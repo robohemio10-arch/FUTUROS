@@ -1,0 +1,20 @@
+runtime_mode: paper
+state_path: data/runtime/state_repository.json
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+capital:
+  max_capital_global: 500.0
+
+ledger:
+  allowed_reservation_statuses:
+    - RESERVED
+    - RELEASED
+    - FILLED
+    - REJECTED
+    - CANCELLED
