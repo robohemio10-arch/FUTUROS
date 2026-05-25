@@ -116,7 +116,7 @@ class DashboardReadonlyCommandBus:
         if reasons:
             status = (
                 READONLY_BLOCKED
-                if "dashboard_readonly" in reasons or has_runtime_guard_reason(reasons)
+                if "dashboard_readonly" in reasons and not has_runtime_guard_reason(reasons)
                 else REJECTED
             )
             result = DashboardCommand(
