@@ -1,0 +1,31 @@
+services:
+  smartcrypto-bot-live:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: live
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    command: python -m smartcrypto.runtime.healthcheck
+
+  freqtrade-live:
+    image: freqtradeorg/freqtrade:stable
+    restart: "no"
+    env_file:
+      - .env
+    volumes:
+      - ./freqtrade/user_data:/freqtrade/user_data
+      - ./data:/freqtrade/user_data/data:ro
+    command: >
+      trade
+      --config /freqtrade/user_data/config.live.example.json
+      --strategy SmartCryptoSignalStrategy

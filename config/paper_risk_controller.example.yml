@@ -1,0 +1,37 @@
+runtime_mode: paper
+
+inputs:
+  default_paths:
+    - data/features/training_dataset_v13_candle_structure_real.parquet
+    - data/features/training_dataset_model_ready_v7_compat.parquet
+    - data/features/training_dataset_model_ready.parquet
+
+policy:
+  name: btc_075_eth_100_daily_stop_25
+  multipliers:
+    BTCUSDT: 0.75
+    ETHUSDT: 1.00
+  default_multiplier: 1.00
+  daily_emergency_stop_usdt: -25.0
+  cooldown_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+
+safety:
+  allowed_runtime_modes:
+    - paper
+    - research
+    - shadow
+  block_live_enabled: true
+  block_order_submission_enabled: true
+  block_real_order_submission_enabled: true
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+outputs:
+  daily_summary_json: data/reports/paper_risk_controller_daily_summary.json
+  daily_trades_csv: data/reports/paper_risk_controller_daily_trades.csv
+  equity_csv: data/reports/paper_risk_controller_equity.csv
+  state_json: data/runtime/paper_risk_controller_state.json
