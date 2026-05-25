@@ -1,0 +1,26 @@
+runtime_mode: paper
+readonly: true
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+paths:
+  financial_event_log: data/runtime/dashboard_command_bus_events.jsonl
+
+allowed_commands:
+  - refresh_metrics
+  - request_paper_snapshot
+  - request_reconciliation_check
+  - request_market_health_check
+
+prohibited_commands:
+  - submit_order
+  - cancel_order
+  - force_close
+  - enable_live
+  - disable_kill_switch
+  - change_risk_limits

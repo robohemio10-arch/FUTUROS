@@ -35,7 +35,18 @@ MARKET_DATA_EVENT_TYPES = {
     "market_data_degraded",
     "market_data_blocked",
 }
-KNOWN_EVENT_TYPES = MINIMUM_EVENT_TYPES | RECONCILIATION_EVENT_TYPES | MARKET_DATA_EVENT_TYPES
+DASHBOARD_COMMAND_EVENT_TYPES = {
+    "dashboard_command_received",
+    "dashboard_command_accepted",
+    "dashboard_command_rejected",
+    "dashboard_readonly_blocked",
+}
+KNOWN_EVENT_TYPES = (
+    MINIMUM_EVENT_TYPES
+    | RECONCILIATION_EVENT_TYPES
+    | MARKET_DATA_EVENT_TYPES
+    | DASHBOARD_COMMAND_EVENT_TYPES
+)
 DEFAULT_LOG_PATH = "data/runtime/financial_event_log.jsonl"
 
 
