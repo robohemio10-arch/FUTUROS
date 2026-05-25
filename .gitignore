@@ -99,3 +99,21 @@ data/predictions/
 Thumbs.db
 .vscode/
 .idea/
+# Office temporary files
+~$*
+*.tmp
+
+# Word handover docs - keep local unless intentionally versioned
+*.docx
+
+# Freqtrade runtime SQLite sidecars
+*.sqlite-shm
+*.sqlite-wal
+*.db-shm
+*.db-wal
+
+# Runtime outputs
+data/
+logs/
+bitradex_realtime_candle_collector_v1/data/output/
+bitradex_realtime_candle_collector_v1/logs/
