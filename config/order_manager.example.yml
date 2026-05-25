@@ -1,0 +1,26 @@
+runtime_mode: paper
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+paths:
+  state_repository: data/runtime/order_manager_state.json
+  financial_event_log: data/runtime/order_manager_financial_events.jsonl
+
+risk:
+  max_position_usdt: 50.0
+  max_leverage: 2.0
+  min_score_long: 0.60
+  max_score_short: 0.40
+  signal_ttl_seconds: 300
+  kill_switch_enabled: false
+  allowed_pairs:
+    - BTCUSDT
+    - ETHUSDT
+
+capital:
+  max_capital_global: 500.0
