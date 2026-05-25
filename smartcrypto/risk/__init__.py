@@ -3,7 +3,14 @@ from __future__ import annotations
 from typing import Any
 
 
-__all__ = ["evaluate_risk", "set_kill_switch", "load_kill_switch"]
+__all__ = [
+    "RiskLimits",
+    "RiskManager",
+    "SignalRiskDecision",
+    "evaluate_risk",
+    "set_kill_switch",
+    "load_kill_switch",
+]
 
 
 def __getattr__(name: str) -> Any:

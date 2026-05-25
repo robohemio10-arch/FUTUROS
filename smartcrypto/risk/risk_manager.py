@@ -8,11 +8,103 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-import yaml
+try:
+    import pandas as pd
+except Exception:  # pragma: no cover - only used in minimal test runtimes.
+    pd = None  # type: ignore[assignment]
+
+try:
+    import yaml
+except Exception:  # pragma: no cover - only used in minimal test runtimes.
+    yaml = None  # type: ignore[assignment]
 
 
 TRUE_VALUES = {"1", "true", "yes", "y", "on"}
+SAFE_RUNTIME_MODES = {"paper", "research", "shadow"}
+
+
+@dataclass(frozen=True)
+class RiskLimits:
+    runtime_mode: str = "paper"
+    max_position_usdt: float = 50.0
+    max_leverage: float = 2.0
+    min_score_long: float = 0.6
+    max_score_short: float = 0.4
+    signal_ttl_seconds: int = 300
+    kill_switch_enabled: bool = False
+    allowed_pairs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SignalRiskDecision:
+    approved: bool
+    status: str
+    reasons: list[str]
+    signal: dict[str, Any]
+    created_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+class RiskManager:
+    """Backward-compatible signal gate used by legacy tests and paper pipelines."""
+
+    def __init__(self, limits: RiskLimits) -> None:
+        self.limits = limits
+
+    def approve(self, signal: dict[str, Any]) -> SignalRiskDecision:
+        reasons: list[str] = []
+        output = dict(signal)
+
+        runtime_mode = str(self.limits.runtime_mode).strip().lower()
+        if runtime_mode not in SAFE_RUNTIME_MODES:
+            reasons.append(f"runtime_mode_not_allowed:{self.limits.runtime_mode}")
+
+        if env_enabled("LIVE_ENABLED"):
+            reasons.append("LIVE_ENABLED=true")
+        if env_enabled("ORDER_SUBMISSION_ENABLED"):
+            reasons.append("ORDER_SUBMISSION_ENABLED=true")
+        if env_enabled("REAL_ORDER_SUBMISSION_ENABLED"):
+            reasons.append("REAL_ORDER_SUBMISSION_ENABLED=true")
+
+        if self.limits.kill_switch_enabled:
+            reasons.append("kill_switch_enabled")
+
+        pair = str(output.get("pair") or output.get("symbol") or "").strip()
+        if self.limits.allowed_pairs and pair not in self.limits.allowed_pairs:
+            reasons.append(f"pair_not_allowed:{pair}")
+
+        score = _safe_float(output.get("score"))
+        if score is None:
+            reasons.append("score_missing_or_invalid")
+        elif score >= float(self.limits.min_score_long):
+            output["side"] = "long"
+        elif score <= float(self.limits.max_score_short):
+            output["side"] = "short"
+        else:
+            reasons.append("score_inside_neutral_zone")
+
+        if self.limits.max_position_usdt <= 0:
+            reasons.append("max_position_usdt_invalid")
+        if self.limits.max_leverage <= 0:
+            reasons.append("max_leverage_invalid")
+
+        approved = not reasons
+        output["risk_approved"] = approved
+        output["max_position_usdt"] = float(self.limits.max_position_usdt)
+        output["max_leverage"] = float(self.limits.max_leverage)
+        output["runtime_mode"] = runtime_mode
+        if reasons:
+            output["risk_reasons"] = reasons
+
+        return SignalRiskDecision(
+            approved=approved,
+            status="approved" if approved else "blocked",
+            reasons=reasons,
+            signal=output,
+            created_at=iso_now(),
+        )
 
 
 @dataclass(frozen=True)
@@ -40,8 +132,17 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     target = Path(path)
     if not target.exists():
         return {}
+    if yaml is None:
+        raise RuntimeError("PyYAML is required to read risk manager YAML config")
     with target.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def read_json(path: str | Path) -> dict[str, Any]:
@@ -115,6 +216,9 @@ def inspect_freqtrade_sqlite(path: Path | None) -> dict[str, Any]:
     result: dict[str, Any] = {"path": str(path), "exists": path.exists()}
     if not path.exists():
         result.update({"open_rows": None, "closed_rows": None, "rows": None})
+        return result
+    if pd is None:
+        result["error"] = "pandas_required"
         return result
     try:
         with sqlite3.connect(str(path)) as connection:
