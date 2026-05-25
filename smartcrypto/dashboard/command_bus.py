@@ -112,16 +112,13 @@ class DashboardReadonlyCommandBus:
             "source": clean_source,
             "payload": safe_payload,
         }
-        self.event_logger.record(
-            "dashboard_command_received",
-            correlation_id=clean_correlation_id,
-            source=clean_source,
-            payload=base_payload,
-        )
-
         reasons = self._rejection_reasons(command_name)
         if reasons:
-            status = READONLY_BLOCKED if "dashboard_readonly" in reasons else REJECTED
+            status = (
+                READONLY_BLOCKED
+                if "dashboard_readonly" in reasons or has_runtime_guard_reason(reasons)
+                else REJECTED
+            )
             result = DashboardCommand(
                 command_id=command_id,
                 command=command_name,
@@ -135,6 +132,13 @@ class DashboardReadonlyCommandBus:
             )
             self._record_rejection(result)
             return result
+
+        self.event_logger.record(
+            "dashboard_command_received",
+            correlation_id=clean_correlation_id,
+            source=clean_source,
+            payload=base_payload,
+        )
 
         result = DashboardCommand(
             command_id=command_id,
@@ -174,11 +178,7 @@ class DashboardReadonlyCommandBus:
         return reasons
 
     def _record_rejection(self, command: DashboardCommand) -> None:
-        event_type = (
-            "dashboard_readonly_blocked"
-            if command.status == READONLY_BLOCKED
-            else "dashboard_command_rejected"
-        )
+        event_type = rejection_event_type(command)
         self.event_logger.record(
             event_type,
             correlation_id=command.correlation_id,
@@ -189,6 +189,27 @@ class DashboardReadonlyCommandBus:
 
 def env_enabled(name: str) -> bool:
     return str(os.getenv(name, "")).strip().lower() in TRUE_VALUES
+
+
+def has_runtime_guard_reason(reasons: list[str]) -> bool:
+    runtime_reasons = {
+        "LIVE_ENABLED=true",
+        "ORDER_SUBMISSION_ENABLED=true",
+        "REAL_ORDER_SUBMISSION_ENABLED=true",
+    }
+    return any(
+        reason in runtime_reasons
+        or reason.startswith("runtime_mode_not_allowed:")
+        for reason in reasons
+    )
+
+
+def rejection_event_type(command: DashboardCommand) -> str:
+    if has_runtime_guard_reason(command.reasons):
+        return "runtime_guard_blocked"
+    if command.status == READONLY_BLOCKED:
+        return "dashboard_readonly_blocked"
+    return "dashboard_command_rejected"
 
 
 def normalize_command(command: str) -> str:
