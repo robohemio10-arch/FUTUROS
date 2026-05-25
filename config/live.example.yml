@@ -1,0 +1,17 @@
+runtime_mode: shadow
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  allow_ai_to_increase_size: false
+  allow_dashboard_direct_order: false
+
+risk_limits:
+  max_drawdown_pct: 3.0
+  max_data_age_seconds: 120
+  max_spread_bps: 15.0
+  max_order_notional: 25.0
+  max_capital_global: 250.0
+
+note: "Safe example only. Real live trading remains disabled."
