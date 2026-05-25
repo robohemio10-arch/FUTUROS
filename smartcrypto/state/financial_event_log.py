@@ -41,11 +41,17 @@ DASHBOARD_COMMAND_EVENT_TYPES = {
     "dashboard_command_rejected",
     "dashboard_readonly_blocked",
 }
+RUNTIME_PREFLIGHT_EVENT_TYPES = {
+    "runtime_preflight_started",
+    "runtime_preflight_passed",
+    "runtime_preflight_failed",
+}
 KNOWN_EVENT_TYPES = (
     MINIMUM_EVENT_TYPES
     | RECONCILIATION_EVENT_TYPES
     | MARKET_DATA_EVENT_TYPES
     | DASHBOARD_COMMAND_EVENT_TYPES
+    | RUNTIME_PREFLIGHT_EVENT_TYPES
 )
 DEFAULT_LOG_PATH = "data/runtime/financial_event_log.jsonl"
 
