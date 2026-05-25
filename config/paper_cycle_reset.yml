@@ -1,0 +1,20 @@
+runtime_mode: paper
+paths:
+  paper_exit_control: data/runtime/paper_exit_control.json
+  paper_exit_archive_dir: data/runtime/archive
+  primary_signals: data/freqtrade_signals.json
+  pinned_signals: data/runtime/active_freqtrade_signals.json
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  sqlite_report: data/reports/phase17_cycle_state_report.json
+  reset_report: data/reports/phase17_reset_report.json
+  summary: data/reports/phase17_summary.json
+paper:
+  max_open_trades: 2
+  expected_pairs:
+    - BTC/USDT:USDT
+    - ETH/USDT:USDT
+policy:
+  archive_exit_control: true
+  disable_exit_control_marker: true
+  clear_signals_default: false
+  require_paper_mode: true

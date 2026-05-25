@@ -1,0 +1,32 @@
+runtime_mode: paper
+binance:
+  base_url: "https://fapi.binance.com"
+  endpoint: "/fapi/v1/klines"
+  market: "usdt_m_futures"
+  interval: "1m"
+  symbols: ["BTCUSDT", "ETHUSDT"]
+  limit: 1500
+  request_sleep_seconds: 0.15
+  max_retries: 5
+  retry_sleep_seconds: 3
+date_range:
+  start_date: "2026-01-06"
+  end_date: "today"
+  timezone: "UTC"
+paths:
+  raw_dir: "data/raw/binance_futures_klines"
+  backfill_features: "data/features/market_features_1m_backfill.parquet"
+  main_features: "data/features/market_features_60d.parquet"
+  sqlite: "data/sqlite/trading_dataset.sqlite"
+  reports_dir: "data/reports"
+  evidence_dir: "data/evidence"
+  backups_dir: "data/backups/phase22"
+features:
+  update_main_features: true
+  backup_main_features_before_update: true
+  sqlite_table: "market_features"
+safety:
+  require_paper_mode: true
+  block_if_live_enabled: true
+  block_if_order_submission_enabled: true
+  block_if_real_order_submission_enabled: true

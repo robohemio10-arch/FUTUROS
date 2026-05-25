@@ -1,0 +1,32 @@
+runtime_mode: paper
+compose_file: docker-compose.paper.yml
+session:
+  default_hours: 24
+  refresh_interval_seconds: 1500
+  feedback_wait_seconds: 120
+  signal_wait_seconds: 10
+  evidence_enabled: true
+  reports_dir: data/reports/paper_sessions
+  evidence_dir: data/evidence
+services:
+  bot: smartcrypto-bot-paper
+  dashboard: smartcrypto-dashboard-paper
+  freqtrade: freqtrade-paper
+paths:
+  qlib_predictions: data/predictions/latest_qlib_predictions.parquet
+  primary_signals: data/freqtrade_signals.json
+  pinned_signals: data/runtime/active_freqtrade_signals.json
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  kill_switch: data/runtime/kill_switch.json
+  paper_exit_control: data/runtime/paper_exit_control.json
+  trades_master: data/trades/trades_master.parquet
+  training_dataset: data/features/training_dataset.parquet
+  sqlite: data/sqlite/trading_dataset.sqlite
+  freqtrade_sqlite_candidates:
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+safety:
+  require_paper_mode: true
+  block_live_flags: true

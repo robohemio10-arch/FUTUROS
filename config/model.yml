@@ -1,0 +1,13 @@
+phase4:
+  target_column: target_win
+  min_trades_for_training: 50
+  min_trades_for_walk_forward: 100
+  min_classes: 2
+  test_size_fraction: 0.25
+  random_state: 42
+  model_name: baseline_random_forest
+  allow_model_export: false
+  production_enabled: false
+  reports_dir: data/reports
+  models_dir: data/models
+  training_dataset_path: data/features/training_dataset.parquet

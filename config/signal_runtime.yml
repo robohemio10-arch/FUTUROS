@@ -1,0 +1,21 @@
+runtime_mode: paper
+primary_signals_path: data/freqtrade_signals.json
+pinned_signals_path: data/runtime/active_freqtrade_signals.json
+decision_log_path: data/runtime/freqtrade_signal_decisions.jsonl
+max_signal_age_minutes: 30
+validity_minutes: 30
+min_confidence: 0.0
+allow_empty_signal_export: false
+read_paths_freqtrade:
+  - /freqtrade/user_data/data/freqtrade_signals.json
+  - /freqtrade/user_data/data/runtime/active_freqtrade_signals.json
+  - /freqtrade/user_data/freqtrade_signals.json
+  - data/freqtrade_signals.json
+read_paths_smartcrypto:
+  - data/freqtrade_signals.json
+  - data/runtime/active_freqtrade_signals.json
+risk:
+  max_open_trades: 2
+  max_position_usdt: 50
+  leverage: 2
+  require_risk_approved: true

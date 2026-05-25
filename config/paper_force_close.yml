@@ -1,0 +1,23 @@
+runtime_mode: paper
+policy:
+  allow_sqlite_force_close: true
+  require_freqtrade_stopped: true
+  backup_sqlite_before_write: true
+  only_dry_run: true
+  exit_reason: phase16_controlled_sqlite_paper_force_close
+paths:
+  freqtrade_db_candidates:
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+  market_features: data/features/market_features_60d.parquet
+  raw_export: data/trades/freqtrade_paper_trades_raw.parquet
+  closed_export: data/trades/freqtrade_paper_closed_smartcrypto.parquet
+  inbox_export_csv: data/trades/inbox/freqtrade_paper_closed_trades.csv
+  report: data/reports/phase16_force_close_report.json
+  summary: data/reports/phase16_summary.json
+risk:
+  allowed_pairs:
+    - BTC/USDT:USDT
+    - ETH/USDT:USDT

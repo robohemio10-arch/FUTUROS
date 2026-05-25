@@ -1,0 +1,10 @@
+mode: fixed
+symbols:
+  - BTCUSDT
+  - ETHUSDT
+pairs:
+  - BTC/USDT:USDT
+  - ETH/USDT:USDT
+future_expansion:
+  universe_selector_top_n: 50
+  portfolio_allocator_top_n: 15

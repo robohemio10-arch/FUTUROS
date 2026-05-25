@@ -1,0 +1,27 @@
+runtime_mode: paper
+paths:
+  kill_switch: data/runtime/kill_switch.json
+  primary_signals: data/freqtrade_signals.json
+  pinned_signals: data/runtime/active_freqtrade_signals.json
+  qlib_predictions: data/predictions/latest_qlib_predictions.parquet
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  report: data/reports/phase20_risk_report.json
+  sqlite_candidates:
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+limits:
+  max_open_trades: 2
+  max_daily_loss_usdt: 10.0
+  max_drawdown_pct: 5.0
+  max_prediction_age_minutes: 90
+  max_signal_age_minutes: 60
+  require_dashboard_readable: false
+  require_non_empty_signals: true
+  require_sqlite_consistent: true
+safety:
+  block_live_enabled: true
+  block_order_submission_enabled: true
+  block_real_order_submission_enabled: true
+  allowed_runtime_mode: paper

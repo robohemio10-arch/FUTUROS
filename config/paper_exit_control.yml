@@ -1,0 +1,20 @@
+runtime_mode: paper
+paths:
+  exit_control: data/runtime/paper_exit_control.json
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  phase15_report: data/reports/phase15_exit_signal_report.json
+  phase15_flow_report: data/reports/phase15_exit_flow_report.json
+  phase15_summary: data/reports/phase15_summary.json
+  freqtrade_db_candidates:
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+policy:
+  validity_minutes: 30
+  allow_exit_all_pairs: true
+  dry_run_only: true
+  require_runtime_mode_paper: true
+expected_pairs:
+  - BTC/USDT:USDT
+  - ETH/USDT:USDT

@@ -1,0 +1,37 @@
+runtime_mode: paper
+signal_source: qlib
+prediction_engine: qlib-worker-paper
+executor: freqtrade-paper
+dashboard: smartcrypto-dashboard-paper
+bot: smartcrypto-bot-paper
+
+paths:
+  signals: data/freqtrade_signals.json
+  qlib_predictions: data/predictions/latest_qlib_predictions.parquet
+  qlib_model: data/models/qlib_market_model.joblib
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  freqtrade_db_host: freqtrade/user_data/tradesv3.paper.sqlite
+  freqtrade_db_container: /app/freqtrade_user_data/tradesv3.paper.sqlite
+
+policy:
+  live_enabled: false
+  allow_real_orders: false
+  max_signal_age_minutes: 15
+  signal_refresh_minutes: 5
+  collect_feedback_after_refresh: true
+  import_feedback_with_phase5: true
+  minimum_wait_after_signal_seconds: 60
+  repair_empty_signal_file_from_predictions: true
+  emit_all_predictions_in_paper: true
+
+risk:
+  max_open_trades: 2
+  max_position_usdt: 50
+  leverage: 2
+  require_risk_approved: true
+
+signal_contract:
+  long_threshold: 0.50
+  short_threshold: 0.50
+  min_confidence: 0.0
+  valid_for_minutes: 15

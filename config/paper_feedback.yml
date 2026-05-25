@@ -1,0 +1,33 @@
+runtime_mode: paper
+
+paths:
+  freqtrade_db_candidates:
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+
+  raw_export: data/trades/freqtrade_paper_trades_raw.parquet
+  closed_export_parquet: data/trades/freqtrade_paper_closed_smartcrypto.parquet
+  closed_export_csv: data/trades/freqtrade_paper_closed_smartcrypto.csv
+  inbox_export_csv: data/trades/inbox/freqtrade_paper_closed_trades.csv
+
+  open_positions_report: data/reports/phase14_open_positions_report.json
+  closed_feedback_report: data/reports/phase14_closed_feedback_report.json
+  output_summary: data/reports/phase14_output_summary.json
+  summary: data/reports/phase14_summary.json
+
+policy:
+  live_enabled: false
+  allow_real_orders: false
+  require_closed_trades_for_import: true
+  min_closed_trades_for_feedback: 1
+  import_closed_to_phase5_inbox: true
+  preserve_open_trades: true
+  force_exit_supported: false
+
+freqtrade:
+  max_open_trades: 2
+  expected_pairs:
+    - BTC/USDT:USDT
+    - ETH/USDT:USDT

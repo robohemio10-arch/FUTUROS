@@ -1,0 +1,59 @@
+market_model:
+  name: market_direction_random_forest
+  version: market_direction_rf_v1
+  source_path: data/features/market_features_60d.parquet
+  training_output_path: data/features/market_training_dataset.parquet
+  model_output_path: data/models/market_direction_model.joblib
+  predictions_output_path: data/predictions/latest_market_predictions.parquet
+  signal_output_path: data/freqtrade_signals.json
+
+  timeframe: 5m
+  target_horizon: 3
+  target_column: target_direction_3
+  min_abs_future_return: 0.0
+
+  min_rows_for_training: 1000
+  test_fraction: 0.20
+  random_state: 42
+
+  prediction:
+    long_probability_threshold: 0.55
+    short_probability_threshold: 0.45
+    max_signal_age_minutes: 10
+    default_leverage: 2.0
+    max_position_usdt: 50.0
+    allow_short: true
+
+features:
+  numeric:
+    - ret_1
+    - ret_3
+    - ret_5
+    - ret_10
+    - ret_15
+    - ret_30
+    - ema_20
+    - ema_50
+    - ema_200
+    - dist_ema20
+    - dist_ema50
+    - dist_ema200
+    - rsi_14
+    - macd_line
+    - macd_signal
+    - macd_hist
+    - atr_14
+    - atr_pct_14
+    - vol_30
+    - vol_120
+    - volume_mean_30
+    - volume_mean_120
+    - volume_rel_30
+    - volume_z_30
+    - hl_range
+    - body_range
+    - upper_wick
+    - lower_wick
+    - trend_score
+  categorical:
+    - market_regime

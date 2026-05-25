@@ -1,0 +1,24 @@
+runtime_mode: paper
+source: qlib
+model_version_default: qlib_lgbm_v1
+
+paths:
+  predictions: data/predictions/latest_qlib_predictions.parquet
+  primary_signals: data/freqtrade_signals.json
+  pinned_signals: data/runtime/active_freqtrade_signals.json
+  report: data/reports/phase13_signal_producer_report.json
+  summary: data/reports/phase13_summary.json
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+
+policy:
+  validity_minutes: 30
+  min_abs_score: 0.0
+  min_confidence: 0.0
+  max_signals: 2
+  include_top_n_when_threshold_empty: 2
+  never_overwrite_with_empty: true
+  require_risk_approved: true
+
+risk:
+  max_position_usdt: 50.0
+  leverage: 2.0

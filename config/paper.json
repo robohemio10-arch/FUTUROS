@@ -1,0 +1,12 @@
+{
+  "runtime_mode": "paper",
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "pairs": ["BTC/USDT:USDT", "ETH/USDT:USDT"],
+  "timeframes": ["1m", "5m"],
+  "primary_timeframe": "5m",
+  "days": 60,
+  "signals_path": "data/freqtrade_signals.json",
+  "predictions_path": "data/predictions/latest_predictions.parquet",
+  "database_path": "data/sqlite/trading_dataset.sqlite",
+  "model_path": "data/models/baseline_model.joblib"
+}

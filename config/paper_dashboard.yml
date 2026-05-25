@@ -1,0 +1,21 @@
+dashboard:
+  title: SmartCrypto Paper Operations
+  refresh_seconds: 30
+paths:
+  sqlite: data/sqlite/trading_dataset.sqlite
+  freqtrade_sqlite_candidates:
+    - /app/freqtrade_user_data/tradesv3.paper.sqlite
+    - /app/freqtrade/user_data/tradesv3.paper.sqlite
+    - /freqtrade/user_data/tradesv3.paper.sqlite
+    - freqtrade/user_data/tradesv3.paper.sqlite
+  qlib_predictions: data/predictions/latest_qlib_predictions.parquet
+  primary_signals: data/freqtrade_signals.json
+  pinned_signals: data/runtime/active_freqtrade_signals.json
+  decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  trades_master: data/trades/trades_master.parquet
+  training_dataset: data/features/training_dataset.parquet
+  market_features: data/features/market_features_60d.parquet
+  kill_switch: data/runtime/kill_switch.json
+  paper_exit_control: data/runtime/paper_exit_control.json
+  reports_dir: data/reports
+  evidence_dir: data/evidence

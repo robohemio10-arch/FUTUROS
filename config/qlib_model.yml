@@ -1,0 +1,41 @@
+timeframe: "5m"
+target_horizon: 3
+min_rows_for_training: 1000
+test_size: 0.2
+random_state: 42
+model_version: "qlib_lgbm_v1"
+prediction_threshold: 0.55
+max_position_usdt: 50.0
+leverage: 2.0
+signal_ttl_minutes: 10
+feature_columns:
+  - ret_1
+  - ret_3
+  - ret_5
+  - ret_10
+  - ret_15
+  - ret_30
+  - ema_20
+  - ema_50
+  - ema_200
+  - dist_ema20
+  - dist_ema50
+  - dist_ema200
+  - rsi_14
+  - macd_line
+  - macd_signal
+  - macd_hist
+  - atr_14
+  - atr_pct_14
+  - vol_30
+  - vol_120
+  - volume_mean_30
+  - volume_mean_120
+  - volume_rel_30
+  - volume_z_30
+  - hl_range
+  - body_range
+  - upper_wick
+  - lower_wick
+  - trend_score
+  - market_regime

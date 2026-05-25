@@ -1,0 +1,25 @@
+# Initial Qlib workflow contract for SmartCrypto.
+# This file documents the intended native-Qlib workflow. The Phase 8 runner
+# exports Qlib-compatible datasets and uses an isolated qlib-worker service.
+# Native qrun integration can be added after the dataset contract is stable.
+
+qlib_init:
+  provider_uri: "/app/data/qlib/provider"
+  region: "us"
+
+dataset:
+  source: "data/features/market_features_60d.parquet"
+  output: "data/qlib/qlib_market_dataset.parquet"
+  timeframe: "5m"
+  label: "future_ret_3"
+  target: "target_direction_3"
+
+model:
+  name: "qlib_lgbm_v1"
+  class: "lightgbm.LGBMClassifier"
+  prediction_output: "data/predictions/latest_qlib_predictions.parquet"
+
+execution_contract:
+  signal_output: "data/freqtrade_signals.json"
+  executor: "Freqtrade"
+  runtime_mode: "paper"

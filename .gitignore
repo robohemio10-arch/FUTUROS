@@ -1,0 +1,101 @@
+.env
+__pycache__/
+*.pyc
+*.sqlite
+*.db
+*.parquet
+*.zip
+*.log
+data/raw/*
+data/features/*
+data/sqlite/*
+data/predictions/*
+data/logs/*
+data/evidence/*
+data/models/*
+!data/raw/.gitkeep
+!data/features/.gitkeep
+!data/sqlite/.gitkeep
+!data/predictions/.gitkeep
+!data/logs/.gitkeep
+!data/evidence/.gitkeep
+!data/models/.gitkeep
+freqtrade/user_data/logs/*
+freqtrade/user_data/data/*
+!freqtrade/user_data/logs/.gitkeep
+!freqtrade/user_data/data/.gitkeep
+
+
+# Runtime/generated data excluded from clean core
+.env
+data/
+logs/*.log
+*.sqlite
+*.db
+*.parquet
+*.csv
+*.xlsx
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+bitradex_realtime_candle_collector_v1/data/
+Bitradex neta/
+Bitradexneta/
+bitradex_kline_scraper*/
+freqtrade/user_data/logs/
+freqtrade/user_data/data/
+freqtrade/user_data/trades*.sqlite
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Runtime databases
+*.sqlite
+*.sqlite3
+*.db
+freqtrade/user_data/tradesv3*.sqlite
+
+# Runtime data
+data/
+logs/
+*.jsonl
+
+# Freqtrade runtime
+freqtrade/user_data/logs/
+freqtrade/user_data/data/
+freqtrade/user_data/backtest_results/
+
+# Bitradex collector runtime
+bitradex_realtime_candle_collector_v1/data/output/
+bitradex_realtime_candle_collector_v1/logs/
+
+# Evidence/reports generated locally
+data/evidence/
+data/reports/
+data/runtime/
+data/trades/
+data/features/
+data/predictions/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
