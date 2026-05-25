@@ -30,7 +30,12 @@ RECONCILIATION_EVENT_TYPES = {
     "state_divergence_detected",
     "reconciliation_failed",
 }
-KNOWN_EVENT_TYPES = MINIMUM_EVENT_TYPES | RECONCILIATION_EVENT_TYPES
+MARKET_DATA_EVENT_TYPES = {
+    "market_data_healthy",
+    "market_data_degraded",
+    "market_data_blocked",
+}
+KNOWN_EVENT_TYPES = MINIMUM_EVENT_TYPES | RECONCILIATION_EVENT_TYPES | MARKET_DATA_EVENT_TYPES
 DEFAULT_LOG_PATH = "data/runtime/financial_event_log.jsonl"
 
 

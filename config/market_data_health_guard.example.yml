@@ -1,0 +1,25 @@
+runtime_mode: paper
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+paths:
+  financial_event_log: data/runtime/market_data_health_events.jsonl
+
+limits:
+  max_ticker_age_seconds: 30
+  max_candle_age_seconds: 300
+  max_spread_bps: 25.0
+  min_liquidity_usdt: 10000.0
+  max_latency_ms: 1000.0
+  max_ws_rest_divergence_bps: 10.0
+  degraded_ticker_age_seconds: 15
+  degraded_candle_age_seconds: 180
+  degraded_spread_bps: 15.0
+  degraded_liquidity_usdt: 25000.0
+  degraded_latency_ms: 500.0
+  degraded_ws_rest_divergence_bps: 5.0
