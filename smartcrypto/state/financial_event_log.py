@@ -25,6 +25,12 @@ MINIMUM_EVENT_TYPES = {
     "kill_switch_triggered",
     "runtime_guard_blocked",
 }
+RECONCILIATION_EVENT_TYPES = {
+    "state_reconciled",
+    "state_divergence_detected",
+    "reconciliation_failed",
+}
+KNOWN_EVENT_TYPES = MINIMUM_EVENT_TYPES | RECONCILIATION_EVENT_TYPES
 DEFAULT_LOG_PATH = "data/runtime/financial_event_log.jsonl"
 
 
@@ -264,7 +270,7 @@ def validate_event_dict(event: dict[str, Any]) -> None:
         raise InvalidFinancialEvent(f"Financial event missing fields: {sorted(missing)}")
     if not isinstance(event["payload"], dict):
         raise InvalidFinancialEvent("Financial event payload must be an object")
-    if event["event_type"] not in MINIMUM_EVENT_TYPES:
+    if event["event_type"] not in KNOWN_EVENT_TYPES:
         raise InvalidFinancialEvent(f"Unknown minimum event_type: {event['event_type']}")
     for field_name in (
         "live_enabled",
