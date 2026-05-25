@@ -1,0 +1,19 @@
+runtime_mode: paper
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+paths:
+  state_repository: data/runtime/state_repository.json
+  financial_event_log: data/runtime/reconciliation_guard_events.jsonl
+
+reconciliation:
+  block_operation_on_divergence: true
+  auto_repair_enabled: false
+  validate_open_reservations: true
+  validate_filled_reservations: true
+  validate_capital_consistency: true

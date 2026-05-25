@@ -7,6 +7,11 @@ from .financial_event_log import (
     RuntimeSafetySnapshot,
     record_financial_event,
 )
+from .reconciliation_guard import (
+    ReconciliationGuard,
+    ReconciliationGuardError,
+    ReconciliationResult,
+)
 from .capital_reservation_ledger import (
     CapitalReservation,
     CapitalReservationLedger,
@@ -24,6 +29,9 @@ __all__ = [
     "FinancialEventLogger",
     "FinancialEventLogConfig",
     "InsufficientCapitalError",
+    "ReconciliationGuard",
+    "ReconciliationGuardError",
+    "ReconciliationResult",
     "RuntimeSafetySnapshot",
     "StateRepository",
     "record_financial_event",
