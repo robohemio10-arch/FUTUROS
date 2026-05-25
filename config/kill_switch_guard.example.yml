@@ -1,0 +1,24 @@
+runtime_mode: paper
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  allow_ai_to_increase_size: false
+  allow_dashboard_direct_order: false
+  external_api_enabled: false
+
+paths:
+  kill_switch_state: data/runtime/kill_switch_guard.json
+  financial_event_log: data/runtime/kill_switch_guard_events.jsonl
+
+defaults:
+  global_enabled: false
+  symbols: {}
+
+policy:
+  block_when_global_enabled: true
+  block_when_symbol_enabled: true
+  treat_missing_state_as_clear: true
+  treat_corrupted_state_as_blocked: true
+  auto_repair_corrupted_state: false
