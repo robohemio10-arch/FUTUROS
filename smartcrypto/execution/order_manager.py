@@ -7,12 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.risk.risk_manager import RiskLimits, RiskManager, env_enabled
+from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
 from smartcrypto.state.capital_reservation_ledger import (
     CapitalReservationLedger,
     DuplicateReservationError,
     InvalidReservationStateError,
 )
-from smartcrypto.state.financial_event_log import FinancialEventLogger
+from smartcrypto.state.financial_event_log import KNOWN_EVENT_TYPES, FinancialEventLogger
 from smartcrypto.state.state_repository import (
     DEFAULT_STATE_PATH,
     SAFE_RUNTIME_MODES,
@@ -83,6 +84,7 @@ class OrderManager:
         risk_manager: RiskManager | None = None,
         state_path: str | Path = DEFAULT_STATE_PATH,
         event_log_path: str | Path = "data/runtime/order_manager_financial_events.jsonl",
+        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
         runtime_mode: str = "paper",
         max_capital_global: float = 0.0,
         risk_limits: RiskLimits | None = None,
@@ -99,6 +101,12 @@ class OrderManager:
             event_log_path,
             runtime_mode=self.runtime_mode,
             source="order_manager",
+            allowed_event_types=set(KNOWN_EVENT_TYPES),
+        )
+        self.kill_switch_guard = KillSwitchGuard(
+            state_path=kill_switch_path,
+            event_logger=self.event_logger,
+            runtime_mode=self.runtime_mode,
         )
         self.risk_manager = risk_manager or RiskManager(
             risk_limits
@@ -143,6 +151,35 @@ class OrderManager:
             created_at=now,
             updated_at=now,
         )
+        kill_switch_result = self.kill_switch_guard.evaluate(clean_symbol)
+        if kill_switch_result.block_operation:
+            rejected = PaperOrderIntent(
+                order_intent_id=order_intent_id,
+                correlation_id=clean_correlation_id,
+                client_order_id=clean_client_order_id,
+                symbol=clean_symbol,
+                side=clean_side,
+                notional=clean_notional,
+                score=clean_score,
+                status="RISK_REJECTED",
+                reservation_id=None,
+                risk_reasons=[f"kill_switch_{kill_switch_result.status.lower()}"],
+                created_at=now,
+                updated_at=utc_timestamp(),
+            )
+            self.event_logger.record(
+                "risk_rejected",
+                correlation_id=clean_correlation_id,
+                symbol=clean_symbol,
+                payload={
+                    "order_intent_id": order_intent_id,
+                    "client_order_id": clean_client_order_id,
+                    "status": rejected.status,
+                    "reasons": rejected.risk_reasons,
+                    "kill_switch": kill_switch_result.to_dict(),
+                },
+            )
+            return rejected
 
         def create_intent(state: dict[str, Any]) -> None:
             order_intents = state.setdefault("order_intents", {})

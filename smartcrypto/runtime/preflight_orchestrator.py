@@ -12,6 +12,7 @@ from smartcrypto.market.market_data_health_guard import (
     MarketDataHealthGuard,
     MarketDataHealthLimits,
 )
+from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
 from smartcrypto.state.financial_event_log import KNOWN_EVENT_TYPES, FinancialEventLogger
 from smartcrypto.state.reconciliation_guard import (
     CORRUPTED,
@@ -52,12 +53,14 @@ class RuntimePreflightOrchestrator:
         config_path: str | Path = "config/runtime_preflight.example.yml",
         event_logger: FinancialEventLogger | None = None,
         event_log_path: str | Path = "data/runtime/runtime_preflight_events.jsonl",
+        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
         state_path: str | Path = "data/runtime/state_repository.json",
         runtime_mode: str = "paper",
     ) -> None:
         self.config_path = Path(config_path)
         self.runtime_mode = str(runtime_mode).strip().lower()
         self.state_path = Path(state_path)
+        self.kill_switch_path = Path(kill_switch_path)
         self.event_log_path = Path(event_log_path)
         self._external_event_logger = event_logger is not None
         self.event_logger = event_logger or FinancialEventLogger(
@@ -134,14 +137,25 @@ class RuntimePreflightOrchestrator:
             return result
 
         checks: dict[str, Any] = {"config": safe_config.to_dict()}
-        state_path = resolve_path(raw_config, "state_repository", self.state_path)
-        max_capital = float(safe_config.max_capital_global)
-        repository = StateRepository(
-            state_path,
+        kill_switch_path = resolve_path(raw_config, "kill_switch_state", self.kill_switch_path)
+        kill_switch_guard = KillSwitchGuard(
+            state_path=kill_switch_path,
+            event_logger=self.event_logger,
             runtime_mode=safe_config.runtime_mode,
-            max_capital_global=max_capital,
         )
-        repository.load()
+        global_kill_result = kill_switch_guard.evaluate()
+        checks["kill_switch"] = global_kill_result.to_dict()
+        if global_kill_result.block_operation:
+            result = RuntimePreflightResult(
+                status=BLOCKED,
+                block_execution=True,
+                checks=checks,
+                errors=[f"kill_switch_{global_kill_result.status.lower()}"],
+                started_at=started_at,
+                completed_at=utc_timestamp(),
+            )
+            self._record_failed(result)
+            return result
 
         if market_snapshot is None:
             result = RuntimePreflightResult(
@@ -154,6 +168,30 @@ class RuntimePreflightOrchestrator:
             )
             self._record_failed(result)
             return result
+
+        symbol = extract_symbol(market_snapshot)
+        symbol_kill_result = kill_switch_guard.evaluate(symbol)
+        checks["kill_switch"] = symbol_kill_result.to_dict()
+        if symbol_kill_result.block_operation:
+            result = RuntimePreflightResult(
+                status=BLOCKED,
+                block_execution=True,
+                checks=checks,
+                errors=[f"kill_switch_{symbol_kill_result.status.lower()}"],
+                started_at=started_at,
+                completed_at=utc_timestamp(),
+            )
+            self._record_failed(result)
+            return result
+
+        state_path = resolve_path(raw_config, "state_repository", self.state_path)
+        max_capital = float(safe_config.max_capital_global)
+        repository = StateRepository(
+            state_path,
+            runtime_mode=safe_config.runtime_mode,
+            max_capital_global=max_capital,
+        )
+        repository.load()
 
         market_guard = MarketDataHealthGuard(
             limits=market_limits(raw_config, safe_config),
@@ -311,3 +349,9 @@ def resolve_path(config: dict[str, Any], key: str, default: str | Path) -> Path:
     if isinstance(paths, dict) and paths.get(key):
         return Path(str(paths[key]))
     return Path(default)
+
+
+def extract_symbol(market_snapshot: dict[str, Any]) -> str | None:
+    value = market_snapshot.get("symbol") if isinstance(market_snapshot, dict) else None
+    text = str(value or "").strip().upper()
+    return text or None
