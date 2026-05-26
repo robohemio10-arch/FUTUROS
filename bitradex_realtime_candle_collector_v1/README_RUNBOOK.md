@@ -23,13 +23,13 @@ Se `probe` retornar `hit_count = 0`, isso significa que os endpoints diretos tes
 Extraia este hotfix sobre:
 
 ```powershell
-C:\Smart Cripto\FUTUROS\bitradex_realtime_candle_collector_v1
+E:\FUTUROS\bitradex_realtime_candle_collector_v1
 ```
 
 Depois:
 
 ```powershell
-cd "C:\Smart Cripto\FUTUROS\bitradex_realtime_candle_collector_v1"
+cd "E:\FUTUROS\bitradex_realtime_candle_collector_v1"
 .\.venv\Scripts\Activate.ps1
 $env:PYTHONPATH="src"
 pip install -r requirements.txt
@@ -98,3 +98,4 @@ logs/bitradex_realtime_candle_collector.log
 ## Segurança
 
 O coletor não usa login, chave, cookies privados, endpoints privados, saldo, posição ou ordens.
+

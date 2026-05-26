@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Set-Location "C:\Smart Cripto\FUTUROS\bitradex_realtime_candle_collector_v1"
+Set-Location "E:\FUTUROS\bitradex_realtime_candle_collector_v1"
 
 if (Test-Path ".\.venv\Scripts\Activate.ps1") {
     . ".\.venv\Scripts\Activate.ps1"
@@ -20,3 +20,4 @@ python -m bitradex_realtime_collector.main `
   --disable-route-validation `
   --audit-all-network `
   --verbose
+

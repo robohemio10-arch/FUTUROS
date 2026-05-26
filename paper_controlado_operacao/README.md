@@ -9,7 +9,7 @@ C:\Smart Cripto
 O comando principal é:
 
 ```powershell
-cd "C:\Smart Cripto\FUTUROS"
+cd "E:\FUTUROS"
 .\paper_controlado_operacao\START_PAPER_24H.ps1
 ```
 
@@ -73,3 +73,4 @@ Páginas incluídas:
 8. Logs
 9. Risco / Kill switch
 10. Evidências
+
