@@ -1,0 +1,13 @@
+runtime_mode: research
+paths:
+  outcomes: data/runtime/model_outcomes.json
+metrics:
+  total_decisions: true
+  resolved_decisions: true
+  win_rate: true
+  average_return_pct: true
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  backtest_execution: false

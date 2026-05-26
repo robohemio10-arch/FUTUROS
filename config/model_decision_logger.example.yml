@@ -1,0 +1,13 @@
+runtime_mode: shadow
+paths:
+  jsonl: data/runtime/model_decisions.jsonl
+allowed_risk_actions:
+  - ALLOW_SHADOW
+  - BLOCK_AI
+  - REDUCE_CONFIDENCE
+  - NO_ACTION
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  strip_secret_payload_fields: true

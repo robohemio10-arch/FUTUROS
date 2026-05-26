@@ -1,0 +1,16 @@
+runtime_mode: research
+paths:
+  registry: data/runtime/model_registry.json
+policy:
+  allowed_statuses:
+    - CANDIDATE
+    - APPROVED_FOR_SHADOW
+    - REJECTED
+    - ROLLED_BACK
+  live_promotion_enabled: false
+  require_feature_contract_for_shadow_approval: true
+  require_valid_risk_status_for_shadow_approval: true
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
