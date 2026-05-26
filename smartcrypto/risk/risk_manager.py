@@ -53,6 +53,15 @@ class RiskManager:
     def __init__(self, limits: RiskLimits) -> None:
         self.limits = limits
 
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> "RiskManager":
+        config_path = Path(path)
+        if not config_path.exists():
+            raise FileNotFoundError(f"RiskManager config file not found: {config_path}")
+        payload = load_yaml(config_path)
+        limits = risk_limits_from_config(payload, source_path=config_path)
+        return cls(limits)
+
     def approve(self, signal: dict[str, Any]) -> SignalRiskDecision:
         reasons: list[str] = []
         output = dict(signal)
@@ -106,6 +115,11 @@ class RiskManager:
             created_at=iso_now(),
         )
 
+    def approve_many(self, signals: list[dict[str, Any]]) -> list[SignalRiskDecision]:
+        if not isinstance(signals, list):
+            raise TypeError("signals must be a list of dictionaries")
+        return [self.approve(signal) for signal in signals if isinstance(signal, dict)]
+
 
 @dataclass(frozen=True)
 class RiskDecision:
@@ -132,10 +146,183 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     target = Path(path)
     if not target.exists():
         return {}
+    text = target.read_text(encoding="utf-8")
     if yaml is None:
-        raise RuntimeError("PyYAML is required to read risk manager YAML config")
-    with target.open("r", encoding="utf-8") as handle:
-        return yaml.safe_load(handle) or {}
+        return load_simple_yaml(text)
+    return yaml.safe_load(text) or {}
+
+
+def load_simple_yaml(text: str) -> dict[str, Any]:
+    lines = [
+        raw_line
+        for raw_line in text.splitlines()
+        if raw_line.strip() and not raw_line.lstrip().startswith("#")
+    ]
+    root: dict[str, Any] = {}
+    stack: list[tuple[int, Any]] = [(-1, root)]
+
+    for index, raw_line in enumerate(lines):
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        stripped = raw_line.strip()
+        while stack and indent <= stack[-1][0]:
+            stack.pop()
+        if not stack:
+            raise ValueError("invalid_yaml_indentation")
+        parent = stack[-1][1]
+
+        if stripped.startswith("- "):
+            if not isinstance(parent, list):
+                raise ValueError("yaml_list_without_parent")
+            parent.append(parse_yaml_scalar(stripped[2:].strip()))
+            continue
+
+        if ":" not in stripped:
+            raise ValueError("yaml_mapping_expected")
+        key, raw_value = stripped.split(":", 1)
+        key = key.strip()
+        value_text = raw_value.strip()
+        if not isinstance(parent, dict):
+            raise ValueError("yaml_mapping_parent_expected")
+
+        if value_text:
+            parent[key] = parse_yaml_scalar(value_text)
+            continue
+
+        child: dict[str, Any] | list[Any]
+        child = [] if next_yaml_child_is_list(lines, index, indent) else {}
+        parent[key] = child
+        stack.append((indent, child))
+
+    return root
+
+
+def next_yaml_child_is_list(lines: list[str], index: int, indent: int) -> bool:
+    for raw_line in lines[index + 1 :]:
+        next_indent = len(raw_line) - len(raw_line.lstrip(" "))
+        if next_indent <= indent:
+            return False
+        return raw_line.strip().startswith("- ")
+    return False
+
+
+def parse_yaml_scalar(value: str) -> Any:
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        return value[1:-1]
+    lowered = value.strip().lower()
+    if lowered in TRUE_VALUES:
+        return True
+    if lowered in {"0", "false", "no", "n", "off", ""}:
+        return False
+    if lowered in {"null", "none", "~"}:
+        return None
+    try:
+        if any(char in value for char in (".", "e", "E")):
+            return float(value)
+        return int(value)
+    except ValueError:
+        return value
+
+
+def risk_limits_from_config(
+    config: dict[str, Any],
+    *,
+    source_path: Path | None = None,
+) -> RiskLimits:
+    if not isinstance(config, dict):
+        raise ValueError("RiskManager YAML root must be a mapping")
+
+    runtime_mode = str(_lookup(config, "runtime_mode", "paper")).strip().lower()
+    unsafe_reasons: list[str] = []
+    if runtime_mode not in SAFE_RUNTIME_MODES:
+        unsafe_reasons.append(f"runtime_mode_not_allowed:{runtime_mode}")
+
+    for flag_name in (
+        "live_enabled",
+        "order_submission_enabled",
+        "real_order_submission_enabled",
+    ):
+        if _config_bool(config, flag_name, default=False):
+            unsafe_reasons.append(f"{flag_name}_must_be_false")
+
+    for env_name in (
+        "LIVE_ENABLED",
+        "ORDER_SUBMISSION_ENABLED",
+        "REAL_ORDER_SUBMISSION_ENABLED",
+    ):
+        if env_enabled(env_name):
+            unsafe_reasons.append(f"{env_name}=true")
+
+    if unsafe_reasons:
+        location = f" in {source_path}" if source_path else ""
+        raise ValueError(
+            "Unsafe RiskManager config" + location + ": " + ",".join(unsafe_reasons)
+        )
+
+    return RiskLimits(
+        runtime_mode=runtime_mode,
+        max_position_usdt=float(_lookup(config, "max_position_usdt", 50.0)),
+        max_leverage=float(_lookup(config, "max_leverage", 2.0)),
+        min_score_long=float(_lookup(config, "min_score_long", 0.6)),
+        max_score_short=float(_lookup(config, "max_score_short", 0.4)),
+        signal_ttl_seconds=int(_lookup(config, "signal_ttl_seconds", 300)),
+        kill_switch_enabled=_config_bool(
+            config,
+            "kill_switch_enabled",
+            default=False,
+        ),
+        allowed_pairs=tuple(
+            str(item) for item in _config_list(config, "allowed_pairs")
+        ),
+    )
+
+
+def _lookup(config: dict[str, Any], key: str, default: Any = None) -> Any:
+    if key in config:
+        return config[key]
+    for section_name in (
+        "risk_limits",
+        "limits",
+        "risk",
+        "safety",
+        "runtime",
+        "execution",
+    ):
+        section = config.get(section_name)
+        if isinstance(section, dict) and key in section:
+            return section[key]
+    return default
+
+
+def _config_bool(config: dict[str, Any], key: str, default: bool = False) -> bool:
+    value = _lookup(config, key, default)
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)) and value in {0, 1}:
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in TRUE_VALUES:
+            return True
+        if normalized in {"0", "false", "no", "n", "off", ""}:
+            return False
+    raise ValueError(f"{key}_must_be_boolean")
+
+
+def _config_list(config: dict[str, Any], key: str) -> list[Any]:
+    value = _lookup(config, key, [])
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    if isinstance(value, str):
+        return [value]
+    raise ValueError(f"{key}_must_be_list")
 
 
 def _safe_float(value: Any) -> float | None:
