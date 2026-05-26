@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
 from smartcrypto.state.financial_event_log import (
     DASHBOARD_COMMAND_EVENT_TYPES,
     KNOWN_EVENT_TYPES,
@@ -76,6 +77,7 @@ class DashboardReadonlyCommandBus:
         readonly: bool = True,
         event_logger: FinancialEventLogger | None = None,
         event_log_path: str | Path = "data/runtime/dashboard_command_bus_events.jsonl",
+        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
         allowed_commands: set[str] | None = None,
         prohibited_commands: set[str] | None = None,
     ) -> None:
@@ -88,6 +90,11 @@ class DashboardReadonlyCommandBus:
             runtime_mode=self.runtime_mode,
             source="dashboard_command_bus",
             allowed_event_types=set(KNOWN_EVENT_TYPES) | DASHBOARD_COMMAND_EVENT_TYPES,
+        )
+        self.kill_switch_guard = KillSwitchGuard(
+            state_path=kill_switch_path,
+            event_logger=self.event_logger,
+            runtime_mode=self.runtime_mode,
         )
 
     def submit(
@@ -113,6 +120,12 @@ class DashboardReadonlyCommandBus:
             "payload": safe_payload,
         }
         reasons = self._rejection_reasons(command_name)
+        if not has_runtime_guard_reason(reasons):
+            kill_switch_result = self.kill_switch_guard.evaluate(
+                extract_symbol_from_payload(safe_payload)
+            )
+            if kill_switch_result.block_operation:
+                reasons.append(f"kill_switch_{kill_switch_result.status.lower()}")
         if reasons:
             status = (
                 READONLY_BLOCKED
@@ -210,6 +223,12 @@ def rejection_event_type(command: DashboardCommand) -> str:
     if command.status == READONLY_BLOCKED:
         return "dashboard_readonly_blocked"
     return "dashboard_command_rejected"
+
+
+def extract_symbol_from_payload(payload: dict[str, Any]) -> str | None:
+    value = payload.get("symbol") or payload.get("pair")
+    text = str(value or "").strip().upper()
+    return text or None
 
 
 def normalize_command(command: str) -> str:
