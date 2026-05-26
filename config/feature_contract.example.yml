@@ -1,0 +1,22 @@
+runtime_mode: research
+contract_version: qlib_market_v1
+strict_order: true
+allow_extra_columns: false
+allow_nan: false
+allow_infinite: false
+features:
+  - name: ret_1
+    dtype: numeric
+    min_value: -1.0
+    max_value: 1.0
+  - name: volume_rel_30
+    dtype: numeric
+    min_value: 0.0
+  - name: rsi_14
+    dtype: numeric
+    min_value: 0.0
+    max_value: 100.0
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false

@@ -1,0 +1,15 @@
+runtime_mode: paper
+
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  allow_ai_to_increase_size: false
+  allow_dashboard_direct_order: false
+
+risk_limits:
+  max_drawdown_pct: 5.0
+  max_data_age_seconds: 300
+  max_spread_bps: 25.0
+  max_order_notional: 50.0
+  max_capital_global: 500.0

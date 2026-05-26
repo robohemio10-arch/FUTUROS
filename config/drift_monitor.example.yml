@@ -1,0 +1,13 @@
+runtime_mode: research
+thresholds:
+  warning_psi: 0.10
+  blocked_psi: 0.25
+  bins: 10
+policy:
+  blocked_means: BLOCK_AI_ONLY
+  increase_risk_allowed: false
+  submit_order_allowed: false
+safety:
+  live_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false

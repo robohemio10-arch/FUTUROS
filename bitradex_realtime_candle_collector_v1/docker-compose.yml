@@ -1,0 +1,35 @@
+services:
+  bitradex-realtime-candle-collector:
+    build: .
+    container_name: bitradex-realtime-candle-collector
+    restart: unless-stopped
+    shm_size: "512mb"
+    environment:
+      - PYTHONPATH=/app/src
+      - TZ=UTC
+    command:
+      [
+        "python",
+        "-m",
+        "bitradex_realtime_collector.main",
+        "--mode",
+        "daemon",
+        "--symbols",
+        "BTCUSDT",
+        "ETHUSDT",
+        "--timeframes",
+        "1m",
+        "5m",
+        "15m",
+        "--capture-seconds",
+        "0",
+        "--scroll-rounds",
+        "20",
+        "--export-every-seconds",
+        "60",
+        "--heartbeat-seconds",
+        "30"
+      ]
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs

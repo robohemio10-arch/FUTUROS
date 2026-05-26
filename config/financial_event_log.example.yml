@@ -1,0 +1,26 @@
+runtime_mode: paper
+source: smartcrypto
+log_path: data/runtime/financial_event_log.jsonl
+
+safety:
+  allowed_runtime_modes:
+    - paper
+    - research
+    - shadow
+  block_live_enabled: true
+  block_order_submission_enabled: true
+  block_real_order_submission_enabled: true
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  use_real_exchange: false
+  require_private_keys: false
+
+events:
+  allowed_event_types:
+    - signal_generated
+    - risk_approved
+    - risk_rejected
+    - paper_trade_adjusted
+    - emergency_stop_triggered
+    - kill_switch_triggered
+    - runtime_guard_blocked

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+logs/*.log
+data/raw/*.jsonl
+data/runtime/*.json
+data/output/*.csv
+data/output/*.parquet
+data/output/*.sqlite
+data/output/*.sqlite-*
