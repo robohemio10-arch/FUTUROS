@@ -126,7 +126,9 @@ def build_normalized_return_sidecar(
     add_flag(flags, sidecar["net_return_pct"].abs().gt(max_abs_net_return_pct), "net_return_extreme")
     if pnl_column in frame.columns and volume_column in frame.columns:
         notional = entry * volume
-        implied_pnl = notional * (sidecar["net_return_pct"] / 100.0)
+        # PnL is an absolute USDT-like value for linear contracts; leverage and
+        # estimated costs affect ROI/margin metrics, not the price-delta PnL check.
+        implied_pnl = notional * (sidecar["gross_return_pct"] / 100.0)
         pnl_error = (sidecar["pnl"] - implied_pnl).abs()
         add_flag(flags, pnl_error.gt(notional.abs() * 0.10), "pnl_incompatible")
 
