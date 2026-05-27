@@ -10,6 +10,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from smartcrypto.dashboard.ai_shadow_panel import render_ai_shadow_panel
+
 
 st.set_page_config(page_title="SmartCrypto Paper", layout="wide")
 
@@ -162,7 +164,7 @@ def dataframe(title: str, frame: pd.DataFrame, height: int = 360) -> None:
 
 
 st.title("SmartCrypto — Operação Paper")
-page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Evidências"])
+page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "AI Shadow", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Evidências"])
 
 trades = freqtrade_trades()
 metrics = perf_metrics(trades)
@@ -189,6 +191,9 @@ elif page == "Qlib / Predições":
     if chart_dir.exists():
         for image in sorted(chart_dir.glob("*.png")):
             st.image(str(image), caption=image.name, use_container_width=True)
+
+elif page == "AI Shadow":
+    render_ai_shadow_panel(st)
 
 elif page == "Sinais":
     st.subheader("Primary Signal")
