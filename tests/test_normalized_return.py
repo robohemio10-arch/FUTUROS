@@ -26,7 +26,7 @@ def source_frame() -> pd.DataFrame:
             "volume_posicao": [1.0, 2.0, 0.0],
             "leverage": [2.0, 3.0, 0.0],
             "return_pct": [999.0, 999.0, 999.0],
-            "pnl": [20.0, 60.0, 0.0],
+            "pnl": [10.0, 20.0, 0.0],
         }
     )
 
@@ -51,6 +51,13 @@ def test_applies_leverage_and_bps_costs_to_net_return() -> None:
     assert report.cost_assumptions["total_cost_pct"] == 0.16
     assert sidecar.loc[0, "leveraged_return_pct"] == 20.0
     assert sidecar.loc[0, "net_return_pct"] == 19.84
+
+
+def test_pnl_check_uses_unleveraged_price_delta() -> None:
+    sidecar, report = build_normalized_return_sidecar(source_frame().iloc[:1].copy(), output_path="out.parquet")
+
+    assert "pnl_incompatible" not in sidecar.loc[0, "quality_flags"]
+    assert report.quality_flag_counts.get("pnl_incompatible", 0) == 0
 
 
 def test_flags_invalid_entry_exit_leverage_side_and_volume() -> None:

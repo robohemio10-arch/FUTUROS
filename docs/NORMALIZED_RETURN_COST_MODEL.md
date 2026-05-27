@@ -33,7 +33,10 @@ O sidecar normalizado registra `quality_flags` quando encontra:
 - side desconhecido;
 - retorno bruto discrepante;
 - `net_return_pct` extremo;
-- PnL incompatível quando ha dados suficientes.
+- PnL incompatível quando ha dados suficientes. O PnL absoluto e comparado
+  contra o retorno bruto por preco e volume, sem multiplicar por leverage ou
+  custos. Leverage e custos afetam ROI/margem, nao o PnL absoluto de contrato
+  linear usado nessa checagem.
 
 ## Execucao
 
