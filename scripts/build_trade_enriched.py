@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -111,7 +112,54 @@ def coerce_float(value: Any) -> float:
 
 
 def coerce_datetime(value: Any) -> pd.Timestamp:
-    return pd.to_datetime(value, errors="coerce", utc=True)
+    parsed = parse_trade_timestamp_series(pd.Series([value]))
+    return parsed.iloc[0]
+
+
+ISO_TIMESTAMP_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$"
+)
+BR_TIMESTAMP_RE = re.compile(
+    r"^\d{2}[/-]\d{2}[/-]\d{4}[ T]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?$"
+)
+
+
+def parse_trade_timestamp_series(series: pd.Series) -> pd.Series:
+    values = pd.Series(series).copy()
+    result = pd.Series(pd.NaT, index=values.index, dtype="datetime64[ns, UTC]")
+
+    text = values.astype("string").str.strip()
+    present = text.notna() & text.ne("") & text.str.lower().ne("nan")
+
+    iso_mask = present & text.map(lambda value: bool(ISO_TIMESTAMP_RE.match(str(value))))
+    br_mask = present & ~iso_mask & text.map(lambda value: bool(BR_TIMESTAMP_RE.match(str(value))))
+    other_mask = present & ~iso_mask & ~br_mask
+
+    if iso_mask.any():
+        result.loc[iso_mask] = pd.to_datetime(
+            text.loc[iso_mask],
+            errors="coerce",
+            utc=True,
+            dayfirst=False,
+            format="mixed",
+        )
+    if br_mask.any():
+        result.loc[br_mask] = pd.to_datetime(
+            text.loc[br_mask],
+            errors="coerce",
+            utc=True,
+            dayfirst=True,
+            format="mixed",
+        )
+    if other_mask.any():
+        result.loc[other_mask] = pd.to_datetime(
+            values.loc[other_mask],
+            errors="coerce",
+            utc=True,
+            dayfirst=False,
+        )
+
+    return result
 
 
 def normalize_symbol(value: Any) -> str:
@@ -147,8 +195,8 @@ def normalize_trades(frame: pd.DataFrame) -> pd.DataFrame:
             trades[column] = pd.NA
 
     trades["symbol"] = trades["moeda"].map(normalize_symbol)
-    trades["open_ts"] = trades["horario_abertura"].map(coerce_datetime)
-    trades["close_ts"] = trades["horario_fechamento"].map(coerce_datetime)
+    trades["open_ts"] = parse_trade_timestamp_series(trades["horario_abertura"])
+    trades["close_ts"] = parse_trade_timestamp_series(trades["horario_fechamento"])
     trades["entry_price"] = trades["preco_abertura"].map(coerce_float)
     trades["exit_price"] = trades["preco_fechamento"].map(coerce_float)
     trades["pnl"] = trades["pnl_fechado"].map(coerce_float)
@@ -188,7 +236,7 @@ def normalize_features(frame: pd.DataFrame) -> pd.DataFrame:
     if "ts" not in features.columns and "date" in features.columns:
         features["ts"] = features["date"]
 
-    features["ts"] = pd.to_datetime(features["ts"], errors="coerce", utc=True)
+    features["ts"] = parse_trade_timestamp_series(features["ts"])
     features = features[features["symbol"].astype(str).str.len().gt(0) & features["ts"].notna()].copy()
     return features.sort_values(["symbol", "tf", "ts"]).reset_index(drop=True)
 
