@@ -34,8 +34,8 @@ def sidecar(rows: int = 24) -> pd.DataFrame:
     )
 
 
-def sidecar_report(status: str = "OK") -> dict:
-    return {
+def sidecar_report(status: str = "OK", rows: int | None = None) -> dict:
+    payload = {
         "status": status,
         "quality_flag_counts": {"net_return_extreme": 1} if status == "BLOCKED" else {},
         "outlier_summary": {"net_return_extreme": 1} if status == "BLOCKED" else {},
@@ -45,6 +45,9 @@ def sidecar_report(status: str = "OK") -> dict:
             else "normalized_returns_plausible_for_offline_research_only"
         ),
     }
+    if rows is not None:
+        payload["rows"] = rows
+    return payload
 
 
 def test_evaluation_fails_if_features_contain_financial_columns() -> None:
@@ -141,6 +144,25 @@ def test_join_loss_is_blocked() -> None:
             embargo_minutes=1,
             sidecar_report=sidecar_report(),
         )
+
+
+def test_finance_grade_filtered_sidecar_can_evaluate_matching_subset() -> None:
+    filtered_sidecar = sidecar().iloc[:-3].copy()
+    report = run_normalized_financial_evaluation(
+        features(),
+        filtered_sidecar,
+        features_path="features.parquet",
+        sidecar_path="sidecar.parquet",
+        folds=2,
+        embargo_minutes=1,
+        sidecar_report=sidecar_report("OK", rows=len(filtered_sidecar)),
+    )
+
+    assert report["status"] == "OK"
+    assert report["joined_rows"] == len(filtered_sidecar)
+    assert report["original_feature_rows"] == 24
+    assert report["finance_grade_excluded_rows"] == 3
+    assert "features_filtered_to_finance_grade_sidecar" in report["limitations"]
 
 
 def test_evaluation_returns_blocked_when_sidecar_report_is_blocked() -> None:

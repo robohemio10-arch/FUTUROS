@@ -60,9 +60,15 @@ def run_normalized_financial_evaluation(
         raise NormalizedFinancialEvaluationError(f"normalized_return_column_missing:{return_column}")
     if sidecar[return_column].isna().any():
         raise NormalizedFinancialEvaluationError("normalized_return_column_contains_nulls")
+    evaluation_features, filtered_context = maybe_filter_features_to_sidecar(
+        features,
+        sidecar,
+        id_column=id_column,
+        sidecar_gate=sidecar_gate,
+    )
     try:
         report = run_sidecar_financial_evaluation(
-            features,
+            evaluation_features,
             sidecar,
             features_path=features_path,
             sidecar_path=sidecar_path,
@@ -81,6 +87,10 @@ def run_normalized_financial_evaluation(
     payload["sidecar_quality_flag_counts"] = sidecar_gate["quality_flag_counts"]
     payload["sidecar_outlier_summary"] = sidecar_gate["outlier_summary"]
     payload["limitations"] = list(payload.get("limitations", []))
+    payload["original_feature_rows"] = filtered_context["original_feature_rows"]
+    payload["finance_grade_excluded_rows"] = filtered_context["excluded_rows"]
+    if filtered_context["excluded_rows"]:
+        payload["limitations"].append("features_filtered_to_finance_grade_sidecar")
     payload["recommended_next_action"] = "normalized_financial_metrics_available_for_offline_research"
     if sidecar_gate["missing"]:
         payload["status"] = "WARNING"
@@ -94,6 +104,47 @@ def run_normalized_financial_evaluation(
         payload["status"] = "OK" if sidecar_gate["status"] == "OK" else "WARNING"
     rename_financial_metrics(payload)
     return payload
+
+
+def maybe_filter_features_to_sidecar(
+    features: pd.DataFrame,
+    sidecar: pd.DataFrame,
+    *,
+    id_column: str,
+    sidecar_gate: dict[str, Any],
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    context = {"original_feature_rows": int(len(features)), "excluded_rows": 0}
+    if id_column not in features.columns or id_column not in sidecar.columns:
+        return features, context
+    feature_ids = set(features[id_column].astype(str))
+    sidecar_ids = set(sidecar[id_column].astype(str))
+    missing_from_sidecar = feature_ids - sidecar_ids
+    if not missing_from_sidecar:
+        return features, context
+    if not can_use_filtered_sidecar(sidecar_gate, len(sidecar)):
+        return features, context
+    extra_sidecar_ids = sidecar_ids - feature_ids
+    if extra_sidecar_ids:
+        raise NormalizedFinancialEvaluationError(f"sidecar_contains_unknown_ids:{len(extra_sidecar_ids)}")
+    filtered = features.loc[features[id_column].astype(str).isin(sidecar_ids)].copy()
+    if filtered.empty:
+        raise NormalizedFinancialEvaluationError("finance_grade_sidecar_has_no_matching_features")
+    context["excluded_rows"] = int(len(features) - len(filtered))
+    return filtered, context
+
+
+def can_use_filtered_sidecar(sidecar_gate: dict[str, Any], sidecar_rows: int) -> bool:
+    if sidecar_gate.get("missing"):
+        return False
+    if sidecar_gate.get("status") not in {"OK", "WARNING"}:
+        return False
+    report_rows = sidecar_gate.get("rows")
+    if report_rows is None:
+        return False
+    try:
+        return int(report_rows) == int(sidecar_rows)
+    except (TypeError, ValueError):
+        return False
 
 
 def validate_normalized_features(frame: pd.DataFrame) -> None:
@@ -134,6 +185,7 @@ def normalize_sidecar_report(sidecar_report: dict[str, Any] | str | Path | None)
     return {
         "status": status,
         "missing": missing,
+        "rows": payload.get("rows"),
         "quality_flag_counts": quality_counts if isinstance(quality_counts, dict) else {},
         "outlier_summary": outlier_summary if isinstance(outlier_summary, dict) else {},
         "recommended_next_action": payload.get("recommended_next_action"),
