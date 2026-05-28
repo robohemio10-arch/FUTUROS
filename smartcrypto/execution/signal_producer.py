@@ -11,6 +11,8 @@ from typing import Any, Mapping
 import pandas as pd
 import yaml
 
+from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+
 
 DEFAULT_CONFIG_PATH = "config/signal_producer.yml"
 
@@ -64,6 +66,7 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
                 "include_top_n_when_threshold_empty": 2,
                 "never_overwrite_with_empty": True,
                 "require_risk_approved": True,
+                "max_prediction_age_minutes": 90,
             },
             "risk": {
                 "max_position_usdt": 50.0,
@@ -298,6 +301,34 @@ def build_active_signals(
     before_primary = active_signals_from_payload(read_json(primary_path), generated_at)
     before_pinned = active_signals_from_payload(read_json(pinned_path), generated_at)
 
+    max_prediction_age = int(policy.get("max_prediction_age_minutes", 90) or 90)
+    freshness = inspect_qlib_prediction_freshness(
+        predictions_path,
+        max_allowed_age_minutes=max_prediction_age,
+        now=generated_at,
+    )
+    if freshness.get("freshness_status") != "fresh":
+        report = {
+            "status": "blocked",
+            "reason": freshness.get("reason") or "qlib_predictions_not_fresh",
+            "created_at": generated_at.isoformat(),
+            "predictions_path": str(predictions_path),
+            "primary_signals_path": str(primary_path),
+            "pinned_signals_path": str(pinned_path),
+            "signals_before_primary": len(before_primary),
+            "signals_before_pinned": len(before_pinned),
+            "signals_after": 0,
+            "written_primary": False,
+            "written_pinned": False,
+            "prediction_rows": int(freshness.get("rows") or 0),
+            "prediction_freshness": freshness,
+            "generated_at": generated_at.isoformat(),
+            "valid_until_min": None,
+            "valid_until_max": None,
+        }
+        atomic_write_json(report_path, report)
+        return report
+
     frame = load_predictions(predictions_path)
     selected = select_prediction_rows(frame, config)
 
@@ -336,6 +367,7 @@ def build_active_signals(
         "written_primary": written_primary,
         "written_pinned": written_pinned,
         "prediction_rows": int(len(frame)),
+        "prediction_freshness": freshness,
         "pairs": [item.get("pair") for item in signals],
         "sides": [item.get("side") for item in signals],
         "generated_at": generated_at.isoformat(),
