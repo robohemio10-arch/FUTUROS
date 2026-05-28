@@ -87,7 +87,8 @@ def inspect_qlib_prediction_frame_freshness(
             "reason": "qlib_predictions_empty_or_invalid",
         }
 
-    timestamps: list[tuple[str, datetime, float]] = []
+    freshness_timestamps: list[tuple[str, datetime, float]] = []
+    diagnostic_timestamps: list[tuple[str, datetime, float]] = []
     invalid_columns: list[str] = []
     if "generated_at" in frame.columns:
         generated_at = latest_timestamp(frame["generated_at"])
@@ -97,7 +98,7 @@ def inspect_qlib_prediction_frame_freshness(
             generated_age = age_minutes(generated_at, current)
             base["prediction_generated_at"] = generated_at.isoformat()
             base["generated_at_age_minutes"] = generated_age
-            timestamps.append(("generated_at", generated_at, generated_age))
+            freshness_timestamps.append(("generated_at", generated_at, generated_age))
     if "date" in frame.columns:
         prediction_date = latest_timestamp(frame["date"])
         if prediction_date is None:
@@ -106,9 +107,15 @@ def inspect_qlib_prediction_frame_freshness(
             date_age = age_minutes(prediction_date, current)
             base["prediction_date"] = prediction_date.isoformat()
             base["date_age_minutes"] = date_age
-            timestamps.append(("date", prediction_date, date_age))
+            diagnostic_timestamps.append(("date", prediction_date, date_age))
 
-    if invalid_columns or not timestamps:
+    # generated_at is the authoritative freshness timestamp for freshly emitted
+    # prediction files. date remains visible as market-data timestamp telemetry.
+    if not freshness_timestamps:
+        freshness_timestamps = diagnostic_timestamps
+
+    blocking_invalid_columns = ["generated_at"] if "generated_at" in invalid_columns else []
+    if blocking_invalid_columns or not freshness_timestamps:
         return {
             **base,
             "freshness_status": INVALID,
@@ -117,9 +124,14 @@ def inspect_qlib_prediction_frame_freshness(
             "invalid_columns": invalid_columns,
         }
 
-    max_age = max(item[2] for item in timestamps)
+    max_age = max(item[2] for item in freshness_timestamps)
     base["prediction_age_minutes"] = float(max_age)
-    stale_columns = [name for name, _, age in timestamps if age > int(max_allowed_age_minutes)]
+    stale_columns = [name for name, _, age in freshness_timestamps if age > int(max_allowed_age_minutes)]
+    diagnostic_stale_columns = [
+        name
+        for name, _, age in diagnostic_timestamps
+        if name not in {item[0] for item in freshness_timestamps} and age > int(max_allowed_age_minutes)
+    ]
     if stale_columns:
         return {
             **base,
@@ -127,6 +139,7 @@ def inspect_qlib_prediction_frame_freshness(
             "stale": True,
             "reason": "qlib_predictions_stale",
             "stale_columns": stale_columns,
+            "diagnostic_stale_columns": diagnostic_stale_columns,
         }
     return {
         **base,
@@ -134,6 +147,7 @@ def inspect_qlib_prediction_frame_freshness(
         "stale": False,
         "reason": None,
         "stale_columns": [],
+        "diagnostic_stale_columns": diagnostic_stale_columns,
     }
 
 
@@ -159,4 +173,4 @@ def normalize_datetime(value: Any) -> datetime | None:
 
 
 def age_minutes(value: datetime, now: datetime) -> float:
-    return float((now - value).total_seconds() / 60.0)
+    return float(max(0.0, (now - value).total_seconds() / 60.0))
