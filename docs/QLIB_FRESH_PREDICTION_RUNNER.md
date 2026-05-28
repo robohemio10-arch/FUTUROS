@@ -29,6 +29,10 @@ O parquet preserva o schema esperado pelo `signal_producer`:
 - `model_version`
 - `model_backend`
 
+O `generated_at` indica quando o arquivo de predições foi emitido. A coluna
+`date` representa o timestamp do candle/dado de mercado usado na inferência e
+é validada separadamente como `input_data_timestamp`.
+
 ## Execução Recomendada
 
 ```powershell
@@ -37,7 +41,11 @@ python .\scripts\run_qlib_fresh_predictions.py
 python .\scripts\phase13_generate_active_signals.py --force-from-predictions --validity-minutes 45
 ```
 
-Se as predições forem frescas, a Fase 13 não deve bloquear por `qlib_predictions_stale`. Se a geração falhar, o relatório retorna `status=blocked` com motivo explícito, como `market_features_missing`, `model_missing` ou `missing_prediction_columns`.
+Se as predições e o dado de entrada forem frescos, a Fase 13 não deve bloquear.
+Se a geração falhar, o relatório retorna `status=blocked` com motivo explícito,
+como `market_features_missing`, `model_missing` ou `missing_prediction_columns`.
+Se o arquivo for gerado agora, mas o candle/dataset usado for antigo, o bloqueio
+esperado é `qlib_input_data_stale`.
 
 ## Interpretação
 
@@ -45,6 +53,10 @@ Se as predições forem frescas, a Fase 13 não deve bloquear por `qlib_predicti
 - `status=blocked`: predição não foi gerada ou não ficou fresca.
 - `rows`: quantidade de linhas de predição geradas.
 - `pairs`/`symbols`: pares disponíveis para o produtor de sinais.
+- `prediction_generated_at`: timestamp de emissão do parquet.
+- `input_data_timestamp`: timestamp do candle/dataset usado para inferência.
+- `input_data_age_minutes`: idade do dado de entrada.
+- `input_data_status`: `input_data_fresh`, `input_data_stale`, `missing` ou `invalid`.
 - `prediction_freshness`: diagnóstico do freshness guard.
 
 Gerar predições frescas não libera live trading. O projeto continua em paper/research/shadow, com Freqtrade em dry-run e sem envio real de ordens.

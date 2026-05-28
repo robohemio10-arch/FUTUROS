@@ -95,7 +95,7 @@ def test_stale_prediction_blocks_signal_and_does_not_rewrite_pinned(tmp_path, mo
     assert report["prediction_freshness"]["freshness_status"] == "stale"
 
 
-def test_fresh_generated_at_allows_signal_even_when_market_date_is_old(tmp_path, monkeypatch) -> None:
+def test_fresh_generated_at_blocks_when_input_data_is_old(tmp_path, monkeypatch) -> None:
     predictions = tmp_path / "latest_qlib_predictions.parquet"
     frame = prediction_frame(NOW - timedelta(days=14))
     frame["generated_at"] = NOW - timedelta(minutes=5)
@@ -104,10 +104,40 @@ def test_fresh_generated_at_allows_signal_even_when_market_date_is_old(tmp_path,
 
     report = build_active_signals(producer_config(tmp_path, predictions), force_from_predictions=True)
 
-    assert report["status"] == "ok"
-    assert report["written_pinned"] is True
+    assert report["status"] == "blocked"
+    assert report["reason"] == "qlib_input_data_stale"
+    assert report["written_pinned"] is False
     assert report["prediction_freshness"]["freshness_status"] == "fresh"
-    assert report["prediction_freshness"]["diagnostic_stale_columns"] == ["date"]
+    assert report["prediction_freshness"]["input_data_status"] == "input_data_stale"
+
+
+def test_missing_input_data_timestamp_blocks(tmp_path, monkeypatch) -> None:
+    predictions = tmp_path / "latest_qlib_predictions.parquet"
+    frame = prediction_frame(NOW - timedelta(minutes=5)).drop(columns=["date"])
+    write_predictions(predictions, frame)
+    monkeypatch.setattr("smartcrypto.execution.signal_producer.utc_now", lambda: NOW)
+
+    report = build_active_signals(producer_config(tmp_path, predictions), force_from_predictions=True)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "qlib_input_data_missing"
+    assert report["prediction_freshness"]["freshness_status"] == "fresh"
+    assert report["prediction_freshness"]["input_data_status"] == "missing"
+
+
+def test_invalid_input_data_timestamp_blocks(tmp_path, monkeypatch) -> None:
+    predictions = tmp_path / "latest_qlib_predictions.parquet"
+    frame = prediction_frame(NOW - timedelta(minutes=5))
+    frame["date"] = "not-a-date"
+    write_predictions(predictions, frame)
+    monkeypatch.setattr("smartcrypto.execution.signal_producer.utc_now", lambda: NOW)
+
+    report = build_active_signals(producer_config(tmp_path, predictions), force_from_predictions=True)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "qlib_input_data_invalid"
+    assert report["prediction_freshness"]["freshness_status"] == "fresh"
+    assert report["prediction_freshness"]["input_data_status"] == "invalid"
 
 
 def test_missing_prediction_file_blocks_with_clear_reason(tmp_path, monkeypatch) -> None:
@@ -153,6 +183,9 @@ def test_dashboard_and_guard_do_not_reference_exchange_or_runtime_mutations() ->
             Path("smartcrypto/dashboard/app.py").read_text(encoding="utf-8"),
         ]
     )
+    assert "input_data_status" in text
+    assert "input_data_timestamp" in text
+    assert "max_input_data_age_minutes" in text
     forbidden = [
         "ccxt",
         "create_order",

@@ -67,6 +67,7 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
                 "never_overwrite_with_empty": True,
                 "require_risk_approved": True,
                 "max_prediction_age_minutes": 90,
+                "max_input_data_age_minutes": 15,
             },
             "risk": {
                 "max_position_usdt": 50.0,
@@ -302,15 +303,43 @@ def build_active_signals(
     before_pinned = active_signals_from_payload(read_json(pinned_path), generated_at)
 
     max_prediction_age = int(policy.get("max_prediction_age_minutes", 90) or 90)
+    max_input_data_age = int(policy.get("max_input_data_age_minutes", 15) or 15)
     freshness = inspect_qlib_prediction_freshness(
         predictions_path,
         max_allowed_age_minutes=max_prediction_age,
+        max_input_data_age_minutes=max_input_data_age,
         now=generated_at,
     )
     if freshness.get("freshness_status") != "fresh":
         report = {
             "status": "blocked",
             "reason": freshness.get("reason") or "qlib_predictions_not_fresh",
+            "created_at": generated_at.isoformat(),
+            "predictions_path": str(predictions_path),
+            "primary_signals_path": str(primary_path),
+            "pinned_signals_path": str(pinned_path),
+            "signals_before_primary": len(before_primary),
+            "signals_before_pinned": len(before_pinned),
+            "signals_after": 0,
+            "written_primary": False,
+            "written_pinned": False,
+            "prediction_rows": int(freshness.get("rows") or 0),
+            "prediction_freshness": freshness,
+            "generated_at": generated_at.isoformat(),
+            "valid_until_min": None,
+            "valid_until_max": None,
+        }
+        atomic_write_json(report_path, report)
+        return report
+    if freshness.get("input_data_status") != "input_data_fresh":
+        input_reason_by_status = {
+            "input_data_stale": "qlib_input_data_stale",
+            "missing": "qlib_input_data_missing",
+            "invalid": "qlib_input_data_invalid",
+        }
+        report = {
+            "status": "blocked",
+            "reason": input_reason_by_status.get(str(freshness.get("input_data_status")), "qlib_input_data_invalid"),
             "created_at": generated_at.isoformat(),
             "predictions_path": str(predictions_path),
             "primary_signals_path": str(primary_path),

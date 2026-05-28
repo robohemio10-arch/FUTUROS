@@ -87,6 +87,9 @@ def test_runner_generates_fresh_parquet_with_valid_schema(tmp_path: Path) -> Non
     assert report["status"] == "ok"
     assert report["rows"] == 2
     assert sorted(report["symbols"]) == ["BTCUSDT", "ETHUSDT"]
+    assert report["input_data_status"] == "input_data_fresh"
+    assert report["input_data_timestamp"]
+    assert report["input_data_age_minutes"] is not None
     predictions = pd.read_parquet(output)
     expected = {"date", "generated_at", "symbol", "pair", "tf", "prob_up", "score", "predicted_direction", "model_version", "model_backend"}
     assert expected.issubset(predictions.columns)

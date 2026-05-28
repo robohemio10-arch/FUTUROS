@@ -17,6 +17,7 @@ def run_qlib_fresh_predictions(
     report_path: str | Path = "data/reports/qlib_fresh_prediction_runner_report.json",
     config_path: str | Path = "config/qlib_model.yml",
     max_allowed_age_minutes: int | float = 90,
+    max_input_data_age_minutes: int | float = 15,
 ) -> dict[str, Any]:
     """Generate fresh Qlib predictions for the paper/shadow signal pipeline."""
     started_at = datetime.now(timezone.utc)
@@ -32,14 +33,23 @@ def run_qlib_fresh_predictions(
     freshness = inspect_qlib_prediction_freshness(
         output_path,
         max_allowed_age_minutes=max_allowed_age_minutes,
+        max_input_data_age_minutes=int(max_input_data_age_minutes),
         now=started_at,
     )
     export_ok = export_report.get("status") == "ok"
     fresh = freshness.get("freshness_status") == "fresh"
-    status = "ok" if export_ok and fresh else "blocked"
+    input_fresh = freshness.get("input_data_status") == "input_data_fresh"
+    status = "ok" if export_ok and fresh and input_fresh else "blocked"
     reason = export_report.get("reason")
     if status == "blocked" and not reason:
-        reason = freshness.get("reason") or "qlib_fresh_prediction_generation_failed"
+        if not fresh:
+            reason = freshness.get("reason") or "qlib_fresh_prediction_generation_failed"
+        elif freshness.get("input_data_status") == "input_data_stale":
+            reason = "qlib_input_data_stale"
+        elif freshness.get("input_data_status") == "missing":
+            reason = "qlib_input_data_missing"
+        else:
+            reason = "qlib_input_data_invalid"
 
     report = {
         "status": status,
@@ -48,6 +58,10 @@ def run_qlib_fresh_predictions(
         "pairs": export_report.get("pairs", []),
         "symbols": export_report.get("symbols", []),
         "generated_at": export_report.get("generated_at") or export_report.get("created_at"),
+        "prediction_generated_at": freshness.get("prediction_generated_at"),
+        "input_data_timestamp": freshness.get("input_data_timestamp"),
+        "input_data_age_minutes": freshness.get("input_data_age_minutes"),
+        "input_data_status": freshness.get("input_data_status"),
         "created_at": started_at.isoformat(),
         "market_features_path": str(market_features_path),
         "model_path": str(model_path),
