@@ -16,6 +16,7 @@ from smartcrypto.dashboard.freqtrade_snapshot_reader import (
     perf_metrics as freqtrade_perf_metrics,
     status_payload as freqtrade_status_payload,
 )
+from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 
 
 st.set_page_config(page_title="SmartCrypto Paper", layout="wide")
@@ -188,7 +189,25 @@ if page == "Visão geral":
     dataframe("Últimos relatórios", latest_reports().head(20), height=260)
 
 elif page == "Qlib / Predições":
-    dataframe("Predições Qlib", read_parquet(PATHS.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")), height=420)
+    qlib_predictions_path = PATHS.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")
+    freshness = inspect_qlib_prediction_freshness(qlib_predictions_path, max_allowed_age_minutes=90)
+    st.subheader("Freshness das predições Qlib")
+    if freshness.get("freshness_status") == "fresh":
+        st.success("Predições Qlib dentro da janela permitida.")
+    else:
+        st.error("Predições Qlib bloqueadas para geração de sinais: arquivo ausente, inválido ou stale.")
+    st.write(
+        {
+            "freshness_status": freshness.get("freshness_status"),
+            "reason": freshness.get("reason"),
+            "source_file": freshness.get("source_file"),
+            "prediction_generated_at": freshness.get("prediction_generated_at"),
+            "prediction_date": freshness.get("prediction_date"),
+            "prediction_age_minutes": freshness.get("prediction_age_minutes"),
+            "max_allowed_age_minutes": freshness.get("max_allowed_age_minutes"),
+        }
+    )
+    dataframe("Predições Qlib", read_parquet(qlib_predictions_path), height=420)
     report = read_json("data/reports/phase21_qlib_walkforward_report.json")
     if report:
         st.subheader("Walk-forward")

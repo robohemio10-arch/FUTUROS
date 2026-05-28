@@ -18,6 +18,7 @@ policy:
   include_top_n_when_threshold_empty: 2
   never_overwrite_with_empty: true
   require_risk_approved: true
+  max_prediction_age_minutes: 90
 
 risk:
   max_position_usdt: 50.0
