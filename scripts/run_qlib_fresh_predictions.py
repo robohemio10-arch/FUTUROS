@@ -21,6 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--report", default="data/reports/qlib_fresh_prediction_runner_report.json")
     parser.add_argument("--config", default="config/qlib_model.yml")
     parser.add_argument("--max-allowed-age-minutes", type=float, default=90)
+    parser.add_argument("--max-input-data-age-minutes", type=float, default=15)
     return parser.parse_args()
 
 
@@ -33,6 +34,7 @@ def main() -> None:
         report_path=args.report,
         config_path=args.config,
         max_allowed_age_minutes=args.max_allowed_age_minutes,
+        max_input_data_age_minutes=args.max_input_data_age_minutes,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, default=str))
 

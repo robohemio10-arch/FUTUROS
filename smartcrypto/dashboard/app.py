@@ -190,21 +190,31 @@ if page == "Visão geral":
 
 elif page == "Qlib / Predições":
     qlib_predictions_path = PATHS.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")
-    freshness = inspect_qlib_prediction_freshness(qlib_predictions_path, max_allowed_age_minutes=90)
+    freshness = inspect_qlib_prediction_freshness(
+        qlib_predictions_path,
+        max_allowed_age_minutes=90,
+        max_input_data_age_minutes=15,
+    )
     st.subheader("Freshness das predições Qlib")
-    if freshness.get("freshness_status") == "fresh":
-        st.success("Predições Qlib dentro da janela permitida.")
-    else:
+    if freshness.get("freshness_status") == "fresh" and freshness.get("input_data_status") == "input_data_fresh":
+        st.success("Predições Qlib e dados de entrada dentro da janela permitida.")
+    elif freshness.get("freshness_status") != "fresh":
         st.error("Predições Qlib bloqueadas para geração de sinais: arquivo ausente, inválido ou stale.")
+    else:
+        st.error("Predições Qlib bloqueadas: dado de entrada usado na predição está ausente, inválido ou stale.")
     st.write(
         {
             "freshness_status": freshness.get("freshness_status"),
+            "input_data_status": freshness.get("input_data_status"),
             "reason": freshness.get("reason"),
             "source_file": freshness.get("source_file"),
             "prediction_generated_at": freshness.get("prediction_generated_at"),
-            "prediction_date": freshness.get("prediction_date"),
             "prediction_age_minutes": freshness.get("prediction_age_minutes"),
+            "prediction_date": freshness.get("prediction_date"),
+            "input_data_timestamp": freshness.get("input_data_timestamp"),
+            "input_data_age_minutes": freshness.get("input_data_age_minutes"),
             "max_allowed_age_minutes": freshness.get("max_allowed_age_minutes"),
+            "max_input_data_age_minutes": freshness.get("max_input_data_age_minutes"),
         }
     )
     dataframe("Predições Qlib", read_parquet(qlib_predictions_path), height=420)

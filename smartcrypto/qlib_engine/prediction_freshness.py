@@ -21,6 +21,7 @@ def inspect_qlib_prediction_freshness(
     predictions_path: str | Path,
     *,
     max_allowed_age_minutes: int = 90,
+    max_input_data_age_minutes: int = 15,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     current = normalize_datetime(now) or utc_now()
@@ -29,11 +30,15 @@ def inspect_qlib_prediction_freshness(
         "source_file": str(path),
         "exists": path.exists(),
         "max_allowed_age_minutes": int(max_allowed_age_minutes),
+        "max_input_data_age_minutes": int(max_input_data_age_minutes),
         "prediction_generated_at": None,
         "prediction_date": None,
+        "input_data_timestamp": None,
         "generated_at_age_minutes": None,
         "date_age_minutes": None,
+        "input_data_age_minutes": None,
         "prediction_age_minutes": None,
+        "input_data_status": MISSING,
     }
     if not path.exists():
         return {
@@ -56,6 +61,7 @@ def inspect_qlib_prediction_freshness(
         frame,
         source_file=path,
         max_allowed_age_minutes=max_allowed_age_minutes,
+        max_input_data_age_minutes=max_input_data_age_minutes,
         now=current,
     )
 
@@ -65,6 +71,7 @@ def inspect_qlib_prediction_frame_freshness(
     *,
     source_file: str | Path = "<memory>",
     max_allowed_age_minutes: int = 90,
+    max_input_data_age_minutes: int = 15,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     current = normalize_datetime(now) or utc_now()
@@ -72,11 +79,15 @@ def inspect_qlib_prediction_frame_freshness(
         "source_file": str(source_file),
         "exists": True,
         "max_allowed_age_minutes": int(max_allowed_age_minutes),
+        "max_input_data_age_minutes": int(max_input_data_age_minutes),
         "prediction_generated_at": None,
         "prediction_date": None,
+        "input_data_timestamp": None,
         "generated_at_age_minutes": None,
         "date_age_minutes": None,
+        "input_data_age_minutes": None,
         "prediction_age_minutes": None,
+        "input_data_status": MISSING,
         "rows": int(len(frame)) if isinstance(frame, pd.DataFrame) else 0,
     }
     if not isinstance(frame, pd.DataFrame) or frame.empty:
@@ -106,7 +117,9 @@ def inspect_qlib_prediction_frame_freshness(
         else:
             date_age = age_minutes(prediction_date, current)
             base["prediction_date"] = prediction_date.isoformat()
+            base["input_data_timestamp"] = prediction_date.isoformat()
             base["date_age_minutes"] = date_age
+            base["input_data_age_minutes"] = date_age
             diagnostic_timestamps.append(("date", prediction_date, date_age))
 
     # generated_at is the authoritative freshness timestamp for freshly emitted
@@ -115,6 +128,21 @@ def inspect_qlib_prediction_frame_freshness(
         freshness_timestamps = diagnostic_timestamps
 
     blocking_invalid_columns = ["generated_at"] if "generated_at" in invalid_columns else []
+    input_invalid_columns = [
+        column for column in invalid_columns if column == "date"
+    ]
+    if input_invalid_columns:
+        base["input_data_status"] = INVALID
+    elif diagnostic_timestamps:
+        input_age = max(item[2] for item in diagnostic_timestamps)
+        base["input_data_status"] = (
+            "input_data_stale"
+            if input_age > int(max_input_data_age_minutes)
+            else "input_data_fresh"
+        )
+    else:
+        base["input_data_status"] = MISSING
+
     if blocking_invalid_columns or not freshness_timestamps:
         return {
             **base,
