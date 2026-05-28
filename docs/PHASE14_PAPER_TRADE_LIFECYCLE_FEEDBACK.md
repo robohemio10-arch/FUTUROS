@@ -22,6 +22,32 @@ Agora precisamos transformar trades fechados em feedback de treino.
 
 Esta fase é paper-only. Ela apenas lê SQLite e exporta arquivos. Não executa ordens reais.
 
+## Leitura SQLite via snapshot
+
+O SQLite paper do Freqtrade pode estar em bind mount dentro do container, por exemplo:
+
+```text
+/app/freqtrade_user_data/tradesv3.paper.sqlite
+```
+
+Em algumas execuções operacionais, o arquivo existe, mas `sqlite3.connect` direto nesse caminho retorna:
+
+```text
+sqlite3.OperationalError: unable to open database file
+```
+
+Para evitar falha falsa da Fase 14, a leitura agora cria um snapshot local temporário do SQLite antes de abrir o banco. O fluxo é:
+
+```text
+SQLite original paper -> cópia temporária em /tmp -> leitura da tabela trades -> limpeza do snapshot
+```
+
+Quando existirem arquivos auxiliares do SQLite (`-wal` e `-shm`), eles também são copiados para o snapshot. Isso mantém a Fase 14 read-only em relação ao banco original e evita prender o arquivo ativo do Freqtrade.
+
+Se a criação ou leitura do snapshot falhar, a Fase 14 registra relatório `blocked` com erro explícito, sem mascarar o problema.
+
+Essa mudança não habilita live trading, não altera sinais, não envia ordens, não modifica strategy e não muda o `START_PAPER_24H`.
+
 ## Comportamento com posições abertas
 
 Se `max_open_trades = 2` e já existem 2 posições abertas, o Freqtrade pode não abrir novas entradas. Nesse caso, a fase reporta `saturated: true`.
