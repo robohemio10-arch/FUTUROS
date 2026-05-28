@@ -343,8 +343,11 @@ def export_latest_qlib_predictions(
         "status": "ok",
         "reason": None,
         "rows": int(len(predictions)),
+        "pairs": sorted(predictions["pair"].astype(str).unique().tolist()),
+        "symbols": sorted(predictions["symbol"].astype(str).unique().tolist()),
         "output_path": str(target),
         "model_path": str(model_file),
+        "generated_at": generated_at,
         "created_at": generated_at,
     }
     write_json(report_path, report)
