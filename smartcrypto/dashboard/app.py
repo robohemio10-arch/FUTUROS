@@ -17,6 +17,7 @@ from smartcrypto.dashboard.freqtrade_snapshot_reader import (
     status_payload as freqtrade_status_payload,
 )
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+from smartcrypto.risk.kill_switch_classifier import classify_kill_switch
 
 
 st.set_page_config(page_title="SmartCrypto Paper", layout="wide")
@@ -276,7 +277,34 @@ elif page == "Logs":
 
 elif page == "Risco / Kill switch":
     st.subheader("Kill switch")
-    st.json(read_json(PATHS.get("kill_switch", "data/runtime/kill_switch.json")))
+    kill_switch_path = PATHS.get("kill_switch", "data/runtime/kill_switch.json")
+    kill_switch_classification = classify_kill_switch(kill_switch_path).to_dict()
+    if kill_switch_classification["status"] == "active":
+        st.error("Kill switch ATIVO.")
+    elif kill_switch_classification["status"] == "invalid":
+        st.error("Kill switch INVÁLIDO. Tratamento conservador aplicado.")
+    elif kill_switch_classification["status"] in {"expired", "historical"}:
+        st.warning("Kill switch EXPIRADO/HISTÓRICO.")
+    elif kill_switch_classification["status"] == "missing":
+        st.info("Kill switch AUSENTE.")
+    else:
+        st.success("Kill switch INATIVO.")
+    st.write(
+        {
+            "label": kill_switch_classification.get("label"),
+            "status": kill_switch_classification.get("status"),
+            "active_now": kill_switch_classification.get("active_now"),
+            "blocks_paper": kill_switch_classification.get("blocks_paper"),
+            "blocks_live": kill_switch_classification.get("blocks_live"),
+            "reason": kill_switch_classification.get("reason"),
+            "created_at": kill_switch_classification.get("created_at"),
+            "expires_at": kill_switch_classification.get("expires_at"),
+            "age_minutes": kill_switch_classification.get("age_minutes"),
+            "source_path": kill_switch_classification.get("source_path"),
+            "parse_error": kill_switch_classification.get("parse_error"),
+        }
+    )
+    st.json(read_json(kill_switch_path))
     st.subheader("Paper exit control")
     st.json(read_json(PATHS.get("paper_exit_control", "data/runtime/paper_exit_control.json")))
     st.subheader("Risk report")
