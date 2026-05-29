@@ -6,24 +6,24 @@ safety:
   real_order_submission_enabled: false
   allow_ai_to_increase_size: false
   allow_dashboard_direct_order: false
-  use_real_exchange: false
-  require_private_keys: false
 
 risk_limits:
   max_drawdown_pct: 5.0
   max_data_age_seconds: 300
   max_spread_bps: 25.0
   max_order_notional: 50.0
-  max_capital_global: 500.0
+  max_capital_global: 100.0
 
 paths:
+  # Kill switch single source of truth (unified across the whole project).
+  kill_switch_state: data/runtime/kill_switch.json
   state_repository: data/runtime/state_repository.json
   financial_event_log: data/runtime/runtime_preflight_events.jsonl
 
 market_data:
-  source: local_snapshot_only
-  external_api_enabled: false
-
-reconciliation:
-  block_on_divergence: true
-  auto_repair_enabled: false
+  min_liquidity_usdt: 10000.0
+  max_latency_ms: 1000.0
+  max_ws_rest_divergence_bps: 10.0
+  degraded_liquidity_usdt: 25000.0
+  degraded_latency_ms: 500.0
+  degraded_ws_rest_divergence_bps: 5.0

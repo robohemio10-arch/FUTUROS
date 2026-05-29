@@ -9,7 +9,10 @@ safety:
   external_api_enabled: false
 
 paths:
-  kill_switch_state: data/runtime/kill_switch_guard.json
+  # Single source of truth. Aligned with set_kill_switch.py, classifier,
+  # dashboard, RiskManager and preflight. Do NOT point this to a separate
+  # kill_switch_guard.json file.
+  kill_switch_state: data/runtime/kill_switch.json
   financial_event_log: data/runtime/kill_switch_guard_events.jsonl
 
 defaults:

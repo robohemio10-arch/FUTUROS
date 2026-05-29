@@ -17,7 +17,11 @@ except Exception:  # pragma: no cover - used only in minimal runtimes without Py
 
 TRUE_VALUES = {"1", "true", "yes", "y", "on"}
 SAFE_RUNTIME_MODES = {"paper", "research", "shadow"}
-DEFAULT_KILL_SWITCH_PATH = "data/runtime/kill_switch_guard.json"
+# Single source of truth for the kill switch across the whole project.
+# Operator (set_kill_switch.py), RiskManager/evaluate_risk, dashboard,
+# kill_switch_classifier, kill_switch_guard and preflight all read/write
+# this same file. Do NOT introduce a separate kill_switch_guard.json.
+DEFAULT_KILL_SWITCH_PATH = "data/runtime/kill_switch.json"
 DEFAULT_EVENT_LOG_PATH = "data/runtime/kill_switch_guard_events.jsonl"
 
 CLEAR = "CLEAR"
@@ -82,8 +86,13 @@ class KillSwitchGuard:
     def from_config(cls, path: str | Path) -> "KillSwitchGuard":
         config = load_config(path)
         paths = config.get("paths", {}) if isinstance(config.get("paths"), dict) else {}
+        state_path = (
+            paths.get("kill_switch_state")
+            or paths.get("kill_switch")
+            or DEFAULT_KILL_SWITCH_PATH
+        )
         return cls(
-            state_path=paths.get("kill_switch_state", DEFAULT_KILL_SWITCH_PATH),
+            state_path=state_path,
             event_log_path=paths.get("financial_event_log", DEFAULT_EVENT_LOG_PATH),
             runtime_mode=str(config.get("runtime_mode", "paper")),
         )
@@ -323,6 +332,11 @@ def normalize_state(payload: dict[str, Any], runtime_mode: str) -> dict[str, Any
     assert_runtime_safe(state["runtime_mode"])
     state.setdefault("updated_at", utc_timestamp())
 
+    # Backward-compatible migration: flat legacy schema written by
+    # risk_manager.set_kill_switch -> {"enabled": ..., "reason": ...}
+    # is promoted to the structured {"global": {...}} schema. A missing
+    # actor is filled with "legacy" so the structured guard never breaks
+    # on operator-written files.
     if "global" not in state and "enabled" in state:
         state["global"] = {
             "enabled": bool(state.get("enabled")),
@@ -357,7 +371,9 @@ def normalize_entry(entry: dict[str, Any], label: str) -> dict[str, Any]:
     if enabled and not reason:
         raise KillSwitchStateError(f"kill_switch_reason_missing:{label}")
     if enabled and not actor:
-        raise KillSwitchStateError(f"kill_switch_actor_missing:{label}")
+        # Operator-written flat files may omit actor; treat as legacy so a
+        # genuine global block is never silently lost on normalization.
+        actor = "legacy"
     return {
         "enabled": enabled,
         "reason": reason,

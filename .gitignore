@@ -122,3 +122,5 @@ bitradex_realtime_candle_collector_v1/logs/
 !smartcrypto/data/
 smartcrypto/data/*
 !smartcrypto/data/paper_trade_lifecycle.py
+/report.json
+/CLAUDE_*.md

@@ -12,7 +12,10 @@ from smartcrypto.market.market_data_health_guard import (
     MarketDataHealthGuard,
     MarketDataHealthLimits,
 )
-from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
+from smartcrypto.risk.kill_switch_guard import (
+    DEFAULT_KILL_SWITCH_PATH as KILL_SWITCH_SINGLE_SOURCE_PATH,
+    KillSwitchGuard,
+)
 from smartcrypto.state.financial_event_log import KNOWN_EVENT_TYPES, FinancialEventLogger
 from smartcrypto.state.reconciliation_guard import (
     CORRUPTED,
@@ -53,7 +56,7 @@ class RuntimePreflightOrchestrator:
         config_path: str | Path = "config/runtime_preflight.example.yml",
         event_logger: FinancialEventLogger | None = None,
         event_log_path: str | Path = "data/runtime/runtime_preflight_events.jsonl",
-        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
+        kill_switch_path: str | Path = KILL_SWITCH_SINGLE_SOURCE_PATH,
         state_path: str | Path = "data/runtime/state_repository.json",
         runtime_mode: str = "paper",
     ) -> None:
@@ -137,7 +140,7 @@ class RuntimePreflightOrchestrator:
             return result
 
         checks: dict[str, Any] = {"config": safe_config.to_dict()}
-        kill_switch_path = resolve_path(raw_config, "kill_switch_state", self.kill_switch_path)
+        kill_switch_path = resolve_kill_switch_path(raw_config, self.kill_switch_path)
         kill_switch_guard = KillSwitchGuard(
             state_path=kill_switch_path,
             event_logger=self.event_logger,
@@ -348,6 +351,21 @@ def resolve_path(config: dict[str, Any], key: str, default: str | Path) -> Path:
     paths = config.get("paths") if isinstance(config, dict) else None
     if isinstance(paths, dict) and paths.get(key):
         return Path(str(paths[key]))
+    return Path(default)
+
+
+def resolve_kill_switch_path(config: dict[str, Any], default: str | Path) -> Path:
+    """Resolve the single source of truth kill switch path.
+
+    Accepts either ``kill_switch_state`` (structured guard key) or
+    ``kill_switch`` (operator/classifier key). Both must point to the same
+    canonical file: data/runtime/kill_switch.json.
+    """
+    paths = config.get("paths") if isinstance(config, dict) else None
+    if isinstance(paths, dict):
+        candidate = paths.get("kill_switch_state") or paths.get("kill_switch")
+        if candidate:
+            return Path(str(candidate))
     return Path(default)
 
 
