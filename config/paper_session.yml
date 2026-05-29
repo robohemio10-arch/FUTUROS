@@ -17,7 +17,11 @@ paths:
   primary_signals: data/freqtrade_signals.json
   pinned_signals: data/runtime/active_freqtrade_signals.json
   decision_log: data/runtime/freqtrade_signal_decisions.jsonl
+  # Kill switch single source of truth. Both keys point to the same file so
+  # operator (set_kill_switch), classifier, dashboard, RiskManager and the
+  # structured kill_switch_guard / preflight all read the same state.
   kill_switch: data/runtime/kill_switch.json
+  kill_switch_state: data/runtime/kill_switch.json
   paper_exit_control: data/runtime/paper_exit_control.json
   trades_master: data/trades/trades_master.parquet
   training_dataset: data/features/training_dataset.parquet
