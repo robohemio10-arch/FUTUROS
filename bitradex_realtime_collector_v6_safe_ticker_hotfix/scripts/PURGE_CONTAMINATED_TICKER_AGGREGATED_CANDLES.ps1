@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$CollectorDir = "C:\Smart Cripto\FUTUROS\bitradex_realtime_candle_collector_v1"
+$CollectorDir = "E:\FUTUROS\bitradex_realtime_candle_collector_v1"
 $Db = Join-Path $CollectorDir "data\output\bitradex_live_candles.sqlite"
 $BackupDir = Join-Path $CollectorDir "data\backup"
 $Ts = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -14,7 +14,7 @@ Write-Host "Backup criado: $Backup"
 import sqlite3
 from pathlib import Path
 
-DB = Path(r"C:\Smart Cripto\FUTUROS\bitradex_realtime_candle_collector_v1\data\output\bitradex_live_candles.sqlite")
+DB = Path(r"E:\FUTUROS\bitradex_realtime_candle_collector_v1\data\output\bitradex_live_candles.sqlite")
 
 with sqlite3.connect(DB) as conn:
     before = conn.execute("SELECT COUNT(*) FROM candles").fetchone()[0]
@@ -65,3 +65,4 @@ print({
     "by_tf_after": by_tf_after,
 })
 '@ | python -
+

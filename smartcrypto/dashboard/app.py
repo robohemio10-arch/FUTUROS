@@ -10,6 +10,13 @@ import pandas as pd
 import streamlit as st
 import yaml
 
+from smartcrypto.dashboard.ai_shadow_panel import render_ai_shadow_panel
+from smartcrypto.dashboard.freqtrade_snapshot_reader import (
+    load_freqtrade_trades_snapshot,
+    perf_metrics as freqtrade_perf_metrics,
+    status_payload as freqtrade_status_payload,
+)
+
 
 st.set_page_config(page_title="SmartCrypto Paper", layout="wide")
 
@@ -69,17 +76,6 @@ def first_existing(paths: list[str]) -> Path | None:
         if candidate.exists():
             return candidate
     return None
-
-
-def freqtrade_trades() -> pd.DataFrame:
-    path = first_existing(PATHS.get("freqtrade_sqlite_candidates", []))
-    if path is None:
-        return pd.DataFrame()
-    try:
-        with sqlite3.connect(str(path)) as connection:
-            return pd.read_sql_query("select * from trades order by id desc", connection)
-    except Exception:
-        return pd.DataFrame()
 
 
 def table_counts(sqlite_path: str | Path) -> pd.DataFrame:
@@ -153,6 +149,17 @@ def show_metrics(metrics: dict[str, Any]) -> None:
     c6.metric("Profit Factor", "—" if pf is None else f"{pf:.2f}")
 
 
+def show_freqtrade_snapshot_status(state: dict[str, Any]) -> None:
+    payload = freqtrade_status_payload(state)
+    if state.get("status") == "ok":
+        st.success("SQLite Freqtrade lido via snapshot local.")
+    elif state.get("status") == "missing":
+        st.warning("SQLite Freqtrade não encontrado nos caminhos configurados.")
+    else:
+        st.error("Falha ao ler SQLite Freqtrade via snapshot local.")
+    st.write(payload)
+
+
 def dataframe(title: str, frame: pd.DataFrame, height: int = 360) -> None:
     st.subheader(title)
     if frame.empty:
@@ -162,10 +169,11 @@ def dataframe(title: str, frame: pd.DataFrame, height: int = 360) -> None:
 
 
 st.title("SmartCrypto — Operação Paper")
-page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Evidências"])
+page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "AI Shadow", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Evidências"])
 
-trades = freqtrade_trades()
-metrics = perf_metrics(trades)
+freqtrade_state = load_freqtrade_trades_snapshot(PATHS.get("freqtrade_sqlite_candidates", []))
+trades = freqtrade_state["trades"]
+metrics = freqtrade_perf_metrics(trades)
 
 if page == "Visão geral":
     show_metrics(metrics)
@@ -190,6 +198,9 @@ elif page == "Qlib / Predições":
         for image in sorted(chart_dir.glob("*.png")):
             st.image(str(image), caption=image.name, use_container_width=True)
 
+elif page == "AI Shadow":
+    render_ai_shadow_panel(st)
+
 elif page == "Sinais":
     st.subheader("Primary Signal")
     st.json(read_json(PATHS.get("primary_signals", "data/freqtrade_signals.json")))
@@ -200,16 +211,19 @@ elif page == "Sinais":
 
 elif page == "Freqtrade":
     show_metrics(metrics)
+    show_freqtrade_snapshot_status(freqtrade_state)
     dataframe("Tabela trades do Freqtrade", trades)
-    st.write({"freqtrade_db": str(first_existing(PATHS.get("freqtrade_sqlite_candidates", [])))})
 
 elif page == "Trades paper":
+    show_metrics(metrics)
+    show_freqtrade_snapshot_status(freqtrade_state)
     is_open = trades.get("is_open", pd.Series(dtype=int))
     dataframe("Trades abertos", trades.loc[is_open == 1] if not trades.empty else pd.DataFrame())
     dataframe("Trades fechados", trades.loc[is_open == 0] if not trades.empty else pd.DataFrame())
 
 elif page == "Performance":
     show_metrics(metrics)
+    show_freqtrade_snapshot_status(freqtrade_state)
     if not trades.empty:
         is_open = trades.get("is_open", pd.Series(dtype=int))
         closed = trades.loc[is_open == 0].copy()

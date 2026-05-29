@@ -19,6 +19,7 @@ Executa avaliação walk-forward do dataset Qlib-compatible, compara contra base
 ## Uso principal
 
 ```powershell
-cd "C:\Smart Cripto\FUTUROS"
+cd "E:\FUTUROS"
 .\paper_controlado_operacao\START_PAPER_24H.ps1
 ```
+

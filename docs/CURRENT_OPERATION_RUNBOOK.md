@@ -12,7 +12,7 @@
 ## Comandos principais
 
 ```powershell
-cd "C:\Smart Cripto\FUTUROS"
+cd "E:\FUTUROS"
 docker compose -f docker-compose.paper.yml up -d
 docker compose -f docker-compose.paper.yml ps
 ```
@@ -47,3 +47,4 @@ docker exec futuros-smartcrypto-bot-paper-1 python /app/scripts/run_paper_risk_c
 - Não habilitar `REAL_ORDER_SUBMISSION_ENABLED`.
 - Não usar chaves reais.
 - Não usar `model_baseline.py` antigo como evidência operacional.
+
