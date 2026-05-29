@@ -5,7 +5,8 @@ param(
     [int]$SignalValidityMinutes = 45,
     [int]$FreqtradeProcessingWaitSeconds = 90,
     [int]$FeedbackWaitSeconds = 120,
-    [switch]$SkipFeedback
+    [switch]$SkipFeedback,
+    [string]$LockScript = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -126,8 +127,44 @@ function Save-SessionState {
     $json | Set-Content -Path (Join-Path $dir "paper_session_$SessionId.json") -Encoding UTF8
 }
 
+function Invoke-PaperSessionLockAcquire {
+    param(
+        [string]$ProjectRoot,
+        [string]$Mode,
+        [string]$ScriptName
+    )
+
+    Write-Step "Adquirindo trava singleton da sessão paper"
+    & python -m smartcrypto.runtime.paper_session_lock acquire `
+        --pid $PID `
+        --script $ScriptName `
+        --project-root $ProjectRoot `
+        --mode $Mode
+    if ($LASTEXITCODE -ne 0) {
+        throw "Sessão paper já ativa ou lock inválido. Abortando para evitar execução duplicada."
+    }
+}
+
+function Invoke-PaperSessionLockRelease {
+    param([string]$ScriptName)
+
+    Write-Step "Liberando trava singleton da sessão paper"
+    & python -m smartcrypto.runtime.paper_session_lock release `
+        --pid $PID `
+        --script $ScriptName
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn "Não foi possível liberar o lock da sessão paper automaticamente. Verifique data\runtime\paper_session.lock."
+    }
+}
+
 $root = Get-ProjectRoot
 Set-Location $root
+
+$lockScriptName = if ([string]::IsNullOrWhiteSpace($LockScript)) { Split-Path -Leaf $PSCommandPath } else { $LockScript }
+$lockAcquired = $false
+try {
+Invoke-PaperSessionLockAcquire -ProjectRoot $root -Mode "paper-${SessionHours}h" -ScriptName $lockScriptName
+$lockAcquired = $true
 
 $sessionId = Get-Date -Format "yyyyMMdd_HHmmss"
 $startedAt = Get-Date
@@ -186,3 +223,9 @@ Invoke-DockerCompose @("ps")
 Write-Host ""
 Write-Host "Sessão paper concluída: $sessionId"
 Write-Host "Dashboard: http://localhost:8502"
+}
+finally {
+    if ($lockAcquired) {
+        Invoke-PaperSessionLockRelease -ScriptName $lockScriptName
+    }
+}
