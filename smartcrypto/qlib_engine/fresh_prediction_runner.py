@@ -18,6 +18,7 @@ def run_qlib_fresh_predictions(
     config_path: str | Path = "config/qlib_model.yml",
     max_allowed_age_minutes: int | float = 90,
     max_input_data_age_minutes: int | float = 15,
+    sklearn_strict_compatibility: bool = False,
 ) -> dict[str, Any]:
     """Generate fresh Qlib predictions for the paper/shadow signal pipeline."""
     started_at = datetime.now(timezone.utc)
@@ -28,6 +29,7 @@ def run_qlib_fresh_predictions(
         output_path=output_path,
         report_path=report_path,
         config=config,
+        sklearn_strict_compatibility=sklearn_strict_compatibility,
     )
 
     freshness = inspect_qlib_prediction_freshness(
@@ -70,6 +72,11 @@ def run_qlib_fresh_predictions(
         "model_version": config.model_version,
         "timeframe": config.timeframe,
         "prediction_freshness": freshness,
+        "sklearn_compatibility": export_report.get("sklearn_compatibility", {}),
+        "sklearn_runtime_version": export_report.get("sklearn_runtime_version"),
+        "sklearn_artifact_version": export_report.get("sklearn_artifact_version"),
+        "sklearn_compatibility_status": export_report.get("sklearn_compatibility_status", "unknown"),
+        "sklearn_compatibility_reason": export_report.get("sklearn_compatibility_reason"),
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,

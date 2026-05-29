@@ -11,6 +11,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 
 from smartcrypto.qlib_engine.common import QlibEngineConfig, qlib_runtime_status, write_json
+from smartcrypto.qlib_engine.sklearn_compatibility import load_sklearn_artifact
 
 
 def _build_model(config: QlibEngineConfig):
@@ -277,6 +278,7 @@ def export_latest_qlib_predictions(
     output_path: str | Path,
     report_path: str | Path,
     config: QlibEngineConfig,
+    sklearn_strict_compatibility: bool = False,
 ) -> dict[str, Any]:
     source = Path(market_features_path)
     model_file = Path(model_path)
@@ -289,7 +291,25 @@ def export_latest_qlib_predictions(
         write_json(report_path, report)
         return report
 
-    payload = joblib.load(model_file)
+    payload, sklearn_compatibility = load_sklearn_artifact(
+        model_file,
+        strict=sklearn_strict_compatibility,
+    )
+    sklearn_compatibility_payload = sklearn_compatibility.to_dict()
+    if sklearn_compatibility.status == "incompatible" and sklearn_strict_compatibility:
+        report = {
+            "status": "blocked",
+            "reason": "sklearn_artifact_incompatible",
+            "model_path": str(model_file),
+            "sklearn_compatibility": sklearn_compatibility_payload,
+            "sklearn_runtime_version": sklearn_compatibility.sklearn_runtime_version,
+            "sklearn_artifact_version": sklearn_compatibility.sklearn_artifact_version,
+            "sklearn_compatibility_status": sklearn_compatibility.status,
+            "sklearn_compatibility_reason": sklearn_compatibility.reason,
+        }
+        write_json(report_path, report)
+        return report
+
     model = payload["model"]
     source_feature_columns = payload.get("feature_columns", config.feature_columns)
     feature_metadata = payload.get("feature_metadata")
@@ -349,6 +369,11 @@ def export_latest_qlib_predictions(
         "model_path": str(model_file),
         "generated_at": generated_at,
         "created_at": generated_at,
+        "sklearn_compatibility": sklearn_compatibility_payload,
+        "sklearn_runtime_version": sklearn_compatibility.sklearn_runtime_version,
+        "sklearn_artifact_version": sklearn_compatibility.sklearn_artifact_version,
+        "sklearn_compatibility_status": sklearn_compatibility.status,
+        "sklearn_compatibility_reason": sklearn_compatibility.reason,
     }
     write_json(report_path, report)
     return report

@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="config/qlib_model.yml")
     parser.add_argument("--max-allowed-age-minutes", type=float, default=90)
     parser.add_argument("--max-input-data-age-minutes", type=float, default=15)
+    parser.add_argument("--sklearn-strict-compatibility", action="store_true")
     return parser.parse_args()
 
 
@@ -35,6 +36,7 @@ def main() -> None:
         config_path=args.config,
         max_allowed_age_minutes=args.max_allowed_age_minutes,
         max_input_data_age_minutes=args.max_input_data_age_minutes,
+        sklearn_strict_compatibility=args.sklearn_strict_compatibility,
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, default=str))
 
