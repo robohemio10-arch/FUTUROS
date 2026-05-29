@@ -17,4 +17,5 @@ $start24 = Join-Path $scriptDir "START_PAPER_24H.ps1"
     -FreqtradeProcessingWaitSeconds $FreqtradeProcessingWaitSeconds `
     -FeedbackWaitSeconds $FeedbackWaitSeconds `
     -OpenDashboard:$OpenDashboard `
-    -SkipFeedback:$SkipFeedback
+    -SkipFeedback:$SkipFeedback `
+    -LockScript "START_PAPER_7D.ps1"
