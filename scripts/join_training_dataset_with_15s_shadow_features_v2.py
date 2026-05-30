@@ -165,6 +165,20 @@ def validate_shadow_features(features: pd.DataFrame) -> dict:
     }
 
 
+def normalize_utc_ns(series: pd.Series) -> pd.Series:
+    """
+    Normaliza timestamps para datetime64[ns, UTC].
+
+    Motivo:
+    pandas.merge_asof exige que as chaves de merge tenham exatamente
+    o mesmo dtype. Em arquivos Parquet diferentes, pyarrow pode carregar
+    uma coluna como datetime64[ns, UTC] e outra como datetime64[us, UTC],
+    mesmo ambas sendo UTC. Isso quebra o merge_asof.
+
+    Esta função força ambas para UTC e precisão nanosegundos.
+    """
+    return pd.to_datetime(series, errors="coerce", utc=True).astype("datetime64[ns, UTC]")
+
 def prepare_base(
     base: pd.DataFrame,
     time_col: str,
@@ -174,7 +188,7 @@ def prepare_base(
 
     out["_base_row_id"] = np.arange(len(out), dtype=np.int64)
     out["_base_symbol_norm"] = out[symbol_col].map(normalize_symbol)
-    out["_base_time_utc"] = pd.to_datetime(out[time_col], errors="coerce", utc=True)
+    out["_base_time_utc"] = normalize_utc_ns(out[time_col])
 
     out = out.dropna(subset=["_base_time_utc"])
     out = out[out["_base_symbol_norm"].isin(["BTCUSDT", "ETHUSDT"])].copy()
@@ -188,8 +202,8 @@ def prepare_shadow(features: pd.DataFrame) -> pd.DataFrame:
     out = features.copy()
 
     out["_shadow_symbol_norm"] = out["symbol"].map(normalize_symbol)
-    out["_shadow_join_time_utc"] = pd.to_datetime(out["join_time_utc"], errors="coerce", utc=True)
-    out["_shadow_usable_from_utc"] = pd.to_datetime(out["usable_from_utc"], errors="coerce", utc=True)
+    out["_shadow_join_time_utc"] = normalize_utc_ns(out["join_time_utc"])
+    out["_shadow_usable_from_utc"] = normalize_utc_ns(out["usable_from_utc"])
 
     out = out.dropna(subset=["_shadow_join_time_utc", "_shadow_usable_from_utc"])
     out = out[out["_shadow_symbol_norm"].isin(["BTCUSDT", "ETHUSDT"])].copy()
@@ -225,7 +239,6 @@ def prepare_shadow(features: pd.DataFrame) -> pd.DataFrame:
 
     return out
 
-
 def asof_join_by_symbol(
     base: pd.DataFrame,
     shadow: pd.DataFrame,
@@ -236,6 +249,9 @@ def asof_join_by_symbol(
     for symbol in sorted(base["_base_symbol_norm"].dropna().unique()):
         left = base[base["_base_symbol_norm"] == symbol].copy()
         right = shadow[shadow["_shadow_symbol_norm"] == symbol].copy()
+
+        left["_base_time_utc"] = normalize_utc_ns(left["_base_time_utc"])
+        right["_shadow_usable_from_utc"] = normalize_utc_ns(right["_shadow_usable_from_utc"])
 
         left = left.sort_values("_base_time_utc")
         right = right.sort_values("_shadow_usable_from_utc")
@@ -296,6 +312,7 @@ def asof_join_by_symbol(
     out = out.sort_values("_base_row_id").reset_index(drop=True)
 
     return out
+
 
 
 def make_manifest(df: pd.DataFrame) -> pd.DataFrame:
