@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from smartcrypto.qlib_engine.paper_refresh_supervisor import (
     BLOCKED,
@@ -20,6 +21,7 @@ from smartcrypto.qlib_engine.paper_refresh_supervisor import (
 
 
 MODULE_PATH = Path("scripts/run_qlib_paper_refresh_supervisor.py")
+COMPOSE_PATH = Path("docker-compose.paper.yml")
 
 
 def config(tmp_path: Path) -> PaperRefreshSupervisorConfig:
@@ -78,6 +80,10 @@ def load_cli_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def compose_payload() -> dict:
+    return yaml.safe_load(COMPOSE_PATH.read_text(encoding="utf-8"))
 
 
 def test_supervisor_ok_report_contains_required_fields(tmp_path: Path) -> None:
@@ -252,3 +258,50 @@ def test_supervisor_does_not_reference_private_exchange_or_orders() -> None:
         ".env",
     ]
     assert all(token not in text for token in forbidden)
+
+
+def test_compose_contains_runtime_supervisor_service() -> None:
+    service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
+
+    assert service["command"] == "python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300"
+    assert service["restart"] == "unless-stopped"
+    assert service["working_dir"] == "/app"
+
+
+def test_compose_supervisor_keeps_live_and_order_flags_false() -> None:
+    env = compose_payload()["services"]["qlib-refresh-supervisor-paper"]["environment"]
+
+    assert env["SMARTCRYPTO_RUNTIME_MODE"] == "paper"
+    assert env["LIVE_ENABLED"] == "false"
+    assert env["ORDER_SUBMISSION_ENABLED"] == "false"
+    assert env["REAL_ORDER_SUBMISSION_ENABLED"] == "false"
+
+
+def test_compose_supervisor_does_not_mount_freqtrade_db_or_call_freqtrade() -> None:
+    service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
+    volumes = service["volumes"]
+    combined = "\n".join([service["command"], *volumes])
+
+    assert "./data:/app/data" in volumes
+    assert "./config:/app/config:ro" in volumes
+    assert "./scripts:/app/scripts:ro" in volumes
+    assert "./smartcrypto:/app/smartcrypto:ro" in volumes
+    assert "freqtrade" not in combined.lower()
+    assert "tradesv3.paper.sqlite" not in combined
+    assert "freqtrade_paper_db" not in combined
+    assert "--db-url" not in combined
+
+
+def test_compose_supervisor_writes_only_runtime_data_tree() -> None:
+    service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
+    writable_mounts = [item for item in service["volumes"] if not item.endswith(":ro")]
+
+    assert writable_mounts == ["./data:/app/data"]
+    assert "run_qlib_paper_refresh_supervisor.py" in service["command"]
+
+
+def test_start_paper_24h_uses_compose_up_without_manual_supervisor_duplication() -> None:
+    text = Path("paper_controlado_operacao/START_PAPER_24H.ps1").read_text(encoding="utf-8")
+
+    assert 'Invoke-DockerCompose @("up", "-d")' in text
+    assert "run_qlib_paper_refresh_supervisor.py" not in text

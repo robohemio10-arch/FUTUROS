@@ -94,6 +94,27 @@ services:
       - ./smartcrypto:/app/smartcrypto
     command: python -m smartcrypto.qlib_engine.worker
 
+  qlib-refresh-supervisor-paper:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+    command: python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
