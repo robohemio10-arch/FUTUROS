@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from smartcrypto.config.schema import load_config_file
 from smartcrypto.runtime.preflight_orchestrator import (
     BLOCKED,
     FAILED,
@@ -30,7 +31,11 @@ def valid_config(tmp_path: Path) -> dict:
             "max_order_notional": 50.0,
             "max_capital_global": 100.0,
         },
-        "paths": {"state_repository": str(tmp_path / "state.json")},
+        "paths": {
+            "state_repository": str(tmp_path / "state.json"),
+            "kill_switch_state": str(tmp_path / "kill_switch_guard.json"),
+            "financial_event_log": str(tmp_path / "preflight_events.jsonl"),
+        },
     }
 
 
@@ -54,6 +59,7 @@ def build_orchestrator(tmp_path: Path) -> RuntimePreflightOrchestrator:
     return RuntimePreflightOrchestrator(
         config_path=tmp_path / "runtime_preflight.yml",
         event_log_path=tmp_path / "preflight_events.jsonl",
+        kill_switch_path=tmp_path / "kill_switch_guard.json",
         state_path=tmp_path / "state.json",
         runtime_mode="paper",
     )
@@ -157,15 +163,25 @@ def test_fails_when_market_snapshot_missing(tmp_path: Path) -> None:
     assert result.errors == ["market_snapshot_required"]
 
 
-def test_example_config_is_valid_for_schema() -> None:
+def test_example_config_is_valid_for_schema(tmp_path: Path) -> None:
     now = datetime(2026, 5, 25, 12, tzinfo=timezone.utc)
+    config = load_config_file("config/runtime_preflight.example.yml")
+    config.setdefault("paths", {})["state_repository"] = str(
+        tmp_path / "runtime_preflight_state.json"
+    )
+    config["paths"]["financial_event_log"] = str(
+        tmp_path / "runtime_preflight_events.jsonl"
+    )
+    config["paths"]["kill_switch_state"] = str(tmp_path / "kill_switch_guard.json")
+
     orchestrator = RuntimePreflightOrchestrator(
         config_path="config/runtime_preflight.example.yml",
-        event_log_path="data/runtime/test_runtime_preflight_events.jsonl",
-        state_path="data/runtime/test_runtime_preflight_state.json",
+        event_log_path=tmp_path / "runtime_preflight_events.jsonl",
+        kill_switch_path=tmp_path / "kill_switch_guard.json",
+        state_path=tmp_path / "runtime_preflight_state.json",
         runtime_mode="paper",
     )
 
-    result = orchestrator.run(market_snapshot=market_snapshot(now), now=now)
+    result = orchestrator.run(config=config, market_snapshot=market_snapshot(now), now=now)
 
     assert result.status == PASSED
