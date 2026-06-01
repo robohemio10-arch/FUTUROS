@@ -2,10 +2,8 @@ runtime_mode: paper
 
 paths:
   freqtrade_db_candidates:
-    - /app/freqtrade_user_data/tradesv3.paper.sqlite
-    - /app/freqtrade/user_data/tradesv3.paper.sqlite
-    - /freqtrade/user_data/tradesv3.paper.sqlite
-    - freqtrade/user_data/tradesv3.paper.sqlite
+    - /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+    - data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
 
   raw_export: data/trades/freqtrade_paper_trades_raw.parquet
   closed_export_parquet: data/trades/freqtrade_paper_closed_smartcrypto.parquet

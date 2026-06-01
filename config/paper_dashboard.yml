@@ -4,10 +4,8 @@ dashboard:
 paths:
   sqlite: data/sqlite/trading_dataset.sqlite
   freqtrade_sqlite_candidates:
-    - /app/freqtrade_user_data/tradesv3.paper.sqlite
-    - /app/freqtrade/user_data/tradesv3.paper.sqlite
-    - /freqtrade/user_data/tradesv3.paper.sqlite
-    - freqtrade/user_data/tradesv3.paper.sqlite
+    - /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+    - data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
   qlib_predictions: data/predictions/latest_qlib_predictions.parquet
   primary_signals: data/freqtrade_signals.json
   pinned_signals: data/runtime/active_freqtrade_signals.json
