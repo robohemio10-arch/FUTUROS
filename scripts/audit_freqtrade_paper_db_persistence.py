@@ -17,10 +17,10 @@ DB_IO_ERROR = "db_io_error"
 LOG_SQLITE_DIVERGENCE = "log_sqlite_divergence"
 INVALID_SCHEMA = "invalid_schema"
 
-DEFAULT_DB_PATH = Path("freqtrade/user_data/tradesv3.paper.sqlite")
+DEFAULT_DB_PATH = Path("data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite")
 DEFAULT_REPORT_PATH = Path("data/reports/freqtrade_paper_db_persistence_audit.json")
 DEFAULT_CONTAINER_NAME = "futuros-freqtrade-paper-1"
-DEFAULT_CONTAINER_DB_PATH = "/freqtrade/user_data/tradesv3.paper.sqlite"
+DEFAULT_CONTAINER_DB_PATH = "/freqtrade/user_data/db/tradesv3.paper.sqlite"
 DEFAULT_LOG_CANDIDATES = (
     Path("freqtrade/user_data/logs/freqtrade-paper.log"),
     Path("data/evidence/db_persistence_fault_20260601/freqtrade_tail_1000.log"),
