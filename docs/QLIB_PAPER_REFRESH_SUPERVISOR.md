@@ -27,6 +27,33 @@ python .\scripts\run_qlib_paper_refresh_supervisor.py --interval-seconds 900
 
 Sem `--interval-seconds`, o CLI executa apenas uma vez.
 
+## Runtime Service
+
+O `docker-compose.paper.yml` inclui o serviço dedicado:
+
+```text
+qlib-refresh-supervisor-paper
+```
+
+Comando executado:
+
+```text
+python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300
+```
+
+O serviço reutiliza a imagem SmartCrypto, monta apenas `data/`, `config/`, `scripts/` e `smartcrypto/`, e não monta `freqtrade/user_data`, o named volume do SQLite paper nem qualquer caminho do DB operacional do Freqtrade.
+
+Flags de segurança fixas no serviço:
+
+```text
+SMARTCRYPTO_RUNTIME_MODE=paper
+LIVE_ENABLED=false
+ORDER_SUBMISSION_ENABLED=false
+REAL_ORDER_SUBMISSION_ENABLED=false
+```
+
+O script operacional `paper_controlado_operacao/START_PAPER_24H.ps1` já chama `docker compose -f docker-compose.paper.yml up -d`; portanto o supervisor sobe junto com os demais serviços paper, sem execução duplicada manual. Para uma renovação pontual fora do serviço, use o modo `--once`.
+
 ## Relatório
 
 O relatório consolidado é escrito em:
