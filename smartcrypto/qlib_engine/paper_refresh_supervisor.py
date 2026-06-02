@@ -101,6 +101,16 @@ def run_paper_refresh_supervisor(
         if write_report:
             write_json(cfg.report_path, report)
         return report
+    if market_report.get("operational_feature_schema_ok") is False:
+        report = base_report(
+            cfg,
+            status=MARKET_FEATURES_FAILED,
+            reason="operational_feature_schema_invalid",
+            market_report=market_report,
+        )
+        if write_report:
+            write_json(cfg.report_path, report)
+        return report
 
     prediction_report = prediction_refresh_fn(
         market_features_path=cfg.market_features_output_path,

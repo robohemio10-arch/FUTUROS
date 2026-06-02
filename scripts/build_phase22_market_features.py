@@ -4,10 +4,21 @@ import json
 import shutil
 import sqlite3
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
 import pandas as pd
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from smartcrypto.market.market_feature_schema import (
+    lookahead_columns,
+    operational_schema_report,
+    sanitize_operational_market_features,
+)
 
 BASE_COLS = ["symbol", "pair", "tf", "ts", "ts_ms", "open", "high", "low", "close", "volume"]
 PRICE_COLS = ["open", "high", "low", "close", "volume"]
@@ -381,17 +392,15 @@ def build_feature_frame(normalized: pd.DataFrame) -> pd.DataFrame:
     duplicate_columns = duplicate_column_names(features)
     if duplicate_columns:
         raise Phase22FeatureBuildError(f"duplicate_columns_in_features:{duplicate_columns}")
-    lookahead_columns = [col for col in features.columns if col.startswith("future_")]
-    if lookahead_columns:
-        raise Phase22FeatureBuildError(f"lookahead_columns_in_features:{lookahead_columns}")
+    found_lookahead_columns = lookahead_columns(features)
+    if found_lookahead_columns:
+        raise Phase22FeatureBuildError(f"lookahead_columns_in_features:{found_lookahead_columns}")
     return features
 
 
 def drop_lookahead_columns(frame: pd.DataFrame) -> pd.DataFrame:
-    lookahead_columns = [col for col in frame.columns if str(col).startswith("future_")]
-    if not lookahead_columns:
-        return frame
-    return frame.drop(columns=lookahead_columns)
+    sanitized, _ = sanitize_operational_market_features(frame)
+    return sanitized
 
 
 def frame_summary(frame: pd.DataFrame, path: Path | None = None) -> dict:
@@ -431,7 +440,11 @@ def controlled_report(
     main_report: dict | None = None,
     sqlite_report: dict | None = None,
     file_reports: list[dict] | None = None,
+    schema_report: dict | None = None,
 ) -> dict:
+    schema_report = schema_report or operational_schema_report(
+        frame=features if features is not None else pd.DataFrame()
+    )
     feature_summary = frame_summary(features, output_path) if features is not None else {
         "path": str(output_path),
         "rows": 0,
@@ -490,6 +503,7 @@ def controlled_report(
         "backfill_features": feature_summary,
         "main_features": main_report,
         "sqlite": sqlite_report,
+        **schema_report,
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,
@@ -572,6 +586,7 @@ def run_phase22_feature_build(
     features: pd.DataFrame | None = None
     main_report = None
     sqlite_report = None
+    schema_report = None
     allowed_symbols = {symbol.upper() for symbol in symbols}
 
     try:
@@ -646,6 +661,7 @@ def run_phase22_feature_build(
         )
         raw = raw.reset_index(drop=True)
         features = build_feature_frame(raw)
+        features, schema_report = sanitize_operational_market_features(features)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         features.to_parquet(output_path, index=False)
@@ -675,6 +691,7 @@ def run_phase22_feature_build(
             main_report=main_report,
             sqlite_report=sqlite_report,
             file_reports=file_reports,
+            schema_report=schema_report,
         )
     except Exception as exc:
         reason = str(exc)
@@ -690,6 +707,7 @@ def run_phase22_feature_build(
             main_report=main_report,
             sqlite_report=sqlite_report,
             file_reports=file_reports,
+            schema_report=schema_report,
         )
 
     quality_report = {
@@ -708,6 +726,12 @@ def run_phase22_feature_build(
         "skipped_paths": report["skipped_paths"],
         "blocked_paths": report["blocked_paths"],
         "raw_file_reports": report["raw_file_reports"],
+        "output_schema_status": report["output_schema_status"],
+        "lookahead_columns": report["lookahead_columns"],
+        "lookahead_columns_count": report["lookahead_columns_count"],
+        "lookahead_columns_removed": report["lookahead_columns_removed"],
+        "lookahead_columns_removed_count": report["lookahead_columns_removed_count"],
+        "operational_feature_schema_ok": report["operational_feature_schema_ok"],
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,

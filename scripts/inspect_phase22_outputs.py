@@ -1,8 +1,15 @@
 from __future__ import annotations
 import json, sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 import pandas as pd
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from smartcrypto.market.market_feature_schema import lookahead_columns
 
 
 def read_json(path: Path) -> dict:
@@ -14,23 +21,38 @@ def read_json(path: Path) -> dict:
         return {"exists": True, "error": str(exc)}
 
 
-def table_info(path: Path) -> dict:
+def table_info(path: Path, *, operational: bool = False) -> dict:
     if not path.exists():
-        return {"exists": False, "rows": None, "columns": None, "min_ts": None, "max_ts": None}
+        return {
+            "exists": False,
+            "rows": None,
+            "columns": None,
+            "min_ts": None,
+            "max_ts": None,
+            "lookahead_columns": [],
+            "lookahead_columns_count": 0,
+            "operational_feature_schema_ok": not operational,
+            "status": "missing",
+        }
     try:
         frame = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
         ts = pd.to_datetime(frame["ts"], utc=True, errors="coerce") if "ts" in frame.columns else None
+        found_lookahead = lookahead_columns(frame)
         return {
             "exists": True,
             "rows": int(len(frame)),
             "columns": list(frame.columns),
+            "lookahead_columns": found_lookahead,
+            "lookahead_columns_count": len(found_lookahead),
+            "operational_feature_schema_ok": not found_lookahead if operational else True,
+            "status": "warning" if operational and found_lookahead else "ok",
             "symbols": sorted(frame["symbol"].dropna().astype(str).unique().tolist()) if "symbol" in frame.columns else [],
             "timeframes": sorted(frame["tf"].dropna().astype(str).unique().tolist()) if "tf" in frame.columns else [],
             "min_ts": ts.min().isoformat() if ts is not None and not ts.dropna().empty else None,
             "max_ts": ts.max().isoformat() if ts is not None and not ts.dropna().empty else None,
         }
     except Exception as exc:
-        return {"exists": True, "error": str(exc)}
+        return {"exists": True, "error": str(exc), "status": "error"}
 
 def sqlite_tables(path: Path) -> dict:
     if not path.exists():
@@ -58,12 +80,35 @@ def trades_range(path: Path) -> dict:
         return {"exists": True, "error": str(exc)}
 
 def main() -> None:
+    backfill_features = table_info(
+        Path("data/features/market_features_1m_backfill.parquet"),
+        operational=True,
+    )
+    main_features = table_info(
+        Path("data/features/market_features_60d.parquet"),
+        operational=True,
+    )
+    affected = []
+    for path, item in [
+        ("data/features/market_features_1m_backfill.parquet", backfill_features),
+        ("data/features/market_features_60d.parquet", main_features),
+    ]:
+        if item.get("lookahead_columns"):
+            affected.append(
+                {
+                    "path": path,
+                    "lookahead_columns": item.get("lookahead_columns", []),
+                    "lookahead_columns_count": item.get("lookahead_columns_count", 0),
+                }
+            )
     report = {
-        "status": "ok",
+        "status": "warning" if affected else "ok",
+        "reason": "operational_lookahead_columns_detected" if affected else "ok",
         "phase": "phase22_historical_market_backfill",
+        "lookahead_columns_affected_paths": affected,
         "raw_files": [str(path) for path in Path("data/raw/binance_futures_klines").glob("*")],
-        "backfill_features": table_info(Path("data/features/market_features_1m_backfill.parquet")),
-        "main_features": table_info(Path("data/features/market_features_60d.parquet")),
+        "backfill_features": backfill_features,
+        "main_features": main_features,
         "trade_enriched": table_info(Path("data/features/trade_enriched.parquet")),
         "training_dataset": table_info(Path("data/features/training_dataset.parquet")),
         "trades_master": trades_range(Path("data/trades/trades_master.parquet")),

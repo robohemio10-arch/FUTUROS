@@ -11,6 +11,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 
 from smartcrypto.data.feature_builder import build_market_features
+from smartcrypto.market.market_feature_schema import sanitize_operational_market_features
 from smartcrypto.qlib_engine.common import write_json
 
 
@@ -136,7 +137,10 @@ def refresh_qlib_market_features(
         final_features = pd.concat([existing_features, recent_features], ignore_index=True, sort=False)
 
     final_features = _dedupe_features(final_features)
+    final_features, schema_report = sanitize_operational_market_features(final_features)
     schema_error = validate_feature_schema(final_features)
+    if not schema_report["operational_feature_schema_ok"]:
+        schema_error = f"operational_lookahead_columns:{schema_report['lookahead_columns']}"
     if schema_error:
         report = _blocked_report(
             reason="invalid_schema",
@@ -146,6 +150,7 @@ def refresh_qlib_market_features(
             report_path=report_file,
             source_report={**source_report, "schema_error": schema_error},
             public_download_report=public_download_report,
+            schema_report=schema_report,
             current=current,
         )
         write_json(report_file, report)
@@ -167,6 +172,7 @@ def refresh_qlib_market_features(
             max_source_age_minutes=max_source_age_minutes,
             source_report=source_report,
             public_download_report=public_download_report,
+            schema_report=schema_report,
             current=current,
         )
         write_json(report_file, report)
@@ -189,6 +195,7 @@ def refresh_qlib_market_features(
         max_source_age_minutes=max_source_age_minutes,
         source_report=source_report,
         public_download_report=public_download_report,
+        schema_report=schema_report,
         current=current,
     )
     write_json(report_file, report)
@@ -400,8 +407,18 @@ def _blocked_report(
     report_path: Path,
     source_report: dict[str, Any],
     public_download_report: dict[str, Any],
+    schema_report: dict[str, Any] | None = None,
     current: datetime,
 ) -> dict[str, Any]:
+    schema_report = schema_report or {
+        "output_schema_status": "unknown",
+        "operational_feature_schema_ok": False,
+        "lookahead_columns": [],
+        "lookahead_columns_count": 0,
+        "lookahead_columns_removed": [],
+        "lookahead_columns_removed_count": 0,
+        "labels_output_path": None,
+    }
     return {
         "status": "blocked",
         "reason": reason,
@@ -415,6 +432,7 @@ def _blocked_report(
         "market_features_age_minutes": None,
         "source_report": source_report,
         "public_download": public_download_report,
+        **schema_report,
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,
@@ -439,6 +457,7 @@ def _status_report(
     max_source_age_minutes: int | float,
     source_report: dict[str, Any],
     public_download_report: dict[str, Any],
+    schema_report: dict[str, Any],
     current: datetime,
 ) -> dict[str, Any]:
     return {
@@ -457,6 +476,7 @@ def _status_report(
         "timeframes": sorted(final_features["tf"].dropna().astype(str).unique().tolist()) if "tf" in final_features.columns else [],
         "source_report": source_report,
         "public_download": public_download_report,
+        **schema_report,
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,
