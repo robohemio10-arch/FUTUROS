@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from smartcrypto.data.feature_builder import build_market_features
-from smartcrypto.market.market_feature_schema import lookahead_columns
+from smartcrypto.market.market_feature_schema import lookahead_columns, write_operational_market_features
 from smartcrypto.qlib_engine.market_features_refresh import refresh_qlib_market_features
 
 
@@ -35,6 +35,7 @@ def market_frame(periods: int = 6, *, contaminated: bool = True) -> pd.DataFrame
             "pair": "BTC/USDT:USDT",
             "tf": "5m",
             "ts": NOW - timedelta(minutes=5 * (periods - idx - 1)),
+            "ts_ms": int((NOW - timedelta(minutes=5 * (periods - idx - 1))).timestamp() * 1000),
             "open": 100 + idx,
             "high": 101 + idx,
             "low": 99 + idx,
@@ -188,6 +189,18 @@ def test_report_contains_hashes_and_metrics(tmp_path: Path) -> None:
     assert report["source_hash_before"] != report["source_hash_after"]
 
 
+def test_central_operational_writer_never_publishes_future_ret(tmp_path: Path) -> None:
+    output = tmp_path / "market_features_60d.parquet"
+
+    written, report = write_operational_market_features(market_frame(contaminated=True), output)
+    persisted = pd.read_parquet(output)
+
+    assert report["operational_feature_schema_ok"] is True
+    assert report["lookahead_columns_removed"] == ["future_ret_1", "future_ret_3", "future_ret_5"]
+    assert lookahead_columns(written) == []
+    assert lookahead_columns(persisted) == []
+
+
 def test_origins_do_not_write_future_ret_to_operational_artifact(tmp_path: Path) -> None:
     raw = tmp_path / "raw.parquet"
     output = tmp_path / "market_features_60d.parquet"
@@ -225,6 +238,45 @@ def test_qlib_refresh_origin_removes_future_ret_from_existing_operational_file(t
     assert report["operational_feature_schema_ok"] is True
     assert "future_ret_1" in report["lookahead_columns_removed"]
     assert lookahead_columns(written) == []
+
+
+def test_phase22_main_writer_removes_existing_future_ret_from_operational_file(tmp_path: Path) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("phase22_build_for_cleanup_test", ROOT / "scripts" / "build_phase22_market_features.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    main_path = tmp_path / "features" / "market_features_60d.parquet"
+    main_path.parent.mkdir(parents=True, exist_ok=True)
+    market_frame(contaminated=True).to_parquet(main_path, index=False)
+    new_features = market_frame(contaminated=False)
+
+    final_features, report = module.merge_with_main_features(
+        new_features,
+        main_path,
+        backup=True,
+        backups_dir=tmp_path / "backups",
+    )
+    written = pd.read_parquet(main_path)
+
+    assert report["operational_feature_schema_ok"] is True
+    assert report["lookahead_columns_removed"] == ["future_ret_1", "future_ret_3", "future_ret_5"]
+    assert lookahead_columns(final_features) == []
+    assert lookahead_columns(written) == []
+
+
+def test_runtime_market_feature_writers_route_through_no_lookahead_contract() -> None:
+    writer_files = [
+        ROOT / "smartcrypto" / "data" / "feature_builder.py",
+        ROOT / "smartcrypto" / "qlib_engine" / "market_features_refresh.py",
+        ROOT / "scripts" / "build_phase22_market_features.py",
+    ]
+    for path in writer_files:
+        text = path.read_text(encoding="utf-8")
+        assert "write_operational_market_features" in text
+    assert "final_features.to_parquet(main_path" not in (ROOT / "scripts" / "build_phase22_market_features.py").read_text(encoding="utf-8")
 
 
 def test_preserves_paper_shadow_only_safety(tmp_path: Path) -> None:

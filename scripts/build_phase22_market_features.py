@@ -18,6 +18,7 @@ from smartcrypto.market.market_feature_schema import (
     lookahead_columns,
     operational_schema_report,
     sanitize_operational_market_features,
+    write_operational_market_features,
 )
 
 BASE_COLS = ["symbol", "pair", "tf", "ts", "ts_ms", "open", "high", "low", "close", "volume"]
@@ -553,14 +554,16 @@ def merge_with_main_features(
     else:
         main_path.parent.mkdir(parents=True, exist_ok=True)
 
-    final_features = drop_lookahead_columns(final_features)
-    if duplicate_column_names(final_features):
+    final_features_candidate = final_features
+    sanitized_features, schema_report = sanitize_operational_market_features(final_features_candidate)
+    if duplicate_column_names(sanitized_features):
         raise Phase22FeatureBuildError(
-            f"duplicate_columns_in_main_features:{duplicate_column_names(final_features)}"
+            f"duplicate_columns_in_main_features:{duplicate_column_names(sanitized_features)}"
         )
-    final_features.to_parquet(main_path, index=False)
+    final_features, schema_report = write_operational_market_features(final_features_candidate, main_path)
     main_report = frame_summary(final_features, main_path)
     main_report["backup_path"] = str(backup_path) if backup_path is not None else None
+    main_report.update(schema_report)
     return final_features, main_report
 
 
@@ -661,10 +664,7 @@ def run_phase22_feature_build(
         )
         raw = raw.reset_index(drop=True)
         features = build_feature_frame(raw)
-        features, schema_report = sanitize_operational_market_features(features)
-
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        features.to_parquet(output_path, index=False)
+        features, schema_report = write_operational_market_features(features, output_path)
 
         final_features = features
         if update_main_features:

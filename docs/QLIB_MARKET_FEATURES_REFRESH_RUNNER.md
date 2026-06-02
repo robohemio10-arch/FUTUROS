@@ -77,6 +77,11 @@ Se labels futuras forem necessárias para treino ou walk-forward, elas devem
 ficar em artefato separado com nome explícito de label/target/training, nunca no
 arquivo operacional `market_features_60d.parquet`.
 
+A escrita final passa pelo contrato central
+`write_operational_market_features(...)`, que sanitiza antes de publicar o
+parquet runtime. Isso evita que uma concatenação com histórico antigo ou um
+builder intermediário recoloque `future_ret_*` no artefato operacional.
+
 Se um artefato operacional antigo já estiver contaminado, execute primeiro o
 cleanup institucional:
 
