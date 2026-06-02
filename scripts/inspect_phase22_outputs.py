@@ -4,6 +4,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 import pandas as pd
 
+
+def read_json(path: Path) -> dict:
+    if not path.exists():
+        return {"exists": False}
+    try:
+        return {"exists": True, "content": json.loads(path.read_text(encoding="utf-8"))}
+    except Exception as exc:
+        return {"exists": True, "error": str(exc)}
+
+
 def table_info(path: Path) -> dict:
     if not path.exists():
         return {"exists": False, "rows": None, "columns": None, "min_ts": None, "max_ts": None}
@@ -62,8 +72,11 @@ def main() -> None:
             "preflight": Path("data/reports/phase22_preflight_report.json").exists(),
             "download": Path("data/reports/phase22_download_report.json").exists(),
             "features": Path("data/reports/phase22_features_report.json").exists(),
+            "data_quality": Path("data/reports/phase22_data_quality_report.json").exists(),
             "phase5_rebuild": Path("data/reports/phase5_rebuild_report.json").exists(),
         },
+        "features_report": read_json(Path("data/reports/phase22_features_report.json")),
+        "data_quality_report": read_json(Path("data/reports/phase22_data_quality_report.json")),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     Path("data/reports/phase22_output_summary.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
