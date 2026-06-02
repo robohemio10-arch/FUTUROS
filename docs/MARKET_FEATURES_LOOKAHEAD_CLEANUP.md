@@ -59,11 +59,17 @@ Os writers operacionais devem chamar o contrato central em
 
 ```text
 sanitize_operational_market_features(...)
+write_operational_market_features(...)
 ```
 
 Se labels futuras forem necessarias para treino offline ou walk-forward, elas
 devem ser escritas em artefato separado de labels/targets, nunca em
 `market_features_60d.parquet`.
+
+`write_operational_market_features(...)` e a API preferencial para publicar
+artefatos runtime. Ela sanitiza `future_ret_*`, grava opcionalmente labels em
+arquivo separado quando solicitado e substitui o parquet operacional de forma
+atomica.
 
 ## Segurança
 

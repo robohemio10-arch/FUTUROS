@@ -11,7 +11,10 @@ from urllib.request import Request, urlopen
 import pandas as pd
 
 from smartcrypto.data.feature_builder import build_market_features
-from smartcrypto.market.market_feature_schema import sanitize_operational_market_features
+from smartcrypto.market.market_feature_schema import (
+    sanitize_operational_market_features,
+    write_operational_market_features,
+)
 from smartcrypto.qlib_engine.common import write_json
 
 
@@ -136,8 +139,8 @@ def refresh_qlib_market_features(
         existing_features = pd.read_parquet(existing)
         final_features = pd.concat([existing_features, recent_features], ignore_index=True, sort=False)
 
-    final_features = _dedupe_features(final_features)
-    final_features, schema_report = sanitize_operational_market_features(final_features)
+    operational_candidate = _dedupe_features(final_features)
+    final_features, schema_report = sanitize_operational_market_features(operational_candidate)
     schema_error = validate_feature_schema(final_features)
     if not schema_report["operational_feature_schema_ok"]:
         schema_error = f"operational_lookahead_columns:{schema_report['lookahead_columns']}"
@@ -178,10 +181,7 @@ def refresh_qlib_market_features(
         write_json(report_file, report)
         return report
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    tmp_output = output.with_suffix(output.suffix + ".tmp")
-    final_features.to_parquet(tmp_output, index=False)
-    tmp_output.replace(output)
+    final_features, schema_report = write_operational_market_features(operational_candidate, output)
     report = _status_report(
         status="ok",
         reason=None,

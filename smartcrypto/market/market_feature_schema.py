@@ -36,6 +36,25 @@ def sanitize_operational_market_features(
     )
 
 
+def write_operational_market_features(
+    frame: pd.DataFrame,
+    output_path: str | Path,
+    *,
+    labels_output_path: str | Path | None = None,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Atomically write market features after enforcing the no-lookahead contract."""
+    sanitized, report = sanitize_operational_market_features(
+        frame,
+        labels_output_path=labels_output_path,
+    )
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    sanitized.to_parquet(tmp, index=False)
+    tmp.replace(target)
+    return sanitized, report
+
+
 def write_market_feature_labels(frame: pd.DataFrame, output_path: str | Path) -> str:
     label_columns = lookahead_columns(frame)
     if not label_columns:
