@@ -77,6 +77,17 @@ Se labels futuras forem necessárias para treino ou walk-forward, elas devem
 ficar em artefato separado com nome explícito de label/target/training, nunca no
 arquivo operacional `market_features_60d.parquet`.
 
+Se um artefato operacional antigo já estiver contaminado, execute primeiro o
+cleanup institucional:
+
+```powershell
+python .\scripts\sanitize_market_features_lookahead.py
+python .\scripts\sanitize_market_features_lookahead.py --apply
+```
+
+O primeiro comando é dry-run. O segundo só deve ser usado depois de revisar o
+relatório e cria backup antes de sobrescrever o parquet operacional.
+
 Isso ajuda a distinguir predição stale por arquivo antigo de predição gerada agora com dado de entrada velho.
 
 ## Não Libera Live
