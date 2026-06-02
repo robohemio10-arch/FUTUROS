@@ -31,6 +31,10 @@ Campos principais:
 - `read_rows`
 - `candidate_new_rows`
 - `duplicate_rows`
+- `duplicate_by_order_id_rows`
+- `duplicate_by_fingerprint_rows`
+- `missing_order_id_rows`
+- `dedup_policy`
 - `invalid_rows`
 - `final_expected_master_rows`
 - `min_trade_ts`
@@ -41,7 +45,21 @@ Campos principais:
 - `warnings`
 
 `status=ok` significa que o arquivo pode ser aplicado. `reason=all_rows_duplicate`
-tambem e seguro: o lote nao adicionaria linhas novas.
+tambem e seguro no dry-run: o lote nao adicionaria linhas novas.
+
+## Politica De Deduplicacao
+
+O gate usa uma politica `order_id_first_then_fingerprint`:
+
+1. quando `order_id` existe e nao esta vazio, ele e a chave institucional de
+   deduplicacao;
+2. quando `order_id` esta ausente, vazio, `NaN`, `None` ou equivalente, a linha
+   usa fingerprint composto;
+3. `order_id` vindo do Excel como numero inteiro decimal, por exemplo `123.0`,
+   e normalizado para `123` antes da comparacao.
+
+Isso impede que lotes OCR historicos ja presentes no master sejam marcados como
+novos apenas por diferenca de formato no `order_id`.
 
 ## Import Real Protegido
 
@@ -67,6 +85,10 @@ Antes de qualquer escrita, o gate cria backup em:
 data/backups/large_trades_import/<timestamp>/
 ```
 
+Se o dry-run confirmado tiver `candidate_new_rows=0`, o `--apply` bloqueia com
+`reason=no_candidate_new_rows`. Nesse caso nao ha nada novo para importar e
+nenhuma escrita deve ocorrer.
+
 ## Depois Do Import
 
 Reconstrua e valide os datasets pela Fase 5:
@@ -86,7 +108,8 @@ O preflight valida:
 - simbolos permitidos: BTCUSDT/ETHUSDT;
 - lado LONG/SHORT/BUY/SELL;
 - PnL e precos numericos;
-- duplicados internos e duplicados contra o master existente.
+- duplicados internos e duplicados contra o master existente;
+- duplicados por `order_id` antes de qualquer fingerprint relaxado.
 
 ## Garantias
 

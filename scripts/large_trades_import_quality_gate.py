@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -32,6 +33,7 @@ ALLOWED_SYMBOLS = {"BTCUSDT", "ETHUSDT", "BTC_USDT", "ETH_USDT", "BTC/USDT", "ET
 VALID_SIDE_TOKENS = {"LONG", "SHORT", "BUY", "SELL"}
 NUMERIC_REQUIRED_COLUMNS = ["pnl_fechado", "preco_abertura", "preco_fechamento"]
 TIME_COLUMNS = ["horario_abertura", "horario_fechamento"]
+DEDUP_POLICY = "order_id_first_then_fingerprint"
 
 
 def parse_args() -> argparse.Namespace:
@@ -90,6 +92,35 @@ def normalize_side(value: object) -> str:
     return text
 
 
+def normalize_order_id(value: object) -> str:
+    if pd.isna(value):
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+
+    text = str(value).strip()
+    if text.lower() in {"", "nan", "none", "<na>", "nat"}:
+        return ""
+
+    excel_integer = re.fullmatch(r"([+-]?\d+)\.0+", text)
+    if excel_integer:
+        return excel_integer.group(1)
+    return text
+
+
+def build_fingerprint_key(row: pd.Series) -> str:
+    fingerprint_row = row.copy()
+    fingerprint_row["order_id"] = ""
+    return build_dedup_key(fingerprint_row)
+
+
+def build_dedup_identity(row: pd.Series) -> tuple[str, str, str]:
+    normalized_order_id = normalize_order_id(row.get("order_id"))
+    if normalized_order_id:
+        return "order_id", f"order_id::{normalized_order_id}", normalized_order_id
+    return "fingerprint", build_fingerprint_key(row), ""
+
+
 def read_source(source_file: Path) -> tuple[pd.DataFrame | None, list[str]]:
     if not source_file.exists():
         return None, [f"source_file_missing:{source_file}"]
@@ -137,7 +168,7 @@ def validate_large_trade_source(raw: pd.DataFrame, source_file: Path) -> tuple[p
         blocking_errors.append(f"invalid_side_rows:{int(invalid_sides.sum())}")
     if int(invalid_numeric.sum()):
         blocking_errors.append(f"invalid_numeric_rows:{int(invalid_numeric.sum())}")
-    if cleaned["order_id"].astype("string").str.strip().fillna("").eq("").any():
+    if cleaned["order_id"].map(normalize_order_id).eq("").any():
         warnings.append("missing_order_id_rows_use_fingerprint_dedup")
 
     valid = cleaned.loc[~invalid_mask].copy()
@@ -163,8 +194,15 @@ def validate_large_trade_source(raw: pd.DataFrame, source_file: Path) -> tuple[p
 
 def add_dedup_keys(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
-    if "_dedup_key" not in result.columns:
-        result["_dedup_key"] = result.apply(build_dedup_key, axis=1) if len(result) else pd.Series(dtype="string")
+    if len(result):
+        identities = result.apply(build_dedup_identity, axis=1, result_type="expand")
+        result["_dedup_source"] = identities[0].astype("string")
+        result["_dedup_key"] = identities[1].astype("string")
+        result["_normalized_order_id"] = identities[2].astype("string")
+    else:
+        result["_dedup_source"] = pd.Series(dtype="string")
+        result["_dedup_key"] = pd.Series(dtype="string")
+        result["_normalized_order_id"] = pd.Series(dtype="string")
     return result
 
 
@@ -196,6 +234,9 @@ def build_preflight_report(
             previous_master_rows=previous_master_rows,
             candidate_new_rows=0,
             duplicate_rows=0,
+            duplicate_by_order_id_rows=0,
+            duplicate_by_fingerprint_rows=0,
+            missing_order_id_rows=0,
             invalid_rows=0,
             final_expected_master_rows=previous_master_rows,
             blocking_errors=read_errors,
@@ -205,13 +246,17 @@ def build_preflight_report(
     valid_incoming, validation = validate_large_trade_source(raw, source_file)
     master = add_dedup_keys(master)
     incoming = add_dedup_keys(valid_incoming)
-    incoming_before_internal_dedup = len(incoming)
+    missing_order_id_rows = int(incoming["_dedup_source"].eq("fingerprint").sum()) if len(incoming) else 0
+    internal_duplicate_mask = incoming.duplicated(subset=["_dedup_key"], keep="last")
+    duplicate_by_order_id_rows = int((internal_duplicate_mask & incoming["_dedup_source"].eq("order_id")).sum())
+    duplicate_by_fingerprint_rows = int((internal_duplicate_mask & incoming["_dedup_source"].eq("fingerprint")).sum())
     incoming = incoming.drop_duplicates(subset=["_dedup_key"], keep="last")
-    internal_duplicates = incoming_before_internal_dedup - len(incoming)
     existing_keys = set(master["_dedup_key"].dropna().astype(str).tolist()) if len(master) else set()
-    new_rows = incoming.loc[~incoming["_dedup_key"].astype(str).isin(existing_keys)].copy()
-    duplicate_existing_rows = len(incoming) - len(new_rows)
-    duplicate_rows = int(internal_duplicates + duplicate_existing_rows)
+    existing_duplicate_mask = incoming["_dedup_key"].astype(str).isin(existing_keys)
+    duplicate_by_order_id_rows += int((existing_duplicate_mask & incoming["_dedup_source"].eq("order_id")).sum())
+    duplicate_by_fingerprint_rows += int((existing_duplicate_mask & incoming["_dedup_source"].eq("fingerprint")).sum())
+    new_rows = incoming.loc[~existing_duplicate_mask].copy()
+    duplicate_rows = int(duplicate_by_order_id_rows + duplicate_by_fingerprint_rows)
     final_expected_master_rows = int(previous_master_rows + len(new_rows))
 
     blocking_errors = list(validation["blocking_errors"])
@@ -234,6 +279,9 @@ def build_preflight_report(
         previous_master_rows=previous_master_rows,
         candidate_new_rows=int(len(new_rows)),
         duplicate_rows=duplicate_rows,
+        duplicate_by_order_id_rows=duplicate_by_order_id_rows,
+        duplicate_by_fingerprint_rows=duplicate_by_fingerprint_rows,
+        missing_order_id_rows=missing_order_id_rows,
         invalid_rows=int(validation["invalid_rows"]),
         final_expected_master_rows=final_expected_master_rows,
         min_trade_ts=validation["min_trade_ts"],
@@ -265,6 +313,9 @@ def base_report(
     duplicate_rows: int,
     invalid_rows: int,
     final_expected_master_rows: int,
+    duplicate_by_order_id_rows: int = 0,
+    duplicate_by_fingerprint_rows: int = 0,
+    missing_order_id_rows: int = 0,
     min_trade_ts: str | None = None,
     max_trade_ts: str | None = None,
     symbols: list[str] | None = None,
@@ -288,6 +339,10 @@ def base_report(
         "previous_master_rows": int(previous_master_rows),
         "candidate_new_rows": int(candidate_new_rows),
         "duplicate_rows": int(duplicate_rows),
+        "duplicate_by_order_id_rows": int(duplicate_by_order_id_rows),
+        "duplicate_by_fingerprint_rows": int(duplicate_by_fingerprint_rows),
+        "missing_order_id_rows": int(missing_order_id_rows),
+        "dedup_policy": DEDUP_POLICY,
         "invalid_rows": int(invalid_rows),
         "final_expected_master_rows": int(final_expected_master_rows),
         "min_trade_ts": min_trade_ts,
@@ -360,8 +415,10 @@ def apply_import(
         report["reason"] = "preflight_failed"
         return report
     if len(new_rows) == 0:
+        report["status"] = "blocked"
         report["write_performed"] = False
-        report["reason"] = "all_rows_duplicate"
+        report["reason"] = "no_candidate_new_rows"
+        report["blocking_errors"] = [*report["blocking_errors"], "no_candidate_new_rows"]
         return report
     backup_paths = create_backups(
         [master_xlsx_path, master_parquet_path, compatibility_xlsx_path],
