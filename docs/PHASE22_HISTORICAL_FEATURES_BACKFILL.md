@@ -40,6 +40,8 @@ O builder:
 
 - valida `symbol`, timestamp ou `open_time`, `open`, `high`, `low`, `close` e
   `volume`;
+- quando `symbol` nao existe no arquivo bruto, infere o simbolo do filename no
+  formato `<SYMBOL>_1m_...`, desde que `SYMBOL` esteja no conjunto permitido;
 - preserva timestamps em UTC;
 - normaliza explicitamente colunas duplicadas antes de conversoes numericas;
 - garante que `pd.to_numeric` receba `Series` 1D;
@@ -66,9 +68,43 @@ Campos principais:
 - `symbols`
 - `timeframes`
 - `duplicate_columns`
+- `raw_files_total`
+- `raw_files_ok`
+- `raw_files_skipped`
+- `raw_files_blocked`
+- `skipped_paths`
+- `blocked_paths`
 
 `status=ok` indica que o backfill foi construido e validado. `status=blocked`
 indica falha controlada; consulte `reason`.
+
+## Inferencia De Symbol
+
+Alguns raws reais da Fase 22 podem vir sem coluna `symbol`. Nesses casos, o
+builder usa uma inferencia explicita e auditavel:
+
+1. o arquivo precisa ter nome no formato `<SYMBOL>_1m_...`;
+2. `SYMBOL` precisa estar na lista permitida passada em `--symbols`;
+3. a inferencia so ocorre quando a coluna `symbol` esta ausente.
+
+Cada item de `raw_file_reports` registra:
+
+- `symbol_inferred`: `true` ou `false`;
+- `inferred_symbol`: simbolo inferido ou `null`;
+- `symbol_source`: `column`, `filename` ou `missing`.
+
+Se o simbolo nao puder ser inferido, o arquivo entra como `status=blocked` com
+o path exato em `blocked_paths`. Isso nao zera a agregacao quando outros raws
+validos existem.
+
+## CSV E Parquet Duplicados
+
+Quando existem `.csv` e `.parquet` com o mesmo stem, o builder prefere
+`.parquet` e registra o `.csv` como `status=skipped`.
+
+Alem disso, apos concatenar os arquivos validos, os candles sao deduplicados por
+`symbol`, `tf` e `ts_ms`. Essa segunda barreira protege contra arquivos de
+periodos sobrepostos.
 
 ## Protecao De Overwrite
 

@@ -60,16 +60,31 @@ def market_frame(symbol: str, rows: int = 90) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def write_raw_csv(raw_dir: Path, symbol: str) -> None:
+def write_raw_csv(raw_dir: Path, symbol: str, *, include_symbol: bool = True) -> Path:
     raw_dir.mkdir(parents=True, exist_ok=True)
-    market_frame(symbol).to_csv(raw_dir / f"{symbol}_1m_fixture.csv", index=False)
+    frame = market_frame(symbol)
+    if not include_symbol:
+        frame = frame.drop(columns=["symbol"])
+    path = raw_dir / f"{symbol}_1m_fixture.csv"
+    frame.to_csv(path, index=False)
+    return path
+
+
+def write_raw_parquet(raw_dir: Path, symbol: str, *, include_symbol: bool = True) -> Path:
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    frame = market_frame(symbol)
+    if not include_symbol:
+        frame = frame.drop(columns=["symbol"])
+    path = raw_dir / f"{symbol}_1m_fixture.parquet"
+    frame.to_parquet(path, index=False)
+    return path
 
 
 def run_builder(tmp_path: Path, *, update_main: bool = False, backup: bool = False) -> dict:
     module = load_module()
     raw_dir = tmp_path / "raw"
-    write_raw_csv(raw_dir, "BTCUSDT")
-    write_raw_csv(raw_dir, "ETHUSDT")
+    write_raw_parquet(raw_dir, "BTCUSDT", include_symbol=False)
+    write_raw_csv(raw_dir, "ETHUSDT", include_symbol=False)
     return module.run_phase22_feature_build(
         raw_dir=raw_dir,
         symbols=["BTCUSDT", "ETHUSDT"],
@@ -169,6 +184,9 @@ def test_builder_outputs_btc_eth_1m_5m_sorted_schema_and_reports(tmp_path: Path)
     assert report["reason"] == "ok"
     assert report["rows"] == len(features)
     assert report["symbols"] == ["BTCUSDT", "ETHUSDT"]
+    assert report["raw_files_ok"] == 2
+    assert report["raw_files_skipped"] == 0
+    assert report["raw_files_blocked"] == 0
     assert set(features["symbol"]) == {"BTCUSDT", "ETHUSDT"}
     assert set(features["tf"]) == {"1m", "5m"}
     assert not features.columns.has_duplicates
@@ -177,6 +195,17 @@ def test_builder_outputs_btc_eth_1m_5m_sorted_schema_and_reports(tmp_path: Path)
     assert report["max_ts"] is not None
     assert quality_report["status"] == "ok"
     assert {"status", "reason", "rows", "min_ts", "max_ts"}.issubset(quality_report)
+    assert quality_report["live_trading_enabled"] is False
+    assert quality_report["order_submission_enabled"] is False
+    assert quality_report["real_order_submission_enabled"] is False
+    assert quality_report["exchange_private_access"] is False
+    assert {
+        item["path"]: (item["symbol_source"], item["symbol_inferred"], item["inferred_symbol"])
+        for item in report["raw_file_reports"]
+    } == {
+        str(tmp_path / "raw" / "BTCUSDT_1m_fixture.parquet"): ("filename", True, "BTCUSDT"),
+        str(tmp_path / "raw" / "ETHUSDT_1m_fixture.csv"): ("filename", True, "ETHUSDT"),
+    }
 
     for _, group in features.groupby(["symbol", "tf"]):
         assert group["ts_ms"].is_monotonic_increasing
@@ -193,6 +222,26 @@ def test_builder_blocks_main_overwrite_without_backup(tmp_path: Path) -> None:
 
     assert report["status"] == "blocked"
     assert report["reason"] == module.MAIN_OVERWRITE_BLOCK_REASON
+
+
+def test_main_features_update_removes_existing_lookahead_columns(tmp_path: Path) -> None:
+    module = load_module()
+    existing = module.normalize_raw(market_frame("BTCUSDT", rows=5))
+    existing["future_ret_1"] = 0.01
+    main_path = tmp_path / "features" / "market_features_60d.parquet"
+    main_path.parent.mkdir(parents=True, exist_ok=True)
+    existing.to_parquet(main_path, index=False)
+
+    report = run_builder(tmp_path, update_main=True, backup=True)
+    updated = pd.read_parquet(main_path)
+
+    assert report["status"] == "ok"
+    assert not [column for column in updated.columns if column.startswith("future_")]
+    assert not [
+        column
+        for column in report["main_features"]["columns"]
+        if column.startswith("future_")
+    ]
 
 
 def test_missing_raw_files_returns_controlled_blocked_report(tmp_path: Path) -> None:
@@ -218,6 +267,110 @@ def test_missing_raw_files_returns_controlled_blocked_report(tmp_path: Path) -> 
     assert json.loads((tmp_path / "features_report.json").read_text(encoding="utf-8"))[
         "status"
     ] == "blocked"
+
+
+def test_symbol_inference_from_parquet_filename_when_symbol_column_missing(tmp_path: Path) -> None:
+    module = load_module()
+    path = write_raw_parquet(tmp_path, "BTCUSDT", include_symbol=False)
+    table = module.read_table(path)
+
+    prepared, metadata = module.prepare_raw_for_normalization(
+        table,
+        path,
+        allowed_symbols={"BTCUSDT", "ETHUSDT"},
+        interval="1m",
+    )
+    normalized = module.normalize_raw(prepared)
+
+    assert metadata == {
+        "symbol_inferred": True,
+        "inferred_symbol": "BTCUSDT",
+        "symbol_source": "filename",
+    }
+    assert set(normalized["symbol"]) == {"BTCUSDT"}
+
+
+def test_symbol_inference_from_csv_filename_when_symbol_column_missing(tmp_path: Path) -> None:
+    module = load_module()
+    path = write_raw_csv(tmp_path, "ETHUSDT", include_symbol=False)
+    table = module.read_table(path)
+
+    prepared, metadata = module.prepare_raw_for_normalization(
+        table,
+        path,
+        allowed_symbols={"BTCUSDT", "ETHUSDT"},
+        interval="1m",
+    )
+    normalized = module.normalize_raw(prepared)
+
+    assert metadata["symbol_inferred"] is True
+    assert metadata["inferred_symbol"] == "ETHUSDT"
+    assert metadata["symbol_source"] == "filename"
+    assert set(normalized["symbol"]) == {"ETHUSDT"}
+
+
+def test_invalid_symbol_filename_is_blocked_without_zeroing_valid_files(tmp_path: Path) -> None:
+    module = load_module()
+    raw_dir = tmp_path / "raw"
+    write_raw_parquet(raw_dir, "BTCUSDT", include_symbol=False)
+    invalid = market_frame("BTCUSDT").drop(columns=["symbol"])
+    invalid.to_parquet(raw_dir / "DOGEUSDT_1m_fixture.parquet", index=False)
+
+    report = module.run_phase22_feature_build(
+        raw_dir=raw_dir,
+        symbols=["BTCUSDT", "ETHUSDT"],
+        interval="1m",
+        output_path=tmp_path / "features.parquet",
+        main_features_path=tmp_path / "main.parquet",
+        sqlite_path=tmp_path / "db.sqlite",
+        sqlite_table="market_features",
+        update_main_features=False,
+        backup=False,
+        backups_dir=tmp_path / "backups",
+        features_report_path=tmp_path / "features_report.json",
+        quality_report_path=tmp_path / "quality_report.json",
+    )
+
+    assert report["status"] == "ok"
+    assert report["raw_files_ok"] == 1
+    assert report["raw_files_blocked"] == 1
+    assert str(raw_dir / "DOGEUSDT_1m_fixture.parquet") in report["blocked_paths"]
+    assert report["rows"] > 0
+    assert report["symbols"] == ["BTCUSDT"]
+    blocked = [item for item in report["raw_file_reports"] if item["status"] == "blocked"][0]
+    assert blocked["symbol_source"] == "missing"
+    assert blocked["reason"].startswith("missing_symbol_and_uninferable_filename:")
+
+
+def test_duplicate_csv_and_parquet_prefers_parquet_and_deduplicates_candles(tmp_path: Path) -> None:
+    module = load_module()
+    raw_dir = tmp_path / "raw"
+    write_raw_parquet(raw_dir, "BTCUSDT", include_symbol=False)
+    write_raw_csv(raw_dir, "BTCUSDT", include_symbol=False)
+
+    report = module.run_phase22_feature_build(
+        raw_dir=raw_dir,
+        symbols=["BTCUSDT", "ETHUSDT"],
+        interval="1m",
+        output_path=tmp_path / "features.parquet",
+        main_features_path=tmp_path / "main.parquet",
+        sqlite_path=tmp_path / "db.sqlite",
+        sqlite_table="market_features",
+        update_main_features=False,
+        backup=False,
+        backups_dir=tmp_path / "backups",
+        features_report_path=tmp_path / "features_report.json",
+        quality_report_path=tmp_path / "quality_report.json",
+    )
+    features = pd.read_parquet(tmp_path / "features.parquet")
+
+    assert report["status"] == "ok"
+    assert report["raw_files_ok"] == 1
+    assert report["raw_files_skipped"] == 1
+    assert str(raw_dir / "BTCUSDT_1m_fixture.csv") in report["skipped_paths"]
+    one_minute = features[features["tf"] == "1m"]
+    assert len(one_minute) == len(market_frame("BTCUSDT"))
+    assert not one_minute.duplicated(subset=["symbol", "tf", "ts_ms"]).any()
 
 
 def test_phase22_builder_preserves_paper_shadow_only_safety(tmp_path: Path) -> None:
