@@ -96,9 +96,12 @@ def test_runner_generates_market_features_with_valid_schema(tmp_path: Path) -> N
     )
 
     assert report["status"] == "ok"
+    assert report["operational_feature_schema_ok"] is True
+    assert report["lookahead_columns"] == []
     assert report["market_features_age_minutes"] <= 15
     features = pd.read_parquet(output)
     assert {"symbol", "pair", "tf", "ts", "ret_1", "ema_20", "rsi_14", "market_regime"}.issubset(features.columns)
+    assert not [column for column in features.columns if column.startswith("future_ret_")]
     json.dumps(json.loads(report_path.read_text(encoding="utf-8")))
 
 

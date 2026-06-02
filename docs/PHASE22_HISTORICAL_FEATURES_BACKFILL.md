@@ -50,6 +50,11 @@ O builder:
 - ordena por `symbol`, `tf` e `ts_ms`;
 - grava relatorios JSON controlados.
 
+`market_features_60d.parquet` é tratado como arquivo operacional. Ele deve
+permanecer sem `future_ret_*` mesmo quando o arquivo existente continha labels
+antigas antes do merge. O relatório registra `output_schema_status`,
+`operational_feature_schema_ok` e `lookahead_columns_removed`.
+
 ## Relatorios
 
 Arquivos gerados:
