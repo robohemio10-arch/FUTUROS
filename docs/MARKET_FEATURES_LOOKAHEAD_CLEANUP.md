@@ -71,6 +71,24 @@ artefatos runtime. Ela sanitiza `future_ret_*`, grava opcionalmente labels em
 arquivo separado quando solicitado e substitui o parquet operacional de forma
 atomica.
 
+## Auditoria De Writers Runtime
+
+Para rastrear quem referencia ou publica o artefato operacional, use:
+
+```powershell
+python .\scripts\audit_market_features_runtime_writers.py
+```
+
+O relatorio e gravado em:
+
+```text
+data/reports/market_features_runtime_writer_audit.json
+```
+
+A auditoria escaneia `scripts/` e `smartcrypto/`, classifica referencias como
+writer runtime, reader runtime, writer offline/labels, teste ou desconhecido, e
+bloqueia writers runtime que nao passam pelo guard/sanitizacao central.
+
 ## Segurança
 
 Este fluxo e paper/shadow only. Ele nao habilita live trading, nao usa API
