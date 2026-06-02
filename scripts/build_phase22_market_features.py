@@ -3,6 +3,7 @@ import argparse
 import json
 import shutil
 import sqlite3
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
@@ -14,6 +15,7 @@ TIMESTAMP_ALIASES = ("timestamp", "ts", "ts_ms", "open_time")
 FEATURES_REPORT_PATH = Path("data/reports/phase22_features_report.json")
 DATA_QUALITY_REPORT_PATH = Path("data/reports/phase22_data_quality_report.json")
 MAIN_OVERWRITE_BLOCK_REASON = "main_features_backup_required_before_overwrite"
+RAW_FILENAME_RE = re.compile(r"^(?P<symbol>[A-Z0-9]+)_(?P<interval>[0-9]+[mhd])_", re.IGNORECASE)
 
 
 class Phase22FeatureBuildError(ValueError):
@@ -35,6 +37,88 @@ def raw_files(raw_dir: Path, symbols: list[str], interval: str) -> list[Path]:
         files.extend(sorted(raw_dir.glob(f"{symbol}_{interval}_*.parquet")))
         files.extend(sorted(raw_dir.glob(f"{symbol}_{interval}_*.csv")))
     return files
+
+
+def discover_raw_files(raw_dir: Path, interval: str) -> list[Path]:
+    return sorted(
+        [
+            *raw_dir.glob(f"*_{interval}_*.parquet"),
+            *raw_dir.glob(f"*_{interval}_*.csv"),
+        ],
+        key=lambda path: (path.stem, 0 if path.suffix.lower() == ".parquet" else 1),
+    )
+
+
+def select_raw_files_with_preferred_format(files: list[Path]) -> tuple[list[Path], list[dict]]:
+    selected: list[Path] = []
+    skipped: list[dict] = []
+    grouped: dict[str, list[Path]] = {}
+    for path in files:
+        grouped.setdefault(path.stem, []).append(path)
+
+    for stem in sorted(grouped):
+        candidates = sorted(
+            grouped[stem],
+            key=lambda path: (0 if path.suffix.lower() == ".parquet" else 1, str(path)),
+        )
+        winner = candidates[0]
+        selected.append(winner)
+        for duplicate in candidates[1:]:
+            skipped.append(
+                {
+                    "path": str(duplicate),
+                    "status": "skipped",
+                    "reason": f"duplicate_raw_file_preferred:{winner.suffix.lower()}",
+                    "preferred_path": str(winner),
+                    "rows": 0,
+                    "duplicate_columns": [],
+                    "symbol_inferred": False,
+                    "inferred_symbol": None,
+                    "symbol_source": "missing",
+                }
+            )
+    return selected, skipped
+
+
+def infer_symbol_from_filename(path: Path, allowed_symbols: set[str], interval: str) -> str | None:
+    match = RAW_FILENAME_RE.match(path.name)
+    if not match:
+        return None
+    symbol = match.group("symbol").upper()
+    file_interval = match.group("interval").lower()
+    if file_interval != interval.lower():
+        return None
+    if symbol not in allowed_symbols:
+        return None
+    return symbol
+
+
+def prepare_raw_for_normalization(
+    raw: pd.DataFrame,
+    path: Path,
+    *,
+    allowed_symbols: set[str],
+    interval: str,
+) -> tuple[pd.DataFrame, dict]:
+    frame = collapse_duplicate_columns(raw)
+    has_symbol = "symbol" in frame.columns
+    inferred_symbol = None
+    symbol_source = "column" if has_symbol else "missing"
+    symbol_inferred = False
+    if not has_symbol:
+        inferred_symbol = infer_symbol_from_filename(path, allowed_symbols, interval)
+        if inferred_symbol is None:
+            raise Phase22FeatureBuildError(f"missing_symbol_and_uninferable_filename:{path}")
+        frame["symbol"] = inferred_symbol
+        symbol_source = "filename"
+        symbol_inferred = True
+
+    metadata = {
+        "symbol_inferred": symbol_inferred,
+        "inferred_symbol": inferred_symbol,
+        "symbol_source": symbol_source,
+    }
+    return frame, metadata
 
 
 def duplicate_column_names(frame: pd.DataFrame) -> list[str]:
@@ -303,6 +387,13 @@ def build_feature_frame(normalized: pd.DataFrame) -> pd.DataFrame:
     return features
 
 
+def drop_lookahead_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    lookahead_columns = [col for col in frame.columns if str(col).startswith("future_")]
+    if not lookahead_columns:
+        return frame
+    return frame.drop(columns=lookahead_columns)
+
+
 def frame_summary(frame: pd.DataFrame, path: Path | None = None) -> dict:
     if frame.empty or "ts" not in frame.columns:
         min_ts = None
@@ -368,6 +459,15 @@ def controlled_report(
             for duplicate in item.get("duplicate_columns", [])
         }
     )
+    raw_files_ok = [
+        item["path"] for item in file_reports or [] if item.get("status") == "ok"
+    ]
+    raw_files_skipped = [
+        item["path"] for item in file_reports or [] if item.get("status") == "skipped"
+    ]
+    raw_files_blocked = [
+        item["path"] for item in file_reports or [] if item.get("status") == "blocked"
+    ]
     return {
         "status": status,
         "reason": reason,
@@ -379,6 +479,12 @@ def controlled_report(
         "timeframes": feature_summary["timeframes"],
         "duplicate_columns": duplicate_columns,
         "raw_files": [str(path) for path in files],
+        "raw_files_total": len(file_reports or files),
+        "raw_files_ok": len(raw_files_ok),
+        "raw_files_skipped": len(raw_files_skipped),
+        "raw_files_blocked": len(raw_files_blocked),
+        "skipped_paths": raw_files_skipped,
+        "blocked_paths": raw_files_blocked,
         "raw_rows": int(raw_summary["rows"]),
         "raw_file_reports": file_reports or [],
         "backfill_features": feature_summary,
@@ -433,6 +539,7 @@ def merge_with_main_features(
     else:
         main_path.parent.mkdir(parents=True, exist_ok=True)
 
+    final_features = drop_lookahead_columns(final_features)
     if duplicate_column_names(final_features):
         raise Phase22FeatureBuildError(
             f"duplicate_columns_in_main_features:{duplicate_column_names(final_features)}"
@@ -458,37 +565,80 @@ def run_phase22_feature_build(
     features_report_path: Path = FEATURES_REPORT_PATH,
     quality_report_path: Path = DATA_QUALITY_REPORT_PATH,
 ) -> dict:
-    files = raw_files(raw_dir, symbols, interval)
-    file_reports: list[dict] = []
+    discovered_files = discover_raw_files(raw_dir, interval)
+    files, skipped_reports = select_raw_files_with_preferred_format(discovered_files)
+    file_reports: list[dict] = list(skipped_reports)
     raw: pd.DataFrame | None = None
     features: pd.DataFrame | None = None
     main_report = None
     sqlite_report = None
+    allowed_symbols = {symbol.upper() for symbol in symbols}
 
     try:
-        if not files:
+        if not discovered_files:
             raise Phase22FeatureBuildError(
                 f"missing_raw_files:{raw_dir}:{symbols}:{interval}"
             )
 
         normalized_frames: list[pd.DataFrame] = []
         for path in files:
-            table = read_table(path)
-            duplicates = duplicate_column_names(table)
-            normalized = normalize_raw(table, interval)
-            file_reports.append(
-                {
-                    "path": str(path),
-                    "status": "ok",
-                    "reason": "ok",
-                    "rows": int(len(normalized)),
-                    "duplicate_columns": duplicates,
-                    "min_ts": normalized["ts"].min().isoformat(),
-                    "max_ts": normalized["ts"].max().isoformat(),
-                    "symbols": sorted(normalized["symbol"].unique().tolist()),
-                }
-            )
-            normalized_frames.append(normalized)
+            duplicates: list[str] = []
+            symbol_metadata = {
+                "symbol_inferred": False,
+                "inferred_symbol": None,
+                "symbol_source": "missing",
+            }
+            try:
+                table = read_table(path)
+                duplicates = duplicate_column_names(table)
+                prepared, symbol_metadata = prepare_raw_for_normalization(
+                    table,
+                    path,
+                    allowed_symbols=allowed_symbols,
+                    interval=interval,
+                )
+                normalized = normalize_raw(prepared, interval)
+                found_symbols = set(normalized["symbol"].dropna().astype(str).str.upper())
+                invalid_symbols = sorted(found_symbols - allowed_symbols)
+                if invalid_symbols:
+                    raise Phase22FeatureBuildError(
+                        f"raw_file_symbols_not_allowed:{path}:{invalid_symbols}"
+                    )
+                file_reports.append(
+                    {
+                        "path": str(path),
+                        "status": "ok",
+                        "reason": "ok",
+                        "rows": int(len(normalized)),
+                        "duplicate_columns": duplicates,
+                        "min_ts": normalized["ts"].min().isoformat(),
+                        "max_ts": normalized["ts"].max().isoformat(),
+                        "symbols": sorted(found_symbols),
+                        **symbol_metadata,
+                    }
+                )
+                normalized_frames.append(normalized)
+            except Exception as exc:
+                reason = str(exc)
+                if not isinstance(exc, Phase22FeatureBuildError):
+                    reason = f"invalid_schema:{reason}"
+                file_reports.append(
+                    {
+                        "path": str(path),
+                        "status": "blocked",
+                        "reason": reason,
+                        "rows": 0,
+                        "duplicate_columns": duplicates,
+                        "min_ts": None,
+                        "max_ts": None,
+                        "symbols": [],
+                        **symbol_metadata,
+                    }
+                )
+                continue
+
+        if not normalized_frames:
+            raise Phase22FeatureBuildError("no_valid_raw_files_after_file_level_validation")
 
         raw = pd.concat(normalized_frames, ignore_index=True)
         raw = raw.drop_duplicates(subset=["symbol", "tf", "ts_ms"]).sort_values(
@@ -518,7 +668,7 @@ def run_phase22_feature_build(
         report = controlled_report(
             status="ok",
             reason="ok",
-            files=files,
+            files=discovered_files,
             raw=raw,
             features=features,
             output_path=output_path,
@@ -533,7 +683,7 @@ def run_phase22_feature_build(
         report = controlled_report(
             status="blocked",
             reason=reason,
-            files=files,
+            files=discovered_files,
             raw=raw,
             features=features,
             output_path=output_path,
@@ -551,9 +701,18 @@ def run_phase22_feature_build(
         "symbols": report["symbols"],
         "timeframes": report["timeframes"],
         "duplicate_columns": report["duplicate_columns"],
+        "raw_files_total": report["raw_files_total"],
+        "raw_files_ok": report["raw_files_ok"],
+        "raw_files_skipped": report["raw_files_skipped"],
+        "raw_files_blocked": report["raw_files_blocked"],
+        "skipped_paths": report["skipped_paths"],
+        "blocked_paths": report["blocked_paths"],
         "raw_file_reports": report["raw_file_reports"],
         "runtime_mode": "paper",
         "shadow_only": True,
+        "live_trading_enabled": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
         "exchange_private_access": False,
         "created_at": report["created_at"],
     }
