@@ -115,6 +115,28 @@ services:
       - ./smartcrypto:/app/smartcrypto:ro
     command: python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300
 
+  phase14-feedback-sync-paper:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: unless-stopped
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_PHASE14_OPERATIONAL_DB_PATH: /paper-db/tradesv3.paper.sqlite
+      SMARTCRYPTO_FREQTRADE_DB_PATH: /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+      - freqtrade_paper_db:/paper-db:ro
+    command: python scripts/run_phase14_runtime_feedback_sync.py --source-db /paper-db/tradesv3.paper.sqlite --interval-seconds 120
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped

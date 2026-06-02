@@ -22,6 +22,49 @@ Agora precisamos transformar trades fechados em feedback de treino.
 
 Esta fase é paper-only. Ela apenas lê SQLite e exporta arquivos. Não executa ordens reais.
 
+## Serviço runtime paper
+
+O runtime paper possui um serviço dedicado para manter o dashboard sincronizado sem
+execução manual:
+
+```powershell
+docker compose -f docker-compose.paper.yml up -d phase14-feedback-sync-paper
+```
+
+O serviço executa periodicamente:
+
+```text
+python scripts/run_phase14_runtime_feedback_sync.py --source-db /paper-db/tradesv3.paper.sqlite --interval-seconds 120
+```
+
+Fluxo do serviço:
+
+```text
+named volume Freqtrade paper (read-only)
+-> snapshot em data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+-> inspect_phase14_open_positions
+-> collect_phase14_closed_feedback
+-> inspect_phase14_outputs
+-> collect_phase14_summary
+```
+
+O serviço monta `freqtrade_paper_db` em `/paper-db:ro`, portanto não altera o
+SQLite operacional do Freqtrade. Ele não chama Freqtrade API, não acessa exchange
+privada, não envia ordens e mantém:
+
+```text
+LIVE_ENABLED=false
+ORDER_SUBMISSION_ENABLED=false
+REAL_ORDER_SUBMISSION_ENABLED=false
+SMARTCRYPTO_RUNTIME_MODE=paper
+```
+
+O relatório do serviço fica em:
+
+```text
+data/reports/phase14_runtime_feedback_sync_report.json
+```
+
 ## Leitura SQLite via snapshot
 
 O SQLite paper do Freqtrade pode estar em bind mount dentro do container, por exemplo:
@@ -64,3 +107,14 @@ data/trades/inbox/freqtrade_paper_closed_trades.csv
 ```
 
 A Fase 5 pode importar o CSV da inbox e reconstruir os datasets.
+
+## Execução manual
+
+O fluxo manual continua disponível para diagnóstico:
+
+```powershell
+python .\scripts\export_freqtrade_paper_db_snapshot.py
+.\paper_controlado_fase_14\RUN_PHASE14_FULL_FEEDBACK_SYNC.ps1
+```
+
+Para runtime contínuo, prefira o serviço `phase14-feedback-sync-paper`.
