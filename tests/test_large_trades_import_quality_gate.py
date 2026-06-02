@@ -80,6 +80,10 @@ def test_valid_large_trade_file_dry_run_reports_new_rows(tmp_path: Path) -> None
     assert report["read_rows"] == 2
     assert report["candidate_new_rows"] == 2
     assert report["duplicate_rows"] == 0
+    assert report["duplicate_by_order_id_rows"] == 0
+    assert report["duplicate_by_fingerprint_rows"] == 0
+    assert report["missing_order_id_rows"] == 0
+    assert report["dedup_policy"] == "order_id_first_then_fingerprint"
     assert report["final_expected_master_rows"] == 3
     assert report["symbols"] == ["BTCUSDT", "ETHUSDT"]
     assert report["sides"] == ["LONG"]
@@ -98,7 +102,77 @@ def test_all_duplicate_file_is_ok_but_has_zero_new_rows(tmp_path: Path) -> None:
     assert report["reason"] == "all_rows_duplicate"
     assert report["candidate_new_rows"] == 0
     assert report["duplicate_rows"] == 1
+    assert report["duplicate_by_order_id_rows"] == 1
+    assert report["duplicate_by_fingerprint_rows"] == 0
+    assert report["missing_order_id_rows"] == 0
+    assert report["dedup_policy"] == "order_id_first_then_fingerprint"
     assert report["final_expected_master_rows"] == 1
+
+
+def test_order_id_dedup_matches_entire_existing_source(tmp_path: Path) -> None:
+    source = tmp_path / "incoming.parquet"
+    master = tmp_path / "trades" / "trades_master.parquet"
+    write_master(master, [trade_row("same-1"), trade_row("same-2", symbol="ETHUSDT")])
+    write_source(source, [trade_row("same-1"), trade_row("same-2", symbol="ETHUSDT")])
+
+    report = run_gate(tmp_path, source)
+
+    assert report["status"] == "ok"
+    assert report["reason"] == "all_rows_duplicate"
+    assert report["candidate_new_rows"] == 0
+    assert report["duplicate_rows"] == report["read_rows"] == 2
+    assert report["duplicate_by_order_id_rows"] == 2
+    assert report["duplicate_by_fingerprint_rows"] == 0
+    assert report["write_performed"] is False
+
+
+def test_partial_order_id_overlap_reports_only_new_rows(tmp_path: Path) -> None:
+    source = tmp_path / "incoming.parquet"
+    master = tmp_path / "trades" / "trades_master.parquet"
+    write_master(master, [trade_row("same-1")])
+    write_source(source, [trade_row("same-1"), trade_row("new-1", symbol="ETHUSDT")])
+
+    report = run_gate(tmp_path, source)
+
+    assert report["status"] == "ok"
+    assert report["candidate_new_rows"] == 1
+    assert report["duplicate_rows"] == 1
+    assert report["duplicate_by_order_id_rows"] == 1
+    assert report["duplicate_by_fingerprint_rows"] == 0
+    assert report["final_expected_master_rows"] == 2
+
+
+def test_excel_numeric_order_id_dot_zero_matches_master_order_id(tmp_path: Path) -> None:
+    source = tmp_path / "incoming.parquet"
+    master = tmp_path / "trades" / "trades_master.parquet"
+    write_master(master, [trade_row("123")])
+    source_row = trade_row("123.0")
+    write_source(source, [source_row])
+
+    report = run_gate(tmp_path, source)
+
+    assert report["status"] == "ok"
+    assert report["reason"] == "all_rows_duplicate"
+    assert report["candidate_new_rows"] == 0
+    assert report["duplicate_rows"] == 1
+    assert report["duplicate_by_order_id_rows"] == 1
+
+
+def test_rows_without_order_id_use_fingerprint_dedup(tmp_path: Path) -> None:
+    source = tmp_path / "incoming.parquet"
+    master = tmp_path / "trades" / "trades_master.parquet"
+    write_master(master, [trade_row("")])
+    write_source(source, [trade_row("")])
+
+    report = run_gate(tmp_path, source)
+
+    assert report["status"] == "ok"
+    assert report["reason"] == "all_rows_duplicate"
+    assert report["candidate_new_rows"] == 0
+    assert report["duplicate_rows"] == 1
+    assert report["duplicate_by_order_id_rows"] == 0
+    assert report["duplicate_by_fingerprint_rows"] == 1
+    assert report["missing_order_id_rows"] == 1
 
 
 def test_invalid_schema_blocks(tmp_path: Path) -> None:
@@ -163,6 +237,24 @@ def test_apply_after_ok_dry_run_creates_backup_before_write(tmp_path: Path) -> N
     assert applied["backup_created"] is True
     assert applied["backup_paths"]
     assert len(pd.read_parquet(master)) == 2
+
+
+def test_apply_blocks_when_preflight_has_zero_new_rows(tmp_path: Path) -> None:
+    source = tmp_path / "incoming.parquet"
+    master = tmp_path / "trades" / "trades_master.parquet"
+    write_master(master, [trade_row("same-1")])
+    write_source(source, [trade_row("same-1")])
+
+    dry_run = run_gate(tmp_path, source)
+    applied = run_gate(tmp_path, source, apply=True)
+
+    assert dry_run["status"] == "ok"
+    assert dry_run["candidate_new_rows"] == 0
+    assert applied["status"] == "blocked"
+    assert applied["reason"] == "no_candidate_new_rows"
+    assert applied["write_performed"] is False
+    assert "no_candidate_new_rows" in applied["blocking_errors"]
+    assert len(pd.read_parquet(master)) == 1
 
 
 def test_apply_blocks_when_preflight_failed(tmp_path: Path) -> None:
