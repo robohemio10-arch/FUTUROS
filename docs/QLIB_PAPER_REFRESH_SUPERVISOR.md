@@ -81,6 +81,20 @@ Campos principais:
 - `phase13_failed`: Phase13 falhou ao gerar sinais.
 - `stale_after_refresh`: refresh terminou, mas freshness ainda ficou stale/inválido.
 
+## Contrato De Market Features
+
+O supervisor depende de `data/features/market_features_60d.parquet` como arquivo
+operacional. Esse arquivo deve estar livre de lookahead:
+
+```text
+future_ret_*
+```
+
+O refresh de market features remove essas colunas antes de gravar o parquet
+operacional e reporta `operational_feature_schema_ok=true`. Se o relatório de
+market features indicar schema operacional inválido, o supervisor bloqueia antes
+de gerar predições ou sinais.
+
 ## Segurança
 
 O supervisor sempre reporta:

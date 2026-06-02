@@ -19,6 +19,7 @@ Por padrão o runner:
 - reconstrói features recentes com o builder institucional;
 - concatena com o histórico existente;
 - remove duplicatas por `symbol`, `tf` e `ts`;
+- remove colunas operacionais de lookahead `future_ret_*`;
 - valida schema mínimo esperado pelo Qlib;
 - bloqueia se o `market_features_max_timestamp` continuar stale.
 
@@ -56,6 +57,25 @@ A aba `Qlib / Predições` mostra também:
 - `market_features_max_timestamp`;
 - `market_features_age_minutes`;
 - `market_features_status`.
+
+## Contrato Sem Lookahead
+
+`data/features/market_features_60d.parquet` é um artefato operacional usado por
+Qlib runtime, Phase13, Fase 5 e dashboard. Ele não pode conter colunas
+`future_ret_*`.
+
+Quando o refresh encontra `future_ret_*` em dados existentes ou em features
+recém-geradas, essas colunas são removidas antes da escrita operacional e o
+relatório registra:
+
+- `output_schema_status`;
+- `operational_feature_schema_ok`;
+- `lookahead_columns`;
+- `lookahead_columns_removed`.
+
+Se labels futuras forem necessárias para treino ou walk-forward, elas devem
+ficar em artefato separado com nome explícito de label/target/training, nunca no
+arquivo operacional `market_features_60d.parquet`.
 
 Isso ajuda a distinguir predição stale por arquivo antigo de predição gerada agora com dado de entrada velho.
 
