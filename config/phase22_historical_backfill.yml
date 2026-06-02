@@ -19,14 +19,20 @@ paths:
   main_features: "data/features/market_features_60d.parquet"
   sqlite: "data/sqlite/trading_dataset.sqlite"
   reports_dir: "data/reports"
+  features_report: "data/reports/phase22_features_report.json"
+  data_quality_report: "data/reports/phase22_data_quality_report.json"
   evidence_dir: "data/evidence"
   backups_dir: "data/backups/phase22"
 features:
   update_main_features: true
   backup_main_features_before_update: true
+  require_ok_report_before_main_update: true
+  reject_lookahead_features: true
+  derived_timeframes: ["1m", "5m"]
   sqlite_table: "market_features"
 safety:
   require_paper_mode: true
   block_if_live_enabled: true
   block_if_order_submission_enabled: true
   block_if_real_order_submission_enabled: true
+  exchange_private_access: false
