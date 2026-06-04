@@ -1,78 +1,104 @@
 # Sklearn Model Version Compatibility Guard
 
-Este guard registra compatibilidade de versão sklearn para artefatos carregados pelo pipeline Qlib.
+Este guard transforma warnings recorrentes de compatibilidade `scikit-learn` em um gate institucional auditavel para modelos IA Shadow, challenger/champion metadata, trainer reports e artefatos locais.
 
 ## Problema
 
-Modelos e encoders salvos com `pickle`/`joblib` podem depender da versão exata do scikit-learn usada no treino/exportação. O warning observado no runtime foi:
+Modelos salvos via `pickle`/`joblib` podem depender da versao exata do scikit-learn usada no treino/exportacao. Quando o runtime usa outra versao, o scikit-learn pode emitir warnings como:
 
 ```text
-InconsistentVersionWarning:
-Trying to unpickle estimator LabelEncoder from version 1.8.0 when using version 1.7.0
+InconsistentVersionWarning: Trying to unpickle estimator from version 1.8.0 when using version 1.7.0
 ```
 
-Mesmo em paper/shadow, isso é risco operacional: uma predição pode continuar rodando, mas com comportamento diferente do ambiente de treino.
+Em paper/shadow, esse risco nao deve ficar escondido no console. Ele precisa ser registrado em JSON e bloquear uso agressivo, promocao ou interpretacao operacional quando a politica exigir.
 
 ## O Que O Guard Faz
 
-O módulo `smartcrypto/qlib_engine/sklearn_compatibility.py`:
+O modulo `smartcrypto/ml/sklearn_compatibility_guard.py`:
 
-- detecta a versão sklearn em runtime;
-- tenta detectar a versão sklearn salva no artefato quando há metadata;
-- captura `InconsistentVersionWarning` explicitamente durante `joblib.load`;
-- registra status no JSON do runner:
-  - `ok`;
-  - `warning`;
-  - `incompatible`;
-  - `unknown`.
+- le `sklearn.__version__` do runtime;
+- le metadata declarada em sidecar, registry, trainer report, JSONL, YAML, CSV ou Parquet quando aplicavel;
+- calcula SHA256 do modelo e da metadata quando os arquivos existem;
+- detecta warnings sklearn em logs fornecidos;
+- compara versao declarada do modelo com versao runtime;
+- gera relatorio runtime em `data/reports/sklearn_model_compatibility_guard_report.json`;
+- preserva `promotion_allowed=false` e `auto_promote=false`;
+- nunca carrega modelo por padrao;
+- nunca altera modelo, registry, dataset, Freqtrade DB, signal producer, Docker ou `.env`.
 
-O relatório do `run_qlib_fresh_predictions.py` expõe:
+## Politica
 
-- `sklearn_runtime_version`;
-- `sklearn_artifact_version`;
-- `sklearn_compatibility_status`;
-- `sklearn_compatibility_reason`;
-- `sklearn_compatibility`.
+Status possiveis:
 
-## Modo Permissivo
+- `ok`: versoes compativeis e sem bloqueios;
+- `warning`: patch mismatch, metadata parcial em modo nao estrito ou warning sklearn detectado em logs;
+- `blocked`: incompatibilidade major/minor, versao futura do modelo, runtime ausente, safety flag insegura, auto promotion ou promotion allowed indevido;
+- `missing_metadata`: nenhuma fonte de metadata suficiente;
+- `missing_model`: modelo informado nao existe.
 
-O modo padrão é permissivo. Se houver warning ou versão diferente, o runner mantém `status=ok` quando o restante do pipeline está válido, mas marca:
+Em `--strict`, o guard bloqueia metadata de versao ausente, registry sem identidade/versao para champion/challenger, trainer report sem versao, fonte de metadata ausente e demais violações de politica.
 
-```json
-"sklearn_compatibility_status": "warning"
-```
+Bloqueios permanentes:
 
-Isso evita quebrar o paper/shadow atual por um warning não bloqueante, mas torna o risco auditável.
+- `live_trading_enabled=true`;
+- `order_submission_enabled=true`;
+- `real_order_submission_enabled=true`;
+- `exchange_private_access=true`;
+- `sends_orders=true`;
+- `changes_risk=true`;
+- `auto_promote=true`;
+- `promotion_allowed=true` sem gate explicito aprovado.
 
-## Modo Strict
-
-O modo strict pode ser acionado no futuro com:
+## CLI
 
 ```powershell
-python .\scripts\run_qlib_fresh_predictions.py --sklearn-strict-compatibility
+python scripts/run_sklearn_model_compatibility_guard.py `
+  --model data/models/shadow/<modelo>.joblib `
+  --metadata data/models/shadow/<modelo>.metadata.json `
+  --registry data/models/registry/model_registry.json `
+  --trainer-report data/reports/ai_shadow_incremental_trainer_report.json `
+  --logs data/logs/runtime.log `
+  --report data/reports/sklearn_model_compatibility_guard_report.json
 ```
 
-Se o artefato estiver claramente incompatível, o runner retorna:
+Modo estrito:
 
-```json
-{
-  "status": "blocked",
-  "reason": "sklearn_artifact_incompatible"
-}
+```powershell
+python scripts/run_sklearn_model_compatibility_guard.py --strict
 ```
 
-## O Que Esta Branch Nao Faz
+## Campos Do Relatorio
 
-Esta branch não retreina modelo, não reexporta encoder e não altera Docker, `.env`, `START_PAPER_24H`, strategy, IA Shadow, Fase 5 ou Fase 14.
+O relatorio contem:
 
-Também não acessa exchange privada, não envia ordem e mantém o projeto paper/shadow only com live trading bloqueado.
+- `runtime_sklearn_version`;
+- `runtime_python_version`;
+- `model_declared_sklearn_version`;
+- `registry_declared_sklearn_version`;
+- `trainer_declared_sklearn_version`;
+- `compatibility_policy`;
+- `compatibility_findings`;
+- `blocking_findings`;
+- `warnings`;
+- `model_hash`;
+- `metadata_hash`;
+- `promotion_allowed=false`;
+- `auto_promote=false`;
+- safety flags paper/shadow only.
 
-## Próxima Etapa Recomendada
+## Garantias
 
-Retreinar/reexportar os artefatos Qlib com versão sklearn pinada e registrar no payload do modelo:
-
-```json
-"sklearn_artifact_version": "<versao_do_treino>"
-```
-
-Depois disso, o modo strict pode ser promovido de diagnóstico para bloqueio obrigatório.
+- Paper/shadow only.
+- Nao habilita live.
+- Nao envia ordens.
+- Nao acessa exchange privada.
+- Nao altera Freqtrade DB.
+- Nao altera `trades_master`.
+- Nao altera `training_dataset.parquet`.
+- Nao altera runtime Qlib.
+- Nao altera registry automaticamente.
+- Nao promove modelo.
+- Nao altera modelos.
+- Nao retreina modelo.
+- Nao altera Docker ou `.env`.
+- O relatorio em `data/reports/` e runtime e nao deve ser versionado.

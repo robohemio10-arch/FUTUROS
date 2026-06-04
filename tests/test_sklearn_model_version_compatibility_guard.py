@@ -1,203 +1,218 @@
 from __future__ import annotations
 
 import json
-import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
-import joblib
-import numpy as np
-import pandas as pd
 import sklearn
-from sklearn.exceptions import InconsistentVersionWarning
 
-from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
-from smartcrypto.qlib_engine.sklearn_compatibility import (
-    evaluate_sklearn_compatibility,
-    load_sklearn_artifact,
-)
+from scripts import run_sklearn_model_compatibility_guard as guard_cli
+from smartcrypto.ml.sklearn_compatibility_guard import run_sklearn_model_compatibility_guard
+
+NOW = datetime(2026, 6, 3, 12, 0, tzinfo=timezone.utc)
 
 
-class DummyProbabilityModel:
-    def predict_proba(self, frame):
-        return np.tile(np.array([[0.2, 0.8]], dtype=float), (len(frame), 1))
-
-
-def _write_config(path: Path) -> None:
-    path.write_text(
-        "\n".join(
-            [
-                'timeframe: "5m"',
-                "target_horizon: 3",
-                "min_rows_for_training: 10",
-                "test_size: 0.2",
-                "random_state: 42",
-                'model_version: "qlib_test"',
-                "prediction_threshold: 0.55",
-                "max_position_usdt: 50.0",
-                "leverage: 2.0",
-                "signal_ttl_minutes: 10",
-                "feature_columns:",
-                "  - ret_1",
-                "  - market_regime",
-            ]
-        ),
-        encoding="utf-8",
-    )
-
-
-def _write_market_features(path: Path) -> None:
-    now = datetime.now(timezone.utc)
-    pd.DataFrame(
-        [
-            {
-                "symbol": "BTCUSDT",
-                "pair": "BTC/USDT:USDT",
-                "tf": "5m",
-                "ts": now - timedelta(minutes=5),
-                "ret_1": 0.01,
-                "market_regime": "trend",
-            },
-            {
-                "symbol": "ETHUSDT",
-                "pair": "ETH/USDT:USDT",
-                "tf": "5m",
-                "ts": now,
-                "ret_1": -0.01,
-                "market_regime": "range",
-            },
-        ]
-    ).to_parquet(path, index=False)
-
-
-def _write_model(path: Path, *, sklearn_artifact_version: str | None = None) -> None:
-    payload = {
-        "model": DummyProbabilityModel(),
-        "feature_columns": ["ret_1", "market_regime"],
-        "model_version": "qlib_test",
-        "model_backend": "dummy_probability_model",
-    }
-    if sklearn_artifact_version is not None:
-        payload["sklearn_artifact_version"] = sklearn_artifact_version
+def write_json(path: Path, payload: dict) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(payload, path)
+    path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    return path
 
 
-def test_status_ok_when_versions_match() -> None:
-    report = evaluate_sklearn_compatibility(
-        artifact_version=sklearn.__version__,
-        runtime_version=sklearn.__version__,
-    )
-
-    assert report.status == "ok"
-    assert report.reason is None
+def write_model(path: Path, content: str = "model-bytes") -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    return path
 
 
-def test_status_warning_when_saved_version_differs_from_runtime() -> None:
-    report = evaluate_sklearn_compatibility(
-        artifact_version="1.8.0",
-        runtime_version="1.7.0",
-    )
-
-    assert report.status == "warning"
-    assert report.reason == "sklearn_version_mismatch"
-
-
-def test_status_unknown_when_metadata_missing() -> None:
-    report = evaluate_sklearn_compatibility(
-        artifact_version=None,
-        runtime_version=sklearn.__version__,
-    )
-
-    assert report.status == "unknown"
-    assert report.reason == "sklearn_artifact_version_unknown"
-
-
-def test_captures_inconsistent_version_warning(monkeypatch, tmp_path: Path) -> None:
-    def fake_load(path):
-        warnings.warn(
-            InconsistentVersionWarning(
-                estimator_name="LabelEncoder",
-                current_sklearn_version="1.7.0",
-                original_sklearn_version="1.8.0",
-            )
-        )
-        return {"model": "dummy"}
-
-    monkeypatch.setattr("smartcrypto.qlib_engine.sklearn_compatibility.joblib.load", fake_load)
-
-    _, report = load_sklearn_artifact(tmp_path / "model.joblib")
-
-    assert report.status == "warning"
-    assert report.sklearn_artifact_version == "1.8.0"
-    assert report.warning_count == 1
+def metadata(version: str | None = None, **extra) -> dict:
+    payload = {
+        "model_id": "shadow_model",
+        "model_version": "v1",
+        "feature_columns": ["feature_ret_1"],
+        "model_format_version": "shadow_joblib_v1",
+        "python_version": "3.12",
+        "paper_only": True,
+        "shadow_only": True,
+        "live_trading_enabled": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
+        "exchange_private_access": False,
+        "sends_orders": False,
+        "changes_risk": False,
+        "auto_promote": False,
+        "promotion_allowed": False,
+    }
+    if version is not None:
+        payload["trained_sklearn_version"] = version
+    payload.update(extra)
+    return payload
 
 
-def test_permissive_mode_does_not_block_runner(tmp_path: Path) -> None:
-    config = tmp_path / "qlib_model.yml"
-    features = tmp_path / "market_features.parquet"
-    model = tmp_path / "model.joblib"
-    output = tmp_path / "latest.parquet"
-    report_path = tmp_path / "report.json"
-    _write_config(config)
-    _write_market_features(features)
-    _write_model(model, sklearn_artifact_version="1.8.0")
-
-    report = run_qlib_fresh_predictions(
-        market_features_path=features,
+def run_guard(tmp_path: Path, *, version: str | None = "1.7.0", runtime: str | None = "1.7.0", strict: bool = False, **extra) -> dict:
+    model = write_model(tmp_path / "model.joblib")
+    meta = write_json(tmp_path / "model.metadata.json", metadata(version, **extra))
+    return run_sklearn_model_compatibility_guard(
         model_path=model,
-        output_path=output,
-        report_path=report_path,
-        config_path=config,
-        sklearn_strict_compatibility=False,
-    )
-
-    assert report["status"] == "ok"
-    assert report["sklearn_compatibility_status"] == "warning"
-    assert report["sklearn_compatibility_reason"] == "sklearn_version_mismatch"
-    json.dumps(json.loads(report_path.read_text(encoding="utf-8")))
-
-
-def test_strict_mode_blocks_runner(tmp_path: Path) -> None:
-    config = tmp_path / "qlib_model.yml"
-    features = tmp_path / "market_features.parquet"
-    model = tmp_path / "model.joblib"
-    _write_config(config)
-    _write_market_features(features)
-    _write_model(model, sklearn_artifact_version="1.8.0")
-
-    report = run_qlib_fresh_predictions(
-        market_features_path=features,
-        model_path=model,
-        output_path=tmp_path / "latest.parquet",
+        metadata_path=meta,
         report_path=tmp_path / "report.json",
-        config_path=config,
-        sklearn_strict_compatibility=True,
+        strict=strict,
+        runtime_sklearn_version=runtime,
+        now=NOW,
     )
 
+
+def test_sklearn_guard_accepts_matching_runtime_and_model_version(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version="1.7.0", runtime="1.7.0")
+    assert report["status"] == "ok"
+    assert report["runtime_sklearn_version"] == "1.7.0"
+    assert report["model_declared_sklearn_version"] == "1.7.0"
+    assert report["promotion_allowed"] is False
+    assert report["auto_promote"] is False
+
+
+def test_sklearn_guard_warns_on_patch_mismatch_non_strict(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version="1.7.0", runtime="1.7.1", strict=False)
+    assert report["status"] == "warning"
+    assert "sklearn_patch_version_mismatch" in report["warnings"]
+
+
+def test_sklearn_guard_blocks_major_minor_mismatch(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version="1.8.0", runtime="1.7.0")
     assert report["status"] == "blocked"
-    assert report["reason"] == "sklearn_artifact_incompatible"
-    assert report["sklearn_compatibility_status"] == "incompatible"
+    assert "sklearn_major_minor_mismatch" in report["blocking_findings"]
 
 
-def test_report_contains_compatibility_fields(tmp_path: Path) -> None:
-    config = tmp_path / "qlib_model.yml"
-    features = tmp_path / "market_features.parquet"
-    model = tmp_path / "model.joblib"
-    _write_config(config)
-    _write_market_features(features)
-    _write_model(model, sklearn_artifact_version=sklearn.__version__)
+def test_sklearn_guard_blocks_missing_model_version_in_strict_mode(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version=None, runtime="1.7.0", strict=True)
+    assert report["status"] == "blocked"
+    assert "missing_model_sklearn_version" in report["blocking_findings"]
 
-    report = run_qlib_fresh_predictions(
-        market_features_path=features,
-        model_path=model,
-        output_path=tmp_path / "latest.parquet",
-        report_path=tmp_path / "report.json",
-        config_path=config,
+
+def test_sklearn_guard_blocks_missing_runtime_version(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("smartcrypto.ml.sklearn_compatibility_guard.get_runtime_sklearn_version", lambda: None)
+    model = write_model(tmp_path / "model.joblib")
+    meta = write_json(tmp_path / "model.metadata.json", metadata("1.7.0"))
+    report = run_sklearn_model_compatibility_guard(model_path=model, metadata_path=meta, report_path=tmp_path / "report.json", now=NOW)
+    assert report["status"] == "blocked"
+    assert "missing_runtime_sklearn_version" in report["blocking_findings"]
+
+
+def test_sklearn_guard_blocks_future_model_version(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version="1.7.9", runtime="1.7.0")
+    assert report["status"] == "blocked"
+    assert "model_sklearn_version_future" in report["blocking_findings"]
+
+
+def test_sklearn_guard_reads_registry_metadata(tmp_path: Path) -> None:
+    registry = write_json(
+        tmp_path / "model_registry.json",
+        {
+            "champion_model_id": "champion",
+            "champion_model_version": "v0",
+            "challengers": [{"model_id": "shadow_model", "model_version": "v1", "metadata": metadata("1.7.0")}],
+        },
     )
-
+    report = run_sklearn_model_compatibility_guard(registry_path=registry, report_path=tmp_path / "report.json", runtime_sklearn_version="1.7.0", now=NOW)
     assert report["status"] == "ok"
-    assert report["sklearn_runtime_version"] == sklearn.__version__
-    assert report["sklearn_artifact_version"] == sklearn.__version__
-    assert report["sklearn_compatibility_status"] == "ok"
-    assert "sklearn_compatibility" in report
+    assert report["registry_declared_sklearn_version"] == "1.7.0"
+
+
+def test_sklearn_guard_reads_trainer_report_metadata(tmp_path: Path) -> None:
+    trainer = write_json(tmp_path / "trainer_report.json", metadata("1.7.0"))
+    report = run_sklearn_model_compatibility_guard(trainer_report_path=trainer, report_path=tmp_path / "report.json", runtime_sklearn_version="1.7.0", now=NOW)
+    assert report["status"] == "ok"
+    assert report["trainer_declared_sklearn_version"] == "1.7.0"
+
+
+def test_sklearn_guard_detects_warning_in_logs(tmp_path: Path) -> None:
+    logs = tmp_path / "runtime.log"
+    logs.write_text("InconsistentVersionWarning: sklearn_version_mismatch 1.8.0 vs 1.7.0", encoding="utf-8")
+    report = run_sklearn_model_compatibility_guard(logs_path=logs, report_path=tmp_path / "report.json", runtime_sklearn_version="1.7.0", now=NOW)
+    assert report["status"] in {"warning", "missing_metadata"}
+    assert report["log_warnings"]
+    assert any("sklearn_warning_detected" in item for item in report["warnings"])
+
+
+def test_sklearn_guard_calculates_model_and_metadata_hash(tmp_path: Path) -> None:
+    model = write_model(tmp_path / "model.joblib", "hash-me")
+    meta = write_json(tmp_path / "model.metadata.json", metadata("1.7.0"))
+    report = run_sklearn_model_compatibility_guard(model_path=model, metadata_path=meta, report_path=tmp_path / "report.json", runtime_sklearn_version="1.7.0", now=NOW)
+    assert report["model_hash"]
+    assert report["metadata_hash"]
+    assert len(report["model_hash"]) == 64
+    assert len(report["metadata_hash"]) == 64
+
+
+def test_sklearn_guard_never_allows_auto_promotion(tmp_path: Path) -> None:
+    report = run_guard(tmp_path, version="1.7.0", runtime="1.7.0", auto_promote=True)
+    assert report["status"] == "blocked"
+    assert report["auto_promote"] is False
+    assert "unsafe_safety_flag:auto_promote" in report["blocking_findings"]
+
+
+def test_sklearn_guard_blocks_unsafe_safety_flags(tmp_path: Path) -> None:
+    report = run_guard(
+        tmp_path,
+        version="1.7.0",
+        runtime="1.7.0",
+        live_trading_enabled=True,
+        order_submission_enabled=True,
+        real_order_submission_enabled=True,
+        exchange_private_access=True,
+        sends_orders=True,
+        changes_risk=True,
+    )
+    assert report["status"] == "blocked"
+    assert "unsafe_safety_flag:live_trading_enabled" in report["blocking_findings"]
+    assert "unsafe_safety_flag:order_submission_enabled" in report["blocking_findings"]
+    assert "unsafe_safety_flag:real_order_submission_enabled" in report["blocking_findings"]
+    assert "unsafe_safety_flag:exchange_private_access" in report["blocking_findings"]
+    assert "unsafe_safety_flag:sends_orders" in report["blocking_findings"]
+    assert "unsafe_safety_flag:changes_risk" in report["blocking_findings"]
+
+
+def test_cli_run_sklearn_model_compatibility_guard_runs_successfully(tmp_path: Path, capsys) -> None:
+    model = write_model(tmp_path / "model.joblib")
+    meta = write_json(tmp_path / "model.metadata.json", metadata(sklearn.__version__))
+    rc = guard_cli.main(["--model", str(model), "--metadata", str(meta), "--report", str(tmp_path / "report.json")])
+    output = json.loads(capsys.readouterr().out)
+    assert rc == 0
+    assert output["status"] == "ok"
+    assert output["runtime_sklearn_version"] == sklearn.__version__
+
+
+def test_does_not_touch_training_dataset_or_trades_master(tmp_path: Path) -> None:
+    protected = [
+        tmp_path / "data" / "features" / "training_dataset.parquet",
+        tmp_path / "data" / "trades" / "trades_master.xlsx",
+    ]
+    for path in protected:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("sentinel", encoding="utf-8")
+    run_guard(tmp_path, version="1.7.0", runtime="1.7.0")
+    assert all(path.read_text(encoding="utf-8") == "sentinel" for path in protected)
+
+
+def test_does_not_touch_freqtrade_db_registry_models_signal_producer_or_config(tmp_path: Path) -> None:
+    protected = [
+        tmp_path / "freqtrade" / "user_data" / "tradesv3.paper.sqlite",
+        tmp_path / "data" / "models" / "registry" / "model_registry.json",
+        tmp_path / "data" / "models" / "shadow" / "model.joblib",
+        tmp_path / "data" / "runtime" / "active_freqtrade_signals.json",
+        tmp_path / ".env",
+    ]
+    for path in protected:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("sentinel", encoding="utf-8")
+    run_sklearn_model_compatibility_guard(report_path=tmp_path / "guard.json", runtime_sklearn_version="1.7.0", now=NOW)
+    assert all(path.read_text(encoding="utf-8") == "sentinel" for path in protected)
+
+
+def test_never_sends_orders_or_accesses_exchange() -> None:
+    checked = [
+        Path("smartcrypto/ml/sklearn_compatibility_guard.py"),
+        Path("scripts/run_sklearn_model_compatibility_guard.py"),
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8").lower() for path in checked)
+    forbidden = ["create_order", "fetch_balance", "private_get", "freqtradeapi", "ccxt.", "requests.post"]
+    assert not any(token in combined for token in forbidden)
