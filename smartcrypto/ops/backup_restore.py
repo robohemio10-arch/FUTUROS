@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -24,6 +25,7 @@ def create_backup_snapshot(
     inputs: list[str | Path],
     output_dir: str | Path | None = None,
     report_path: str | Path | None = DEFAULT_REPORT_PATH,
+    project_root: str | Path | None = None,
     allow_freqtrade_db: bool = False,
     strict: bool = False,
     now: datetime | None = None,
@@ -31,9 +33,14 @@ def create_backup_snapshot(
 ) -> dict[str, Any]:
     created_at = ensure_utc(now or datetime.now(timezone.utc))
     snapshot_dir = Path(output_dir) if output_dir is not None else DEFAULT_BACKUP_ROOT / f"system_snapshot_{created_at.strftime('%Y%m%d_%H%M%S')}"
+    root = resolved_path(project_root or Path.cwd())
     safety = safety_payload(safety_overrides)
     blockers = [f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(safety)]
     files = collect_input_files(inputs)
+    relative_paths = {source: backup_relative_path(source, inputs, project_root=root) for source in files}
+    duplicate_relative_paths = duplicate_values(relative.as_posix() for relative in relative_paths.values())
+    if duplicate_relative_paths:
+        blockers.append("duplicate_relative_paths")
     for source in files:
         reason = forbidden_backup_reason(source, allow_freqtrade_db=allow_freqtrade_db)
         if reason:
@@ -51,6 +58,7 @@ def create_backup_snapshot(
             created_at=created_at,
             write_performed=False,
             missing_inputs=missing_inputs,
+            duplicate_relative_paths=duplicate_relative_paths,
             safety=safety,
         )
         write_report(report, report_path)
@@ -59,7 +67,7 @@ def create_backup_snapshot(
     manifest_files = []
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     for source in sorted(files, key=lambda path: str(path).lower()):
-        relative = backup_relative_path(source, inputs)
+        relative = relative_paths[source]
         destination = snapshot_dir / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
@@ -75,6 +83,8 @@ def create_backup_snapshot(
         "status": "ok",
         "manifest_version": 1,
         "created_at_utc": iso(created_at),
+        "project_root": str(root),
+        "relative_path_policy": "project_root_relative_else_external_hash",
         "file_count": len(manifest_files),
         "total_size_bytes": sum(item["size_bytes"] for item in manifest_files),
         "files": manifest_files,
@@ -91,6 +101,7 @@ def create_backup_snapshot(
         created_at=created_at,
         write_performed=True,
         missing_inputs=missing_inputs,
+        duplicate_relative_paths=[],
         safety=safety,
     )
     write_report(report, report_path)
@@ -114,20 +125,40 @@ def run_restore_dry_run(
     payload = load_manifest(manifest_path)
     missing_files: list[str] = []
     corrupted_files: list[str] = []
+    duplicate_relative_paths: list[str] = []
+    invalid_relative_paths: list[str] = []
     would_restore_files: list[dict[str, Any]] = []
     if not manifest_path.exists():
         blockers.append("missing_manifest")
     elif payload.get("status") != "ok":
         blockers.append("invalid_manifest")
     else:
-        for item in payload.get("files", []):
-            relative = Path(str(item.get("relative_path", "")))
+        manifest_files = payload.get("files", [])
+        if not isinstance(manifest_files, list):
+            manifest_files = []
+            blockers.append("invalid_manifest_files")
+        duplicate_relative_paths = duplicate_values(str(item.get("relative_path", "")) for item in manifest_files if isinstance(item, Mapping))
+        if duplicate_relative_paths:
+            blockers.append("duplicate_relative_paths")
+        for item in manifest_files:
+            if not isinstance(item, Mapping):
+                blockers.append("invalid_manifest_file_entry")
+                continue
+            relative_text = str(item.get("relative_path", ""))
+            if not valid_manifest_relative_path(relative_text):
+                invalid_relative_paths.append(relative_text)
+                continue
+            relative = Path(relative_text)
             snapshot_file = base_dir / relative
             if not snapshot_file.exists():
                 missing_files.append(relative.as_posix())
                 continue
             observed_hash = sha256_file(snapshot_file)
+            observed_size = snapshot_file.stat().st_size
+            expected_size = int_or_none(item.get("size_bytes"))
             if observed_hash != item.get("sha256"):
+                corrupted_files.append(relative.as_posix())
+            elif expected_size is None or observed_size != expected_size:
                 corrupted_files.append(relative.as_posix())
             would_restore_files.append(
                 {
@@ -137,6 +168,8 @@ def run_restore_dry_run(
                     "size_bytes": item.get("size_bytes", 0),
                 }
             )
+    if invalid_relative_paths:
+        blockers.append("invalid_relative_paths")
     if missing_files:
         blockers.append("missing_backup_files")
     if corrupted_files:
@@ -157,6 +190,8 @@ def run_restore_dry_run(
         "would_restore_files": would_restore_files,
         "missing_files": missing_files,
         "corrupted_files": corrupted_files,
+        "duplicate_relative_paths": duplicate_relative_paths,
+        "invalid_relative_paths": invalid_relative_paths,
         **safety,
     }
     write_report(report, report_path)
@@ -165,12 +200,23 @@ def run_restore_dry_run(
 
 def collect_input_files(inputs: list[str | Path]) -> list[Path]:
     files: list[Path] = []
+    seen: set[Path] = set()
     for item in inputs:
         target = Path(item)
         if target.is_file():
-            files.append(target)
+            resolved = resolved_path(target)
+            if resolved not in seen:
+                seen.add(resolved)
+                files.append(target)
         elif target.is_dir():
-            files.extend(path for path in target.rglob("*") if path.is_file())
+            for path in target.rglob("*"):
+                if not path.is_file():
+                    continue
+                resolved = resolved_path(path)
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                files.append(path)
     return files
 
 
@@ -184,16 +230,24 @@ def forbidden_backup_reason(path: Path, *, allow_freqtrade_db: bool) -> str | No
     return None
 
 
-def backup_relative_path(source: Path, inputs: list[str | Path]) -> Path:
+def backup_relative_path(source: Path, inputs: list[str | Path], *, project_root: Path | None = None) -> Path:
+    source_resolved = resolved_path(source)
+    root = resolved_path(project_root or Path.cwd())
+    try:
+        return source_resolved.relative_to(root)
+    except ValueError:
+        pass
     for item in sorted((Path(value) for value in inputs), key=lambda path: len(str(path)), reverse=True):
+        item_resolved = resolved_path(item)
         if item.is_dir():
             try:
-                return Path(item.name) / source.relative_to(item)
+                suffix = source_resolved.relative_to(item_resolved)
             except ValueError:
                 continue
-        if item.is_file() and source == item:
-            return Path(item.name)
-    return Path(source.name)
+            return Path("external") / external_path_id(item_resolved) / sanitized_path(item.name) / suffix
+        if item.is_file() and source_resolved == item_resolved:
+            return Path("external") / external_path_id(source_resolved) / sanitized_path(source.name)
+    return Path("external") / external_path_id(source_resolved) / sanitized_path(source.name)
 
 
 def backup_report(
@@ -206,6 +260,7 @@ def backup_report(
     created_at: datetime,
     write_performed: bool,
     missing_inputs: list[str],
+    duplicate_relative_paths: list[str],
     safety: dict[str, bool],
 ) -> dict[str, Any]:
     return {
@@ -218,6 +273,7 @@ def backup_report(
         "total_size_bytes": sum(int(item.get("size_bytes", 0)) for item in files),
         "files": files,
         "missing_inputs": missing_inputs,
+        "duplicate_relative_paths": duplicate_relative_paths,
         "write_performed": write_performed,
         **safety,
     }
@@ -239,3 +295,35 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def duplicate_values(values: Any) -> list[str]:
+    counts = Counter(str(value) for value in values)
+    return sorted(value for value, count in counts.items() if value and count > 1)
+
+
+def valid_manifest_relative_path(value: str) -> bool:
+    if not value:
+        return False
+    path = Path(value)
+    return not path.is_absolute() and ".." not in path.parts
+
+
+def resolved_path(path: str | Path) -> Path:
+    return Path(path).resolve()
+
+
+def external_path_id(path: Path) -> str:
+    return hashlib.sha256(str(path).lower().encode("utf-8")).hexdigest()[:16]
+
+
+def sanitized_path(value: str) -> Path:
+    cleaned = "".join(char if char.isalnum() or char in {".", "_", "-"} else "_" for char in str(value).strip())
+    return Path(cleaned or "unnamed")
+
+
+def int_or_none(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
