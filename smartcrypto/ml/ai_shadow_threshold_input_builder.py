@@ -18,6 +18,14 @@ DECISION_CANDIDATES = ("decision", "action_shadow", "ai_decision", "shadow_decis
 TIME_CANDIDATES = ("opened_at_utc", "open_time_utc", "horario_abertura", "timestamp_utc", "timestamp", "created_at_utc", "generated_at_utc", "created_at")
 OUTCOME_TIME_CANDIDATES = ("opened_at_utc", "open_time_utc", "horario_abertura", "timestamp_utc", "timestamp", "created_at_utc", "generated_at_utc", "created_at")
 RETURN_CANDIDATES = ("target_return", "return_pct", "pnl_fechado", "pnl_net", "pnl_usdt", "pnl", "profit_abs")
+EMBEDDED_OUTCOME_CANDIDATES = (
+    "shadow_filtered_pnl_usdt",
+    "base_policy_pnl_usdt",
+    "raw_pnl_usdt",
+    "pnl_usdt",
+    "pnl_net",
+    "pnl_fechado",
+)
 TARGET_CANDIDATES = ("target_profitable", "target_win")
 SAFE_FALSE_FLAGS = (
     "live_trading_enabled",
@@ -133,7 +141,7 @@ def build_ai_shadow_threshold_evaluation_input(
         return payload
 
     normalized_outcomes = normalize_outcomes(outcomes_frame)
-    rows = match_decisions_to_outcomes(
+    rows, match_stats = match_decisions_to_outcomes(
         normalized_decisions,
         normalized_outcomes,
         max_time_delta_minutes=max_time_delta_minutes,
@@ -177,6 +185,12 @@ def build_ai_shadow_threshold_evaluation_input(
         "output_rows": int(len(output_frame)),
         "matched_rows": matched_rows,
         "unmatched_rows": unmatched_rows,
+        "external_matched_rows": match_stats["external_matched_rows"],
+        "embedded_outcome_rows": match_stats["embedded_outcome_rows"],
+        "embedded_matched_rows": match_stats["embedded_matched_rows"],
+        "embedded_outcome_column_used": match_stats["embedded_outcome_column_used"],
+        "embedded_outcome_columns_used": match_stats["embedded_outcome_columns_used"],
+        "unmatched_reason_counts": match_stats["unmatched_reason_counts"],
         "missing_probability_rows": missing_probability_rows,
         "missing_decision_rows": missing_decision_rows,
         "missing_outcome_rows": missing_outcome_rows,
@@ -260,6 +274,9 @@ def normalize_decisions(frame: pd.DataFrame, *, decision_column: str) -> pd.Data
     if "action_shadow" not in result.columns:
         result["action_shadow"] = result["decision"]
     result["source_decision_path"] = result.get("source_decision_path")
+    for column in EMBEDDED_OUTCOME_CANDIDATES:
+        if column in result.columns:
+            result[column] = pd.to_numeric(result[column], errors="coerce").replace([np.inf, -np.inf], np.nan)
     return result
 
 
@@ -291,15 +308,69 @@ def coalesce_numeric(frame: pd.DataFrame, candidates: tuple[str, ...]) -> pd.Ser
     return result
 
 
-def match_decisions_to_outcomes(decisions: pd.DataFrame, outcomes: pd.DataFrame, *, max_time_delta_minutes: float) -> list[dict[str, Any]]:
+def match_decisions_to_outcomes(decisions: pd.DataFrame, outcomes: pd.DataFrame, *, max_time_delta_minutes: float) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     rows = []
     used_outcome_indexes: set[int] = set()
+    external_matched_rows = 0
+    embedded_matched_rows = 0
+    embedded_outcome_rows = 0
+    embedded_outcome_columns_used: list[str] = []
+    unmatched_reason_counts: dict[str, int] = {}
     for decision_index, decision in decisions.iterrows():
+        embedded_outcome, embedded_column = build_embedded_outcome(decision)
+        if embedded_outcome is not None:
+            embedded_outcome_rows += 1
         outcome, method, confidence = find_match(decision, outcomes, used_outcome_indexes, max_time_delta_minutes=max_time_delta_minutes)
         if outcome is not None:
             used_outcome_indexes.add(int(outcome.name))
+            external_matched_rows += 1
+        elif embedded_outcome is not None:
+            outcome = embedded_outcome
+            method = "embedded_decision_outcome"
+            confidence = 1.0
+            embedded_matched_rows += 1
+            if embedded_column:
+                embedded_outcome_columns_used.append(embedded_column)
+        else:
+            reason = "missing_embedded_outcome" if outcomes.empty else "no_external_or_embedded_outcome"
+            unmatched_reason_counts[reason] = unmatched_reason_counts.get(reason, 0) + 1
         rows.append(build_output_row(decision, outcome, method, confidence))
-    return rows
+    columns_used = sorted(set(embedded_outcome_columns_used), key=EMBEDDED_OUTCOME_CANDIDATES.index)
+    stats = {
+        "external_matched_rows": int(external_matched_rows),
+        "embedded_outcome_rows": int(embedded_outcome_rows),
+        "embedded_matched_rows": int(embedded_matched_rows),
+        "embedded_outcome_column_used": columns_used[0] if columns_used else None,
+        "embedded_outcome_columns_used": columns_used,
+        "unmatched_reason_counts": dict(sorted(unmatched_reason_counts.items())),
+    }
+    return rows, stats
+
+
+def build_embedded_outcome(decision: pd.Series) -> tuple[pd.Series | None, str | None]:
+    for column in EMBEDDED_OUTCOME_CANDIDATES:
+        if column not in decision.index:
+            continue
+        value = decision.get(column)
+        if pd.isna(value):
+            continue
+        value = pd.to_numeric(pd.Series([value]), errors="coerce").replace([np.inf, -np.inf], np.nan).iloc[0]
+        if pd.isna(value):
+            continue
+        outcome = {
+            "order_id": decision.get("order_id", ""),
+            "trade_id": decision.get("trade_id", ""),
+            "symbol": decision.get("symbol", ""),
+            "side": decision.get("side", ""),
+            "outcome_time_utc": decision.get("decision_time_utc"),
+            "open_time_utc": iso_timestamp(decision.get("decision_time_utc")) if pd.notna(decision.get("decision_time_utc")) else None,
+            "pnl_usdt": float(value),
+            "pnl_fechado": float(value),
+            "target_profitable": int(float(value) > 0.0),
+            "source_outcome_path": decision.get("source_decision_path"),
+        }
+        return pd.Series(outcome), column
+    return None, None
 
 
 def find_match(decision: pd.Series, outcomes: pd.DataFrame, used: set[int], *, max_time_delta_minutes: float) -> tuple[pd.Series | None, str, float]:
