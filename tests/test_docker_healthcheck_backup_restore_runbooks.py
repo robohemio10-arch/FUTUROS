@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -234,7 +235,120 @@ def test_backup_snapshot_writes_manifest_and_checksums(tmp_path: Path) -> None:
     assert report["status"] == "ok"
     assert report["file_count"] == 1
     assert manifest["files"][0]["sha256"]
-    assert (tmp_path / "backup" / "source" / "a.txt").exists()
+    assert (tmp_path / "backup" / manifest["files"][0]["relative_path"]).exists()
+
+
+def test_backup_snapshot_preserves_relative_paths_for_duplicate_basenames(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    dockerfiles = [
+        project / "docker" / "dashboard" / "Dockerfile",
+        project / "docker" / "qlib" / "Dockerfile",
+        project / "docker" / "smartcrypto" / "Dockerfile",
+    ]
+    for index, path in enumerate(dockerfiles):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"FROM python:3.11\n# {index}\n", encoding="utf-8")
+
+    report = create_backup_snapshot(
+        inputs=dockerfiles,
+        output_dir=tmp_path / "backup",
+        report_path=tmp_path / "backup_report.json",
+        project_root=project,
+        now=NOW,
+    )
+
+    relative_paths = [item["relative_path"] for item in report["files"]]
+    assert report["status"] == "ok"
+    assert sorted(relative_paths) == [
+        "docker/dashboard/Dockerfile",
+        "docker/qlib/Dockerfile",
+        "docker/smartcrypto/Dockerfile",
+    ]
+    assert all((tmp_path / "backup" / relative).exists() for relative in relative_paths)
+
+
+def test_backup_snapshot_manifest_has_unique_relative_paths(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    files = [
+        project / "docker" / "dashboard" / "Dockerfile",
+        project / "docker" / "qlib" / "Dockerfile",
+        project / "docker-compose.paper.yml",
+    ]
+    for path in files:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(path.as_posix(), encoding="utf-8")
+
+    report = create_backup_snapshot(
+        inputs=files,
+        output_dir=tmp_path / "backup",
+        report_path=tmp_path / "backup_report.json",
+        project_root=project,
+        now=NOW,
+    )
+    manifest = json.loads(Path(report["manifest_path"]).read_text(encoding="utf-8"))
+    relative_paths = [item["relative_path"] for item in manifest["files"]]
+
+    assert report["status"] == "ok"
+    assert report["duplicate_relative_paths"] == []
+    assert len(relative_paths) == len(set(relative_paths))
+
+
+def test_restore_dry_run_accepts_collision_safe_dockerfiles(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    dockerfiles = [
+        project / "docker" / "dashboard" / "Dockerfile",
+        project / "docker" / "qlib" / "Dockerfile",
+        project / "docker" / "smartcrypto" / "Dockerfile",
+    ]
+    for path in dockerfiles:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"FROM python:3.11\n# {path.parent.name}\n", encoding="utf-8")
+    backup = create_backup_snapshot(
+        inputs=dockerfiles,
+        output_dir=tmp_path / "backup",
+        report_path=tmp_path / "backup_report.json",
+        project_root=project,
+        now=NOW,
+    )
+
+    report = run_restore_dry_run(
+        backup_dir=backup["backup_dir"],
+        manifest=backup["manifest_path"],
+        report_path=tmp_path / "restore_report.json",
+        now=NOW,
+    )
+
+    assert report["status"] == "ok"
+    assert report["manifest_valid"] is True
+    assert report["corrupted_files"] == []
+    assert report["missing_files"] == []
+
+
+def test_restore_dry_run_blocks_duplicate_manifest_relative_paths(tmp_path: Path) -> None:
+    backup_dir = tmp_path / "backup"
+    backup_dir.mkdir()
+    payload = b"same"
+    snapshot_file = backup_dir / "Dockerfile"
+    snapshot_file.write_bytes(payload)
+    digest = hashlib.sha256(payload).hexdigest()
+    manifest = {
+        "status": "ok",
+        "manifest_version": 1,
+        "created_at_utc": "2026-06-03T12:00:00Z",
+        "files": [
+            {"relative_path": "Dockerfile", "source_path": "docker/dashboard/Dockerfile", "sha256": digest, "size_bytes": len(payload)},
+            {"relative_path": "Dockerfile", "source_path": "docker/qlib/Dockerfile", "sha256": digest, "size_bytes": len(payload)},
+        ],
+        **safe_flags(),
+    }
+    manifest_path = write_json(backup_dir / "backup_manifest.json", manifest)
+
+    report = run_restore_dry_run(backup_dir=backup_dir, manifest=manifest_path, report_path=tmp_path / "restore.json", now=NOW)
+
+    assert report["status"] == "blocked"
+    assert "duplicate_relative_paths" in report["reason"]
+    assert report["duplicate_relative_paths"] == ["Dockerfile"]
+    assert report["manifest_valid"] is False
 
 
 def test_backup_snapshot_blocks_sensitive_env_or_secret_files(tmp_path: Path) -> None:
@@ -379,6 +493,17 @@ def test_never_sends_orders_or_accesses_exchange() -> None:
         Path("smartcrypto/ops/system_healthcheck.py"),
         Path("smartcrypto/ops/backup_restore.py"),
         Path("scripts/run_system_healthcheck.py"),
+        Path("scripts/run_backup_snapshot.py"),
+        Path("scripts/run_restore_dry_run.py"),
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8").lower() for path in checked)
+    forbidden = ["create_order", "fetch_balance", "private_get", "freqtradeapi", "ccxt.", "requests.post"]
+    assert not any(token in combined for token in forbidden)
+
+
+def test_backup_restore_never_sends_orders_or_accesses_exchange() -> None:
+    checked = [
+        Path("smartcrypto/ops/backup_restore.py"),
         Path("scripts/run_backup_snapshot.py"),
         Path("scripts/run_restore_dry_run.py"),
     ]

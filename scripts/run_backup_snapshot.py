@@ -17,6 +17,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--inputs", nargs="+", required=True)
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--report", default=str(DEFAULT_REPORT_PATH))
+    parser.add_argument("--project-root", default=str(ROOT))
     parser.add_argument("--allow-freqtrade-db", action="store_true")
     parser.add_argument("--strict", action="store_true")
     return parser.parse_args(argv)
@@ -28,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
         inputs=args.inputs,
         output_dir=args.output_dir,
         report_path=args.report,
+        project_root=args.project_root,
         allow_freqtrade_db=args.allow_freqtrade_db,
         strict=args.strict,
     )

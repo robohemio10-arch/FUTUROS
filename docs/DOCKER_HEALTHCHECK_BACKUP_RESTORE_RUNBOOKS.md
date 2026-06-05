@@ -73,6 +73,14 @@ O manifesto fica em:
 <backup-dir>/backup_manifest.json
 ```
 
+Politica de caminhos:
+
+- arquivos dentro do repositorio sao registrados pelo caminho relativo ao project root, por exemplo `docker/dashboard/Dockerfile`, `docker/qlib/Dockerfile` e `docker/smartcrypto/Dockerfile`;
+- arquivos fora do repositorio usam namespace externo seguro `external/<hash>/<basename>` ou `external/<hash>/<input-dir>/<path-interno>`;
+- `files[].relative_path` nunca deve se repetir no manifesto;
+- se um manifesto externo ou legado contiver `relative_path` duplicado, o restore dry-run bloqueia com `duplicate_relative_paths`;
+- se o backup detectar colisao antes de escrever, ele bloqueia em vez de gerar snapshot ambiguo.
+
 Campos principais:
 
 - `file_count`;
@@ -108,6 +116,15 @@ python scripts/run_restore_dry_run.py `
 
 ```powershell
 python scripts/run_backup_snapshot.py --inputs docs config --output-dir data/backups/system_snapshot_YYYYMMDD_HHMMSS
+```
+
+Exemplo para evidencias runtime e Dockerfiles institucionais:
+
+```powershell
+python scripts/run_backup_snapshot.py `
+  --inputs data/reports/critical_alerting_report.json data/reports/market_data_health_audit_report.json data/reports/state_reconciliation_audit_report.json data/reports/order_intent_capital_ledger_audit_report.json data/reports/risk_recovery_mode_audit_report.json data/reports/runtime_evidence_refresh_report.json data/reports/system_healthcheck_report.json data/runtime/runtime_safety_audit_config.json docker-compose.paper.yml docker/smartcrypto/Dockerfile docker/dashboard/Dockerfile docker/qlib/Dockerfile `
+  --output-dir data/backups/runtime_evidence_latest `
+  --report data/reports/backup_snapshot_report.json
 ```
 
 2. Validar restore dry-run:
