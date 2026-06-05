@@ -21,6 +21,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Audita saúde de dados de mercado em modo paper/shadow read-only."
     )
     parser.add_argument("--candles")
+    parser.add_argument("--runtime-candles")
     parser.add_argument("--ticker")
     parser.add_argument("--order-book")
     parser.add_argument("--trades")
@@ -46,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     report = run_market_data_health_audit(
         candles_path=args.candles,
+        runtime_candles_path=args.runtime_candles,
         ticker_path=args.ticker,
         order_book_path=args.order_book,
         trades_path=args.trades,

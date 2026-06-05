@@ -27,6 +27,7 @@ Fetcher = Callable[[str, dict[str, Any], float], tuple[Any, float]]
 
 @dataclass(frozen=True)
 class RuntimeSourcePaths:
+    candles: Path
     ticker: Path
     order_book: Path
     trades: Path
@@ -53,6 +54,7 @@ def collect_market_data_health_runtime_sources(
     normalized_symbols = [normalize_symbol(symbol) for symbol in symbols]
     output = Path(output_dir)
     paths = RuntimeSourcePaths(
+        candles=output / "candles.json",
         ticker=output / "ticker.json",
         order_book=output / "order_book.json",
         trades=output / "trades.json",
@@ -63,6 +65,7 @@ def collect_market_data_health_runtime_sources(
     safety = safety_payload(safety_overrides)
     blocking_errors = [f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(safety)]
     warnings: list[str] = []
+    candle_rows: list[dict[str, Any]] = []
     ticker_rows: list[dict[str, Any]] = []
     order_book_rows: list[dict[str, Any]] = []
     trade_rows: list[dict[str, Any]] = []
@@ -70,6 +73,15 @@ def collect_market_data_health_runtime_sources(
     heartbeat_rows: list[dict[str, Any]] = []
 
     for symbol in normalized_symbols:
+        try:
+            klines_payload, klines_latency = active_fetcher(
+                "/fapi/v1/klines",
+                {"symbol": symbol, "interval": "1m", "limit": 3},
+                timeout_seconds,
+            )
+            candle_rows.extend(candle_rows_from_klines(symbol, klines_payload, klines_latency, current_time))
+        except Exception as exc:
+            warnings.append(f"{symbol}:candles_fetch_failed:{type(exc).__name__}")
         try:
             ticker_payload, ticker_latency = active_fetcher("/fapi/v1/ticker/bookTicker", {"symbol": symbol}, timeout_seconds)
             ticker_rows.append(ticker_row(symbol, ticker_payload, ticker_latency, current_time))
@@ -94,6 +106,7 @@ def collect_market_data_health_runtime_sources(
 
     if strict:
         for source_name, rows in {
+            "candles": candle_rows,
             "ticker": ticker_rows,
             "order_book": order_book_rows,
             "trades": trade_rows,
@@ -102,13 +115,14 @@ def collect_market_data_health_runtime_sources(
         }.items():
             if not rows:
                 blocking_errors.append(f"missing_runtime_source:{source_name}")
+    write_runtime_json(paths.candles, candle_rows, current_time, safety)
     write_runtime_json(paths.ticker, ticker_rows, current_time, safety)
     write_runtime_json(paths.order_book, order_book_rows, current_time, safety)
     write_runtime_json(paths.trades, trade_rows, current_time, safety)
     write_runtime_json(paths.rest_snapshot, rest_rows, current_time, safety)
     write_runtime_json(paths.ws_heartbeat, heartbeat_rows, current_time, safety)
 
-    metrics = aggregate_metrics(ticker_rows, order_book_rows, rest_rows, heartbeat_rows, current_time)
+    metrics = aggregate_metrics(candle_rows, ticker_rows, order_book_rows, rest_rows, heartbeat_rows, current_time)
     status = "blocked" if blocking_errors else "warning" if warnings else "ok"
     report = {
         "status": status,
@@ -122,6 +136,7 @@ def collect_market_data_health_runtime_sources(
         "output_dir": str(output),
         "runtime_source_paths": paths.as_dict(),
         "source_counts": {
+            "candles": len(candle_rows),
             "ticker": len(ticker_rows),
             "order_book": len(order_book_rows),
             "trades": len(trade_rows),
@@ -153,6 +168,34 @@ def public_binance_futures_fetcher(endpoint: str, params: dict[str, Any], timeou
         raise
     latency_ms = (time.perf_counter() - started) * 1000.0
     return payload, latency_ms
+
+
+def candle_rows_from_klines(symbol: str, payload: Any, latency_ms: float, now: datetime) -> list[dict[str, Any]]:
+    rows = payload if isinstance(payload, list) else []
+    output = []
+    for kline in rows[-3:]:
+        if not isinstance(kline, list | tuple) or len(kline) < 6:
+            continue
+        timestamp = ms_to_iso(kline[0]) or iso(now)
+        output.append(
+            {
+                "symbol": symbol,
+                "timestamp": timestamp,
+                "ts": timestamp,
+                "open_time_utc": timestamp,
+                "close_time_utc": ms_to_iso(kline[6]) if len(kline) > 6 else None,
+                "open": float_value(kline[1]),
+                "high": float_value(kline[2]),
+                "low": float_value(kline[3]),
+                "close": float_value(kline[4]),
+                "volume": float_value(kline[5]),
+                "latency_ms": safe_float(latency_ms),
+                "candle_timeframe": "1m",
+                "candle_source": "public_rest_klines",
+                "source": "binance_public_rest_klines",
+            }
+        )
+    return output
 
 
 def ticker_row(symbol: str, payload: Any, latency_ms: float, now: datetime) -> dict[str, Any]:
@@ -242,6 +285,7 @@ def ws_heartbeat_row(symbol: str, now: datetime, *, simulated: bool) -> dict[str
 
 
 def aggregate_metrics(
+    candle_rows: list[dict[str, Any]],
     ticker_rows: list[dict[str, Any]],
     order_book_rows: list[dict[str, Any]],
     rest_rows: list[dict[str, Any]],
@@ -249,13 +293,18 @@ def aggregate_metrics(
     now: datetime,
 ) -> dict[str, dict[str, Any]]:
     metrics: dict[str, dict[str, Any]] = {}
-    symbols = sorted({row["symbol"] for row in [*ticker_rows, *order_book_rows, *rest_rows, *heartbeat_rows]})
+    symbols = sorted({row["symbol"] for row in [*candle_rows, *ticker_rows, *order_book_rows, *rest_rows, *heartbeat_rows]})
     for symbol in symbols:
+        candle = latest_for_symbol(candle_rows, symbol)
         ticker = latest_for_symbol(ticker_rows, symbol)
         book = latest_for_symbol(order_book_rows, symbol)
         rest = latest_for_symbol(rest_rows, symbol)
         heartbeat = latest_for_symbol(heartbeat_rows, symbol)
         metrics[symbol] = {
+            "last_candle_timestamp_utc": value_or_none(candle, "timestamp"),
+            "last_candle_age_seconds": age_seconds(candle, now),
+            "candle_timeframe": value_or_none(candle, "candle_timeframe"),
+            "candle_source": value_or_none(candle, "candle_source"),
             "spread_bps": first_present(book, ticker, "spread_bps"),
             "top_of_book_depth": value_or_none(book, "top_of_book_depth"),
             "estimated_slippage_bps": value_or_none(book, "estimated_slippage_bps"),

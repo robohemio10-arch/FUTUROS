@@ -15,6 +15,12 @@ NOW = datetime(2026, 6, 5, 12, 0, tzinfo=timezone.utc)
 
 def fake_fetcher(endpoint: str, params: dict, timeout_seconds: float):
     symbol = params.get("symbol", "BTCUSDT")
+    if endpoint == "/fapi/v1/klines":
+        return [
+            [int((NOW - timedelta(minutes=2)).timestamp() * 1000), "99.0", "100.0", "98.0", "99.5", "10", int((NOW - timedelta(minutes=2, seconds=-59)).timestamp() * 1000)],
+            [int((NOW - timedelta(minutes=1)).timestamp() * 1000), "99.5", "100.5", "99.0", "100.0", "11", int((NOW - timedelta(seconds=1)).timestamp() * 1000)],
+            [int(NOW.timestamp() * 1000), "100.0", "101.0", "99.5", "100.5", "12", int((NOW + timedelta(seconds=59)).timestamp() * 1000)],
+        ], 11.0
     if endpoint == "/fapi/v1/ticker/bookTicker":
         return {"symbol": symbol, "bidPrice": "100.00", "askPrice": "100.10", "bidQty": "50", "askQty": "55"}, 12.5
     if endpoint == "/fapi/v1/depth":
@@ -61,6 +67,46 @@ def write_candles(path: Path, *, seconds_ago: int = 1) -> Path:
     return path
 
 
+def write_runtime_candles_json(path: Path, *, seconds_ago: int) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = (NOW - timedelta(seconds=seconds_ago)).isoformat().replace("+00:00", "Z")
+    path.write_text(
+        json.dumps(
+            {
+                "generated_at_utc": NOW.isoformat().replace("+00:00", "Z"),
+                "rows": [
+                    {
+                        "symbol": "BTCUSDT",
+                        "timestamp": timestamp,
+                        "ts": timestamp,
+                        "open": 1,
+                        "high": 1,
+                        "low": 1,
+                        "close": 1,
+                        "volume": 1,
+                        "candle_timeframe": "1m",
+                        "candle_source": "public_rest_klines",
+                    },
+                    {
+                        "symbol": "ETHUSDT",
+                        "timestamp": timestamp,
+                        "ts": timestamp,
+                        "open": 1,
+                        "high": 1,
+                        "low": 1,
+                        "close": 1,
+                        "volume": 1,
+                        "candle_timeframe": "1m",
+                        "candle_source": "public_rest_klines",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def test_collects_public_market_health_sources_without_private_access(tmp_path: Path) -> None:
     report = collect(tmp_path)
     assert report["status"] == "ok"
@@ -71,16 +117,21 @@ def test_collects_public_market_health_sources_without_private_access(tmp_path: 
     assert report["sends_orders"] is False
 
 
-def test_outputs_ticker_order_book_trades_rest_snapshot_and_heartbeat(tmp_path: Path) -> None:
+def test_outputs_ticker_order_book_trades_rest_snapshot_heartbeat_and_candles(tmp_path: Path) -> None:
     report = collect(tmp_path)
     paths = {name: Path(path) for name, path in report["runtime_source_paths"].items()}
-    assert set(paths) == {"ticker", "order_book", "trades", "rest_snapshot", "ws_heartbeat"}
+    assert set(paths) == {"candles", "ticker", "order_book", "trades", "rest_snapshot", "ws_heartbeat"}
     assert all(path.exists() for path in paths.values())
+    assert len(load_rows(paths["candles"])) == 6
     assert len(load_rows(paths["ticker"])) == 2
     assert len(load_rows(paths["order_book"])) == 2
     assert len(load_rows(paths["trades"])) == 2
     assert len(load_rows(paths["rest_snapshot"])) == 2
     assert len(load_rows(paths["ws_heartbeat"])) == 2
+    assert report["source_counts"]["candles"] == 6
+    assert report["metrics"]["BTCUSDT"]["last_candle_age_seconds"] == 0.0
+    assert report["metrics"]["BTCUSDT"]["candle_timeframe"] == "1m"
+    assert report["metrics"]["BTCUSDT"]["candle_source"] == "public_rest_klines"
 
 
 def test_computes_spread_bps_depth_slippage_and_latency(tmp_path: Path) -> None:
@@ -142,6 +193,67 @@ def test_market_health_audit_accepts_optional_runtime_sources(tmp_path: Path) ->
     )
     assert audit["status"] == "ok"
     assert audit["global_summary"]["sources_present"] == ["candles", "order_book", "rest_snapshot", "ticker", "trades", "ws_heartbeat"]
+
+
+def test_market_health_audit_uses_runtime_candles_for_freshness(tmp_path: Path) -> None:
+    report = collect(tmp_path)
+    stale_feature_candles = write_candles(tmp_path / "candles.parquet", seconds_ago=1_000)
+    audit = run_market_data_health_audit(
+        candles_path=stale_feature_candles,
+        runtime_candles_path=report["runtime_source_paths"]["candles"],
+        ticker_path=report["runtime_source_paths"]["ticker"],
+        order_book_path=report["runtime_source_paths"]["order_book"],
+        trades_path=report["runtime_source_paths"]["trades"],
+        rest_snapshot_path=report["runtime_source_paths"]["rest_snapshot"],
+        ws_heartbeat_path=report["runtime_source_paths"]["ws_heartbeat"],
+        report_path=None,
+        now=NOW,
+        strict=True,
+    )
+    assert audit["status"] == "ok"
+    assert audit["candle_source_selection"]["selected"] == "runtime_candles"
+    assert "candle_stale" not in ";".join(audit["validation_errors"])
+
+
+def test_market_health_audit_blocks_when_runtime_candles_stale(tmp_path: Path) -> None:
+    report = collect(tmp_path)
+    fresh_feature_candles = write_candles(tmp_path / "candles.parquet", seconds_ago=1)
+    stale_runtime_candles = write_runtime_candles_json(tmp_path / "runtime_candles.json", seconds_ago=1_000)
+    audit = run_market_data_health_audit(
+        candles_path=fresh_feature_candles,
+        runtime_candles_path=stale_runtime_candles,
+        ticker_path=report["runtime_source_paths"]["ticker"],
+        order_book_path=report["runtime_source_paths"]["order_book"],
+        trades_path=report["runtime_source_paths"]["trades"],
+        rest_snapshot_path=report["runtime_source_paths"]["rest_snapshot"],
+        ws_heartbeat_path=report["runtime_source_paths"]["ws_heartbeat"],
+        report_path=None,
+        now=NOW,
+        strict=True,
+    )
+    assert audit["status"] == "blocked"
+    assert audit["candle_source_selection"]["selected"] == "runtime_candles"
+    assert any("candle_stale" in error for error in audit["validation_errors"])
+
+
+def test_market_health_audit_falls_back_to_feature_candles_when_runtime_candles_absent(tmp_path: Path) -> None:
+    report = collect(tmp_path)
+    fresh_feature_candles = write_candles(tmp_path / "candles.parquet", seconds_ago=1)
+    audit = run_market_data_health_audit(
+        candles_path=fresh_feature_candles,
+        runtime_candles_path=tmp_path / "missing_runtime_candles.json",
+        ticker_path=report["runtime_source_paths"]["ticker"],
+        order_book_path=report["runtime_source_paths"]["order_book"],
+        trades_path=report["runtime_source_paths"]["trades"],
+        rest_snapshot_path=report["runtime_source_paths"]["rest_snapshot"],
+        ws_heartbeat_path=report["runtime_source_paths"]["ws_heartbeat"],
+        report_path=None,
+        now=NOW,
+        strict=True,
+    )
+    assert audit["status"] == "ok"
+    assert audit["candle_source_selection"]["selected"] == "candles"
+    assert audit["candle_source_selection"]["reason"] == "runtime_candles_missing"
 
 
 def test_market_health_audit_remains_backward_compatible_with_candles_only(tmp_path: Path) -> None:

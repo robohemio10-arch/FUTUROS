@@ -8,6 +8,7 @@ Ela coleta somente dados publicos da Binance USDT-M Futures REST quando disponiv
 
 Os arquivos gerados sao runtime e nao devem ser versionados:
 
+- `data/runtime/market_health/candles.json`
 - `data/runtime/market_health/ticker.json`
 - `data/runtime/market_health/order_book.json`
 - `data/runtime/market_health/trades.json`
@@ -43,6 +44,10 @@ Em testes ou ambientes sem WebSocket real, o heartbeat pode ser simulado como ar
 
 O coletor calcula ou persiste:
 
+- `last_candle_timestamp_utc`;
+- `last_candle_age_seconds`;
+- `candle_timeframe`;
+- `candle_source`;
 - `spread_bps`;
 - `top_of_book_depth`;
 - `estimated_slippage_bps`;
@@ -62,6 +67,7 @@ O audit atual ja aceita fontes opcionais:
 ```powershell
 python scripts/run_market_data_health_audit.py `
   --candles data/features/market_features_60d.parquet `
+  --runtime-candles data/runtime/market_health/candles.json `
   --ticker data/runtime/market_health/ticker.json `
   --order-book data/runtime/market_health/order_book.json `
   --trades data/runtime/market_health/trades.json `
@@ -70,7 +76,9 @@ python scripts/run_market_data_health_audit.py `
   --report data/reports/market_data_health_audit_report.json
 ```
 
-O modo antigo apenas com `--candles` permanece compativel, mas pode continuar gerando `missing_data` para SpreadGuard, LiquidityGuard, LatencyGuard e WsRestDivergenceGuard se as fontes runtime nao forem fornecidas.
+`--candles` continua sendo o parquet historico/operacional de contexto. Quando `--runtime-candles` aponta para um JSON valido e nao vazio, o `DataFreshnessGuard` usa essa fonte publica recente para o freshness de candles. Se `--runtime-candles` estiver ausente, vazio ou ilegivel, o audit volta para o comportamento anterior com `--candles`.
+
+O modo antigo apenas com `--candles` permanece compativel, mas pode continuar gerando `candle_stale` se `data/features/market_features_60d.parquet` estiver stale, alem de `missing_data` para SpreadGuard, LiquidityGuard, LatencyGuard e WsRestDivergenceGuard se as fontes runtime nao forem fornecidas.
 
 ## Segurança
 
