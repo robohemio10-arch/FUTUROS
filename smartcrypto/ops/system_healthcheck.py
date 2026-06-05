@@ -18,9 +18,17 @@ DEFAULT_STATE_RECONCILIATION_REPORT = Path("data/reports/state_reconciliation_au
 DEFAULT_LEDGER_REPORT = Path("data/reports/order_intent_capital_ledger_audit_report.json")
 DEFAULT_BACKUP_REPORT = Path("data/reports/backup_snapshot_report.json")
 DEFAULT_RESTORE_REPORT = Path("data/reports/restore_dry_run_report.json")
-DEFAULT_DOCKERFILE = Path("Dockerfile")
+DEFAULT_DOCKERFILE = Path("docker/smartcrypto/Dockerfile")
 DEFAULT_COMPOSE_FILE = Path("docker-compose.paper.yml")
 DEFAULT_REPORT_PATH = Path("data/reports/system_healthcheck_report.json")
+REPORT_TIMESTAMP_KEYS = (
+    "generated_at_utc",
+    "audited_at_utc",
+    "evaluated_at_utc",
+    "created_at_utc",
+    "created_at",
+    "updated_at_utc",
+)
 
 CRITICAL_REPORTS = (
     "readiness_report",
@@ -73,6 +81,7 @@ def run_system_healthcheck(
     checks: dict[str, dict[str, Any]] = {}
     warnings: list[str] = []
     blockers: list[str] = []
+    stale_reports: list[dict[str, Any]] = []
     safety = safety_payload(safety_overrides)
     blockers.extend(f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(safety))
 
@@ -85,6 +94,7 @@ def run_system_healthcheck(
                 blockers.append(f"missing_required_report:{name}")
         elif check["status"] == "stale":
             warnings.append(f"stale_report:{name}")
+            stale_reports.append(stale_report_detail(name, check))
         elif check["status"] == "blocked":
             blockers.extend(report_blockers(name, payloads[name]))
         for flag in unsafe_safety_flags(payloads[name]):
@@ -142,6 +152,8 @@ def run_system_healthcheck(
         "checks": checks,
         "failed_checks": failed_checks,
         "warnings": warnings,
+        "stale_reports": stale_reports,
+        "stale_reports_count": len(stale_reports),
         "blocking_findings": blockers,
         **safety,
     }
@@ -196,26 +208,70 @@ def report_blockers(name: str, payload: Mapping[str, Any]) -> list[str]:
 def check_report(name: str, path: str | Path | None, payload: dict[str, Any], now: datetime, max_age_seconds: int) -> dict[str, Any]:
     target = Path(path) if path is not None else None
     if target is None or not target.exists():
-        return {"status": "missing", "reason": "missing_report", "path": str(target) if target else None}
+        return {"status": "missing", "reason": "missing_report", "report_name": name, "exists": False, "path": str(target) if target else None}
     payload_status = str(payload.get("status", "ok")).lower()
     if payload_status in {"blocked", "critical", "failed"}:
-        return {"status": "blocked", "reason": f"status_{payload_status}", "path": str(target)}
+        return {
+            "status": "blocked",
+            "reason": f"status_{payload_status}",
+            "report_name": name,
+            "exists": True,
+            "path": str(target),
+            "source_status": payload_status,
+        }
     age = report_age_seconds(target, payload, now)
     status = "stale" if age is not None and age > max_age_seconds else "ok"
     reason = "report_stale" if status == "stale" else "ok"
-    return {"status": status, "reason": reason, "path": str(target), "age_seconds": age, "source_status": payload_status}
+    timestamp_key, timestamp_value = report_timestamp(payload)
+    return {
+        "status": status,
+        "reason": reason,
+        "report_name": name,
+        "exists": True,
+        "path": str(target),
+        "age_seconds": age,
+        "age_minutes": round(age / 60.0, 3) if age is not None else None,
+        "stale_limit_seconds": int(max_age_seconds),
+        "stale_limit_minutes": round(max_age_seconds / 60.0, 3),
+        "timestamp_key": timestamp_key,
+        "report_timestamp_utc": timestamp_value,
+        "source_status": payload_status,
+    }
+
+
+def stale_report_detail(name: str, check: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "report_name": name,
+        "path": check.get("path"),
+        "reason": check.get("reason"),
+        "source_status": check.get("source_status"),
+        "age_seconds": check.get("age_seconds"),
+        "age_minutes": check.get("age_minutes"),
+        "stale_limit_seconds": check.get("stale_limit_seconds"),
+        "stale_limit_minutes": check.get("stale_limit_minutes"),
+        "timestamp_key": check.get("timestamp_key"),
+        "report_timestamp_utc": check.get("report_timestamp_utc"),
+    }
 
 
 def report_age_seconds(path: Path, payload: Mapping[str, Any], now: datetime) -> int | None:
-    for key in ("generated_at_utc", "created_at", "created_at_utc", "updated_at_utc"):
-        parsed = parse_utc(payload.get(key))
-        if parsed is not None:
-            return max(0, int((now - parsed).total_seconds()))
+    _, timestamp_value = report_timestamp(payload)
+    parsed = parse_utc(timestamp_value)
+    if parsed is not None:
+        return max(0, int((now - parsed).total_seconds()))
     try:
         mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
     except OSError:
         return None
     return max(0, int((now - mtime).total_seconds()))
+
+
+def report_timestamp(payload: Mapping[str, Any]) -> tuple[str | None, Any]:
+    for key in REPORT_TIMESTAMP_KEYS:
+        value = payload.get(key)
+        if parse_utc(value) is not None:
+            return key, value
+    return None, None
 
 
 def check_file_exists(name: str, path: str | Path | None) -> dict[str, Any]:
