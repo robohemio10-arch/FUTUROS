@@ -121,6 +121,8 @@ bitradex_realtime_candle_collector_v1/logs/
 # Source package exception: keep runtime data/ ignored while allowing this module.
 !smartcrypto/data/
 smartcrypto/data/*
+!smartcrypto/data/__init__.py
+!smartcrypto/data/*.py
 !smartcrypto/data/paper_trade_lifecycle.py
 /report.json
 /CLAUDE_*.md
