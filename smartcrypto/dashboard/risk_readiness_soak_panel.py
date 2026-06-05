@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.ops.paper_shadow_soak_report import monte_carlo_policy_summary
+
 
 DEFAULT_PAPER_SOAK_REPORT_PATH = Path("data/reports/paper_soak_report.json")
 DEFAULT_PAPER_SESSION_REPORT_PATH = Path("data/reports/paper_session_report.json")
@@ -13,6 +15,7 @@ DEFAULT_DATA_QUALITY_REPORT_PATH = Path("data/reports/data_quality_report.json")
 DEFAULT_DATASET_MANIFEST_PATH = Path("data/reports/dataset_manifest.json")
 DEFAULT_ANTI_LEAKAGE_REPORT_PATH = Path("data/reports/phase23_anti_leakage_report.json")
 DEFAULT_MONTE_CARLO_REPORT_PATH = Path("data/reports/monte_carlo_risk_simulation_report.json")
+DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH = Path("data/reports/monte_carlo_risk_budget_policy_report.json")
 DEFAULT_BACKTEST_REPORT_PATH = Path("data/reports/event_driven_backtest_report.json")
 DEFAULT_KILL_SWITCH_PATH = Path("data/runtime/kill_switch.json")
 DEFAULT_ACTIVE_SIGNALS_PATH = Path("data/runtime/active_freqtrade_signals.json")
@@ -61,6 +64,7 @@ FORBIDDEN_ACTION_LABELS = (
 PASS_VALUES = {"pass", "passed", "ok", "valid", "ready"}
 BLOCKED_STATUSES = {"blocked", "error", "failed", "invalid"}
 WARNING_STATUSES = {"warning", "warn", "degraded"}
+OPTIONAL_SOURCE_NAMES = {"monte_carlo_risk_budget_policy_report"}
 
 
 def load_risk_readiness_soak_state(
@@ -75,6 +79,10 @@ def load_risk_readiness_soak_state(
     paths = build_source_paths(source_paths)
     sources = {name: load_source(name, path) for name, path in paths.items()}
     payloads = {name: source.get("payload") or {} for name, source in sources.items()}
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy_report", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy_report", {}).get("exists", False),
+    )
     signal_decisions = sources["signal_decisions"].get("rows") or []
     safety_flags = collect_safety_flags(payloads)
     soak = summarize_soak(payloads["paper_soak_report"], required_paper_days=required_paper_days)
@@ -109,6 +117,7 @@ def load_risk_readiness_soak_state(
         required_paper_days=required_paper_days,
         payloads=payloads,
         sources=sources,
+        monte_carlo_policy=monte_carlo_policy,
     )
     warnings = aggregate_warnings(
         sources=sources,
@@ -156,6 +165,13 @@ def load_risk_readiness_soak_state(
         "readiness_approved": status == "ok",
         "readiness_blockers": blocked_reasons,
         "readiness_warnings": warnings,
+        "monte_carlo_risk_budget_policy_status": monte_carlo_policy["status"],
+        "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
+        "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"]
+        and normalize_status(payloads["monte_carlo_report"].get("status")) == "blocked",
+        "no_trade_policy_present": monte_carlo_policy["no_trade_policy_present"],
+        "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else status == "ok",
+        "live_release_allowed": False,
         "safety_flags": safety_flags,
         "is_read_only": True,
         "read_only": True,
@@ -168,7 +184,7 @@ def load_risk_readiness_soak_state(
 def build_source_paths(overrides: dict[str, str | Path | None] | None) -> dict[str, Path]:
     paths = dict(DEFAULT_SOURCES)
     for key, value in (overrides or {}).items():
-        if key in paths and value is not None:
+        if (key in paths or key in OPTIONAL_SOURCE_NAMES) and value is not None:
             paths[key] = Path(value)
     return {key: Path(value) for key, value in paths.items()}
 
@@ -320,6 +336,7 @@ def aggregate_blockers(
     required_paper_days: int,
     payloads: dict[str, dict[str, Any]],
     sources: dict[str, dict[str, Any]],
+    monte_carlo_policy: dict[str, Any],
 ) -> list[str]:
     blockers: list[str] = []
     if safety_flags.get("paper_only") is not True:
@@ -351,7 +368,13 @@ def aggregate_blockers(
         blockers.append("paper_days_below_required")
     if sources["active_signals"]["exists"] and stale_data_count > 0:
         blockers.append("stale_data_count_above_limit")
+    if monte_carlo_policy["unsafe_findings"]:
+        blockers.append("unsafe_policy_report")
+    if monte_carlo_policy["no_trade_policy_present"]:
+        blockers.append("monte_carlo_no_trade_policy_active")
     for name, payload in payloads.items():
+        if name == "monte_carlo_report" and normalize_status(payload.get("status")) == "blocked" and monte_carlo_policy["no_trade_policy_present"]:
+            continue
         if normalize_status(payload.get("status")) in BLOCKED_STATUSES:
             blockers.append(f"artifact_status_blocked:{name}")
     return sorted(set(blockers))
@@ -366,7 +389,7 @@ def aggregate_warnings(
     max_stale_signal_age_seconds: int,
     stale_data_count: int,
 ) -> list[str]:
-    warnings = [f"missing_source:{name}" for name, source in sources.items() if source["status"] == "missing"]
+    warnings = [f"missing_source:{name}" for name, source in sources.items() if source["status"] == "missing" and name not in OPTIONAL_SOURCE_NAMES]
     if soak["clean_streak_days"] < soak["required_paper_days"]:
         warnings.append("clean_streak_below_required")
     if latest_signal_age_seconds is None or latest_signal_age_seconds > max_stale_signal_age_seconds:
@@ -389,7 +412,7 @@ def aggregate_status(
 ) -> str:
     if blockers:
         return "blocked"
-    has_missing = any(source["status"] == "missing" for source in sources.values())
+    has_missing = any(source["status"] == "missing" for name, source in sources.items() if name not in OPTIONAL_SOURCE_NAMES)
     if strict and has_missing:
         return "blocked"
     if has_missing and warnings:
@@ -431,7 +454,7 @@ def primary_runtime_mode(modes: list[str]) -> str:
 
 
 def missing_sources(sources: dict[str, dict[str, Any]]) -> set[str]:
-    return {name for name, source in sources.items() if source["status"] == "missing"}
+    return {name for name, source in sources.items() if source["status"] == "missing" and name not in OPTIONAL_SOURCE_NAMES}
 
 
 def first_present(payload: dict[str, Any], keys: tuple[str, ...], *, default: Any = None) -> Any:

@@ -21,6 +21,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--reports-root", default=str(DEFAULT_REPORTS_ROOT))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
     parser.add_argument("--project-root", default=str(Path.cwd()))
+    parser.add_argument("--monte-carlo-risk-budget-policy-report", default=None)
     parser.add_argument("--required-target-score", type=float, default=9.0)
     parser.add_argument("--strict", action="store_true")
     return parser.parse_args(argv)
@@ -32,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
         reports_root=args.reports_root,
         output_path=args.output,
         project_root=args.project_root,
+        monte_carlo_risk_budget_policy_report=args.monte_carlo_risk_budget_policy_report,
         required_target_score=args.required_target_score,
         strict=args.strict,
     )
