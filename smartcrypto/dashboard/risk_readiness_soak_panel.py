@@ -136,6 +136,10 @@ def load_risk_readiness_soak_state(
         stale_data_count=stale_data_count,
     )
     status = aggregate_status(blocked_reasons, warnings, sources, strict=strict)
+    paper_days_observed = soak["paper_days"]
+    paper_days_required = required_paper_days
+    paper_days_remaining = max(int(required_paper_days) - soak["paper_days"], 0)
+    no_trade_present = monte_carlo_policy["no_trade_policy_present"]
     return {
         "status": status,
         "reason": "ok" if status == "ok" else ";".join(blocked_reasons or warnings or ["missing_data"]),
@@ -150,8 +154,11 @@ def load_risk_readiness_soak_state(
         "real_order_submission_enabled": safety_flags["real_order_submission_enabled"],
         "exchange_private_access": safety_flags["exchange_private_access"],
         "paper_days": soak["paper_days"],
+        "paper_days_observed": paper_days_observed,
         "required_paper_days": required_paper_days,
-        "remaining_paper_days": max(int(required_paper_days) - soak["paper_days"], 0),
+        "paper_days_required": paper_days_required,
+        "remaining_paper_days": paper_days_remaining,
+        "paper_days_remaining": paper_days_remaining,
         "clean_streak_days": soak["clean_streak_days"],
         "duplicate_orders_count": soak["duplicate_orders_count"],
         "unknown_state_count": soak["unknown_state_count"],
@@ -180,9 +187,20 @@ def load_risk_readiness_soak_state(
         "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
         "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"]
         and normalize_status(payloads["monte_carlo_report"].get("status")) == "blocked",
-        "no_trade_policy_present": monte_carlo_policy["no_trade_policy_present"],
-        "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else status == "ok",
+        "no_trade_policy_present": no_trade_present,
+        "readiness_may_proceed": False if no_trade_present else status == "ok",
         "live_release_allowed": False,
+        "no_trade_exit_requirements": no_trade_exit_requirements(
+            observed_days=paper_days_observed,
+            required_days=paper_days_required,
+            no_trade_policy_present=no_trade_present,
+        ),
+        "next_collection_targets": next_collection_targets(
+            remaining_days=paper_days_remaining,
+            missing=missing_sources(sources),
+            stale_data_count=stale_data_count,
+            no_trade_policy_present=no_trade_present,
+        ),
         "safety_flags": safety_flags,
         "is_read_only": True,
         "read_only": True,
@@ -393,6 +411,40 @@ def aggregate_blockers(
         if normalize_status(payload.get("status")) in BLOCKED_STATUSES:
             blockers.append(f"artifact_status_blocked:{name}")
     return sorted(set(blockers))
+
+
+def no_trade_exit_requirements(*, observed_days: int, required_days: int, no_trade_policy_present: bool) -> list[str]:
+    requirements = [
+        f"paper_soak_days:{observed_days}_of_{required_days}",
+        "expectancy_non_negative_or_positive",
+        "profit_factor_above_minimum",
+        "risk_of_ruin_within_policy_cap",
+        "fresh_market_and_runtime_evidence",
+        "manual_go_no_go_required_before_live",
+    ]
+    if no_trade_policy_present:
+        requirements.insert(1, "monte_carlo_policy_action_not_no_trade")
+    return requirements
+
+
+def next_collection_targets(
+    *,
+    remaining_days: int,
+    missing: set[str],
+    stale_data_count: int,
+    no_trade_policy_present: bool,
+) -> list[str]:
+    targets: list[str] = []
+    if remaining_days > 0:
+        targets.append(f"collect_paper_shadow_soak_days:{remaining_days}")
+    if missing:
+        targets.append("refresh_missing_runtime_sources")
+    if stale_data_count > 0:
+        targets.append("refresh_market_data_and_active_signals")
+    if no_trade_policy_present:
+        targets.append("collect_financial_outcomes_for_expectancy_profit_factor_risk_of_ruin")
+    targets.append("keep_live_release_disabled")
+    return sorted(set(targets))
 
 
 def aggregate_warnings(

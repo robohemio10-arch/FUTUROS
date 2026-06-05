@@ -117,8 +117,11 @@ def build_paper_shadow_soak_report(
         "soak_start_utc": iso(soak_start) if soak_start else None,
         "soak_end_utc": iso(soak_end) if soak_end else None,
         "soak_days": soak_days,
+        "observed_soak_days": soak_days,
+        "observed_soak_hours": round(soak_days * 24.0, 3),
         "required_soak_days": int(required_soak_days),
         "remaining_soak_days": max(0.0, round(float(required_soak_days) - soak_days, 6)),
+        "remaining_soak_hours": round(max(0.0, float(required_soak_days) - soak_days) * 24.0, 3),
         "clean_streak_days": int_value(first_present(payloads["risk_readiness_report"], "clean_streak_days", default=0)),
         "paper_events_count": count_events(events, "paper"),
         "shadow_events_count": count_events(events, "shadow"),
@@ -159,6 +162,7 @@ def build_paper_shadow_soak_report(
         "monte_carlo_policy_unsafe_findings": monte_carlo_policy["unsafe_findings"],
         "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else None,
         "live_release_allowed": False,
+        "readiness_approved": False,
         "event_backtest_status": str(payloads["event_backtest_report"].get("status", "missing")),
         "data_quality_status": str(payloads["data_quality_report"].get("status", "missing")),
         "readiness_status": "unknown",
@@ -168,9 +172,17 @@ def build_paper_shadow_soak_report(
         "sources": {name: {"path": source["path"], "exists": source["exists"], "status": source["status"]} for name, source in sources.items()},
         **safety,
     }
+    report["performance_summary"] = performance_summary(report, payloads)
+    report["evidence_quality_summary"] = evidence_quality_summary(report, payloads, sources)
     blockers, warnings = evaluate_soak_blockers(report, payloads, sources, strict)
     report["readiness_blockers"] = sorted(set(blockers))
     report["readiness_warnings"] = sorted(set(warnings))
+    report["blocking_reasons_by_category"] = group_soak_reasons_by_category(
+        report["readiness_blockers"],
+        report["readiness_warnings"],
+    )
+    report["next_required_actions"] = paper_soak_next_required_actions(report)
+    report["no_trade_exit_requirements"] = no_trade_exit_requirements(report)
     if report["readiness_blockers"]:
         report["status"] = "insufficient_soak" if only_insufficient_soak(report["readiness_blockers"]) else "blocked"
         report["reason"] = ";".join(report["readiness_blockers"])
@@ -204,6 +216,15 @@ def evaluate_soak_blockers(report: dict[str, Any], payloads: dict[str, dict[str,
         blockers.append("soak_days_below_required")
     elif report["soak_days"] < report["required_soak_days"]:
         warnings.append("soak_days_below_required")
+    performance = report.get("performance_summary", {})
+    if as_bool(performance.get("expectancy_negative")):
+        blockers.append("financial_expectancy_negative")
+    if as_bool(performance.get("profit_factor_below_minimum")):
+        blockers.append("financial_profit_factor_below_minimum")
+    if as_bool(performance.get("paper_pnl_negative")):
+        blockers.append("paper_pnl_negative")
+    if as_bool(performance.get("sample_warning")):
+        warnings.append("insufficient_financial_sample")
     numeric_blocks = {
         "p0_incidents": "p0_incidents_gt_0",
         "p1_incidents": "p1_incidents_gt_0",
@@ -241,6 +262,121 @@ def evaluate_soak_blockers(report: dict[str, Any], payloads: dict[str, dict[str,
         if int_value(report.get(key)) > 0:
             blockers.append(f"{key}_gt_0")
     return blockers, warnings
+
+
+def performance_summary(report: Mapping[str, Any], payloads: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    financial = payloads.get("financial_threshold_report", {})
+    risk = payloads.get("risk_recovery_report", {})
+    monte_carlo = payloads.get("monte_carlo_report", {})
+    expectancy = first_present(financial, "expectancy", "paper_expectancy", "avg_return", default=None)
+    profit_factor = first_present(financial, "profit_factor", "paper_profit_factor", default=None)
+    sample_warning = as_bool(first_present(financial, "sample_warning", default=False)) or as_bool(first_present(monte_carlo, "sample_warning", default=False))
+    paper_pnl = float_value(report.get("paper_pnl_net"))
+    shadow_pnl = float_value(report.get("shadow_pnl_net"))
+    return {
+        "status": str(financial.get("status", "missing")),
+        "paper_pnl_net": paper_pnl,
+        "shadow_pnl_net": shadow_pnl,
+        "expectancy": float_or_none(expectancy),
+        "profit_factor": float_or_none(profit_factor),
+        "risk_of_ruin": float_or_none(nested(monte_carlo, "risk_metrics", "risk_of_ruin", default=monte_carlo.get("risk_of_ruin"))),
+        "max_drawdown_pct": float_value(report.get("max_drawdown_pct")),
+        "risk_recovery_mode": str(risk.get("recommended_mode", "missing")),
+        "paper_pnl_negative": paper_pnl < 0,
+        "shadow_pnl_negative": shadow_pnl < 0,
+        "expectancy_negative": float_or_none(expectancy) is not None and float_or_none(expectancy) < 0,
+        "profit_factor_below_minimum": float_or_none(profit_factor) is not None and float_or_none(profit_factor) < 1.0,
+        "sample_warning": sample_warning,
+        "metrics_required_before_no_trade_exit": [
+            "expectancy_positive_or_non_negative",
+            "profit_factor_above_minimum",
+            "risk_of_ruin_within_cap",
+            "drawdown_within_policy",
+            "sample_size_sufficient",
+        ],
+    }
+
+
+def evidence_quality_summary(
+    report: Mapping[str, Any],
+    payloads: dict[str, dict[str, Any]],
+    sources: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    required_missing = [name for name in REQUIRED_SOURCE_NAMES if not sources.get(name, {}).get("exists", False)]
+    missing_data_sources = [
+        name
+        for name, payload in payloads.items()
+        if str(payload.get("status", "")).lower() == "missing_data" or not sources.get(name, {}).get("exists", False)
+    ]
+    return {
+        "status": "blocked" if required_missing else "warning" if missing_data_sources else "ok",
+        "required_sources_count": len(REQUIRED_SOURCE_NAMES),
+        "required_missing_sources": required_missing,
+        "missing_data_sources": sorted(set(missing_data_sources)),
+        "ledger_status": str(payloads.get("ledger_report", {}).get("status", "missing")),
+        "risk_recovery_status": str(payloads.get("risk_recovery_report", {}).get("status", "missing")),
+        "market_health_status": str(payloads.get("market_health_report", {}).get("status", "missing")),
+        "data_quality_status": str(report.get("data_quality_status", "missing")),
+        "dataset_manifest_status": str(payloads.get("dataset_manifest", {}).get("status", "missing")),
+    }
+
+
+def group_soak_reasons_by_category(blockers: list[str], warnings: list[str]) -> dict[str, list[str]]:
+    categories = {
+        "risk_policy": [],
+        "soak_duration": [],
+        "financial_performance": [],
+        "evidence_completeness": [],
+        "data_quality": [],
+        "readiness_gate": [],
+    }
+    for reason in sorted(set(blockers + warnings)):
+        category = reason_category(reason)
+        categories[category].append(reason)
+    return categories
+
+
+def reason_category(reason: str) -> str:
+    text = str(reason)
+    if "monte_carlo" in text or "no_trade_policy" in text or "risk_budget" in text:
+        return "risk_policy"
+    if "soak" in text or "paper_days" in text:
+        return "soak_duration"
+    if "financial" in text or "pnl" in text or "expectancy" in text or "profit_factor" in text or "sample" in text:
+        return "financial_performance"
+    if "missing" in text or "ledger" in text or "risk_recovery" in text or "evidence" in text:
+        return "evidence_completeness"
+    if "data_quality" in text or "market_data" in text or "stale" in text or "spread" in text or "liquidity" in text or "latency" in text:
+        return "data_quality"
+    return "readiness_gate"
+
+
+def paper_soak_next_required_actions(report: Mapping[str, Any]) -> list[str]:
+    actions = ["keep_live_disabled", "continue_paper_shadow_only", "do_not_increase_risk"]
+    blockers = list_value(report.get("readiness_blockers"))
+    warnings = list_value(report.get("readiness_warnings"))
+    if report.get("no_trade_policy_present"):
+        actions.append("respect_monte_carlo_no_trade_policy")
+        actions.append("improve_expectancy_profit_factor_and_risk_of_ruin")
+    if "soak_days_below_required" in blockers or "soak_days_below_required" in warnings:
+        actions.append("continue_soak_until_required_days")
+    if report.get("evidence_quality_summary", {}).get("missing_data_sources"):
+        actions.append("refresh_missing_runtime_evidence")
+    if report.get("performance_summary", {}).get("sample_warning"):
+        actions.append("collect_more_closed_paper_trades")
+    return sorted(set(actions))
+
+
+def no_trade_exit_requirements(report: Mapping[str, Any]) -> list[str]:
+    return [
+        f"complete_required_soak_days:{report.get('observed_soak_days', 0)}_of_{report.get('required_soak_days', 0)}",
+        "monte_carlo_policy_action_not_no_trade",
+        "expectancy_non_negative_or_positive",
+        "profit_factor_above_minimum",
+        "risk_of_ruin_within_policy_cap",
+        "evidence_sources_fresh_and_complete",
+        "manual_review_required_before_any_live_release",
+    ]
 
 
 def load_source(path: str | Path | None, *, jsonl: bool = False) -> dict[str, Any]:
@@ -376,6 +512,15 @@ def float_value(value: Any) -> float:
         return float(value or 0.0)
     except (TypeError, ValueError):
         return 0.0
+
+
+def float_or_none(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def list_value(value: Any) -> list[Any]:
