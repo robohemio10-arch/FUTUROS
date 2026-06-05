@@ -17,6 +17,7 @@ from smartcrypto.dashboard.ai_governance_panel import (  # noqa: E402
     DEFAULT_DECISIONS_JSONL_PATH,
     DEFAULT_DRIFT_REPORT_PATH,
     DEFAULT_FINANCIAL_REPORT_PATH,
+    DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH,
     DEFAULT_MONTE_CARLO_REPORT_PATH,
     DEFAULT_OUTCOMES_REPORT_PATH,
     DEFAULT_PROMOTION_REPORT_PATH,
@@ -40,6 +41,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--financial-report", default=str(DEFAULT_FINANCIAL_REPORT_PATH))
     parser.add_argument("--anti-leakage-report", default=str(DEFAULT_ANTI_LEAKAGE_REPORT_PATH))
     parser.add_argument("--monte-carlo-report", default=str(DEFAULT_MONTE_CARLO_REPORT_PATH))
+    parser.add_argument("--monte-carlo-risk-budget-policy-report", default=str(DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH))
     parser.add_argument("--backtest-report", default=str(DEFAULT_BACKTEST_REPORT_PATH))
     parser.add_argument("--data-quality-report", default=str(DEFAULT_DATA_QUALITY_REPORT_PATH))
     parser.add_argument("--dataset-manifest", default=str(DEFAULT_DATASET_MANIFEST_PATH))
@@ -61,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
             "financial_report": args.financial_report,
             "anti_leakage_report": args.anti_leakage_report,
             "monte_carlo_report": args.monte_carlo_report,
+            "monte_carlo_risk_budget_policy_report": args.monte_carlo_risk_budget_policy_report,
             "backtest_report": args.backtest_report,
             "data_quality_report": args.data_quality_report,
             "dataset_manifest": args.dataset_manifest,

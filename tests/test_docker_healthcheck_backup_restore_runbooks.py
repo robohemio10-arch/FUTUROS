@@ -171,6 +171,52 @@ def test_system_healthcheck_blocks_risk_panic_or_reconciling(tmp_path: Path) -> 
     assert "risk_recovery_mode_panic" in report["blocking_findings"]
 
 
+def test_system_healthcheck_does_not_keep_stale_market_health_block(tmp_path: Path) -> None:
+    report = run_clean_healthcheck(
+        tmp_path,
+        overrides={"market_health_report": {"status": "ok", "stale_data_count": 0}},
+    )
+
+    assert report["status"] == "ok"
+    assert "market_health_report_blocked" not in report["blocking_findings"]
+    assert "market_health_report_blocked" not in report["reason"]
+
+
+def test_system_healthcheck_does_not_keep_stale_risk_recovery_panic(tmp_path: Path) -> None:
+    report = run_clean_healthcheck(
+        tmp_path,
+        overrides={"risk_recovery_report": {"status": "missing_data", "recommended_mode": "NORMAL"}},
+    )
+
+    assert "risk_recovery_mode_panic" not in report["blocking_findings"]
+    assert "risk_recovery_report_blocked" not in report["blocking_findings"]
+
+
+def test_system_healthcheck_blocks_for_readiness_and_no_trade_policy(tmp_path: Path) -> None:
+    report = run_clean_healthcheck(
+        tmp_path,
+        overrides={
+            "readiness_report": {
+                "status": "blocked",
+                "readiness_approved": False,
+                "no_trade_policy_present": True,
+                "readiness_blockers": ["no_trade_policy_active", "soak_days_below_required"],
+            },
+            "paper_soak_report": {
+                "status": "blocked",
+                "no_trade_policy_present": True,
+                "readiness_blockers": ["monte_carlo_no_trade_policy_active", "soak_days_below_required"],
+            },
+        },
+    )
+
+    assert report["status"] == "blocked"
+    assert "readiness_gate_blocked" in report["blocking_findings"]
+    assert "no_trade_policy_active" in report["blocking_findings"]
+    assert "soak_days_below_required" in report["blocking_findings"]
+    assert "market_health_report_blocked" not in report["blocking_findings"]
+
+
 def test_system_healthcheck_reports_missing_docker_healthcheck(tmp_path: Path) -> None:
     report = run_clean_healthcheck(tmp_path, docker_healthcheck=False)
     assert report["status"] == "warning"
