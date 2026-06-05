@@ -18,4 +18,7 @@ COPY config ./config
 RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install -e ".[dashboard]"
 
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -m smartcrypto.runtime.container_healthcheck --quiet
+
 CMD ["streamlit", "run", "smartcrypto/dashboard/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]

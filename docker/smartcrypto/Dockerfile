@@ -20,4 +20,7 @@ COPY config ./config
 RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install -e ".[data,ml]"
 
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -m smartcrypto.runtime.container_healthcheck --quiet
+
 CMD ["python", "-m", "smartcrypto.bot"]
