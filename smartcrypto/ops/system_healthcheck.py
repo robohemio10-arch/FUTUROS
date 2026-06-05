@@ -86,7 +86,7 @@ def run_system_healthcheck(
         elif check["status"] == "stale":
             warnings.append(f"stale_report:{name}")
         elif check["status"] == "blocked":
-            blockers.append(f"{name}_blocked")
+            blockers.extend(report_blockers(name, payloads[name]))
         for flag in unsafe_safety_flags(payloads[name]):
             blockers.append(f"unsafe_source_safety_flag:{name}:{flag}")
 
@@ -98,7 +98,7 @@ def run_system_healthcheck(
             if strict:
                 blockers.append(f"missing_required_report:{name}")
         elif check["status"] == "blocked":
-            blockers.append(f"{name}_blocked")
+            blockers.extend(report_blockers(name, payloads[name]))
 
     blockers.extend(domain_blockers(payloads))
     checks["dockerfile"] = check_file_exists("dockerfile", dockerfile)
@@ -152,12 +152,17 @@ def run_system_healthcheck(
 def domain_blockers(payloads: dict[str, dict[str, Any]]) -> list[str]:
     blockers: list[str] = []
     readiness = payloads["readiness_report"]
+    soak = payloads["paper_soak_report"]
     critical = payloads["critical_alerting_report"]
     risk = payloads["risk_recovery_report"]
     state = payloads["state_reconciliation_report"]
     ledger = payloads["ledger_report"]
     if str(readiness.get("status", "")).lower() == "blocked" or readiness.get("readiness_approved") is False:
         blockers.append("readiness_gate_blocked")
+    if as_bool(readiness.get("no_trade_policy_present")) or as_bool(soak.get("no_trade_policy_present")) or "no_trade_policy_active" in list_values(readiness.get("readiness_blockers")) or "monte_carlo_no_trade_policy_active" in list_values(soak.get("readiness_blockers")):
+        blockers.append("no_trade_policy_active")
+    if "soak_days_below_required" in list_values(readiness.get("readiness_blockers")) or "soak_days_below_required" in list_values(soak.get("readiness_blockers")):
+        blockers.append("soak_days_below_required")
     if str(critical.get("status", "")).lower() == "blocked" or int_value(critical.get("critical_alerts")) > 0:
         blockers.append("critical_alerting_blocked")
     if str(risk.get("recommended_mode", "")).upper() in {"PANIC", "RECONCILING"}:
@@ -167,6 +172,25 @@ def domain_blockers(payloads: dict[str, dict[str, Any]]) -> list[str]:
     if str(ledger.get("status", "")).lower() == "blocked":
         blockers.append("ledger_audit_blocked")
     return blockers
+
+
+def report_blockers(name: str, payload: Mapping[str, Any]) -> list[str]:
+    if name == "readiness_report":
+        blockers = ["readiness_gate_blocked"]
+        if as_bool(payload.get("no_trade_policy_present")) or "no_trade_policy_active" in list_values(payload.get("readiness_blockers")):
+            blockers.append("no_trade_policy_active")
+        if "soak_days_below_required" in list_values(payload.get("readiness_blockers")):
+            blockers.append("soak_days_below_required")
+        return blockers
+    if name == "paper_soak_report":
+        blockers = []
+        report_blockers_list = list_values(payload.get("readiness_blockers"))
+        if as_bool(payload.get("no_trade_policy_present")) or "monte_carlo_no_trade_policy_active" in report_blockers_list:
+            blockers.append("no_trade_policy_active")
+        if "soak_days_below_required" in report_blockers_list:
+            blockers.append("soak_days_below_required")
+        return blockers or ["paper_soak_report_blocked"]
+    return [f"{name}_blocked"]
 
 
 def check_report(name: str, path: str | Path | None, payload: dict[str, Any], now: datetime, max_age_seconds: int) -> dict[str, Any]:
@@ -246,6 +270,14 @@ def load_json(path: str | Path | None) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         return {"status": "blocked", "error": str(exc)}
     return payload if isinstance(payload, dict) else {"status": "blocked", "error": "invalid_json_payload"}
+
+
+def list_values(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if value in (None, "", {}):
+        return []
+    return [value]
 
 
 def parse_utc(value: Any) -> datetime | None:

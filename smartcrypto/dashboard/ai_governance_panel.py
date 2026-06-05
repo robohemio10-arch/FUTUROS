@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.ops.paper_shadow_soak_report import monte_carlo_policy_summary
+
 
 DEFAULT_REGISTRY_PATH = Path("data/models/registry/model_registry.json")
 DEFAULT_TRAINER_REPORT_PATH = Path("data/reports/ai_shadow_incremental_trainer_report.json")
@@ -14,6 +16,7 @@ DEFAULT_OUTCOMES_REPORT_PATH = Path("data/reports/ai_shadow_model_outcomes_repor
 DEFAULT_FINANCIAL_REPORT_PATH = Path("data/reports/ai_shadow_financial_threshold_evaluation_report.json")
 DEFAULT_ANTI_LEAKAGE_REPORT_PATH = Path("data/reports/phase23_anti_leakage_report.json")
 DEFAULT_MONTE_CARLO_REPORT_PATH = Path("data/reports/monte_carlo_risk_simulation_report.json")
+DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH = Path("data/reports/monte_carlo_risk_budget_policy_report.json")
 DEFAULT_BACKTEST_REPORT_PATH = Path("data/reports/event_driven_backtest_report.json")
 DEFAULT_DATA_QUALITY_REPORT_PATH = Path("data/reports/data_quality_report.json")
 DEFAULT_DATASET_MANIFEST_PATH = Path("data/reports/dataset_manifest.json")
@@ -28,6 +31,7 @@ DEFAULT_SOURCES = {
     "financial_report": DEFAULT_FINANCIAL_REPORT_PATH,
     "anti_leakage_report": DEFAULT_ANTI_LEAKAGE_REPORT_PATH,
     "monte_carlo_report": DEFAULT_MONTE_CARLO_REPORT_PATH,
+    "monte_carlo_risk_budget_policy_report": DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH,
     "backtest_report": DEFAULT_BACKTEST_REPORT_PATH,
     "data_quality_report": DEFAULT_DATA_QUALITY_REPORT_PATH,
     "dataset_manifest": DEFAULT_DATASET_MANIFEST_PATH,
@@ -52,6 +56,7 @@ FORBIDDEN_ACTION_LABELS = (
 )
 BLOCKED_STATUSES = {"blocked", "safety_alert", "error"}
 WARNING_STATUSES = {"warning", "warn", "degraded"}
+OPTIONAL_SOURCE_NAMES = {"decisions_jsonl", "outcomes_report", "monte_carlo_risk_budget_policy_report"}
 
 
 def load_ai_governance_panel_state(
@@ -75,6 +80,10 @@ def load_ai_governance_panel_state(
         payloads["monte_carlo_report"],
         preferred_keys=("recommendation_status", "status"),
     )
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy_report", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy_report", {}).get("exists", False),
+    )
     backtest = summarize_status_source(payloads["backtest_report"], preferred_keys=("status",))
     data_quality = summarize_status_source(payloads["data_quality_report"], preferred_keys=("status",))
     dataset_manifest = summarize_status_source(payloads["dataset_manifest"], preferred_keys=("status",))
@@ -89,6 +98,7 @@ def load_ai_governance_panel_state(
         anti_leakage=anti_leakage,
         data_quality=data_quality,
         safety_alerts=safety_alerts,
+        monte_carlo_policy=monte_carlo_policy,
     )
     warnings = aggregate_warnings(
         sources=sources,
@@ -96,6 +106,7 @@ def load_ai_governance_panel_state(
         dataset_manifest=dataset_manifest,
         monte_carlo=monte_carlo,
         backtest=backtest,
+        financial=financial,
     )
     status = aggregate_status(blocked_reasons, warnings, sources, strict=strict)
     return {
@@ -122,6 +133,11 @@ def load_ai_governance_panel_state(
         "latest_outcome_tracking_status": outcomes["status"],
         "anti_leakage_status": anti_leakage["status"],
         "monte_carlo_recommendation_status": monte_carlo["status"],
+        "monte_carlo_risk_budget_policy_status": monte_carlo_policy["status"],
+        "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
+        "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"] and normalize_status(monte_carlo["status"]) == "blocked",
+        "no_trade_policy_present": monte_carlo_policy["no_trade_policy_present"],
+        "live_release_allowed": False,
         "event_driven_backtest_status": backtest["status"],
         "data_quality_status": data_quality["status"],
         "dataset_manifest_status": dataset_manifest["status"],
@@ -341,6 +357,7 @@ def aggregate_blocked_reasons(
     anti_leakage: dict[str, Any],
     data_quality: dict[str, Any],
     safety_alerts: list[str],
+    monte_carlo_policy: dict[str, Any],
 ) -> list[str]:
     reasons = [f"unsafe_safety_flag:{item}" for item in safety_alerts]
     reasons.extend(f"source_blocked:{name}" for name, source in sources.items() if source["status"] == "blocked")
@@ -355,6 +372,10 @@ def aggregate_blocked_reasons(
     if normalize_status(data_quality["status"]) == "blocked":
         reasons.append("data_quality_blocked")
     for name, payload in payloads.items():
+        if name in {"monte_carlo_report", "monte_carlo_risk_budget_policy_report"} and monte_carlo_policy["no_trade_policy_present"] and normalize_status(payload.get("status")) in BLOCKED_STATUSES:
+            continue
+        if name in OPTIONAL_SOURCE_NAMES and normalize_status(payload.get("status")) == "missing":
+            continue
         if normalize_status(payload.get("status")) in BLOCKED_STATUSES:
             reasons.append(f"artifact_status_blocked:{name}")
     return sorted(set(reasons))
@@ -367,8 +388,13 @@ def aggregate_warnings(
     dataset_manifest: dict[str, Any],
     monte_carlo: dict[str, Any],
     backtest: dict[str, Any],
+    financial: dict[str, Any],
 ) -> list[str]:
-    warnings = [f"missing_source:{name}" for name, source in sources.items() if source["status"] == "missing"]
+    warnings = [
+        f"missing_source:{name}"
+        for name, source in sources.items()
+        if source["status"] == "missing" and (name not in OPTIONAL_SOURCE_NAMES or normalize_status(financial["status"]) != "ok")
+    ]
     if trainer["sample_warning"]:
         warnings.append("trainer_sample_warning")
     for name, summary in (

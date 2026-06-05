@@ -123,6 +123,7 @@ def all_source_paths(tmp_path: Path) -> dict[str, Path]:
         "financial_report": tmp_path / "financial.json",
         "anti_leakage_report": tmp_path / "anti_leakage.json",
         "monte_carlo_report": tmp_path / "monte_carlo.json",
+        "monte_carlo_risk_budget_policy_report": tmp_path / "monte_carlo_policy.json",
         "backtest_report": tmp_path / "backtest.json",
         "data_quality_report": tmp_path / "data_quality.json",
         "dataset_manifest": tmp_path / "manifest.json",
@@ -140,6 +141,13 @@ def write_all_sources(tmp_path: Path, **overrides) -> dict[str, Path]:
     write_json(paths["financial_report"], overrides.get("financial_report", {"status": "ok", "recommendation": "keep_threshold"}))
     write_json(paths["anti_leakage_report"], overrides.get("anti_leakage_report", {"status": "ok"}))
     write_json(paths["monte_carlo_report"], overrides.get("monte_carlo_report", {"status": "ok", "recommendation_status": "ok"}))
+    write_json(
+        paths["monte_carlo_risk_budget_policy_report"],
+        overrides.get(
+            "monte_carlo_risk_budget_policy_report",
+            {"status": "ok", "policy_action": "observe_only", "live_release_allowed": False, **registry_payload()},
+        ),
+    )
     write_json(paths["backtest_report"], overrides.get("backtest_report", {"status": "ok"}))
     write_json(paths["data_quality_report"], overrides.get("data_quality_report", {"status": "ok"}))
     write_json(paths["dataset_manifest"], overrides.get("dataset_manifest", {"status": "ok"}))
@@ -221,6 +229,52 @@ def test_ai_governance_panel_reports_financial_thresholds(tmp_path):
     state = load_ai_governance_panel_state(source_paths=paths)
 
     assert state["financial_threshold_recommendation"] == 0.63
+
+
+def test_ai_governance_does_not_block_ok_drift_or_financial_thresholds(tmp_path):
+    paths = write_all_sources(
+        tmp_path,
+        drift_report={"status": "ok", "drift_status": "ok"},
+        financial_report={"status": "ok", "recommended_threshold": 0.7},
+    )
+
+    state = load_ai_governance_panel_state(source_paths=paths)
+
+    assert "drift_status_blocked" not in state["blocked_reasons"]
+    assert "artifact_status_blocked:drift_report" not in state["blocked_reasons"]
+    assert "artifact_status_blocked:financial_report" not in state["blocked_reasons"]
+    assert state["drift_status"] == "ok"
+    assert state["financial_threshold_recommendation"] == 0.7
+
+
+def test_ai_governance_reclassifies_monte_carlo_no_trade_policy_as_treated(tmp_path):
+    paths = write_all_sources(
+        tmp_path,
+        monte_carlo_report={"status": "blocked", "reason": "risk_of_ruin_above_limit"},
+        monte_carlo_risk_budget_policy_report={
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+            "sends_orders": False,
+            "changes_risk": False,
+        },
+    )
+
+    state = load_ai_governance_panel_state(source_paths=paths)
+
+    assert state["monte_carlo_risk_treated"] is True
+    assert state["no_trade_policy_present"] is True
+    assert state["monte_carlo_risk_budget_policy_action"] == "no_trade"
+    assert "artifact_status_blocked:monte_carlo_report" not in state["blocked_reasons"]
+    assert "artifact_status_blocked:monte_carlo_risk_budget_policy_report" not in state["blocked_reasons"]
+    assert state["live_release_allowed"] is False
 
 
 def test_ai_governance_panel_reports_latest_shadow_decision(tmp_path):
@@ -321,6 +375,8 @@ def test_cli_inspect_ai_governance_sources_runs_successfully(tmp_path):
             str(paths["anti_leakage_report"]),
             "--monte-carlo-report",
             str(paths["monte_carlo_report"]),
+            "--monte-carlo-risk-budget-policy-report",
+            str(paths["monte_carlo_risk_budget_policy_report"]),
             "--backtest-report",
             str(paths["backtest_report"]),
             "--data-quality-report",

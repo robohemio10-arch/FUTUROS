@@ -29,6 +29,7 @@ DEFAULT_SOURCES = {
     "dataset_manifest": DEFAULT_DATASET_MANIFEST_PATH,
     "anti_leakage_report": DEFAULT_ANTI_LEAKAGE_REPORT_PATH,
     "monte_carlo_report": DEFAULT_MONTE_CARLO_REPORT_PATH,
+    "monte_carlo_risk_budget_policy_report": DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH,
     "backtest_report": DEFAULT_BACKTEST_REPORT_PATH,
     "kill_switch": DEFAULT_KILL_SWITCH_PATH,
     "active_signals": DEFAULT_ACTIVE_SIGNALS_PATH,
@@ -88,7 +89,8 @@ def load_risk_readiness_soak_state(
     soak = summarize_soak(payloads["paper_soak_report"], required_paper_days=required_paper_days)
     session = summarize_session(payloads["paper_session_report"])
     kill_switch = summarize_kill_switch(payloads["kill_switch"], sources["kill_switch"])
-    active_signal_age = latest_json_timestamp_age(payloads["active_signals"], current_time)
+    active_signal_freshness = latest_json_timestamp_details(payloads["active_signals"], current_time)
+    active_signal_age = active_signal_freshness["age_seconds"]
     latest_shadow_decision_age = latest_jsonl_timestamp_age(signal_decisions, current_time)
     stale_data_count = int_value(
         first_present(
@@ -101,6 +103,12 @@ def load_risk_readiness_soak_state(
         stale_data_count += 1
     elif active_signal_age > max_stale_signal_age_seconds:
         stale_data_count += 1
+    stale_source_details = build_stale_source_details(
+        payloads=payloads,
+        sources=sources,
+        active_signal_freshness=active_signal_freshness,
+        max_stale_signal_age_seconds=max_stale_signal_age_seconds,
+    )
     runtime_modes = classify_runtime_modes(
         safety_flags=safety_flags,
         kill_switch=kill_switch,
@@ -149,6 +157,9 @@ def load_risk_readiness_soak_state(
         "unknown_state_count": soak["unknown_state_count"],
         "divergence_count": soak["divergence_count"],
         "stale_data_count": stale_data_count,
+        "stale_sources": [item["source"] for item in stale_source_details],
+        "stale_source_details": stale_source_details,
+        "stale_data_limit_seconds": int(max_stale_signal_age_seconds),
         "shadow_order_attempts": soak["shadow_order_attempts"],
         "controlled_live_attempts": soak["controlled_live_attempts"],
         "kill_switch_status": kill_switch["status"],
@@ -375,6 +386,10 @@ def aggregate_blockers(
     for name, payload in payloads.items():
         if name == "monte_carlo_report" and normalize_status(payload.get("status")) == "blocked" and monte_carlo_policy["no_trade_policy_present"]:
             continue
+        if name == "monte_carlo_risk_budget_policy_report" and normalize_status(payload.get("status")) == "blocked" and monte_carlo_policy["no_trade_policy_present"]:
+            continue
+        if name == "paper_soak_report" and normalize_status(payload.get("status")) == "blocked" and paper_soak_policy_or_duration_blocked(payload):
+            continue
         if normalize_status(payload.get("status")) in BLOCKED_STATUSES:
             blockers.append(f"artifact_status_blocked:{name}")
     return sorted(set(blockers))
@@ -457,6 +472,14 @@ def missing_sources(sources: dict[str, dict[str, Any]]) -> set[str]:
     return {name for name, source in sources.items() if source["status"] == "missing" and name not in OPTIONAL_SOURCE_NAMES}
 
 
+def paper_soak_policy_or_duration_blocked(payload: dict[str, Any]) -> bool:
+    blockers = payload.get("readiness_blockers")
+    if not isinstance(blockers, list):
+        return False
+    allowed = {"monte_carlo_no_trade_policy_active", "no_trade_policy_active", "soak_days_below_required"}
+    return bool(blockers) and all(str(item) in allowed for item in blockers)
+
+
 def first_present(payload: dict[str, Any], keys: tuple[str, ...], *, default: Any = None) -> Any:
     for key in keys:
         if payload.get(key) is not None:
@@ -465,15 +488,23 @@ def first_present(payload: dict[str, Any], keys: tuple[str, ...], *, default: An
 
 
 def latest_json_timestamp_age(payload: dict[str, Any], now: datetime) -> int | None:
+    return latest_json_timestamp_details(payload, now)["age_seconds"]
+
+
+def latest_json_timestamp_details(payload: dict[str, Any], now: datetime) -> dict[str, Any]:
     candidates: list[Any] = []
-    for key in ("generated_at_utc", "updated_at_utc", "created_at", "timestamp", "valid_until"):
+    for key in ("generated_at_utc", "generated_at", "updated_at_utc", "created_at", "timestamp", "valid_until"):
         if payload.get(key) is not None:
             candidates.append(payload[key])
     if isinstance(payload.get("signals"), list):
         for item in payload["signals"]:
             if isinstance(item, dict):
-                candidates.extend(item.get(key) for key in ("generated_at_utc", "created_at", "timestamp") if item.get(key) is not None)
-    return latest_age(candidates, now)
+                candidates.extend(item.get(key) for key in ("generated_at_utc", "generated_at", "created_at", "timestamp") if item.get(key) is not None)
+    latest = latest_time(candidates)
+    return {
+        "timestamp_utc": utc_timestamp(latest) if latest is not None else None,
+        "age_seconds": int(max((now - latest).total_seconds(), 0)) if latest is not None else None,
+    }
 
 
 def latest_jsonl_timestamp_age(rows: list[dict[str, Any]], now: datetime) -> int | None:
@@ -484,11 +515,86 @@ def latest_jsonl_timestamp_age(rows: list[dict[str, Any]], now: datetime) -> int
 
 
 def latest_age(values: list[Any], now: datetime) -> int | None:
+    latest = latest_time(values)
+    if latest is None:
+        return None
+    return int(max((now - latest).total_seconds(), 0))
+
+
+def latest_time(values: list[Any]) -> datetime | None:
     parsed = [parse_time(value) for value in values]
     valid = [value for value in parsed if value is not None]
-    if not valid:
-        return None
-    return int(max((now - max(valid)).total_seconds(), 0))
+    return max(valid) if valid else None
+
+
+def build_stale_source_details(
+    *,
+    payloads: dict[str, dict[str, Any]],
+    sources: dict[str, dict[str, Any]],
+    active_signal_freshness: dict[str, Any],
+    max_stale_signal_age_seconds: int,
+) -> list[dict[str, Any]]:
+    details: list[dict[str, Any]] = []
+    soak = payloads["paper_soak_report"]
+    raw_sources = soak.get("stale_source_details") or soak.get("stale_sources")
+    if isinstance(raw_sources, list):
+        for item in raw_sources:
+            if isinstance(item, dict):
+                details.append(
+                    {
+                        "source": str(item.get("source") or item.get("name") or "paper_soak_report"),
+                        "timestamp_utc": item.get("timestamp_utc") or item.get("last_seen_utc") or item.get("generated_at_utc"),
+                        "age_seconds": int_value(item.get("age_seconds") or item.get("last_age_seconds")),
+                        "limit_seconds": int_value(item.get("limit_seconds") or max_stale_signal_age_seconds),
+                    }
+                )
+            else:
+                details.append(
+                    {
+                        "source": str(item),
+                        "timestamp_utc": None,
+                        "age_seconds": None,
+                        "limit_seconds": int(max_stale_signal_age_seconds),
+                    }
+                )
+    elif int_value(first_present(soak, ("stale_data_count", "stale_sources_count"), default=0)) > 0:
+        details.append(
+            {
+                "source": "paper_soak_report",
+                "timestamp_utc": soak.get("generated_at_utc") or soak.get("created_at_utc"),
+                "age_seconds": int_value(soak.get("stale_data_count")),
+                "limit_seconds": int(max_stale_signal_age_seconds),
+            }
+        )
+    if not sources["active_signals"]["exists"]:
+        details.append(
+            {
+                "source": "active_signals",
+                "timestamp_utc": None,
+                "age_seconds": None,
+                "limit_seconds": int(max_stale_signal_age_seconds),
+                "reason": "missing_source",
+            }
+        )
+    elif active_signal_freshness["age_seconds"] is None or active_signal_freshness["age_seconds"] > max_stale_signal_age_seconds:
+        details.append(
+            {
+                "source": "active_signals",
+                "timestamp_utc": active_signal_freshness["timestamp_utc"],
+                "age_seconds": active_signal_freshness["age_seconds"],
+                "limit_seconds": int(max_stale_signal_age_seconds),
+                "reason": "stale" if active_signal_freshness["age_seconds"] is not None else "missing_timestamp",
+            }
+        )
+    seen: set[tuple[Any, Any]] = set()
+    unique = []
+    for item in details:
+        key = (item.get("source"), item.get("timestamp_utc"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return unique
 
 
 def parse_time(value: Any) -> datetime | None:

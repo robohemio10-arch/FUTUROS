@@ -76,6 +76,7 @@ def all_source_paths(tmp_path: Path) -> dict[str, Path]:
         "dataset_manifest": tmp_path / "dataset_manifest.json",
         "anti_leakage_report": tmp_path / "anti_leakage.json",
         "monte_carlo_report": tmp_path / "monte_carlo.json",
+        "monte_carlo_risk_budget_policy_report": tmp_path / "monte_carlo_policy.json",
         "backtest_report": tmp_path / "backtest.json",
         "kill_switch": tmp_path / "kill_switch.json",
         "active_signals": tmp_path / "active_signals.json",
@@ -92,6 +93,24 @@ def write_all_sources(tmp_path: Path, **overrides) -> dict[str, Path]:
     write_json(paths["dataset_manifest"], overrides.get("dataset_manifest", {"status": "ok"}))
     write_json(paths["anti_leakage_report"], overrides.get("anti_leakage_report", {"status": "ok"}))
     write_json(paths["monte_carlo_report"], overrides.get("monte_carlo_report", {"status": "ok", "recommendation_status": "ok"}))
+    write_json(
+        paths["monte_carlo_risk_budget_policy_report"],
+        overrides.get(
+            "monte_carlo_risk_budget_policy_report",
+            {
+                "status": "policy_present",
+                "policy_action": "observe_only",
+                "readiness_may_proceed": True,
+                "live_release_allowed": False,
+                "paper_only": True,
+                "shadow_only": True,
+                "live_trading_enabled": False,
+                "order_submission_enabled": False,
+                "real_order_submission_enabled": False,
+                "exchange_private_access": False,
+            },
+        ),
+    )
     write_json(paths["backtest_report"], overrides.get("backtest_report", {"status": "ok"}))
     write_json(paths["kill_switch"], overrides.get("kill_switch", {"enabled": False, "status": "inactive", "reason": "clear"}))
     write_json(paths["active_signals"], overrides.get("active_signals", {"generated_at_utc": "2026-06-03T11:58:00Z", "signals": []}))
@@ -241,6 +260,80 @@ def test_risk_readiness_panel_reports_stale_signal_warning(tmp_path):
     assert "STALE_DATA" in state["runtime_modes"]
 
 
+def test_risk_readiness_exposes_no_trade_policy_fields(tmp_path):
+    paths = write_all_sources(
+        tmp_path,
+        monte_carlo_report={"status": "blocked", "reason": "risk_budget_exceeded"},
+        monte_carlo_risk_budget_policy_report={
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+        },
+    )
+
+    state = load(paths)
+
+    assert state["monte_carlo_risk_treated"] is True
+    assert state["no_trade_policy_present"] is True
+    assert state["monte_carlo_risk_budget_policy_action"] == "no_trade"
+    assert state["readiness_may_proceed"] is False
+    assert state["live_release_allowed"] is False
+    assert "artifact_status_blocked:monte_carlo_report" not in state["readiness_blockers"]
+    assert "artifact_status_blocked:monte_carlo_risk_budget_policy_report" not in state["readiness_blockers"]
+
+
+def test_risk_readiness_keeps_blocked_for_no_trade_policy_and_soak_days(tmp_path):
+    paths = write_all_sources(
+        tmp_path,
+        paper_soak_report=soak_payload(
+            status="blocked",
+            paper_days=2,
+            clean_streak_days=2,
+            readiness_blockers=["monte_carlo_no_trade_policy_active", "soak_days_below_required"],
+        ),
+        monte_carlo_report={"status": "blocked", "reason": "risk_budget_exceeded"},
+        monte_carlo_risk_budget_policy_report={
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+        },
+    )
+
+    state = load(paths, required_paper_days=7)
+
+    assert state["status"] == "blocked"
+    assert "monte_carlo_no_trade_policy_active" in state["readiness_blockers"]
+    assert "paper_days_below_required" in state["readiness_blockers"]
+    assert "artifact_status_blocked:paper_soak_report" not in state["readiness_blockers"]
+
+
+def test_risk_readiness_reports_stale_source_details(tmp_path):
+    paths = write_all_sources(tmp_path, active_signals={"generated_at_utc": "2026-06-03T10:00:00Z", "signals": []})
+
+    state = load(paths, max_stale_signal_age_seconds=900)
+
+    assert "stale_data_count_above_limit" in state["readiness_blockers"]
+    assert state["stale_sources"] == ["active_signals"]
+    assert state["stale_source_details"][0]["source"] == "active_signals"
+    assert state["stale_source_details"][0]["timestamp_utc"] == "2026-06-03T10:00:00Z"
+    assert state["stale_source_details"][0]["age_seconds"] == 7200
+    assert state["stale_source_details"][0]["limit_seconds"] == 900
+
+
 def test_risk_readiness_panel_never_marks_ok_when_critical_gate_blocked(tmp_path):
     paths = write_all_sources(tmp_path, data_quality_report={"status": "blocked"})
 
@@ -259,6 +352,26 @@ def test_risk_readiness_panel_is_read_only(tmp_path):
     assert state["read_only"] is True
     assert state["forbidden_actions_present"] == []
     assert state["readiness_approved"] is True
+
+
+def test_reports_never_allow_live_release(tmp_path):
+    paths = write_all_sources(tmp_path)
+    state = load(paths)
+
+    assert state["live_release_allowed"] is False
+    assert state["live_trading_enabled"] is False
+    assert state["order_submission_enabled"] is False
+    assert state["real_order_submission_enabled"] is False
+
+
+def test_reports_never_send_orders_or_access_exchange(tmp_path):
+    paths = write_all_sources(tmp_path)
+    state = load(paths)
+
+    assert state["exchange_private_access"] is False
+    assert state["safety_flags"]["sends_orders"] is False
+    assert state["safety_flags"]["changes_risk"] is False
+    assert state["forbidden_actions_present"] == []
 
 
 def test_risk_readiness_panel_has_no_live_order_or_risk_actions():
@@ -324,6 +437,8 @@ def test_cli_inspect_risk_readiness_sources_runs_successfully(tmp_path):
             str(paths["anti_leakage_report"]),
             "--monte-carlo-report",
             str(paths["monte_carlo_report"]),
+            "--monte-carlo-risk-budget-policy-report",
+            str(paths["monte_carlo_risk_budget_policy_report"]),
             "--backtest-report",
             str(paths["backtest_report"]),
             "--kill-switch",
