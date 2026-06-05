@@ -39,6 +39,7 @@ class MarketDataHealthLimits:
 def run_market_data_health_audit(
     *,
     candles_path: str | Path | None = None,
+    runtime_candles_path: str | Path | None = None,
     ticker_path: str | Path | None = None,
     order_book_path: str | Path | None = None,
     trades_path: str | Path | None = None,
@@ -55,9 +56,12 @@ def run_market_data_health_audit(
     current_time = ensure_utc(now or datetime.now(timezone.utc))
     active_limits = limits or MarketDataHealthLimits()
     safety = safety_payload(safety_overrides)
+    candles_source, candle_source_selection = select_candles_source(
+        candles_path=candles_path,
+        runtime_candles_path=runtime_candles_path,
+    )
     sources = load_sources(
         {
-            "candles": candles_path,
             "ticker": ticker_path,
             "order_book": order_book_path,
             "trades": trades_path,
@@ -65,6 +69,7 @@ def run_market_data_health_audit(
             "rest_snapshot": rest_snapshot_path,
         }
     )
+    sources = {"candles": candles_source, **sources}
     validation_errors = [f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(safety)]
     warnings: list[str] = []
     if strict and not any(source["exists"] for source in sources.values()):
@@ -130,10 +135,59 @@ def run_market_data_health_audit(
         "warnings": sorted(set(warnings)),
         "limits": asdict(active_limits),
         "sources": source_summary(sources),
+        "candle_source_selection": candle_source_selection,
         **safety,
     }
     write_json_if_requested(report, Path(report_path) if report_path is not None else None)
     return report
+
+
+def select_candles_source(
+    *,
+    candles_path: str | Path | None,
+    runtime_candles_path: str | Path | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    historical_source = load_source("candles", candles_path)
+    if runtime_candles_path is None:
+        return historical_source, {
+            "selected": "candles",
+            "reason": "runtime_candles_not_provided",
+            "candles_path": str(candles_path) if candles_path is not None else None,
+            "runtime_candles_path": None,
+        }
+
+    runtime_source = load_source("runtime_candles", runtime_candles_path)
+    runtime_valid = (
+        runtime_source["exists"]
+        and runtime_source["status"] == "ok"
+        and isinstance(runtime_source.get("frame"), pd.DataFrame)
+        and not runtime_source["frame"].empty
+    )
+    if runtime_valid:
+        selected = dict(runtime_source)
+        selected["name"] = "candles"
+        return selected, {
+            "selected": "runtime_candles",
+            "reason": "runtime_candles_valid",
+            "candles_path": str(candles_path) if candles_path is not None else None,
+            "runtime_candles_path": str(runtime_candles_path),
+            "runtime_rows": int(len(runtime_source["frame"])),
+        }
+
+    fallback_reason = "runtime_candles_missing"
+    if runtime_source["exists"] and runtime_source["status"] == "blocked":
+        fallback_reason = "runtime_candles_invalid"
+    elif runtime_source["exists"]:
+        fallback_reason = "runtime_candles_empty"
+    return historical_source, {
+        "selected": "candles",
+        "reason": fallback_reason,
+        "candles_path": str(candles_path) if candles_path is not None else None,
+        "runtime_candles_path": str(runtime_candles_path),
+        "runtime_status": runtime_source["status"],
+        "runtime_exists": runtime_source["exists"],
+        "runtime_rows": int(len(runtime_source["frame"])) if isinstance(runtime_source.get("frame"), pd.DataFrame) else 0,
+    }
 
 
 def load_sources(paths: dict[str, str | Path | None]) -> dict[str, dict[str, Any]]:
