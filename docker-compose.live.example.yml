@@ -7,10 +7,11 @@ services:
     env_file:
       - .env
     environment:
-      SMARTCRYPTO_RUNTIME_MODE: live
+      SMARTCRYPTO_RUNTIME_MODE: paper
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
     volumes:
       - ./data:/app/data
       - ./config:/app/config:ro
@@ -22,6 +23,12 @@ services:
     restart: "no"
     env_file:
       - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
     volumes:
       - ./freqtrade/user_data:/freqtrade/user_data
       - ./data:/freqtrade/user_data/data:ro

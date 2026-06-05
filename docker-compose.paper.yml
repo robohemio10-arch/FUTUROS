@@ -11,6 +11,7 @@ services:
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       SMARTCRYPTO_DB_PATH: /app/data/sqlite/trading_dataset.sqlite
       SMARTCRYPTO_SIGNALS_PATH: /app/data/freqtrade_signals.json
       SMARTCRYPTO_PREDICTIONS_PATH: /app/data/predictions/latest_predictions.parquet
@@ -37,6 +38,7 @@ services:
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       SMARTCRYPTO_DB_PATH: /app/data/sqlite/trading_dataset.sqlite
       SMARTCRYPTO_SIGNALS_PATH: /app/data/freqtrade_signals.json
       SMARTCRYPTO_FREQTRADE_DB_PATH: /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
@@ -61,6 +63,7 @@ services:
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
     volumes:
       - ./freqtrade/user_data/config.paper.json:/freqtrade/user_data/config.paper.json:ro
       - ./freqtrade/user_data/strategies:/freqtrade/user_data/strategies:ro
@@ -84,6 +87,10 @@ services:
       - .env
     environment:
       SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       PYTHONPATH: /app
     working_dir: /app
     volumes:
@@ -106,6 +113,7 @@ services:
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       PYTHONPATH: /app
     working_dir: /app
     volumes:
@@ -125,6 +133,7 @@ services:
       LIVE_ENABLED: "false"
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       SMARTCRYPTO_PHASE14_OPERATIONAL_DB_PATH: /paper-db/tradesv3.paper.sqlite
       SMARTCRYPTO_FREQTRADE_DB_PATH: /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
       PYTHONPATH: /app
