@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+      - "codex/**"
+
+permissions:
+  contents: read
+
+env:
+  SMARTCRYPTO_RUNTIME_MODE: paper
+  LIVE_ENABLED: "false"
+  ORDER_SUBMISSION_ENABLED: "false"
+  REAL_ORDER_SUBMISSION_ENABLED: "false"
+  EXCHANGE_PRIVATE_ACCESS: "false"
+  SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+
+jobs:
+  test:
+    name: Compile and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e ".[dev,test]"
+
+      - name: Validate paper shadow safety flags
+        run: |
+          python - <<'PY'
+          import os
+          unsafe = [
+              key
+              for key in ("LIVE_ENABLED", "ORDER_SUBMISSION_ENABLED", "REAL_ORDER_SUBMISSION_ENABLED", "EXCHANGE_PRIVATE_ACCESS")
+              if os.environ.get(key, "false").lower() in {"1", "true", "yes", "on"}
+          ]
+          if unsafe:
+              raise SystemExit("unsafe runtime flags enabled: " + ",".join(unsafe))
+          print("paper/shadow only safety flags ok")
+          PY
+
+      - name: Compile sources
+        run: python -m compileall scripts smartcrypto tests
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Ensure runtime artifacts are not versioned
+        run: |
+          python - <<'PY'
+          import subprocess
+          forbidden_prefixes = ("data/", "logs/", "models/", "reports/")
+          forbidden_suffixes = (".parquet", ".sqlite", ".sqlite3", ".db", ".csv", ".xlsx", ".jsonl", ".zip")
+          tracked = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          bad = [
+              path
+              for path in tracked
+              if path.startswith(forbidden_prefixes) or path.endswith(forbidden_suffixes)
+          ]
+          if bad:
+              raise SystemExit("runtime artifacts are versioned: " + ",".join(bad))
+          print("no runtime artifacts versioned")
+          PY

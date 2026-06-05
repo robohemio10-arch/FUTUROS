@@ -115,6 +115,8 @@ Thumbs.db
 # Runtime outputs
 data/
 logs/
+reports/
+models/
 bitradex_realtime_candle_collector_v1/data/output/
 bitradex_realtime_candle_collector_v1/logs/
 
