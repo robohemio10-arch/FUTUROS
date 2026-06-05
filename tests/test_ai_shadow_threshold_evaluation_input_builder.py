@@ -112,6 +112,44 @@ def build(tmp_path: Path, *, decisions: list[dict] | None = None, outcomes: list
     return report, frame
 
 
+def write_sqlite_decisions(path: Path, rows: list[dict]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(path) as conn:
+        pd.DataFrame(rows).to_sql("ai_shadow_decisions", conn, index=False)
+    return path
+
+
+def embedded_decision_rows() -> list[dict]:
+    return [
+        {
+            "trade_id": "embedded-1",
+            "open_time_utc": "2026-06-05T10:00:00Z",
+            "symbol": "BTCUSDT",
+            "side": "long",
+            "ai_score": 0.91,
+            "ai_decision": "AI_ACCEPT",
+            "raw_pnl_usdt": -50.0,
+            "base_policy_pnl_usdt": 25.0,
+            "shadow_filtered_pnl_usdt": 3.5,
+            "sends_order": 0,
+            "changes_risk": 0,
+        },
+        {
+            "trade_id": "embedded-2",
+            "open_time_utc": "2026-06-05T10:05:00Z",
+            "symbol": "ETHUSDT",
+            "side": "short",
+            "ai_score": 0.31,
+            "ai_decision": "AI_REJECT",
+            "raw_pnl_usdt": 10.0,
+            "base_policy_pnl_usdt": -2.0,
+            "shadow_filtered_pnl_usdt": -1.25,
+            "sends_order": 0,
+            "changes_risk": 0,
+        },
+    ]
+
+
 def test_builder_outputs_required_threshold_columns(tmp_path: Path) -> None:
     report, frame = build(tmp_path)
 
@@ -200,6 +238,117 @@ def test_builder_reads_sqlite_decisions_read_only(tmp_path: Path) -> None:
     assert report["input_decisions_rows"] == 4
     assert output.exists()
     assert db_path.read_bytes() == before
+
+
+def test_builder_uses_embedded_sqlite_outcome_when_external_match_absent(tmp_path: Path) -> None:
+    db_path = write_sqlite_decisions(tmp_path / "decisions.sqlite", embedded_decision_rows())
+    output = tmp_path / "threshold_input.parquet"
+
+    report = build_ai_shadow_threshold_evaluation_input(
+        sqlite_decisions=db_path,
+        output=output,
+        report=tmp_path / "report.json",
+    )
+    frame = pd.read_parquet(output)
+
+    assert report["status"] == "ok"
+    assert report["matched_rows"] == 2
+    assert report["embedded_matched_rows"] == 2
+    assert frame["matched"].eq(True).all()
+    assert frame["match_method"].eq("embedded_decision_outcome").all()
+    assert frame["match_confidence"].eq(1.0).all()
+    assert frame["source_outcome_path"].eq(str(db_path)).all()
+
+
+def test_builder_prefers_shadow_filtered_pnl_for_embedded_outcome(tmp_path: Path) -> None:
+    db_path = write_sqlite_decisions(tmp_path / "decisions.sqlite", embedded_decision_rows())
+    output = tmp_path / "threshold_input.parquet"
+
+    report = build_ai_shadow_threshold_evaluation_input(
+        sqlite_decisions=db_path,
+        output=output,
+        report=tmp_path / "report.json",
+    )
+    frame = pd.read_parquet(output)
+    row = frame.loc[frame["trade_id"].eq("embedded-1")].iloc[0]
+
+    assert report["embedded_outcome_column_used"] == "shadow_filtered_pnl_usdt"
+    assert row["pnl_usdt"] == 3.5
+    assert row["pnl_fechado"] == 3.5
+
+
+def test_builder_derives_target_profitable_from_embedded_pnl(tmp_path: Path) -> None:
+    db_path = write_sqlite_decisions(tmp_path / "decisions.sqlite", embedded_decision_rows())
+    output = tmp_path / "threshold_input.parquet"
+
+    build_ai_shadow_threshold_evaluation_input(
+        sqlite_decisions=db_path,
+        output=output,
+        report=tmp_path / "report.json",
+    )
+    frame = pd.read_parquet(output).set_index("trade_id")
+
+    assert frame.loc["embedded-1", "target_profitable"] == 1
+    assert frame.loc["embedded-2", "target_profitable"] == 0
+
+
+def test_builder_reports_embedded_and_external_match_counts(tmp_path: Path) -> None:
+    db_path = write_sqlite_decisions(tmp_path / "decisions.sqlite", embedded_decision_rows())
+    outcomes_path = write_parquet(
+        tmp_path / "outcomes.parquet",
+        [
+            {
+                "trade_id": "embedded-1",
+                "symbol": "BTCUSDT",
+                "side": "long",
+                "open_time_utc": "2026-06-05T10:00:00Z",
+                "pnl_fechado": 8.0,
+                "target_profitable": 1,
+            }
+        ],
+    )
+
+    report = build_ai_shadow_threshold_evaluation_input(
+        sqlite_decisions=db_path,
+        outcomes=outcomes_path,
+        output=tmp_path / "threshold_input.parquet",
+        report=tmp_path / "report.json",
+    )
+
+    assert report["external_matched_rows"] == 1
+    assert report["embedded_outcome_rows"] == 2
+    assert report["embedded_matched_rows"] == 1
+    assert report["unmatched_reason_counts"] == {}
+
+
+def test_builder_does_not_fake_embedded_outcome_when_financial_columns_missing(tmp_path: Path) -> None:
+    rows = [
+        {
+            "trade_id": "no-outcome",
+            "open_time_utc": "2026-06-05T10:00:00Z",
+            "symbol": "BTCUSDT",
+            "side": "long",
+            "ai_score": 0.72,
+            "ai_decision": "AI_ACCEPT",
+        }
+    ]
+    db_path = write_sqlite_decisions(tmp_path / "decisions.sqlite", rows)
+    output = tmp_path / "threshold_input.parquet"
+
+    report = build_ai_shadow_threshold_evaluation_input(
+        sqlite_decisions=db_path,
+        output=output,
+        report=tmp_path / "report.json",
+    )
+    frame = pd.read_parquet(output)
+
+    assert report["status"] == "warning"
+    assert report["matched_rows"] == 0
+    assert report["embedded_outcome_rows"] == 0
+    assert report["embedded_matched_rows"] == 0
+    assert report["unmatched_reason_counts"] == {"missing_embedded_outcome": 1}
+    assert bool(frame.iloc[0]["matched"]) is False
+    assert pd.isna(frame.iloc[0]["pnl_usdt"])
 
 
 def test_builder_report_contains_counts_hashes_and_safety_flags(tmp_path: Path) -> None:
