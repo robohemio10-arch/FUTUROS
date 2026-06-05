@@ -15,9 +15,9 @@ DEFAULT_THRESHOLDS = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80)
 MINIMUM_RECOMMENDED_SAMPLES = 30
 DECISION_GROUPS = ("AI_ACCEPT", "AI_REJECT", "SHADOW_ENTRY", "SHADOW_SKIP")
 REQUIRED_COLUMNS = ("matched",)
-PROBABILITY_CANDIDATES = ("probability", "probability_win", "confidence", "score")
+PROBABILITY_CANDIDATES = ("probability_or_confidence", "probability", "probability_win", "confidence", "proba", "score", "model_confidence")
 RETURN_CANDIDATES = ("target_return", "return_pct", "pnl_fechado", "pnl", "pnl_usdt")
-DECISION_CANDIDATES = ("action_shadow", "decision", "ai_decision", "shadow_decision", "action")
+DECISION_CANDIDATES = ("decision", "action_shadow", "ai_decision", "shadow_decision", "action")
 
 
 class FinancialEvaluationError(ValueError):
@@ -200,9 +200,9 @@ def validate_input_frame(frame: pd.DataFrame) -> dict[str, Any]:
         return {"errors": ["input_must_be_dataframe"]}
     columns = [str(column) for column in frame.columns]
     missing = [column for column in REQUIRED_COLUMNS if column not in columns]
-    probability_column = first_existing(columns, PROBABILITY_CANDIDATES)
-    return_column = first_existing(columns, RETURN_CANDIDATES)
-    decision_column = first_existing(columns, DECISION_CANDIDATES)
+    probability_column = first_numeric_existing(frame, PROBABILITY_CANDIDATES)
+    return_column = first_numeric_existing(frame, RETURN_CANDIDATES)
+    decision_column = first_nonempty_existing(frame, DECISION_CANDIDATES)
     if probability_column is None:
         missing.append("probability_or_confidence")
     if return_column is None:
@@ -417,6 +417,26 @@ def parse_thresholds(value: str | None) -> list[float]:
 
 def first_existing(columns: list[str], candidates: tuple[str, ...]) -> str | None:
     return next((candidate for candidate in candidates if candidate in columns), None)
+
+
+def first_numeric_existing(frame: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
+    for candidate in candidates:
+        if candidate not in frame.columns:
+            continue
+        values = pd.to_numeric(frame[candidate], errors="coerce").replace([np.inf, -np.inf], np.nan)
+        if values.notna().any():
+            return candidate
+    return first_existing([str(column) for column in frame.columns], candidates)
+
+
+def first_nonempty_existing(frame: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:
+    for candidate in candidates:
+        if candidate not in frame.columns:
+            continue
+        values = frame[candidate].dropna().astype(str).str.strip()
+        if values.ne("").any():
+            return candidate
+    return first_existing([str(column) for column in frame.columns], candidates)
 
 
 def normalize_bool(value: Any) -> bool:
