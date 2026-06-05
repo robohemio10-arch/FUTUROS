@@ -56,6 +56,7 @@ def clean_payloads() -> dict[str, dict]:
         "financial_thresholds": {"status": "ok", "paper_pnl_net": 10, **flags},
         "anti_leakage": {"status": "ok", **flags},
         "monte_carlo": {"status": "ok", **flags},
+        "monte_carlo_risk_budget_policy": {"status": "ok", "policy_action": "eligible_for_shadow_only", "risk_budget_status": "ok", "readiness_may_proceed": True, "live_release_allowed": False, **flags},
         "event_backtest": {"status": "ok", **flags},
         "data_quality": {"status": "ok", **flags},
         "dataset_manifest": {"status": "ok", "rows": 2864, **flags},

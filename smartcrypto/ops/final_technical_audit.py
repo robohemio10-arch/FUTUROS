@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from smartcrypto.ops.paper_shadow_soak_report import monte_carlo_policy_summary
+
 DEFAULT_REPORTS_ROOT = Path("data/reports")
 DEFAULT_OUTPUT_PATH = Path("data/reports/final_technical_audit_20_pillars_report.json")
 ROADMAP_VERSION = "canonical_20_pillars_v1"
@@ -38,12 +40,14 @@ REPORT_FILES = {
     "financial_thresholds": "ai_shadow_financial_threshold_evaluation_report.json",
     "anti_leakage": "phase23_anti_leakage_report.json",
     "monte_carlo": "monte_carlo_risk_simulation_report.json",
+    "monte_carlo_risk_budget_policy": "monte_carlo_risk_budget_policy_report.json",
     "event_backtest": "event_driven_backtest_report.json",
     "data_quality": "data_quality_report.json",
     "dataset_manifest": "dataset_manifest.json",
     "model_registry_gate": "model_registry_promotion_gate_report.json",
     "ai_shadow_trainer": "ai_shadow_incremental_trainer_report.json",
 }
+OPTIONAL_REPORT_KEYS = {"monte_carlo_risk_budget_policy"}
 
 PILLARS = [
     {"id": 1, "name": "Arquitetura", "previous_score": 7.0, "evidence": ["runtime_safety", "system_healthcheck", "data_quality"], "gates": ["runtime_safety", "system_healthcheck"]},
@@ -74,6 +78,7 @@ def build_final_technical_audit_report(
     reports_root: str | Path = DEFAULT_REPORTS_ROOT,
     output_path: str | Path | None = DEFAULT_OUTPUT_PATH,
     project_root: str | Path | None = None,
+    monte_carlo_risk_budget_policy_report: str | Path | None = None,
     required_target_score: float = 9.0,
     strict: bool = False,
     now: datetime | None = None,
@@ -83,11 +88,17 @@ def build_final_technical_audit_report(
     root = Path(reports_root)
     project = Path(project_root) if project_root is not None else Path.cwd()
     sources = {name: load_source(root / filename, jsonl=filename.endswith(".jsonl")) for name, filename in REPORT_FILES.items()}
+    if monte_carlo_risk_budget_policy_report is not None:
+        sources["monte_carlo_risk_budget_policy"] = load_source(Path(monte_carlo_risk_budget_policy_report))
     payloads = {name: source["payload"] for name, source in sources.items()}
     gate_summary = build_quality_gates_summary(payloads, sources)
     p0, p1, p2 = collect_findings(payloads, sources)
     global_blockers = build_global_blockers(payloads, sources, gate_summary, p0, p1, strict, safety_overrides)
-    missing_evidence = sorted(name for name, source in sources.items() if not source["exists"])
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy", {}).get("exists", False),
+    )
+    missing_evidence = sorted(name for name, source in sources.items() if not source["exists"] and name not in OPTIONAL_REPORT_KEYS)
     pillars = [
         classify_pillar(
             definition,
@@ -113,6 +124,12 @@ def build_final_technical_audit_report(
         "target_score": float(required_target_score),
         "readiness_approved": readiness_approved,
         "live_release_allowed": False,
+        "monte_carlo_risk_budget_policy_status": monte_carlo_policy["status"],
+        "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
+        "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"]
+        and str(payloads["monte_carlo"].get("status", "")).lower() in {"blocked", "critical", "failed"},
+        "no_trade_policy_present": monte_carlo_policy["no_trade_policy_present"],
+        "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else readiness_approved,
         "manual_go_no_go_required": True,
         "paper_shadow_only": True,
         "pillars": pillars,
@@ -188,6 +205,22 @@ def build_quality_gates_summary(payloads: Mapping[str, dict[str, Any]], sources:
             continue
         status, reason = source_gate_status(name, payload)
         gates[name] = {"status": status, "reason": reason, "path": source["path"]}
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy", {}).get("exists", False),
+    )
+    if monte_carlo_policy["unsafe_findings"]:
+        gates["monte_carlo_risk_budget_policy"] = {
+            "status": "blocked",
+            "reason": "unsafe_policy_report",
+            "path": sources.get("monte_carlo_risk_budget_policy", {}).get("path"),
+        }
+    if gates.get("monte_carlo", {}).get("status") == "blocked" and monte_carlo_policy["no_trade_policy_present"]:
+        gates["monte_carlo"] = {
+            **gates["monte_carlo"],
+            "status": "warning",
+            "reason": "monte_carlo_no_trade_policy_active",
+        }
     return gates
 
 
@@ -195,6 +228,8 @@ def source_gate_status(name: str, payload: Mapping[str, Any]) -> tuple[str, str]
     raw_status = str(payload.get("status", "ok")).lower()
     if any_unsafe_flag(payload):
         return "blocked", "unsafe_safety_flags"
+    if name == "monte_carlo_risk_budget_policy":
+        return "ok", "policy_present"
     if raw_status in {"blocked", "critical", "failed"}:
         return "blocked", f"status_{raw_status}"
     if name == "readiness_gate" and payload.get("readiness_approved") is False:
@@ -242,6 +277,7 @@ def build_global_blockers(
         "ledger": "ledger_audit_blocked",
         "anti_leakage": "anti_leakage_blocked",
         "monte_carlo": "monte_carlo_blocked",
+        "monte_carlo_risk_budget_policy": "unsafe_policy_report",
         "event_backtest": "event_backtest_blocked",
         "data_quality": "data_quality_blocked",
         "sklearn_compatibility": "sklearn_compatibility_blocked",
@@ -249,6 +285,14 @@ def build_global_blockers(
     for key, reason in critical_blockers.items():
         if gates.get(key, {}).get("status") == "blocked":
             blockers.append(reason)
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy", {}).get("exists", False),
+    )
+    if gates.get("monte_carlo", {}).get("reason") == "monte_carlo_no_trade_policy_active":
+        blockers.append("monte_carlo_no_trade_policy_active")
+    if monte_carlo_policy["unsafe_findings"]:
+        blockers.append("unsafe_policy_report")
     if gates.get("paper_soak", {}).get("reason") == "insufficient_soak":
         blockers.append("paper_soak_insufficient")
     if strict:
@@ -304,7 +348,7 @@ def load_source(path: Path, *, jsonl: bool = False) -> dict[str, Any]:
 
 def evidence_summary(sources: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
     present = sorted(name for name, source in sources.items() if source["exists"])
-    missing = sorted(name for name, source in sources.items() if not source["exists"])
+    missing = sorted(name for name, source in sources.items() if not source["exists"] and name not in OPTIONAL_REPORT_KEYS)
     return {
         "total_sources": len(sources),
         "present_count": len(present),
@@ -321,6 +365,10 @@ def next_required_actions(blockers: list[str], missing: list[str], pillars: list
     if blockers:
         actions.append("keep_live_disabled")
         actions.append("resolve_global_blockers")
+    if "monte_carlo_no_trade_policy_active" in blockers:
+        actions.append("respect_no_trade_policy")
+        actions.append("improve_expectancy_before_readiness")
+        actions.append("collect_more_paper_shadow_evidence")
     if any("readiness_gate" in blocker for blocker in blockers):
         actions.append("rerun_readiness_gate")
     if any("sklearn" in blocker for blocker in blockers):

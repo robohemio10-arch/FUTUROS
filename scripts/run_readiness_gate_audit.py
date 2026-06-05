@@ -40,6 +40,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--data-quality-report", default=str(DEFAULT_DATA_QUALITY_REPORT))
     parser.add_argument("--anti-leakage-report", default=str(DEFAULT_ANTI_LEAKAGE_REPORT))
     parser.add_argument("--monte-carlo-report", default=str(DEFAULT_MONTE_CARLO_REPORT))
+    parser.add_argument("--monte-carlo-risk-budget-policy-report", default=None)
     parser.add_argument("--event-backtest-report", default=str(DEFAULT_EVENT_BACKTEST_REPORT))
     parser.add_argument("--report", default=str(DEFAULT_REPORT_PATH))
     parser.add_argument("--required-soak-days", type=int, default=7)
@@ -60,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         data_quality_report=args.data_quality_report,
         anti_leakage_report=args.anti_leakage_report,
         monte_carlo_report=args.monte_carlo_report,
+        monte_carlo_risk_budget_policy_report=args.monte_carlo_risk_budget_policy_report,
         event_backtest_report=args.event_backtest_report,
         report_path=args.report,
         required_soak_days=args.required_soak_days,

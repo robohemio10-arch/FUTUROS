@@ -18,6 +18,7 @@ DEFAULT_DRIFT_REPORT = Path("data/reports/ai_shadow_drift_monitor_report.json")
 DEFAULT_FINANCIAL_THRESHOLD_REPORT = Path("data/reports/ai_shadow_financial_threshold_evaluation_report.json")
 DEFAULT_ANTI_LEAKAGE_REPORT = Path("data/reports/phase23_anti_leakage_report.json")
 DEFAULT_MONTE_CARLO_REPORT = Path("data/reports/monte_carlo_risk_simulation_report.json")
+DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT = Path("data/reports/monte_carlo_risk_budget_policy_report.json")
 DEFAULT_EVENT_BACKTEST_REPORT = Path("data/reports/event_driven_backtest_report.json")
 DEFAULT_DATA_QUALITY_REPORT = Path("data/reports/data_quality_report.json")
 DEFAULT_DATASET_MANIFEST = Path("data/reports/dataset_manifest.json")
@@ -57,6 +58,7 @@ def build_paper_shadow_soak_report(
     financial_threshold_report: str | Path | None = DEFAULT_FINANCIAL_THRESHOLD_REPORT,
     anti_leakage_report: str | Path | None = DEFAULT_ANTI_LEAKAGE_REPORT,
     monte_carlo_report: str | Path | None = DEFAULT_MONTE_CARLO_REPORT,
+    monte_carlo_risk_budget_policy_report: str | Path | None = None,
     event_backtest_report: str | Path | None = DEFAULT_EVENT_BACKTEST_REPORT,
     data_quality_report: str | Path | None = DEFAULT_DATA_QUALITY_REPORT,
     dataset_manifest: str | Path | None = DEFAULT_DATASET_MANIFEST,
@@ -80,11 +82,16 @@ def build_paper_shadow_soak_report(
         "financial_threshold_report": financial_threshold_report,
         "anti_leakage_report": anti_leakage_report,
         "monte_carlo_report": monte_carlo_report,
+        "monte_carlo_risk_budget_policy_report": monte_carlo_risk_budget_policy_report,
         "event_backtest_report": event_backtest_report,
         "data_quality_report": data_quality_report,
         "dataset_manifest": dataset_manifest,
     }
-    sources = {name: load_source(path, jsonl=name == "financial_event_log") for name, path in paths.items()}
+    sources = {
+        name: load_source(path, jsonl=name == "financial_event_log")
+        for name, path in paths.items()
+        if path is not None
+    }
     payloads = {name: source["payload"] for name, source in sources.items()}
     events = sources["financial_event_log"]["rows"]
     times = [parse_utc(first_present(event, "occurred_at_utc", "created_at_utc", "timestamp_utc", "generated_at_utc")) for event in events]
@@ -99,6 +106,10 @@ def build_paper_shadow_soak_report(
     soak_end = current_time if times else None
     soak_days = round(((soak_end - soak_start).total_seconds() / 86400.0), 6) if soak_start and soak_end else 0.0
     safety = safety_payload(safety_overrides)
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy_report", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy_report", {}).get("exists", False),
+    )
     report = {
         "status": "ok",
         "reason": "paper_shadow_soak_ok",
@@ -140,6 +151,14 @@ def build_paper_shadow_soak_report(
         "shadow_pnl_net": float_value(first_present(payloads["financial_threshold_report"], "shadow_pnl_net", "shadow_total_pnl", default=0.0)),
         "max_drawdown_pct": float_value(first_present(payloads["risk_recovery_report"], "max_drawdown_pct", default=nested(payloads["risk_recovery_report"], "risk_metrics", "max_drawdown_pct", default=0.0))),
         "monte_carlo_status": str(payloads["monte_carlo_report"].get("status", "missing")),
+        "monte_carlo_risk_budget_policy_status": monte_carlo_policy["status"],
+        "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
+        "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"] and status_is_blocked(payloads["monte_carlo_report"]),
+        "no_trade_policy_present": monte_carlo_policy["no_trade_policy_present"],
+        "monte_carlo_risk_budget_policy_active": monte_carlo_policy["no_trade_policy_present"],
+        "monte_carlo_policy_unsafe_findings": monte_carlo_policy["unsafe_findings"],
+        "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else None,
+        "live_release_allowed": False,
         "event_backtest_status": str(payloads["event_backtest_report"].get("status", "missing")),
         "data_quality_status": str(payloads["data_quality_report"].get("status", "missing")),
         "readiness_status": "unknown",
@@ -169,6 +188,13 @@ def build_paper_shadow_soak_report(
 def evaluate_soak_blockers(report: dict[str, Any], payloads: dict[str, dict[str, Any]], sources: dict[str, dict[str, Any]], strict: bool) -> tuple[list[str], list[str]]:
     blockers = [f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(report)]
     warnings = [f"missing_source:{name}" for name in report["missing_sources"]]
+    monte_carlo_policy = monte_carlo_policy_summary(
+        payloads.get("monte_carlo_risk_budget_policy_report", {}),
+        source_exists=sources.get("monte_carlo_risk_budget_policy_report", {}).get("exists", False),
+    )
+    monte_carlo_treated = monte_carlo_policy["monte_carlo_risk_treated"] and status_is_blocked(payloads["monte_carlo_report"])
+    if monte_carlo_policy["unsafe_findings"]:
+        blockers.append("unsafe_policy_report")
     for source_name, payload in payloads.items():
         blockers.extend(f"unsafe_source_safety_flag:{source_name}:{flag}" for flag in unsafe_safety_flags(payload))
     for name in REQUIRED_SOURCE_NAMES:
@@ -199,12 +225,16 @@ def evaluate_soak_blockers(report: dict[str, Any], payloads: dict[str, dict[str,
     for source_name, reason in (
         ("data_quality_report", "data_quality_blocked"),
         ("anti_leakage_report", "anti_leakage_blocked"),
-        ("monte_carlo_report", "monte_carlo_blocked"),
         ("event_backtest_report", "event_driven_backtest_blocked"),
         ("ledger_report", "ledger_audit_blocked"),
     ):
         if status_is_blocked(payloads[source_name]):
             blockers.append(reason)
+    if status_is_blocked(payloads["monte_carlo_report"]):
+        if monte_carlo_treated:
+            blockers.append("monte_carlo_no_trade_policy_active")
+        else:
+            blockers.append("monte_carlo_blocked")
     if int_value(report.get("stale_data_count")) > 0:
         blockers.append("stale_data_count_gt_0")
     for key in ("high_spread_blocks", "low_liquidity_blocks", "latency_blocks", "drift_blocks", "backup_failures", "restore_failures"):
@@ -231,6 +261,48 @@ def load_source(path: str | Path | None, *, jsonl: bool = False) -> dict[str, An
     except Exception as exc:
         return {"path": str(target), "exists": True, "status": "blocked", "payload": {"status": "blocked", "error": str(exc)}, "rows": []}
     return {"path": str(target), "exists": True, "status": str(payload.get("status", "ok")), "payload": payload, "rows": list_value(payload.get("rows"))}
+
+
+def monte_carlo_policy_summary(payload: Mapping[str, Any], *, source_exists: bool) -> dict[str, Any]:
+    if not source_exists:
+        return {
+            "exists": False,
+            "status": "missing",
+            "policy_action": None,
+            "no_trade_policy_present": False,
+            "monte_carlo_risk_treated": False,
+            "readiness_may_proceed": None,
+            "live_release_allowed": False,
+            "unsafe_findings": [],
+        }
+    if not isinstance(payload, Mapping) or not payload:
+        return {
+            "exists": True,
+            "status": "invalid",
+            "policy_action": None,
+            "no_trade_policy_present": False,
+            "monte_carlo_risk_treated": False,
+            "readiness_may_proceed": None,
+            "live_release_allowed": False,
+            "unsafe_findings": ["invalid_policy_report"],
+        }
+    unsafe = unsafe_safety_flags(payload)
+    if payload.get("live_release_allowed") is True:
+        unsafe.append("live_release_allowed")
+    unsafe = sorted(set(unsafe))
+    action = str(payload.get("policy_action", "")).strip().lower() or None
+    status = str(payload.get("risk_budget_status") or payload.get("status") or "missing").strip().lower()
+    no_trade = bool(action == "no_trade" and not unsafe)
+    return {
+        "exists": True,
+        "status": status,
+        "policy_action": action,
+        "no_trade_policy_present": no_trade,
+        "monte_carlo_risk_treated": no_trade,
+        "readiness_may_proceed": as_bool(payload.get("readiness_may_proceed")),
+        "live_release_allowed": as_bool(payload.get("live_release_allowed")),
+        "unsafe_findings": unsafe,
+    }
 
 
 def safety_payload(overrides: Mapping[str, Any] | None = None) -> dict[str, bool]:
