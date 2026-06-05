@@ -103,10 +103,12 @@ def run_readiness_gate_audit(
     if strict:
         readiness_blockers.extend(f"missing_required_evidence:{name}" for name in missing_gates)
     observed_soak_days = float(payloads["paper_soak_report"].get("soak_days") or payloads["paper_soak_report"].get("paper_days") or 0.0)
+    remaining_soak_days = max(0.0, round(float(required_soak_days) - observed_soak_days, 6))
     if observed_soak_days < required_soak_days:
         readiness_blockers.append("soak_days_below_required")
     readiness_blockers = sorted(set(readiness_blockers))
     readiness_warnings = sorted(set(readiness_warnings))
+    readiness_categories = readiness_block_categories(readiness_blockers, readiness_warnings, missing_gates, gates, payloads)
     approved = not readiness_blockers and not missing_gates and all(gate["status"] == "ok" for gate in gates.values())
     report = {
         "status": "ok" if approved else "blocked",
@@ -115,12 +117,21 @@ def run_readiness_gate_audit(
         "readiness_approved": bool(approved),
         "required_soak_days": int(required_soak_days),
         "observed_soak_days": observed_soak_days,
+        "remaining_soak_days": remaining_soak_days,
         "gates": gates,
         "blocking_gates": blocking_gates,
         "warning_gates": warning_gates,
         "missing_gates": missing_gates,
         "readiness_blockers": readiness_blockers,
         "readiness_warnings": readiness_warnings,
+        "blocked_by_policy": readiness_categories["blocked_by_policy"],
+        "blocked_by_soak_duration": readiness_categories["blocked_by_soak_duration"],
+        "blocked_by_financial_expectancy": readiness_categories["blocked_by_financial_expectancy"],
+        "blocked_by_missing_evidence": readiness_categories["blocked_by_missing_evidence"],
+        "blocked_by_runtime_safety": readiness_categories["blocked_by_runtime_safety"],
+        "blocked_by_market_health": readiness_categories["blocked_by_market_health"],
+        "blocked_by_technical_failure": readiness_categories["blocked_by_technical_failure"],
+        "blocking_reasons_by_category": readiness_categories["blocking_reasons_by_category"],
         "monte_carlo_risk_budget_policy_status": monte_carlo_policy["status"],
         "monte_carlo_risk_budget_policy_action": monte_carlo_policy["policy_action"],
         "monte_carlo_risk_treated": monte_carlo_policy["monte_carlo_risk_treated"]
@@ -129,6 +140,7 @@ def run_readiness_gate_audit(
         "readiness_may_proceed": False if monte_carlo_policy["no_trade_policy_present"] else bool(approved),
         "live_release_allowed": False,
         "next_required_actions": next_required_actions(readiness_blockers, readiness_warnings, missing_gates),
+        "no_trade_exit_requirements": no_trade_exit_requirements(observed_soak_days, required_soak_days),
         **safety,
     }
     write_report(report, report_path)
@@ -200,3 +212,86 @@ def next_required_actions(blockers: list[str], warnings: list[str], missing: lis
     if warnings and not blockers:
         actions.append("review_warnings_before_promotion")
     return sorted(set(actions or ["no_action_required"]))
+
+
+def readiness_block_categories(
+    blockers: list[str],
+    warnings: list[str],
+    missing: list[str],
+    gates: dict[str, dict[str, Any]],
+    payloads: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    grouped = {
+        "policy": [],
+        "soak_duration": [],
+        "financial_expectancy": [],
+        "missing_evidence": [],
+        "runtime_safety": [],
+        "market_health": [],
+        "technical_failure": [],
+    }
+    for reason in sorted(set(blockers + warnings)):
+        category = readiness_reason_category(reason)
+        grouped[category].append(reason)
+    for name in missing:
+        grouped["missing_evidence"].append(f"missing_gate:{name}")
+    for name, gate in gates.items():
+        if gate["status"] != "blocked":
+            continue
+        reason = str(gate.get("reason", ""))
+        if name == "monte_carlo_report" and reason == "monte_carlo_no_trade_policy_active":
+            grouped["policy"].append(reason)
+        elif name == "market_health_report":
+            grouped["market_health"].append(f"gate_blocked:{name}")
+        elif name == "paper_soak_report" and "soak" in reason:
+            grouped["soak_duration"].append(reason)
+        elif "unsafe" in reason or name == "runtime_safety_report":
+            grouped["runtime_safety"].append(f"gate_blocked:{name}")
+        elif name in {"ledger_report", "risk_recovery_report"} and str(payloads.get(name, {}).get("status", "")).lower() == "missing_data":
+            grouped["missing_evidence"].append(f"missing_data:{name}")
+        elif reason not in {"monte_carlo_no_trade_policy_active", "soak_days_below_required"}:
+            grouped["technical_failure"].append(f"gate_blocked:{name}")
+    grouped = {key: sorted(set(value)) for key, value in grouped.items()}
+    technical = grouped["technical_failure"]
+    policy_only_monte_carlo = any("monte_carlo_no_trade_policy_active" in item or item == "no_trade_policy_active" for item in grouped["policy"])
+    if policy_only_monte_carlo:
+        technical = [item for item in technical if "monte_carlo" not in item]
+    return {
+        "blocked_by_policy": bool(grouped["policy"]),
+        "blocked_by_soak_duration": bool(grouped["soak_duration"]),
+        "blocked_by_financial_expectancy": bool(grouped["financial_expectancy"]),
+        "blocked_by_missing_evidence": bool(grouped["missing_evidence"]),
+        "blocked_by_runtime_safety": bool(grouped["runtime_safety"]),
+        "blocked_by_market_health": bool(grouped["market_health"]),
+        "blocked_by_technical_failure": bool(technical),
+        "blocking_reasons_by_category": {**grouped, "technical_failure": technical},
+    }
+
+
+def readiness_reason_category(reason: str) -> str:
+    text = str(reason)
+    if "no_trade_policy" in text or "monte_carlo" in text or "readiness_may_proceed_false" in text:
+        return "policy"
+    if "soak" in text or "paper_days" in text:
+        return "soak_duration"
+    if "financial" in text or "expectancy" in text or "profit_factor" in text or "pnl" in text or "sample" in text:
+        return "financial_expectancy"
+    if "missing" in text or "evidence" in text or "ledger" in text or "risk_recovery" in text:
+        return "missing_evidence"
+    if "unsafe" in text or "runtime_safety" in text or "live_trading" in text or "order_submission" in text:
+        return "runtime_safety"
+    if "market_health" in text or "market_data" in text or "stale" in text:
+        return "market_health"
+    return "technical_failure"
+
+
+def no_trade_exit_requirements(observed_soak_days: float, required_soak_days: int) -> list[str]:
+    return [
+        f"complete_required_soak_days:{observed_soak_days}_of_{required_soak_days}",
+        "monte_carlo_policy_action_not_no_trade",
+        "expectancy_non_negative_or_positive",
+        "profit_factor_above_minimum",
+        "risk_of_ruin_within_policy_cap",
+        "runtime_evidence_complete_and_fresh",
+        "manual_review_required_before_live",
+    ]

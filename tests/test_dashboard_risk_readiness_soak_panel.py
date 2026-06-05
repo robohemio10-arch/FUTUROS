@@ -158,8 +158,11 @@ def test_risk_readiness_panel_reports_paper_shadow_soak_progress(tmp_path):
 
     assert state["status"] == "blocked"
     assert state["paper_days"] == 5
+    assert state["paper_days_observed"] == 5
     assert state["required_paper_days"] == 7
+    assert state["paper_days_required"] == 7
     assert state["remaining_paper_days"] == 2
+    assert state["paper_days_remaining"] == 2
     assert "paper_days_below_required" in state["readiness_blockers"]
 
 
@@ -285,8 +288,39 @@ def test_risk_readiness_exposes_no_trade_policy_fields(tmp_path):
     assert state["monte_carlo_risk_budget_policy_action"] == "no_trade"
     assert state["readiness_may_proceed"] is False
     assert state["live_release_allowed"] is False
+    assert "monte_carlo_policy_action_not_no_trade" in state["no_trade_exit_requirements"]
+    assert "collect_financial_outcomes_for_expectancy_profit_factor_risk_of_ruin" in state["next_collection_targets"]
     assert "artifact_status_blocked:monte_carlo_report" not in state["readiness_blockers"]
     assert "artifact_status_blocked:monte_carlo_risk_budget_policy_report" not in state["readiness_blockers"]
+
+
+def test_risk_readiness_dashboard_exposes_collection_targets(tmp_path):
+    paths = write_all_sources(
+        tmp_path,
+        paper_soak_report=soak_payload(paper_days=3, clean_streak_days=3),
+        monte_carlo_report={"status": "blocked", "reason": "risk_budget_exceeded"},
+        monte_carlo_risk_budget_policy_report={
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+        },
+    )
+
+    state = load(paths, required_paper_days=7)
+
+    assert state["status"] == "blocked"
+    assert state["paper_days_remaining"] == 4
+    assert "collect_paper_shadow_soak_days:4" in state["next_collection_targets"]
+    assert "collect_financial_outcomes_for_expectancy_profit_factor_risk_of_ruin" in state["next_collection_targets"]
+    assert "risk_of_ruin_within_policy_cap" in state["no_trade_exit_requirements"]
+    assert state["live_release_allowed"] is False
 
 
 def test_risk_readiness_keeps_blocked_for_no_trade_policy_and_soak_days(tmp_path):

@@ -52,6 +52,7 @@ def source_paths(tmp_path: Path) -> dict[str, Path]:
         "financial_threshold_report": reports / "ai_shadow_financial_threshold_evaluation_report.json",
         "anti_leakage_report": reports / "phase23_anti_leakage_report.json",
         "monte_carlo_report": reports / "monte_carlo_risk_simulation_report.json",
+        "monte_carlo_risk_budget_policy_report": reports / "monte_carlo_risk_budget_policy_report.json",
         "event_backtest_report": reports / "event_driven_backtest_report.json",
         "data_quality_report": reports / "data_quality_report.json",
         "dataset_manifest": reports / "dataset_manifest.json",
@@ -108,6 +109,7 @@ def write_soak_sources(tmp_path: Path, *, overrides: dict[str, dict] | None = No
         "financial_threshold_report": {"status": "ok", "paper_pnl_net": 10.0, "shadow_pnl_net": 8.0, **safe_flags()},
         "anti_leakage_report": {"status": "ok", **safe_flags()},
         "monte_carlo_report": {"status": "ok", **safe_flags()},
+        "monte_carlo_risk_budget_policy_report": {"status": "ok", "policy_action": "observe_only", "readiness_may_proceed": True, "live_release_allowed": False, **safe_flags()},
         "event_backtest_report": {"status": "ok", **safe_flags()},
         "data_quality_report": {"status": "ok", **safe_flags()},
         "dataset_manifest": {"status": "ok", "rows": 26, **safe_flags()},
@@ -134,6 +136,7 @@ def build_soak(tmp_path: Path, *, overrides: dict[str, dict] | None = None, requ
         financial_threshold_report=paths["financial_threshold_report"],
         anti_leakage_report=paths["anti_leakage_report"],
         monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
         event_backtest_report=paths["event_backtest_report"],
         data_quality_report=paths["data_quality_report"],
         dataset_manifest=paths["dataset_manifest"],
@@ -161,6 +164,7 @@ def run_gate(tmp_path: Path, *, strict: bool = False, required_days: int = 2, om
         data_quality_report=paths["data_quality_report"],
         anti_leakage_report=paths["anti_leakage_report"],
         monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
         event_backtest_report=paths["event_backtest_report"],
         report_path=paths["readiness_gate_report"],
         required_soak_days=required_days,
@@ -193,9 +197,112 @@ def test_soak_report_handles_missing_sources(tmp_path: Path) -> None:
 def test_soak_report_calculates_soak_days_and_remaining_days(tmp_path: Path) -> None:
     report = build_soak(tmp_path, required_days=3)
     assert report["soak_days"] == 2.0
+    assert report["observed_soak_days"] == 2.0
+    assert report["observed_soak_hours"] == 48.0
     assert report["remaining_soak_days"] == 1.0
+    assert report["remaining_soak_hours"] == 24.0
     assert report["paper_events_count"] == 1
     assert report["shadow_events_count"] == 1
+
+
+def test_paper_soak_reports_remaining_soak_days(tmp_path: Path) -> None:
+    report = build_soak(tmp_path, required_days=7, strict=True)
+
+    assert report["status"] == "insufficient_soak"
+    assert report["observed_soak_days"] == 2.0
+    assert report["required_soak_days"] == 7
+    assert report["remaining_soak_days"] == 5.0
+    assert "continue_soak_until_required_days" in report["next_required_actions"]
+
+
+def test_paper_soak_groups_blockers_by_category(tmp_path: Path) -> None:
+    paths = write_soak_sources(
+        tmp_path,
+        overrides={
+            "financial_threshold_report": {"paper_pnl_net": -10.0, "expectancy": -0.1, "profit_factor": 0.8, "sample_warning": True},
+            "monte_carlo_report": {"status": "blocked", "reason": "risk_budget_exceeded"},
+        },
+    )
+    write_json(
+        paths["monte_carlo_risk_budget_policy_report"],
+        {
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            **safe_flags(),
+        },
+    )
+    report = build_paper_shadow_soak_report(
+        financial_event_log=paths["financial_event_log"],
+        critical_alerting_report=paths["critical_alerting_report"],
+        risk_recovery_report=paths["risk_recovery_report"],
+        market_health_report=paths["market_health_report"],
+        state_reconciliation_report=paths["state_reconciliation_report"],
+        ledger_report=paths["ledger_report"],
+        ai_governance_report=paths["ai_governance_report"],
+        risk_readiness_report=paths["risk_readiness_report"],
+        drift_report=paths["drift_report"],
+        financial_threshold_report=paths["financial_threshold_report"],
+        anti_leakage_report=paths["anti_leakage_report"],
+        monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
+        event_backtest_report=paths["event_backtest_report"],
+        data_quality_report=paths["data_quality_report"],
+        dataset_manifest=paths["dataset_manifest"],
+        report_path=paths["paper_soak_report"],
+        required_soak_days=7,
+        strict=True,
+        now=NOW,
+    )
+
+    grouped = report["blocking_reasons_by_category"]
+    assert "monte_carlo_no_trade_policy_active" in grouped["risk_policy"]
+    assert "soak_days_below_required" in grouped["soak_duration"]
+    assert "financial_expectancy_negative" in grouped["financial_performance"]
+    assert report["performance_summary"]["paper_pnl_negative"] is True
+    assert "improve_expectancy_profit_factor_and_risk_of_ruin" in report["next_required_actions"]
+
+
+def test_paper_soak_keeps_no_trade_policy_blocked(tmp_path: Path) -> None:
+    paths = write_soak_sources(
+        tmp_path,
+        overrides={"monte_carlo_report": {"status": "blocked", "reason": "risk_budget_exceeded"}},
+    )
+    write_json(
+        paths["monte_carlo_risk_budget_policy_report"],
+        {
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            **safe_flags(),
+        },
+    )
+
+    report = build_paper_shadow_soak_report(
+        financial_event_log=paths["financial_event_log"],
+        critical_alerting_report=paths["critical_alerting_report"],
+        risk_recovery_report=paths["risk_recovery_report"],
+        market_health_report=paths["market_health_report"],
+        state_reconciliation_report=paths["state_reconciliation_report"],
+        ledger_report=paths["ledger_report"],
+        anti_leakage_report=paths["anti_leakage_report"],
+        monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
+        event_backtest_report=paths["event_backtest_report"],
+        data_quality_report=paths["data_quality_report"],
+        report_path=paths["paper_soak_report"],
+        required_soak_days=2,
+        now=NOW,
+    )
+
+    assert report["status"] == "blocked"
+    assert report["no_trade_policy_present"] is True
+    assert report["readiness_may_proceed"] is False
+    assert report["readiness_approved"] is False
+    assert report["live_release_allowed"] is False
+    assert "monte_carlo_no_trade_policy_active" in report["readiness_blockers"]
 
 
 def test_soak_report_blocks_insufficient_soak_in_strict_mode(tmp_path: Path) -> None:
@@ -288,6 +395,74 @@ def test_readiness_gate_blocks_missing_required_evidence_in_strict_mode(tmp_path
     assert report["status"] == "blocked"
     assert "runtime_safety_report" in report["missing_gates"]
     assert "missing_required_evidence:runtime_safety_report" in report["readiness_blockers"]
+
+
+def test_readiness_gate_distinguishes_policy_block_from_technical_failure(tmp_path: Path) -> None:
+    paths = write_soak_sources(
+        tmp_path,
+        overrides={"monte_carlo_report": {"status": "blocked", "reason": "risk_budget_exceeded"}},
+    )
+    write_json(
+        paths["monte_carlo_risk_budget_policy_report"],
+        {
+            "status": "blocked",
+            "policy_action": "no_trade",
+            "readiness_may_proceed": False,
+            "live_release_allowed": False,
+            **safe_flags(),
+        },
+    )
+    soak = build_paper_shadow_soak_report(
+        financial_event_log=paths["financial_event_log"],
+        critical_alerting_report=paths["critical_alerting_report"],
+        risk_recovery_report=paths["risk_recovery_report"],
+        market_health_report=paths["market_health_report"],
+        state_reconciliation_report=paths["state_reconciliation_report"],
+        ledger_report=paths["ledger_report"],
+        anti_leakage_report=paths["anti_leakage_report"],
+        monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
+        event_backtest_report=paths["event_backtest_report"],
+        data_quality_report=paths["data_quality_report"],
+        report_path=paths["paper_soak_report"],
+        required_soak_days=2,
+        now=NOW,
+    )
+    write_json(paths["runtime_safety_report"], {"status": "ok", **safe_flags()})
+
+    report = run_readiness_gate_audit(
+        paper_soak_report=paths["paper_soak_report"],
+        runtime_safety_report=paths["runtime_safety_report"],
+        critical_alerting_report=paths["critical_alerting_report"],
+        risk_recovery_report=paths["risk_recovery_report"],
+        market_health_report=paths["market_health_report"],
+        state_reconciliation_report=paths["state_reconciliation_report"],
+        ledger_report=paths["ledger_report"],
+        data_quality_report=paths["data_quality_report"],
+        anti_leakage_report=paths["anti_leakage_report"],
+        monte_carlo_report=paths["monte_carlo_report"],
+        monte_carlo_risk_budget_policy_report=paths["monte_carlo_risk_budget_policy_report"],
+        event_backtest_report=paths["event_backtest_report"],
+        report_path=paths["readiness_gate_report"],
+        required_soak_days=2,
+        now=NOW,
+    )
+
+    assert soak["status"] == "blocked"
+    assert report["status"] == "blocked"
+    assert report["blocked_by_policy"] is True
+    assert report["blocked_by_technical_failure"] is False
+    assert "no_trade_policy_active" in report["readiness_blockers"]
+
+
+def test_readiness_gate_exposes_no_trade_exit_requirements(tmp_path: Path) -> None:
+    build_soak(tmp_path, required_days=7, strict=True)
+    report = run_gate(tmp_path, required_days=7)
+
+    assert report["blocked_by_soak_duration"] is True
+    assert report["remaining_soak_days"] == 5.0
+    assert "expectancy_non_negative_or_positive" in report["no_trade_exit_requirements"]
+    assert "keep_live_disabled" in report["next_required_actions"]
 
 
 def test_readiness_gate_never_enables_live(tmp_path: Path) -> None:

@@ -158,6 +158,30 @@ def test_final_audit_blocks_when_monte_carlo_blocked(tmp_path: Path) -> None:
     assert "monte_carlo_blocked" in report["global_blockers"]
 
 
+def test_no_trade_policy_is_not_auto_removed(tmp_path: Path) -> None:
+    report = run_audit(
+        tmp_path / "reports",
+        overrides={
+            "readiness_gate": {"status": "blocked", "readiness_approved": False, "no_trade_policy_present": True},
+            "paper_soak": {"status": "blocked", "readiness_blockers": ["monte_carlo_no_trade_policy_active", "soak_days_below_required"]},
+            "monte_carlo": {"status": "blocked"},
+            "monte_carlo_risk_budget_policy": {
+                "status": "blocked",
+                "policy_action": "no_trade",
+                "readiness_may_proceed": False,
+                "live_release_allowed": False,
+            },
+        },
+    )
+
+    assert report["status"] == "blocked"
+    assert report["no_trade_policy_present"] is True
+    assert report["readiness_may_proceed"] is False
+    assert report["live_release_allowed"] is False
+    assert "monte_carlo_no_trade_policy_active" in report["global_blockers"]
+    assert "respect_no_trade_policy" in report["next_required_actions"]
+
+
 def test_final_audit_blocks_when_event_backtest_blocked(tmp_path: Path) -> None:
     report = run_audit(tmp_path / "reports", overrides={"event_backtest": {"status": "blocked"}})
     assert report["status"] == "blocked"
