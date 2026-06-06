@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "584225892e425b4c12c643d300da64a8aca041670920763d55f056ca0dde86d8",
+  "aggregate_sha256": "94679b58184415b635d7a6c46d0fd514c53a5b66237134a865ea5cb3387f81f3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 92,
-    "manifested_files_total": 608,
+    "docs_files": 93,
+    "manifested_files_total": 609,
     "python_files": 434,
     "runtime_excluded_files_total": 0,
     "test_files": 100,
-    "tracked_files_total": 609,
+    "tracked_files_total": 610,
     "workflows": 1
   },
   "deterministic": true,
@@ -738,6 +738,12 @@
       "hash_mode": "text_lf",
       "path": "docs/LARGE_TRADES_IMPORT_QUALITY_GATE.md",
       "sha256": "96126ed1a531f21c53b966eb7c62f1f182004a5581feaa732cdd2ed6a221ab98"
+    },
+    {
+      "bytes": 3014,
+      "hash_mode": "text_lf",
+      "path": "docs/LEDGER_RISK_RECOVERY_EVIDENCE_MATERIALIZATION.md",
+      "sha256": "f4bd09ea9416eba02cf1718dd35308566f5ce314efdd78d918d400a8590ee2d5"
     },
     {
       "bytes": 5124,
