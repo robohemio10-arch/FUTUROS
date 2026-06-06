@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "c2a749b7227c980e28e5261d665e95d5a7bac3474c24e3edd5d5b27a51ff894f",
+  "aggregate_sha256": "584225892e425b4c12c643d300da64a8aca041670920763d55f056ca0dde86d8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2036,10 +2036,10 @@
       "sha256": "f53718d01bde8cd77a6b0751e57da54407ecdda177470113d8b65a89540bdbda"
     },
     {
-      "bytes": 10648,
+      "bytes": 20625,
       "hash_mode": "text_lf",
       "path": "scripts/run_order_intent_capital_ledger_audit.py",
-      "sha256": "f34afafcb0a5a0ebe5ecfa4bdf15f8eaf7c69c9da9a13e13b9559db2c4318b68"
+      "sha256": "d65c8478cd3122f39edcb0dcc118c4a78e40fd26af927d9c6e82de9bfa1ffe4a"
     },
     {
       "bytes": 2633,
@@ -2972,10 +2972,10 @@
       "sha256": "7c02161f41817ca2eb6ac623ebd6da7ee21ebb3afda676dc2dad1dda24c765b3"
     },
     {
-      "bytes": 20918,
+      "bytes": 26610,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/risk_recovery_modes.py",
-      "sha256": "4600dec20de2e94f315976c5e7a3b01c01ad279b2844468d910a0df36c8a6483"
+      "sha256": "3ebf054a71957098eb8ba147679f1bc54e89487a14ebe29f6690e49a694e6adb"
     },
     {
       "bytes": 571,
@@ -3272,10 +3272,10 @@
       "sha256": "dea050c5ab9837a78884d620f7fd5386eca5e431cf590dba2286ac4fe83a1679"
     },
     {
-      "bytes": 13156,
+      "bytes": 16957,
       "hash_mode": "text_lf",
       "path": "tests/test_idempotent_order_intent_capital_ledger.py",
-      "sha256": "d02e583edce202174b6d1a6a04d6abc16d72d2e7fd7032225eb1372acb61dd33"
+      "sha256": "d7e1d2daef7009d04d7bafe1dd0cbab9c298f6dc4b9b7b36f492957ed4d6b133"
     },
     {
       "bytes": 10026,
@@ -3590,10 +3590,10 @@
       "sha256": "609bc36e5bdf185e697a0a55446531d1908cdce79045ccbccf2cfb34b591c78a"
     },
     {
-      "bytes": 10807,
+      "bytes": 16451,
       "hash_mode": "text_lf",
       "path": "tests/test_risk_manager_drawdown_recovery_modes.py",
-      "sha256": "df46e282938edfe81030cd74678ce6fbb6605ba106cc3fcaebea1a43abd9e2b7"
+      "sha256": "d92ccc199746c3337d02d9d9a116bfafadc8ec6fbc6c8364a9737b757539f973"
     },
     {
       "bytes": 863,

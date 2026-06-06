@@ -11,6 +11,7 @@ from smartcrypto.execution.capital_reservation_ledger import (
     CapitalReservationLedger,
     CapitalReservationSafetyError,
     CapitalReservationValidationError,
+    ensure_schema,
 )
 from smartcrypto.execution.order_intent_ledger import (
     OrderIntentLedger,
@@ -261,6 +262,8 @@ def test_cli_run_order_intent_capital_ledger_audit_runs_successfully(tmp_path: P
 
     assert rc == 0
     assert payload["status"] == "ok"
+    assert payload["repository_state"] == "repository_present_with_valid_events"
+    assert payload["evidence_quality_summary"]["operational_evidence_complete"] is True
     assert payload["order_intents_count"] == 1
     assert payload["capital_reservations_count"] == 1
     assert report_path.exists()
@@ -330,3 +333,87 @@ def test_audit_detects_manual_double_spend_and_over_consumption(tmp_path: Path) 
 
     assert report["status"] == "blocked"
     assert report["over_consumption_findings"]
+
+
+def test_ledger_audit_differentiates_missing_repository(tmp_path: Path) -> None:
+    missing = tmp_path / "missing.sqlite"
+
+    report = cli.run_order_intent_capital_ledger_audit(repository_path=missing, report_path=None)
+
+    assert report["status"] == "missing_data"
+    assert report["reason"] == "repository_missing"
+    assert report["repository_state"] == "repository_missing"
+    assert str(missing) in report["required_sources_missing"]
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is False
+    assert "initialize_empty_ledger_repository_if_runtime_needs_materialization" in report["next_required_actions"]
+
+
+def test_ledger_audit_differentiates_empty_repository_file(tmp_path: Path) -> None:
+    empty = ledger_path(tmp_path)
+    empty.touch()
+
+    report = cli.run_order_intent_capital_ledger_audit(repository_path=empty, report_path=None)
+
+    assert report["status"] == "missing_data"
+    assert report["reason"] == "repository_empty"
+    assert report["repository_state"] == "repository_empty"
+    assert report["evidence_quality_summary"]["has_schema"] is False
+    assert report["evidence_quality_summary"]["has_real_events"] is False
+
+
+def test_ledger_audit_does_not_treat_empty_structure_as_operational_evidence(tmp_path: Path) -> None:
+    path = ledger_path(tmp_path)
+    ensure_schema(path)
+
+    report = cli.run_order_intent_capital_ledger_audit(repository_path=path, report_path=None)
+
+    assert report["status"] == "warning"
+    assert report["reason"] == "repository_present_but_no_events"
+    assert report["repository_state"] == "repository_present_but_no_events"
+    assert report["recommended_mode"] == "NORMAL"
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is False
+    assert "wait_for_real_paper_order_intent_or_capital_reservation_event" in report["next_required_actions"]
+
+
+def test_ledger_audit_blocks_core_schema_invalid(tmp_path: Path) -> None:
+    path = ledger_path(tmp_path)
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE order_intents (order_intent_id TEXT)")
+
+    report = cli.run_order_intent_capital_ledger_audit(repository_path=path, report_path=None)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "schema_invalid"
+    assert report["schema_findings"]
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is False
+
+
+def test_ledger_audit_blocks_event_schema_invalid(tmp_path: Path) -> None:
+    path = ledger_path(tmp_path)
+    ensure_schema(path)
+    with sqlite3.connect(path) as connection:
+        connection.execute("DROP TABLE order_intent_events")
+
+    report = cli.run_order_intent_capital_ledger_audit(repository_path=path, report_path=None)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "event_schema_invalid"
+    assert report["event_schema_findings"] == ["missing_event_table:order_intent_events"]
+
+
+def test_ledger_initializes_empty_repository_without_fake_events(tmp_path: Path) -> None:
+    path = ledger_path(tmp_path)
+
+    report = cli.run_order_intent_capital_ledger_audit(
+        repository_path=path,
+        report_path=None,
+        initialize_empty_repository=True,
+    )
+
+    assert path.exists()
+    assert report["status"] == "warning"
+    assert report["repository_materialized"] is True
+    assert report["repository_state"] == "repository_present_but_no_events"
+    assert report["order_intents_count"] == 0
+    assert report["capital_reservations_count"] == 0
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is False

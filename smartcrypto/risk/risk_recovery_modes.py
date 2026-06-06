@@ -21,6 +21,19 @@ SAFE_FALSE_FLAGS = (
     "sends_orders",
     "changes_risk",
 )
+RUNTIME_SOURCE_NAMES = (
+    "equity_curve",
+    "closed_trades",
+    "paper_session_report",
+    "market_health_report",
+    "readiness_report",
+    "monte_carlo_report",
+    "backtest_report",
+    "kill_switch",
+    "incidents",
+    "state_divergence_report",
+)
+OPTIONAL_SOURCE_NAMES = RUNTIME_SOURCE_NAMES
 
 
 @dataclass(frozen=True)
@@ -69,7 +82,8 @@ def run_risk_recovery_mode_audit(
         }
     )
     validation_errors = [f"unsafe_safety_flag:{flag}" for flag in unsafe_safety_flags(safety)]
-    warnings = [f"missing_optional_source:{name}" for name, source in sources.items() if not source["exists"]]
+    missing_sources = [name for name, source in sources.items() if not source["exists"]]
+    warnings = [f"missing_optional_source:{name}" for name in missing_sources]
     if strict and not any(source["exists"] for source in sources.values()):
         validation_errors.append("missing_required_input")
     validation_errors.extend(
@@ -97,9 +111,28 @@ def run_risk_recovery_mode_audit(
         limits=active_limits,
     )
     status = status_from_findings(blocking_findings, warnings, sources, strict)
+    evidence = evidence_quality_summary(
+        sources=sources,
+        payloads=payloads,
+        risk_metrics=risk_metrics,
+        recommended_mode=recommended_mode,
+        blocking_findings=blocking_findings,
+        warnings=warnings,
+        strict=strict,
+    )
+    if status == "ok" and evidence["primary_state"] in {
+        "missing_runtime_sources",
+        "no_drawdown_state",
+        "market_health_ok_but_no_recovery_state",
+        "recovery_state_empty",
+        "recovery_state_invalid",
+    }:
+        status = "warning"
     report = {
         "status": status,
-        "reason": "ok" if status == "ok" else ";".join(blocking_findings or warnings or ["missing_data"]),
+        "reason": "ok"
+        if status == "ok"
+        else ";".join(blocking_findings or [str(evidence["primary_state"])] or warnings or ["missing_data"]),
         "generated_at_utc": utc_timestamp(current_time),
         "report_version": REPORT_VERSION,
         "previous_mode": normalize_mode(previous_mode),
@@ -112,6 +145,11 @@ def run_risk_recovery_mode_audit(
         "blocking_findings": blocking_findings,
         "warnings": sorted(set(warnings)),
         "sources": source_summary(sources),
+        "missing_sources": missing_sources,
+        "optional_sources_missing": [name for name in missing_sources if name in OPTIONAL_SOURCE_NAMES],
+        "required_sources_missing": missing_sources if strict else [],
+        "evidence_quality_summary": evidence,
+        "next_required_actions": next_required_actions(evidence, blocking_findings),
         "limits": asdict(active_limits),
         **safety,
     }
@@ -360,6 +398,8 @@ def recommend_mode(
     if financial_findings:
         return "PROTECTION", "financial_limit_exceeded"
     if warnings:
+        if all(str(warning).startswith("missing_optional_source:") for warning in warnings):
+            return "NORMAL", "missing_optional_sources_no_recovery_activation"
         return "CONSERVATIVE", "warning_conditions_detected"
     return "NORMAL", "normal_conditions"
 
@@ -426,6 +466,94 @@ def source_summary(sources: dict[str, dict[str, Any]]) -> dict[str, Any]:
         }
         for name, source in sources.items()
     }
+
+
+def evidence_quality_summary(
+    *,
+    sources: dict[str, dict[str, Any]],
+    payloads: dict[str, dict[str, Any]],
+    risk_metrics: dict[str, Any],
+    recommended_mode: str,
+    blocking_findings: list[str],
+    warnings: list[str],
+    strict: bool,
+) -> dict[str, Any]:
+    present = sorted(name for name, source in sources.items() if source["exists"] and source["status"] == "ok")
+    missing = sorted(name for name, source in sources.items() if not source["exists"])
+    blocked = sorted(name for name, source in sources.items() if source["status"] == "blocked")
+    has_drawdown_state = sources["equity_curve"]["exists"] and not sources["equity_curve"]["frame"].empty
+    has_closed_trade_state = sources["closed_trades"]["exists"] and not sources["closed_trades"]["frame"].empty
+    has_recovery_state = has_drawdown_state or has_closed_trade_state or bool(payloads["paper_session_report"])
+    market_health_ok = normalized_status(payloads["market_health_report"].get("status")) == "ok"
+    incidents = payloads["incidents"]
+    incidents_count = max(
+        int_value(first_present(incidents, keys=("p0_incidents", "p0"), default=0)),
+        int_value(first_present(incidents, keys=("p1_incidents", "p1"), default=0)),
+        int_value(first_present(incidents, keys=("open", "open_incidents"), default=0)),
+    )
+
+    if blocked:
+        primary_state = "recovery_state_invalid"
+    elif not present:
+        primary_state = "missing_runtime_sources"
+    elif not has_drawdown_state and not has_closed_trade_state:
+        primary_state = "market_health_ok_but_no_recovery_state" if market_health_ok else "no_drawdown_state"
+    elif recommended_mode == "NORMAL":
+        primary_state = "recovery_mode_inactive"
+    else:
+        primary_state = "recovery_mode_active"
+
+    if present and not has_recovery_state:
+        state_detail = "recovery_state_empty"
+    elif incidents_count == 0 and sources["incidents"]["exists"]:
+        state_detail = "no_incidents_observed"
+    else:
+        state_detail = primary_state
+
+    complete = (
+        primary_state == "recovery_mode_inactive"
+        and has_drawdown_state
+        and has_closed_trade_state
+        and not blocked
+        and not blocking_findings
+    )
+    return {
+        "primary_state": primary_state,
+        "state_detail": state_detail,
+        "operational_evidence_complete": bool(complete),
+        "missing_runtime_sources": bool(not present),
+        "recovery_policy_present": True,
+        "has_drawdown_state": bool(has_drawdown_state),
+        "has_closed_trade_state": bool(has_closed_trade_state),
+        "has_recovery_state": bool(has_recovery_state),
+        "market_health_ok": bool(market_health_ok),
+        "no_incidents_observed": bool(incidents_count == 0 and sources["incidents"]["exists"]),
+        "recovery_mode_active": recommended_mode != "NORMAL",
+        "recovery_mode_inactive": recommended_mode == "NORMAL",
+        "required_sources_missing": missing if strict else [],
+        "optional_sources_missing": [name for name in missing if name in OPTIONAL_SOURCE_NAMES],
+        "missing_sources": missing,
+        "blocked_sources": blocked,
+        "warnings": sorted(set(warnings)),
+        "risk_metrics_available": any(float(risk_metrics.get(key) or 0.0) != 0.0 for key in risk_metrics),
+    }
+
+
+def next_required_actions(evidence: dict[str, Any], blocking_findings: list[str]) -> list[str]:
+    actions: list[str] = []
+    state = str(evidence.get("primary_state") or "")
+    if state == "missing_runtime_sources":
+        actions.append("materialize_runtime_reports_before_full_recovery_evidence")
+    if state in {"no_drawdown_state", "market_health_ok_but_no_recovery_state"}:
+        actions.append("provide_equity_curve_or_closed_trades_snapshot")
+    if state == "recovery_state_invalid":
+        actions.append("repair_invalid_runtime_recovery_source")
+    if evidence.get("no_incidents_observed"):
+        actions.append("continue_observing_without_fabricating_incidents")
+    if blocking_findings:
+        actions.append("resolve_blocking_risk_recovery_findings_before_readiness")
+    actions.append("keep_live_and_order_submission_disabled")
+    return sorted(set(actions))
 
 
 def first_existing(frame: pd.DataFrame, candidates: tuple[str, ...]) -> str | None:

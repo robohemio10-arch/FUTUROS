@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from smartcrypto.ops.system_healthcheck import run_system_healthcheck
 from smartcrypto.risk.risk_recovery_modes import (
     RiskRecoveryLimits,
     run_risk_recovery_mode_audit,
@@ -60,6 +61,19 @@ def session_payload(**overrides):
     return payload
 
 
+def safe_flags() -> dict:
+    return {
+        "paper_only": True,
+        "shadow_only": True,
+        "live_trading_enabled": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
+        "exchange_private_access": False,
+        "sends_orders": False,
+        "changes_risk": False,
+    }
+
+
 def write_sources(tmp_path: Path, **overrides) -> dict[str, Path]:
     paths = {
         "equity_curve_path": tmp_path / "equity.parquet",
@@ -102,6 +116,8 @@ def test_risk_recovery_accepts_normal_conditions(tmp_path):
     assert report["status"] == "ok"
     assert report["recommended_mode"] == "NORMAL"
     assert report["risk_metrics"]["max_drawdown_pct"] == 0.0
+    assert report["evidence_quality_summary"]["primary_state"] == "recovery_mode_inactive"
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is True
 
 
 def test_risk_recovery_enters_conservative_on_warning_conditions(tmp_path):
@@ -219,6 +235,52 @@ def test_risk_recovery_blocks_unsafe_safety_flags(tmp_path):
     assert "unsafe_safety_flag:order_submission_enabled" in report["blocking_findings"]
 
 
+def test_risk_recovery_differentiates_missing_runtime_sources(tmp_path):
+    report = run_risk_recovery_mode_audit(report_path=None, now=NOW)
+
+    assert report["status"] == "missing_data"
+    assert report["evidence_quality_summary"]["primary_state"] == "missing_runtime_sources"
+    assert set(report["missing_sources"]) >= {"equity_curve", "closed_trades", "market_health_report"}
+    assert report["required_sources_missing"] == []
+    assert report["paper_only"] is True
+    assert report["live_trading_enabled"] is False
+
+
+def test_risk_recovery_policy_present_without_incidents_is_not_full_ok(tmp_path):
+    market = write_json(tmp_path / "market_health.json", {"status": "ok", "stale_data_count": 0})
+    incidents = write_json(tmp_path / "incidents.json", {"p0": 0, "p1": 0, "open": 0})
+
+    report = run_risk_recovery_mode_audit(
+        market_health_report_path=market,
+        incidents_path=incidents,
+        report_path=None,
+        now=NOW,
+    )
+
+    assert report["status"] in {"missing_data", "warning"}
+    assert report["recommended_mode"] == "NORMAL"
+    assert report["evidence_quality_summary"]["primary_state"] == "market_health_ok_but_no_recovery_state"
+    assert report["evidence_quality_summary"]["no_incidents_observed"] is True
+    assert report["evidence_quality_summary"]["recovery_mode_inactive"] is True
+    assert report["evidence_quality_summary"]["operational_evidence_complete"] is False
+    assert "provide_equity_curve_or_closed_trades_snapshot" in report["next_required_actions"]
+
+
+def test_risk_recovery_reports_source_read_failures_as_invalid_state(tmp_path):
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text("{not-json", encoding="utf-8")
+
+    report = run_risk_recovery_mode_audit(
+        paper_session_report_path=invalid,
+        report_path=None,
+        now=NOW,
+    )
+
+    assert report["status"] == "blocked"
+    assert report["evidence_quality_summary"]["primary_state"] == "recovery_state_invalid"
+    assert "paper_session_report" in report["evidence_quality_summary"]["blocked_sources"]
+
+
 def test_cli_run_risk_recovery_mode_audit_runs_successfully(tmp_path):
     paths = write_sources(tmp_path / "sources")
     report_path = tmp_path / "risk_recovery.json"
@@ -288,3 +350,80 @@ def test_does_not_touch_registry_models_signal_producer_or_freqtrade(tmp_path):
     audit(write_sources(tmp_path / "sources"))
 
     assert {path: path.read_text(encoding="utf-8") for path in sentinels} == before
+
+
+def test_system_healthcheck_blocks_on_no_trade_readiness_soak_not_ledger_or_recovery_warnings(tmp_path):
+    reports = tmp_path / "reports"
+    timestamp = NOW.isoformat().replace("+00:00", "Z")
+    readiness = write_json(
+        reports / "readiness.json",
+        {
+            "status": "blocked",
+            "readiness_approved": False,
+            "no_trade_policy_present": True,
+            "readiness_blockers": ["no_trade_policy_active", "soak_days_below_required"],
+            "generated_at_utc": timestamp,
+            **safe_flags(),
+        },
+    )
+    soak = write_json(
+        reports / "soak.json",
+        {
+            "status": "insufficient_soak",
+            "readiness_blockers": ["monte_carlo_no_trade_policy_active", "soak_days_below_required"],
+            "no_trade_policy_present": True,
+            "generated_at_utc": timestamp,
+            **safe_flags(),
+        },
+    )
+    critical = write_json(reports / "critical.json", {"status": "ok", "critical_alerts": 0, "generated_at_utc": timestamp, **safe_flags()})
+    risk = write_json(
+        reports / "risk.json",
+        {
+            "status": "warning",
+            "reason": "market_health_ok_but_no_recovery_state",
+            "recommended_mode": "NORMAL",
+            "generated_at_utc": timestamp,
+            **safe_flags(),
+        },
+    )
+    market = write_json(reports / "market.json", {"status": "ok", "generated_at_utc": timestamp, **safe_flags()})
+    state = write_json(
+        reports / "state.json",
+        {"status": "ok", "reconciliation_required": False, "generated_at_utc": timestamp, **safe_flags()},
+    )
+    ledger = write_json(
+        reports / "ledger.json",
+        {
+            "status": "warning",
+            "reason": "repository_present_but_no_events",
+            "generated_at_utc": timestamp,
+            **safe_flags(),
+        },
+    )
+    backup = write_json(reports / "backup.json", {"status": "ok", "generated_at_utc": timestamp, **safe_flags()})
+    restore = write_json(reports / "restore.json", {"status": "ok", "generated_at_utc": timestamp, **safe_flags()})
+
+    report = run_system_healthcheck(
+        readiness_report=readiness,
+        paper_soak_report=soak,
+        critical_alerting_report=critical,
+        risk_recovery_report=risk,
+        market_health_report=market,
+        state_reconciliation_report=state,
+        ledger_report=ledger,
+        backup_report=backup,
+        restore_report=restore,
+        dockerfile=None,
+        compose_file=None,
+        report_path=None,
+        now=NOW,
+    )
+
+    assert report["status"] == "blocked"
+    assert "readiness_gate_blocked" in report["blocking_findings"]
+    assert "no_trade_policy_active" in report["blocking_findings"]
+    assert "soak_days_below_required" in report["blocking_findings"]
+    assert "ledger_audit_blocked" not in report["blocking_findings"]
+    assert "risk_recovery_mode_panic" not in report["blocking_findings"]
+    assert report["live_trading_enabled"] is False
