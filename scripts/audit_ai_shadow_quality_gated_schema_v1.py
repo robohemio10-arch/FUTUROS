@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 
-ROOT = Path("E:/FUTUROS")
+ROOT = Path(os.getenv("SMARTCRYPTO_PROJECT_ROOT") or Path.cwd()).resolve()
 OUT = ROOT / "data" / "reports" / "ai_shadow_quality_gated_schema_audit_v1.json"
 
 MODEL = ROOT / "data" / "models" / "ai_shadow_filter_extratrees_050.joblib"
@@ -116,7 +117,6 @@ def main() -> None:
     model = joblib.load(MODEL)
     model_features = extract_features(model)
 
-    old_df = pd.read_parquet(OLD_QG) if OLD_QG.exists() else pd.DataFrame()
     new_df = pd.read_parquet(NEW_TRAINING) if NEW_TRAINING.exists() else pd.DataFrame()
 
     feature_family_counts = {

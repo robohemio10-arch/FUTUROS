@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def read(path: str) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def make_target_body(target: str) -> str:
+    text = read("Makefile")
+    pattern = rf"^{re.escape(target)}:\n(?P<body>(?:\t.*\n)+)"
+    match = re.search(pattern, text, flags=re.MULTILINE)
+    assert match, f"missing Makefile target {target}"
+    return match.group("body")
+
+
+def load_manifest_module():
+    path = ROOT / "scripts" / "generate_project_manifest.py"
+    spec = importlib.util.spec_from_file_location("generate_project_manifest", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_makefile_typecheck_is_not_noop() -> None:
+    body = make_target_body("typecheck")
+
+    assert "python -m mypy" in body or "$(PYTHON) -m mypy" in body
+    assert "find_spec" not in body
+    assert "else 0" not in body
+
+
+def test_makefile_lint_is_not_noop() -> None:
+    body = make_target_body("lint")
+
+    assert "ruff check" in body
+    assert "find_spec" not in body
+    assert "else 0" not in body
+
+
+def test_makefile_security_is_not_noop() -> None:
+    body = make_target_body("security")
+
+    assert "bandit" in body
+    assert "pip_audit" in body
+    assert "scan_versioned_secrets.py" in body
+    assert "find_spec" not in body
+    assert "else 0" not in body
+
+
+def test_requirements_lock_contains_security_lint_and_typecheck_tools() -> None:
+    text = read("requirements-dev.lock").lower()
+
+    assert "mypy==" in text
+    assert "ruff==" in text
+    assert "bandit==" in text
+    assert "pip-audit==" in text
+    assert "pyarrow==23.0.1" in text
+    assert "pytest==9.0.3" in text
+    assert "streamlit==1.54.0" in text
+
+
+def test_pyproject_exposes_tools_in_test_and_dev_extras() -> None:
+    payload = __import__("tomllib").loads(read("pyproject.toml"))
+    optional = payload["project"]["optional-dependencies"]
+    for extra in ("test", "dev"):
+        deps = "\n".join(optional[extra]).lower()
+        assert "mypy" in deps
+        assert "ruff" in deps
+        assert "bandit" in deps
+        assert "pip-audit" in deps
+        assert "pyarrow>=23.0.1" in deps
+
+
+def test_ci_contains_lint_typecheck_security_secret_scan_docker_and_healthcheck() -> None:
+    text = read(".github/workflows/ci.yml")
+
+    assert "python -m pip install -r requirements-dev.lock" in text
+    assert "make lint" in text
+    assert "make typecheck" in text
+    assert "make security" in text
+    assert "scan_versioned_secrets.py" in read("Makefile")
+    assert "docker build -f docker/smartcrypto/Dockerfile" in text
+    assert "docker build -f docker/dashboard/Dockerfile" in text
+    assert "docker build -f docker/qlib/Dockerfile" in text
+    assert "smartcrypto.runtime.container_healthcheck" in text
+    assert "scripts/generate_project_manifest.py --check" in text
+
+
+def test_ci_does_not_use_secrets_or_enable_live() -> None:
+    text = read(".github/workflows/ci.yml")
+    forbidden = [
+        "secrets.",
+        "LIVE_ENABLED: \"true\"",
+        "ORDER_SUBMISSION_ENABLED: \"true\"",
+        "REAL_ORDER_SUBMISSION_ENABLED: \"true\"",
+        "SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: \"true\"",
+    ]
+
+    assert not any(token in text for token in forbidden)
+    assert 'SMARTCRYPTO_RUNTIME_MODE: paper' in text
+    assert 'LIVE_ENABLED: "false"' in text
+    assert 'ORDER_SUBMISSION_ENABLED: "false"' in text
+    assert 'REAL_ORDER_SUBMISSION_ENABLED: "false"' in text
+
+
+def test_project_manifest_is_coherent_and_deterministic() -> None:
+    module = load_manifest_module()
+    expected = module.build_manifest(ROOT)
+    actual = json.loads(read("PROJECT_MANIFEST_CLEAN.json"))
+
+    assert actual == expected
+    assert actual["generated_by_script"] == "scripts/generate_project_manifest.py"
+    assert actual["deterministic"] is True
+    assert actual["runtime_artifacts_not_in_zip"] is True
+    assert actual["aggregate_sha256"] == expected["aggregate_sha256"]
+    assert actual["counts"]["tracked_files_total"] == len(
+        subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
+    )
+    assert actual["counts"]["python_files"] > 0
+    assert actual["counts"]["test_files"] > 0
+    assert actual["counts"]["docs_files"] > 0
+    assert actual["counts"]["dockerfiles"] >= 4
+    assert actual["counts"]["workflows"] >= 1
+    assert all(not path["path"].startswith(("data/", "logs/", "models/", "reports/")) for path in actual["files"])
+
+
+def test_bitradex_dockerfile_has_non_root_user_and_healthcheck() -> None:
+    dockerfile = ROOT / "bitradex_realtime_candle_collector_v1" / "Dockerfile"
+    text = dockerfile.read_text(encoding="utf-8")
+    users = [line.split(maxsplit=1)[1].strip().lower() for line in text.splitlines() if line.strip().upper().startswith("USER ")]
+
+    assert dockerfile.exists()
+    assert users
+    assert users[-1] not in {"root", "0"}
+    assert users[-1] == "bitradex"
+    assert "HEALTHCHECK" in text
+    assert "chown -R bitradex:bitradex /app /ms-playwright" in text
+
+
+def test_operational_python_has_no_hardcoded_windows_project_root() -> None:
+    offenders: list[str] = []
+    for base in (ROOT / "scripts", ROOT / "smartcrypto"):
+        for path in base.rglob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            if "E:/FUTUROS" in text or "E:\\FUTUROS" in text:
+                offenders.append(str(path.relative_to(ROOT)).replace("\\", "/"))
+
+    assert offenders == []
+
+
+def test_runtime_safety_flags_remain_blocked_in_composes_and_ci() -> None:
+    for compose_path in ("docker-compose.paper.yml", "docker-compose.live.example.yml"):
+        payload = yaml.safe_load(read(compose_path))
+        for service in payload["services"].values():
+            if service.get("image", "").startswith("redis"):
+                continue
+            env = service.get("environment") or {}
+            assert env["SMARTCRYPTO_RUNTIME_MODE"] == "paper"
+            assert env["LIVE_ENABLED"] == "false"
+            assert env["ORDER_SUBMISSION_ENABLED"] == "false"
+            assert env["REAL_ORDER_SUBMISSION_ENABLED"] == "false"
+
+    ci = read(".github/workflows/ci.yml")
+    assert "create_order" not in ci
+    assert "fetch_balance" not in ci
+    assert "private_get" not in ci

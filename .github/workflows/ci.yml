@@ -20,7 +20,7 @@ env:
 
 jobs:
   test:
-    name: Compile and test
+    name: Compile, scan, test and build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,7 +34,8 @@ jobs:
       - name: Install package and test dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -e ".[dev,test]"
+          python -m pip install -r requirements-dev.lock
+          python -m pip install -e .
 
       - name: Validate paper shadow safety flags
         run: |
@@ -51,10 +52,21 @@ jobs:
           PY
 
       - name: Compile sources
-        run: python -m compileall scripts smartcrypto tests
+        run: |
+          # Makefile command: python -m compileall scripts smartcrypto tests
+          make compile
 
-      - name: Run tests
-        run: python -m pytest -q
+      - name: Lint
+        run: make lint
+
+      - name: Typecheck
+        run: make typecheck
+
+      - name: Security scan
+        run: make security
+
+      - name: Check deterministic project manifest
+        run: python scripts/generate_project_manifest.py --check
 
       - name: Ensure runtime artifacts are not versioned
         run: |
@@ -72,3 +84,28 @@ jobs:
               raise SystemExit("runtime artifacts are versioned: " + ",".join(bad))
           print("no runtime artifacts versioned")
           PY
+
+      - name: Run tests
+        run: |
+          # Makefile command: python -m pytest -q
+          make test
+
+      - name: Build SmartCrypto image
+        run: docker build -f docker/smartcrypto/Dockerfile -t smartcrypto-ci:smartcrypto .
+
+      - name: Build Dashboard image
+        run: docker build -f docker/dashboard/Dockerfile -t smartcrypto-ci:dashboard .
+
+      - name: Build Qlib image
+        run: docker build -f docker/qlib/Dockerfile -t smartcrypto-ci:qlib .
+
+      - name: Container healthcheck smoke
+        run: |
+          docker run --rm \
+            -e SMARTCRYPTO_RUNTIME_MODE=paper \
+            -e LIVE_ENABLED=false \
+            -e ORDER_SUBMISSION_ENABLED=false \
+            -e REAL_ORDER_SUBMISSION_ENABLED=false \
+            -e SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS=false \
+            smartcrypto-ci:smartcrypto \
+            python -m smartcrypto.runtime.container_healthcheck --required-path smartcrypto --required-import smartcrypto --quiet

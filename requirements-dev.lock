@@ -1,17 +1,20 @@
-# Conservative development/test lock captured from the validated local environment.
-# Install the package itself with: python -m pip install -e ".[dev,test]"
+# Conservative direct development/test lock for reproducible CI.
+# Install the package itself with: python -m pip install -e .
+bandit==1.8.3
 joblib==1.5.1
 lightgbm==4.6.0
+mypy==1.20.2
 numpy==2.2.6
 openpyxl==3.1.5
-pandas==3.0.3
+pandas==2.2.3
+pip-audit==2.9.0
 pydantic==2.13.3
-pyarrow==22.0.0
-pytest==8.4.1
+pyarrow==23.0.1
+pytest==9.0.3
 python-dotenv==1.2.2
 PyYAML==6.0.3
 ruff==0.11.13
 scikit-learn==1.7.0
 SQLAlchemy==2.0.41
-streamlit==1.45.1
+streamlit==1.54.0
 tqdm==4.67.1

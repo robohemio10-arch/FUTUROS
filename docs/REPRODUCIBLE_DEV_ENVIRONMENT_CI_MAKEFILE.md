@@ -18,6 +18,15 @@ Sem Makefile:
 
 ```bash
 python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements-dev.lock
+python -m pip install -e .
+python -m compileall scripts smartcrypto tests
+python -m pytest -q
+```
+
+Também é possível usar os extras do projeto durante desenvolvimento local:
+
+```bash
 python -m pip install -e ".[dev,test]"
 python -m compileall scripts smartcrypto tests
 python -m pytest -q
@@ -31,16 +40,17 @@ Isso evita falhas em ambiente externo quando testes ou scripts usam parquet via 
 
 ## Lockfile
 
-`requirements-dev.lock` registra pins conservadores do ambiente local validado.
+`requirements-dev.lock` registra pins conservadores diretos do ambiente local validado.
 
-Uso opcional para troubleshooting:
+Uso recomendado no CI e em clone limpo:
 
 ```bash
 python -m pip install -r requirements-dev.lock
-python -m pip install -e ".[dev,test]"
+python -m pip install -e .
 ```
 
-O `pyproject.toml` continua sendo a fonte principal de dependências. O lock completo com resolução transitive via ferramenta dedicada, como `uv lock`, permanece uma evolução operacional possível.
+O `pyproject.toml` continua declarando os extras `dev` e `test`. O lock completo
+com resolução transitive e hashes permanece uma evolução operacional possível.
 
 ## Makefile
 
@@ -57,7 +67,10 @@ Targets disponíveis:
 - `make paper-check`
 - `make clean-cache`
 
-`lint` roda `ruff` quando disponível. `typecheck` roda `mypy` apenas se já estiver instalado localmente; não acessa rede.
+`lint` roda `ruff check` de verdade no escopo institucional configurado.
+`typecheck` roda `mypy` de verdade e falha se a ferramenta estiver ausente ou
+se o escopo configurado quebrar. `security` roda testes locais, `bandit`,
+`pip-audit` no lock direto e secret scan sobre arquivos versionados.
 
 ## CI
 
@@ -65,11 +78,18 @@ O workflow `.github/workflows/ci.yml` executa:
 
 - checkout;
 - Python 3.12;
-- instalação com `.[dev,test]`;
+- instalação reproduzível com `requirements-dev.lock` e `python -m pip install -e .`;
 - validação de flags paper/shadow;
 - `python -m compileall scripts smartcrypto tests`;
+- `ruff check`;
+- `mypy`;
+- `bandit`;
+- `pip-audit`;
+- secret scan local;
 - `python -m pytest -q`;
 - checagem de ausência de artefatos runtime versionados.
+- build dos Dockerfiles SmartCrypto, Dashboard e Qlib;
+- smoke test de `smartcrypto.runtime.container_healthcheck`.
 
 O CI não usa secrets, não acessa exchange privada, não sobe container live, não chama Freqtrade live e não envia ordens.
 
