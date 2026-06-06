@@ -44,6 +44,25 @@ from smartcrypto.risk.risk_recovery_modes import run_risk_recovery_mode_audit  #
 from smartcrypto.state.reconciliation_guard import run_state_reconciliation_audit  # noqa: E402
 
 DEFAULT_REFRESH_REPORT_PATH = Path("data/reports/runtime_evidence_refresh_report.json")
+DEFAULT_EQUITY_CURVE_PATH = Path("data/reports/equity_curve.parquet")
+DEFAULT_CLOSED_TRADES_PATH = Path("data/feedback/paper_closed_trades_incremental.parquet")
+DEFAULT_PAPER_SESSION_REPORT = Path("data/reports/paper_session_report.json")
+DEFAULT_MONTE_CARLO_REPORT = Path("data/reports/monte_carlo_risk_simulation_report.json")
+DEFAULT_BACKTEST_REPORT = Path("data/reports/event_driven_backtest_report.json")
+DEFAULT_KILL_SWITCH_PATH = Path("data/runtime/kill_switch.json")
+DEFAULT_INCIDENTS_PATH = Path("data/reports/incidents_report.json")
+RISK_RECOVERY_SOURCE_KEYS = (
+    "equity_curve",
+    "closed_trades",
+    "paper_session_report",
+    "market_health_report",
+    "readiness_report",
+    "monte_carlo_report",
+    "backtest_report",
+    "kill_switch",
+    "incidents",
+    "state_divergence_report",
+)
 
 
 def refresh_runtime_evidence_reports(
@@ -54,6 +73,14 @@ def refresh_runtime_evidence_reports(
     critical_event_log: str | Path = DEFAULT_EVENT_LOG_PATH,
     critical_alerting_report: str | Path | None = DEFAULT_CRITICAL_ALERTING_REPORT,
     risk_recovery_report: str | Path | None = DEFAULT_RISK_RECOVERY_REPORT,
+    equity_curve: str | Path | None = DEFAULT_EQUITY_CURVE_PATH,
+    closed_trades: str | Path | None = DEFAULT_CLOSED_TRADES_PATH,
+    paper_session_report: str | Path | None = DEFAULT_PAPER_SESSION_REPORT,
+    monte_carlo_report: str | Path | None = DEFAULT_MONTE_CARLO_REPORT,
+    backtest_report: str | Path | None = DEFAULT_BACKTEST_REPORT,
+    kill_switch: str | Path | None = DEFAULT_KILL_SWITCH_PATH,
+    incidents: str | Path | None = DEFAULT_INCIDENTS_PATH,
+    state_divergence_report: str | Path | None = None,
     market_health_report: str | Path | None = DEFAULT_MARKET_HEALTH_REPORT,
     market_runtime_dir: str | Path = DEFAULT_MARKET_RUNTIME_DIR,
     market_symbols: list[str] | tuple[str, ...] = ("BTCUSDT", "ETHUSDT"),
@@ -120,10 +147,6 @@ def refresh_runtime_evidence_reports(
     )
     refreshed_reports.append("critical_alerting_report")
 
-    risk = run_risk_recovery_mode_audit(report_path=risk_recovery_report, strict=False, safety_overrides=safety, now=current_time)
-    refreshed_reports.append("risk_recovery_report")
-
-    ledger = refresh_ledger_report(ledger_repository, ledger_report, refreshed_reports, skipped_reports, current_time, safety)
     state = refresh_state_report(state_repository, state_reconciliation_report, refreshed_reports, skipped_reports, current_time, safety)
     market = refresh_market_health_report(
         skip_market_health=skip_market_health,
@@ -136,6 +159,38 @@ def refresh_runtime_evidence_reports(
         current_time=current_time,
         safety=safety,
     )
+    effective_state_divergence_report = state_divergence_report or state_reconciliation_report
+    risk_sources = risk_recovery_sources(
+        equity_curve=equity_curve,
+        closed_trades=closed_trades,
+        paper_session_report=paper_session_report,
+        market_health_report=market_health_report,
+        readiness_report=readiness_report,
+        monte_carlo_report=monte_carlo_report,
+        backtest_report=backtest_report,
+        kill_switch=kill_switch,
+        incidents=incidents,
+        state_divergence_report=effective_state_divergence_report,
+    )
+    risk = run_risk_recovery_mode_audit(
+        equity_curve_path=risk_sources["equity_curve"],
+        closed_trades_path=risk_sources["closed_trades"],
+        paper_session_report_path=risk_sources["paper_session_report"],
+        market_health_report_path=risk_sources["market_health_report"],
+        readiness_report_path=risk_sources["readiness_report"],
+        monte_carlo_report_path=risk_sources["monte_carlo_report"],
+        backtest_report_path=risk_sources["backtest_report"],
+        kill_switch_path=risk_sources["kill_switch"],
+        incidents_path=risk_sources["incidents"],
+        state_divergence_report_path=risk_sources["state_divergence_report"],
+        report_path=risk_recovery_report,
+        strict=False,
+        safety_overrides=safety,
+        now=current_time,
+    )
+    refreshed_reports.append("risk_recovery_report")
+
+    ledger = refresh_ledger_report(ledger_repository, ledger_report, refreshed_reports, skipped_reports, current_time, safety)
 
     system_after = run_system_healthcheck(
         readiness_report=readiness_report,
@@ -177,6 +232,10 @@ def refresh_runtime_evidence_reports(
             "live_release_allowed": False,
             "readiness_approved": False if "readiness_gate_blocked" in system_after.get("blocking_findings", []) else None,
             "runtime_source_paths": runtime_source_paths,
+            "risk_recovery_sources_passed": stringify_sources(risk_sources),
+            "risk_recovery_optional_sources_missing": risk.get("optional_sources_missing", []),
+            "risk_recovery_source_status": risk.get("sources", {}),
+            "risk_recovery_reason": risk.get("reason"),
             "source_statuses": {
                 "critical_alerting_report": critical.get("status"),
                 "risk_recovery_report": risk.get("status"),
@@ -188,6 +247,37 @@ def refresh_runtime_evidence_reports(
     )
     write_report(report, report_path)
     return report
+
+
+def risk_recovery_sources(
+    *,
+    equity_curve: str | Path | None,
+    closed_trades: str | Path | None,
+    paper_session_report: str | Path | None,
+    market_health_report: str | Path | None,
+    readiness_report: str | Path | None,
+    monte_carlo_report: str | Path | None,
+    backtest_report: str | Path | None,
+    kill_switch: str | Path | None,
+    incidents: str | Path | None,
+    state_divergence_report: str | Path | None,
+) -> dict[str, str | Path | None]:
+    return {
+        "equity_curve": equity_curve,
+        "closed_trades": closed_trades,
+        "paper_session_report": paper_session_report,
+        "market_health_report": market_health_report,
+        "readiness_report": readiness_report,
+        "monte_carlo_report": monte_carlo_report,
+        "backtest_report": backtest_report,
+        "kill_switch": kill_switch,
+        "incidents": incidents,
+        "state_divergence_report": state_divergence_report,
+    }
+
+
+def stringify_sources(sources: dict[str, str | Path | None]) -> dict[str, str | None]:
+    return {name: str(path) if path is not None else None for name, path in sources.items()}
 
 
 def refresh_ledger_report(
@@ -348,6 +438,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--critical-event-log", default=str(DEFAULT_EVENT_LOG_PATH))
     parser.add_argument("--critical-alerting-report", default=str(DEFAULT_ALERT_REPORT_PATH))
     parser.add_argument("--risk-recovery-report", default=str(DEFAULT_RISK_RECOVERY_REPORT))
+    parser.add_argument("--equity-curve", default=str(DEFAULT_EQUITY_CURVE_PATH))
+    parser.add_argument("--closed-trades", default=str(DEFAULT_CLOSED_TRADES_PATH))
+    parser.add_argument("--paper-session-report", default=str(DEFAULT_PAPER_SESSION_REPORT))
+    parser.add_argument("--monte-carlo-report", default=str(DEFAULT_MONTE_CARLO_REPORT))
+    parser.add_argument("--backtest-report", default=str(DEFAULT_BACKTEST_REPORT))
+    parser.add_argument("--kill-switch", default=str(DEFAULT_KILL_SWITCH_PATH))
+    parser.add_argument("--incidents", default=str(DEFAULT_INCIDENTS_PATH))
+    parser.add_argument("--state-divergence-report")
     parser.add_argument("--market-health-report", default=str(DEFAULT_MARKET_HEALTH_REPORT))
     parser.add_argument("--market-runtime-dir", default=str(DEFAULT_MARKET_RUNTIME_DIR))
     parser.add_argument("--market-symbols", nargs="+", default=["BTCUSDT", "ETHUSDT"])
@@ -375,6 +473,14 @@ def main(argv: list[str] | None = None) -> int:
         critical_event_log=args.critical_event_log,
         critical_alerting_report=args.critical_alerting_report,
         risk_recovery_report=args.risk_recovery_report,
+        equity_curve=args.equity_curve,
+        closed_trades=args.closed_trades,
+        paper_session_report=args.paper_session_report,
+        monte_carlo_report=args.monte_carlo_report,
+        backtest_report=args.backtest_report,
+        kill_switch=args.kill_switch,
+        incidents=args.incidents,
+        state_divergence_report=args.state_divergence_report,
         market_health_report=args.market_health_report,
         market_runtime_dir=args.market_runtime_dir,
         market_symbols=args.market_symbols,
