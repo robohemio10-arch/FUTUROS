@@ -85,9 +85,16 @@ atual. High severity dentro do escopo ativo nao e aceito.
 ## Manifesto
 
 `scripts/generate_project_manifest.py` gera `PROJECT_MANIFEST_CLEAN.json` de
-forma deterministica. O manifesto registra contagens reais, hashes SHA256 por
-arquivo relevante, hash agregado e exclusoes de artefatos runtime. O proprio
-manifesto e excluido do hash para evitar autoreferencia.
+forma deterministica entre Windows e Linux. O manifesto registra contagens reais,
+hashes SHA256 por arquivo relevante, hash agregado e exclusoes de artefatos
+runtime. O proprio manifesto e excluido do hash para evitar autoreferencia.
+
+A estrategia de hash e `sha256 over canonical text LF content or raw binary
+bytes`: arquivos de texto UTF-8 tem CRLF/CR normalizados para LF antes do hash e
+do contador `bytes`; arquivos binarios preservam bytes crus. Todos os paths sao
+gravados em formato POSIX (`path/to/file`) e a lista vem ordenada por
+`git ls-files`, evitando dependencia de separador de caminho, ordem de
+filesystem ou line endings do checkout local.
 
 ## Bitradex Dockerfile
 

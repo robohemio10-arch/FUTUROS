@@ -166,6 +166,9 @@ def test_project_manifest_is_coherent_and_deterministic() -> None:
     assert actual == expected
     assert actual["generated_by_script"] == "scripts/generate_project_manifest.py"
     assert actual["deterministic"] is True
+    assert actual["manifest_version"] >= 3
+    assert actual["hash_strategy"] == "sha256 over canonical text LF content or raw binary bytes"
+    assert actual["byte_count_strategy"] == "canonical content bytes"
     assert actual["runtime_artifacts_not_in_zip"] is True
     assert actual["aggregate_sha256"] == expected["aggregate_sha256"]
     assert actual["counts"]["tracked_files_total"] == len(
@@ -177,6 +180,40 @@ def test_project_manifest_is_coherent_and_deterministic() -> None:
     assert actual["counts"]["dockerfiles"] >= 4
     assert actual["counts"]["workflows"] >= 1
     assert all(not path["path"].startswith(("data/", "logs/", "models/", "reports/")) for path in actual["files"])
+    assert all("\\" not in path["path"] for path in actual["files"])
+    assert {path["hash_mode"] for path in actual["files"]} <= {"text_lf", "binary_raw"}
+
+
+def test_project_manifest_build_is_stable_across_calls() -> None:
+    module = load_manifest_module()
+
+    assert module.build_manifest(ROOT) == module.build_manifest(ROOT)
+
+
+def test_manifest_text_hash_normalizes_crlf_and_lf(tmp_path: Path) -> None:
+    module = load_manifest_module()
+    lf_path = tmp_path / "lf.txt"
+    crlf_path = tmp_path / "crlf.txt"
+    lf_path.write_bytes(b"a\nb\n")
+    crlf_path.write_bytes(b"a\r\nb\r\n")
+
+    lf_content, lf_mode = module.canonical_file_content(lf_path)
+    crlf_content, crlf_mode = module.canonical_file_content(crlf_path)
+
+    assert lf_content == crlf_content == b"a\nb\n"
+    assert lf_mode == crlf_mode == "text_lf"
+    assert module.file_sha256(lf_path) == module.file_sha256(crlf_path)
+
+
+def test_manifest_binary_hash_preserves_raw_bytes(tmp_path: Path) -> None:
+    module = load_manifest_module()
+    binary_path = tmp_path / "blob.bin"
+    binary_path.write_bytes(b"a\r\n\x00b\r\n")
+
+    content, mode = module.canonical_file_content(binary_path)
+
+    assert content == b"a\r\n\x00b\r\n"
+    assert mode == "binary_raw"
 
 
 def test_bitradex_dockerfile_has_non_root_user_and_healthcheck() -> None:

@@ -32,6 +32,9 @@ RUNTIME_SUFFIXES = (
     ".log",
 )
 SELF_PATH = "PROJECT_MANIFEST_CLEAN.json"
+MANIFEST_VERSION = 3
+TEXT_HASH_MODE = "text_lf"
+BINARY_HASH_MODE = "binary_raw"
 
 
 def git_tracked_files(root: Path) -> list[str]:
@@ -44,12 +47,30 @@ def is_runtime_artifact(path: str) -> bool:
     return normalized.startswith(RUNTIME_PREFIXES) or normalized.lower().endswith(RUNTIME_SUFFIXES)
 
 
+def is_utf8_text(content: bytes) -> bool:
+    if b"\0" in content:
+        return False
+    try:
+        content.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
+def normalize_text_line_endings(content: bytes) -> bytes:
+    return content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def canonical_file_content(path: Path) -> tuple[bytes, str]:
+    content = path.read_bytes()
+    if is_utf8_text(content):
+        return normalize_text_line_endings(content), TEXT_HASH_MODE
+    return content, BINARY_HASH_MODE
+
+
 def file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    canonical_content, _hash_mode = canonical_file_content(path)
+    return hashlib.sha256(canonical_content).hexdigest()
 
 
 def count_files(files: list[str]) -> dict[str, int]:
@@ -67,7 +88,7 @@ def aggregate_hash(manifest_files: list[dict[str, Any]], counts: dict[str, int])
         "files": manifest_files,
         "counts": counts,
         "generated_by_script": GENERATED_BY,
-        "manifest_version": 2,
+        "manifest_version": MANIFEST_VERSION,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -77,14 +98,17 @@ def build_manifest(root: Path) -> dict[str, Any]:
     tracked = git_tracked_files(root)
     runtime_excluded = [path for path in tracked if is_runtime_artifact(path)]
     included = [path for path in tracked if path != SELF_PATH and not is_runtime_artifact(path)]
-    files = [
-        {
-            "path": path,
-            "bytes": int((root / path).stat().st_size),
-            "sha256": file_sha256(root / path),
-        }
-        for path in included
-    ]
+    files = []
+    for path in included:
+        canonical_content, hash_mode = canonical_file_content(root / path)
+        files.append(
+            {
+                "path": path,
+                "bytes": len(canonical_content),
+                "hash_mode": hash_mode,
+                "sha256": hashlib.sha256(canonical_content).hexdigest(),
+            }
+        )
     counts = {
         "tracked_files_total": len(tracked),
         "manifested_files_total": len(files),
@@ -92,8 +116,10 @@ def build_manifest(root: Path) -> dict[str, Any]:
         **count_files(included),
     }
     return {
-        "manifest_version": 2,
+        "manifest_version": MANIFEST_VERSION,
         "generated_by_script": GENERATED_BY,
+        "hash_strategy": "sha256 over canonical text LF content or raw binary bytes",
+        "byte_count_strategy": "canonical content bytes",
         "deterministic": True,
         "self_excluded_for_determinism": SELF_PATH,
         "runtime_artifacts_not_in_zip": True,
