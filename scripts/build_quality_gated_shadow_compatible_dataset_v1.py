@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import math
+import os
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 
-ROOT = Path("E:/FUTUROS")
+ROOT = Path(os.getenv("SMARTCRYPTO_PROJECT_ROOT") or Path.cwd()).resolve()
 
 MODEL_PATH = ROOT / "data/models/ai_shadow_filter_extratrees_050.joblib"
 TRADE_ENRICHED_PATH = ROOT / "data/features/trade_enriched.parquet"
