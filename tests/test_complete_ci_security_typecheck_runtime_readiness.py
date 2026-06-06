@@ -57,6 +57,7 @@ def test_makefile_security_is_not_noop() -> None:
     assert "bandit" in body
     assert "pip_audit" in body
     assert "scan_versioned_secrets.py" in body
+    assert "--skip B608,B310" not in body
     assert "find_spec" not in body
     assert "else 0" not in body
 
@@ -65,6 +66,7 @@ def test_requirements_lock_contains_security_lint_and_typecheck_tools() -> None:
     text = read("requirements-dev.lock").lower()
 
     assert "mypy==" in text
+    assert "types-pyyaml==" in text
     assert "ruff==" in text
     assert "bandit==" in text
     assert "pip-audit==" in text
@@ -79,6 +81,7 @@ def test_pyproject_exposes_tools_in_test_and_dev_extras() -> None:
     for extra in ("test", "dev"):
         deps = "\n".join(optional[extra]).lower()
         assert "mypy" in deps
+        assert "types-pyyaml" in deps
         assert "ruff" in deps
         assert "bandit" in deps
         assert "pip-audit" in deps
@@ -92,12 +95,50 @@ def test_ci_contains_lint_typecheck_security_secret_scan_docker_and_healthcheck(
     assert "make lint" in text
     assert "make typecheck" in text
     assert "make security" in text
+    assert "make audit" in text
+    assert "make paper-check" in text
     assert "scan_versioned_secrets.py" in read("Makefile")
     assert "docker build -f docker/smartcrypto/Dockerfile" in text
     assert "docker build -f docker/dashboard/Dockerfile" in text
     assert "docker build -f docker/qlib/Dockerfile" in text
     assert "smartcrypto.runtime.container_healthcheck" in text
     assert "scripts/generate_project_manifest.py --check" in text
+
+
+def test_incremental_lint_typecheck_and_security_scope_is_documented() -> None:
+    doc = read("docs/COMPLETE_CI_SECURITY_TYPECHECK_RUNTIME_READINESS.md")
+
+    assert "ruff check ." in doc
+    assert "mypy smartcrypto --ignore-missing-imports" in doc
+    assert "bandit -q -r smartcrypto scripts" in doc
+    assert "smartcrypto/runtime" in doc
+    assert "smartcrypto/config/runtime_safety_config.py" in doc
+    assert "smartcrypto/ops/backup_restore.py" in doc
+    assert "smartcrypto/ops/system_healthcheck.py" in doc
+    assert "accepted_legacy_debt" in doc
+    assert "High severity dentro do escopo ativo nao e aceito" in doc
+
+
+def test_security_exception_backlog_has_required_fields() -> None:
+    text = read("docs/security_audit_exceptions.md")
+
+    for token in (
+        "Date",
+        "Classification",
+        "Rule/advisory",
+        "Package",
+        "Reason",
+        "Plan",
+        "accepted_legacy_debt",
+        "B608",
+        "B310",
+        "2026-06-06",
+    ):
+        assert token in text
+
+    assert "# nosec" in text
+    assert "--skip" in text
+    assert "nao sao excecoes ativas do gate atual" in text
 
 
 def test_ci_does_not_use_secrets_or_enable_live() -> None:

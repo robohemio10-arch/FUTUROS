@@ -1,13 +1,13 @@
 {
-  "aggregate_sha256": "9d49b9a8b77dcd6fe15c2a52d1859f1a23725bd77838b26bcba01553dc47d27d",
+  "aggregate_sha256": "cdde70f0873bb84b7ce04d5ecf0412ca02df211a7d7a822751ca7601cd503e18",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 90,
-    "manifested_files_total": 603,
-    "python_files": 431,
+    "docs_files": 92,
+    "manifested_files_total": 608,
+    "python_files": 434,
     "runtime_excluded_files_total": 0,
-    "test_files": 99,
-    "tracked_files_total": 604,
+    "test_files": 100,
+    "tracked_files_total": 609,
     "workflows": 1
   },
   "deterministic": true,
@@ -23,9 +23,9 @@
       "sha256": "31a6e1b5f16ce855566ccd3500e00711cf8453da585fa1da403cdf80aa8f2c20"
     },
     {
-      "bytes": 3498,
+      "bytes": 3622,
       "path": ".github/workflows/ci.yml",
-      "sha256": "5ec1c912927e7100f5044b629de419ccfac24ddc85414d19c324e9a80c6763f9"
+      "sha256": "6a44e158517b5cf634c98f10342f71257440b1794f69304735151f3d811abbdb"
     },
     {
       "bytes": 2180,
@@ -43,9 +43,9 @@
       "sha256": "508599ae25c910119dfbb13f034e0271992269942cfdf90f4882dfaee7eade14"
     },
     {
-      "bytes": 2102,
+      "bytes": 2197,
       "path": "Makefile",
-      "sha256": "8a881d32255741235c74edbc4000ce9f454376f628fde2333eb4505678ec67b6"
+      "sha256": "b307c0de7dae1a9f5e67161f9646074e82e0a7ccc0103d00577c2afb412624a8"
     },
     {
       "bytes": 1675,
@@ -508,6 +508,11 @@
       "sha256": "b324cbcab23b392b9ce6c0e740c9f96d815b895365e09c1dfc3a6a56b53ec10f"
     },
     {
+      "bytes": 4713,
+      "path": "docs/COMPLETE_CI_SECURITY_TYPECHECK_RUNTIME_READINESS.md",
+      "sha256": "277e32c38e25ee1587626d6f1f1c30ba6cbc8893a49999fa048b77ac8614936d"
+    },
+    {
       "bytes": 4383,
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
@@ -838,6 +843,11 @@
       "sha256": "d6d029e7d7a42324db0dbac7fab88584cccfa52acdc8a038c94186fec4d68a33"
     },
     {
+      "bytes": 2954,
+      "path": "docs/security_audit_exceptions.md",
+      "sha256": "6acae512781ac61971c79bea5209e51fda7bf39218fd68481b9cee9bc30e5cb9"
+    },
+    {
       "bytes": 353,
       "path": "freqtrade/user_data/config.live.example.json",
       "sha256": "e5aec428d325726c1ba18c91f34353d0d325ea4098d14de7aa45132e88388d00"
@@ -923,14 +933,14 @@
       "sha256": "74dcac503cbe53b8fedb82978118ac22897b19ace5dc33d7ad0ae0fc9c8dbd53"
     },
     {
-      "bytes": 1670,
+      "bytes": 1722,
       "path": "pyproject.toml",
-      "sha256": "18c4a50f872bcfd274625f6d366bee5e614af8558695167b1a66525fd4fe4055"
+      "sha256": "46b8d030b9384896cf7cebadd14f785f3b4c09f5a55a71209fb5d7e7a819ecd0"
     },
     {
-      "bytes": 410,
+      "bytes": 440,
       "path": "requirements-dev.lock",
-      "sha256": "f983b251157d86df432ebe66d768bf2f32efbc956bebc0f071c3e8e7b36f338c"
+      "sha256": "137fe1aa097efd6a32f76d8a400f172c37009d11f370111e2faf58714ba868b3"
     },
     {
       "bytes": 528,
@@ -1331,6 +1341,11 @@
       "bytes": 3177,
       "path": "scripts/generate_phase9_test_signals.py",
       "sha256": "0994387c11939ba4e8336e1184ae59298719e9f7d121633ac0a59ed289f4a52e"
+    },
+    {
+      "bytes": 5083,
+      "path": "scripts/generate_project_manifest.py",
+      "sha256": "09cc7a8b6b14a52a90ecedabea759f94c28fd34ed9765d317590beeaa741fb4c"
     },
     {
       "bytes": 1420,
@@ -1816,6 +1831,11 @@
       "bytes": 7374,
       "path": "scripts/sanitize_market_features_lookahead.py",
       "sha256": "f190917d21c50cf73b315d78d1656b214f2a49248af326e600a5a9d7f1bb8fbb"
+    },
+    {
+      "bytes": 3644,
+      "path": "scripts/scan_versioned_secrets.py",
+      "sha256": "87129719aafd31f3290b61378d1a5dc53d32b90bdf232ce3d69d09afe188c713"
     },
     {
       "bytes": 559,
@@ -2606,6 +2626,11 @@
       "bytes": 5003,
       "path": "tests/test_bitradex_ocr_review_pipeline_contract.py",
       "sha256": "9caa28f78492d370f1a7b4a65676c2628de954a3494f5d4c9a6eaa219d5b9941"
+    },
+    {
+      "bytes": 7794,
+      "path": "tests/test_complete_ci_security_typecheck_runtime_readiness.py",
+      "sha256": "f282464361337c3d340e85676d6547a07d26e2efcd24a704cdc11f3e427af862"
     },
     {
       "bytes": 4423,

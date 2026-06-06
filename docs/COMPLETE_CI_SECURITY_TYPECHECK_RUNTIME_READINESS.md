@@ -15,6 +15,8 @@ O workflow `.github/workflows/ci.yml` executa:
 - `make lint`;
 - `make typecheck`;
 - `make security`;
+- `make audit`;
+- `make paper-check`;
 - checagem deterministica do `PROJECT_MANIFEST_CLEAN.json`;
 - `make test`;
 - build dos Dockerfiles SmartCrypto, Dashboard e Qlib;
@@ -36,13 +38,49 @@ Os alvos institucionais sao reais:
 O escopo de lint/typecheck e incremental de proposito. Ele cria um gate real
 sem transformar esta branch em uma refatoracao global da base historica.
 
+### Lint scope
+
+`make lint` executa `ruff check` diretamente, sem fallback silencioso:
+
+```bash
+python -m ruff check smartcrypto/runtime smartcrypto/ops/backup_restore.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py tests/test_complete_ci_security_typecheck_runtime_readiness.py
+```
+
+O comando bruto `ruff check .` ainda e backlog legado e nao e o gate desta
+branch. Novos arquivos incluidos nesse escopo devem estar limpos; a expansao
+para o repositorio inteiro deve ocorrer em branch dedicada.
+
+### Typecheck scope
+
+`make typecheck` executa `mypy` diretamente e falha se a ferramenta estiver
+ausente:
+
+```bash
+python -m mypy smartcrypto/runtime smartcrypto/config/runtime_safety_config.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py --ignore-missing-imports --follow-imports=skip
+```
+
+`types-PyYAML` fica no extra `test`/`dev` e em `requirements-dev.lock` para que
+o modulo de configuracao de safety seja tipado de forma reproduzivel. O comando
+bruto `mypy smartcrypto --ignore-missing-imports` continua fora do gate desta
+branch porque ainda mistura divida historica de tipagem com a entrega de CI.
+
 ## Security scan
 
-`bandit` roda com excecoes rastreadas em
-`docs/security_audit_exceptions.md`. `pip-audit` roda contra o lock direto com
-`--disable-pip --no-deps`, evitando resolver dependencias transitivas fora do
-arquivo institucional. O secret scan local le somente arquivos versionados por
-`git ls-files` e ignora runtime/data/logs.
+`bandit` roda sem `# nosec` e sem `--skip` no escopo incremental ativo:
+
+```bash
+python -m bandit -q -r smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcrypto/ops/system_healthcheck.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py --severity-level medium --confidence-level medium
+```
+
+`pip-audit` roda contra o lock direto com `--disable-pip --no-deps`, evitando
+resolver dependencias transitivas fora do arquivo institucional. O secret scan
+local le somente arquivos versionados por `git ls-files` e ignora
+runtime/data/logs.
+
+O comando bruto `bandit -q -r smartcrypto scripts` tem achados legados B608/B310
+documentados em `docs/security_audit_exceptions.md` como `accepted_legacy_debt`,
+com regra/advisory, motivo, data e plano. Eles nao sao excecoes ativas do gate
+atual. High severity dentro do escopo ativo nao e aceito.
 
 ## Manifesto
 

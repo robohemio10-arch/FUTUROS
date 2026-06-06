@@ -65,6 +65,12 @@ jobs:
       - name: Security scan
         run: make security
 
+      - name: Institutional audit
+        run: make audit
+
+      - name: Paper runtime check
+        run: make paper-check
+
       - name: Check deterministic project manifest
         run: python scripts/generate_project_manifest.py --check
 

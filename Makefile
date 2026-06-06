@@ -1,9 +1,8 @@
 PYTHON ?= python
 PIP ?= $(PYTHON) -m pip
-LINT_TARGETS ?= smartcrypto/runtime scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py tests/test_complete_ci_security_typecheck_runtime_readiness.py
-TYPECHECK_TARGETS ?= smartcrypto/runtime scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
-BANDIT_TARGETS ?= smartcrypto/runtime scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
-BANDIT_SKIPS ?= B608,B310
+LINT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py tests/test_complete_ci_security_typecheck_runtime_readiness.py
+TYPECHECK_TARGETS ?= smartcrypto/runtime smartcrypto/config/runtime_safety_config.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
+BANDIT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcrypto/ops/system_healthcheck.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
 
 .PHONY: install test test-fast compile lint typecheck security audit paper-check clean-cache
 
@@ -29,13 +28,13 @@ typecheck:
 
 security:
 	$(PYTHON) -m pytest tests/test_reproducible_dev_environment_ci_makefile.py -q
-	$(PYTHON) -m bandit -q -r $(BANDIT_TARGETS) --skip $(BANDIT_SKIPS) --severity-level medium --confidence-level medium
+	$(PYTHON) -m bandit -q -r $(BANDIT_TARGETS) --severity-level medium --confidence-level medium
 	$(PYTHON) -m pip_audit -r requirements-dev.lock --no-deps --disable-pip --progress-spinner off
 	$(PYTHON) scripts/scan_versioned_secrets.py --json
 
 audit: compile lint typecheck security test-fast
 
-paper-check: audit
+paper-check:
 	LIVE_ENABLED=false ORDER_SUBMISSION_ENABLED=false REAL_ORDER_SUBMISSION_ENABLED=false SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS=false $(PYTHON) -m smartcrypto.runtime.container_healthcheck --required-path smartcrypto --required-import smartcrypto --quiet
 
 clean-cache:
