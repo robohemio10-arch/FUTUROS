@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "6ac567bfaff2c3e622a5e1c4afade992ed6260394fb049f419f19ea8ac1d6f1c",
+  "aggregate_sha256": "74d2e43d096b4c9dc8acab7b37bceb90011e4a2898ed0b9cb3eb20a7396d85bf",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 93,
-    "manifested_files_total": 609,
-    "python_files": 434,
+    "docs_files": 94,
+    "manifested_files_total": 611,
+    "python_files": 435,
     "runtime_excluded_files_total": 0,
-    "test_files": 100,
-    "tracked_files_total": 610,
+    "test_files": 101,
+    "tracked_files_total": 612,
     "workflows": 1
   },
   "deterministic": true,
@@ -966,6 +966,12 @@
       "hash_mode": "text_lf",
       "path": "docs/RISK_MANAGER_DRAWDOWN_RECOVERY_MODES.md",
       "sha256": "83cf57cedd4b61958fa149e0dde2178c82507d98bc677d963791574dbbe45bb6"
+    },
+    {
+      "bytes": 2425,
+      "hash_mode": "text_lf",
+      "path": "docs/RISK_RECOVERY_REFRESH_SOURCE_PARITY.md",
+      "sha256": "371abb2c6bd7dfff1d303c76c3bd311808976f16e697fb68262e8c925306842d"
     },
     {
       "bytes": 2793,
@@ -3600,6 +3606,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_risk_manager_drawdown_recovery_modes.py",
       "sha256": "d92ccc199746c3337d02d9d9a116bfafadc8ec6fbc6c8364a9737b757539f973"
+    },
+    {
+      "bytes": 11135,
+      "hash_mode": "text_lf",
+      "path": "tests/test_risk_recovery_refresh_source_parity.py",
+      "sha256": "60c84e84663c644f288d13b54bb370eebdae222b7dcf9560cba5ba9b8b103d2f"
     },
     {
       "bytes": 863,
