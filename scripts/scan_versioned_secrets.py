@@ -3,21 +3,16 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
+ROOT_IMPORT_PATH = Path(__file__).resolve().parents[1]
+if str(ROOT_IMPORT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_IMPORT_PATH))
 
-RUNTIME_PREFIXES = (
-    "data/",
-    "logs/",
-    "models/",
-    "reports/",
-    "freqtrade/user_data/logs/",
-    "freqtrade/user_data/data/",
-    "bitradex_realtime_candle_collector_v1/data/",
-    "bitradex_realtime_candle_collector_v1/logs/",
-)
+from smartcrypto.ops.versioned_file_discovery import discover_versioned_files, is_runtime_artifact
+
 SKIP_SUFFIXES = (
     ".png",
     ".jpg",
@@ -29,8 +24,12 @@ SKIP_SUFFIXES = (
     ".zip",
     ".parquet",
     ".sqlite",
+    ".sqlite3",
     ".db",
+    ".csv",
     ".xlsx",
+    ".jsonl",
+    ".log",
 )
 SECRET_PATTERNS = {
     "aws_access_key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -42,14 +41,9 @@ SECRET_PATTERNS = {
 }
 
 
-def git_tracked_files(root: Path) -> list[str]:
-    output = subprocess.check_output(["git", "ls-files"], cwd=root, text=True)
-    return sorted(path.strip() for path in output.splitlines() if path.strip())
-
-
 def should_scan(path: str) -> bool:
     normalized = path.replace("\\", "/")
-    if normalized.startswith(RUNTIME_PREFIXES):
+    if is_runtime_artifact(normalized):
         return False
     return not normalized.lower().endswith(SKIP_SUFFIXES)
 
@@ -74,7 +68,8 @@ def scan_file(path: Path, relative_path: str) -> list[dict[str, Any]]:
 
 
 def run_secret_scan(root: Path) -> dict[str, Any]:
-    tracked = git_tracked_files(root)
+    discovery = discover_versioned_files(root)
+    tracked = discovery.files
     scanned = [path for path in tracked if should_scan(path)]
     findings: list[dict[str, Any]] = []
     for relative_path in scanned:
@@ -86,6 +81,8 @@ def run_secret_scan(root: Path) -> dict[str, Any]:
         "reason": "secret_findings_detected" if findings else "no_versioned_secrets_detected",
         "scanned_files": len(scanned),
         "skipped_runtime_or_binary_files": len(tracked) - len(scanned),
+        "file_discovery_mode": discovery.mode,
+        "file_discovery_source": discovery.source,
         "findings": findings,
         "paper_only": True,
         "shadow_only": True,
