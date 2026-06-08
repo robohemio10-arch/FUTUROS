@@ -1,0 +1,3 @@
+# Additional Docker constraints for optional workers that install a direct
+# requirements file on top of requirements-runtime.lock.
+pyqlib==0.9.7

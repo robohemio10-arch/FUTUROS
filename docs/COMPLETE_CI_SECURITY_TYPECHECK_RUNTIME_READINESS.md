@@ -9,7 +9,7 @@ datasets, Freqtrade DB, stake, leverage ou live readiness.
 O workflow `.github/workflows/ci.yml` executa:
 
 - instalacao reproduzivel com `requirements-dev.lock`;
-- instalacao editavel do pacote com `python -m pip install -e .`;
+- instalacao editavel do pacote com `python -m pip install --no-deps -e .`;
 - validacao de flags paper/shadow only;
 - `make compile`;
 - `make lint`;
@@ -72,9 +72,9 @@ branch porque ainda mistura divida historica de tipagem com a entrega de CI.
 python -m bandit -q -r smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcrypto/ops/system_healthcheck.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py --severity-level medium --confidence-level medium
 ```
 
-`pip-audit` roda contra o lock direto com `--disable-pip --no-deps`, evitando
-resolver dependencias transitivas fora do arquivo institucional. O secret scan
-local le somente arquivos versionados por `git ls-files` e ignora
+`pip-audit` roda contra `requirements-dev.lock` sem `--no-deps`, permitindo que
+o auditor valide o conjunto transitivo declarado pelo lock institucional. O
+secret scan local le somente arquivos versionados por `git ls-files` e ignora
 runtime/data/logs.
 
 O comando bruto `bandit -q -r smartcrypto scripts` tem achados legados B608/B310

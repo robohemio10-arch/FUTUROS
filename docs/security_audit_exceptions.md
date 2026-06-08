@@ -1,10 +1,10 @@
 # Security audit exceptions
 
-Esta branch nao possui excecoes `pip-audit` ativas. O lock direto de
+Esta branch nao possui excecoes `pip-audit` ativas. O lock transitivo de
 desenvolvimento/teste e auditado por `make security` com:
 
 ```bash
-python -m pip_audit -r requirements-dev.lock --no-deps --disable-pip --progress-spinner off
+python -m pip_audit -r requirements-dev.lock --progress-spinner off
 ```
 
 O gate ativo de Bandit tambem nao usa `# nosec` nem `--skip`. Ele e incremental

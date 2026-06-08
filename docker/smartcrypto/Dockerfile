@@ -18,13 +18,14 @@ RUN apt-get update \
 RUN groupadd --system --gid "${SMARTCRYPTO_GID}" smartcrypto \
     && useradd --system --uid "${SMARTCRYPTO_UID}" --gid smartcrypto --home-dir /app --shell /usr/sbin/nologin smartcrypto
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md requirements-runtime.lock ./
 COPY smartcrypto ./smartcrypto
 COPY scripts ./scripts
 COPY config ./config
 
 RUN python -m pip install --upgrade pip setuptools wheel \
-    && python -m pip install -e ".[data,ml]"
+    && python -m pip install -r requirements-runtime.lock \
+    && python -m pip install --no-deps -e .
 
 RUN mkdir -p /app/data /app/data/reports /app/data/runtime /app/data/features /app/data/predictions /app/data/sqlite /app/logs \
     && chown -R smartcrypto:smartcrypto /app

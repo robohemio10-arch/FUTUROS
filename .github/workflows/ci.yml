@@ -35,7 +35,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements-dev.lock
-          python -m pip install -e .
+          python -m pip install --no-deps -e .
 
       - name: Validate paper shadow safety flags
         run: |
