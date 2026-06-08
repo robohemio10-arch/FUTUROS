@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "74d2e43d096b4c9dc8acab7b37bceb90011e4a2898ed0b9cb3eb20a7396d85bf",
+  "aggregate_sha256": "0db078c1050b9e03adf6dbd5c044715ba90e1734968592f7c2864f119c13b9c9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 94,
-    "manifested_files_total": 611,
-    "python_files": 435,
+    "docs_files": 95,
+    "manifested_files_total": 615,
+    "python_files": 437,
     "runtime_excluded_files_total": 0,
-    "test_files": 101,
-    "tracked_files_total": 612,
+    "test_files": 102,
+    "tracked_files_total": 616,
     "workflows": 1
   },
   "deterministic": true,
@@ -528,6 +528,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_MODEL_GOVERNANCE.md",
       "sha256": "580f8a09c24cd89c0f98f6814c739042c7d6b7188eb142465077dcc01e2a471b"
+    },
+    {
+      "bytes": 4455,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_SHADOW_DAILY_UPDATE_SCHEDULER_EVIDENCE.md",
+      "sha256": "e9310a9ce2906e1bd41bb7afd25c8e20ddbccf5cd120270f88b2f16790c7ff35"
     },
     {
       "bytes": 2945,
@@ -1152,6 +1158,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/analyze_v13_quality_gated_threshold_uplift.py",
       "sha256": "3f8de125ee7f2e9d71de0919cfbbb573e445d526de4a2f9914aa439f6e7a3656"
+    },
+    {
+      "bytes": 15494,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_ai_shadow_daily_update_scheduler.py",
+      "sha256": "9da1fb8a1c806ebb0e3800498ee13ec1ac76581a8cb28ea609eeabac60bab91e"
     },
     {
       "bytes": 9151,
@@ -1944,6 +1956,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/register_ai_shadow_challenger_model.py",
       "sha256": "5f6fead596e06debb8f840191bbe0cb7b6860a5dfc74755f83534d2222a7cfd4"
+    },
+    {
+      "bytes": 2378,
+      "hash_mode": "text_lf",
+      "path": "scripts/register_ai_shadow_daily_update_task.ps1",
+      "sha256": "23d4625d35f8e949e7256fb7915ac0de028721909597cb70cf7f5cb8b12d1c39"
     },
     {
       "bytes": 4367,
@@ -3072,6 +3090,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/state/state_repository.py",
       "sha256": "2ad23242b1c0bccfcf083b2992cf2c227328247547a3b17b24dff9102b0e42dc"
+    },
+    {
+      "bytes": 8216,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_shadow_daily_update_scheduler_evidence.py",
+      "sha256": "f2bd6be662f8214c3efe7c42bd372744a9c43e4a08fda149bcefb93154d213fe"
     },
     {
       "bytes": 5220,
