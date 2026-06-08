@@ -17,6 +17,7 @@ DEFAULT_ANTI_LEAKAGE_REPORT_PATH = Path("data/reports/phase23_anti_leakage_repor
 DEFAULT_MONTE_CARLO_REPORT_PATH = Path("data/reports/monte_carlo_risk_simulation_report.json")
 DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH = Path("data/reports/monte_carlo_risk_budget_policy_report.json")
 DEFAULT_BACKTEST_REPORT_PATH = Path("data/reports/event_driven_backtest_report.json")
+DEFAULT_READINESS_SNAPSHOT_V2_PATH = Path("data/reports/readiness_snapshot_v2.json")
 DEFAULT_KILL_SWITCH_PATH = Path("data/runtime/kill_switch.json")
 DEFAULT_ACTIVE_SIGNALS_PATH = Path("data/runtime/active_freqtrade_signals.json")
 DEFAULT_SIGNAL_DECISIONS_PATH = Path("data/runtime/freqtrade_signal_decisions.jsonl")
@@ -31,6 +32,7 @@ DEFAULT_SOURCES = {
     "monte_carlo_report": DEFAULT_MONTE_CARLO_REPORT_PATH,
     "monte_carlo_risk_budget_policy_report": DEFAULT_MONTE_CARLO_RISK_BUDGET_POLICY_REPORT_PATH,
     "backtest_report": DEFAULT_BACKTEST_REPORT_PATH,
+    "readiness_snapshot_v2": DEFAULT_READINESS_SNAPSHOT_V2_PATH,
     "kill_switch": DEFAULT_KILL_SWITCH_PATH,
     "active_signals": DEFAULT_ACTIVE_SIGNALS_PATH,
     "signal_decisions": DEFAULT_SIGNAL_DECISIONS_PATH,
@@ -65,7 +67,7 @@ FORBIDDEN_ACTION_LABELS = (
 PASS_VALUES = {"pass", "passed", "ok", "valid", "ready"}
 BLOCKED_STATUSES = {"blocked", "error", "failed", "invalid"}
 WARNING_STATUSES = {"warning", "warn", "degraded"}
-OPTIONAL_SOURCE_NAMES = {"monte_carlo_risk_budget_policy_report"}
+OPTIONAL_SOURCE_NAMES = {"monte_carlo_risk_budget_policy_report", "readiness_snapshot_v2"}
 
 
 def load_risk_readiness_soak_state(
@@ -192,6 +194,15 @@ def load_risk_readiness_soak_state(
         "no_trade_policy_present": no_trade_present,
         "readiness_may_proceed": False if no_trade_present else status == "ok",
         "live_release_allowed": False,
+        "readiness_snapshot_v2_status": normalize_status(payloads["readiness_snapshot_v2"].get("status")),
+        "readiness_snapshot_v2": {
+            "exists": sources["readiness_snapshot_v2"]["exists"],
+            "status": normalize_status(payloads["readiness_snapshot_v2"].get("status")),
+            "path": sources["readiness_snapshot_v2"]["path"],
+            "observed_soak_days": payloads["readiness_snapshot_v2"].get("observed_soak_days"),
+            "readiness_soak_reached": payloads["readiness_snapshot_v2"].get("readiness_soak_reached"),
+            "live_release_allowed": False,
+        },
         "no_trade_exit_requirements": no_trade_exit_requirements(
             observed_days=paper_days_observed,
             required_days=paper_days_required,
@@ -761,6 +772,7 @@ def render_risk_readiness_soak_panel(st_module: Any, state: dict[str, Any] | Non
             "latest_signal_age_seconds": state["latest_signal_age_seconds"],
             "latest_shadow_decision_age_seconds": state["latest_shadow_decision_age_seconds"],
             "readiness_approved": state["readiness_approved"],
+            "readiness_snapshot_v2_status": state["readiness_snapshot_v2_status"],
         }
     )
     st_module.subheader("Blockers")
