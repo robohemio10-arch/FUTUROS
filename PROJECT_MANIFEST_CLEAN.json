@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8253f06e8f80a352af1aabe5faa9cc2e6666ae6072cf509d1b99f418d7abb5f5",
+  "aggregate_sha256": "1545462bdc621700509bc4a82e9630fbc3ae53e36b704a5e52aadbc3292fe3d0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 95,
-    "manifested_files_total": 615,
-    "python_files": 437,
+    "docs_files": 96,
+    "manifested_files_total": 618,
+    "python_files": 439,
     "runtime_excluded_files_total": 0,
-    "test_files": 102,
-    "tracked_files_total": 616,
+    "test_files": 103,
+    "tracked_files_total": 619,
     "workflows": 1
   },
   "deterministic": true,
@@ -708,6 +708,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FINANCIAL_EVENT_LOG_AND_ALERTING.md",
       "sha256": "aa20bf232bd2cc20558c628f0dc33f1e956aeef0153954ea96f419e6d613c8da"
+    },
+    {
+      "bytes": 3842,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_DB_AUTHORITY_AND_SOAK_RECALCULATION.md",
+      "sha256": "8a79726a1d762579d3ac6665897624cbd93e0baa374b5a6f4fa15fefaec88986"
     },
     {
       "bytes": 2224,
@@ -2864,6 +2870,12 @@
       "sha256": "52d5a4bf6f98c9df5637923e0983075c9ad50f2d1c966681a0b371ae8ae31de2"
     },
     {
+      "bytes": 8124,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/freqtrade_paper_db_authority.py",
+      "sha256": "4a7cb597e85ccac2f51d38003129daa02fd380f5b7972ffbc47d266dd0a93484"
+    },
+    {
       "bytes": 553,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/metrics_exporter.py",
@@ -3300,6 +3312,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_financial_event_log_and_alerting.py",
       "sha256": "0a73f089a78fa4fc2114ccc0aa3c3408d6935617ca3e89bfe7bd28fe47e9444d"
+    },
+    {
+      "bytes": 14241,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_db_authority_and_soak_recalculation.py",
+      "sha256": "57ee0bd6e648412f6e447ebbbd04e538ac37b848fbbf7b18be3fb53f38ede9b7"
     },
     {
       "bytes": 5074,
