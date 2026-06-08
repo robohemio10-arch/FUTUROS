@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import re
 import subprocess
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath, PureWindowsPath
 from typing import Any
 
 
@@ -48,13 +49,21 @@ def normalize_path_like(value: object) -> str:
     return text.replace("\\", "/").rstrip("/").casefold()
 
 
-def contains_normalized_path(haystack: object, needle: Path | str) -> bool:
+def contains_normalized_path(haystack: object, needle: object) -> bool:
     haystack_text = normalize_path_like(haystack)
     needle_text = normalize_path_like(str(needle))
     return bool(needle_text and needle_text in haystack_text)
 
 
-def expected_daily_script(project_root: Path) -> Path:
+def resolve_project_root(value: str) -> PurePath:
+    if re.match(r"^[A-Za-z]:[\\/]", value):
+        if platform.system() == "Windows":
+            return Path(value).resolve()
+        return PureWindowsPath(value)
+    return Path(value).resolve()
+
+
+def expected_daily_script(project_root: PurePath) -> PurePath:
     return project_root / "scripts" / DAILY_SCRIPT_NAME
 
 
@@ -116,7 +125,7 @@ def flatten_scheduler_evidence(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def classify_scheduler_evidence(raw: dict[str, Any], *, project_root: Path, task_name: str) -> dict[str, Any]:
+def classify_scheduler_evidence(raw: dict[str, Any], *, project_root: PurePath, task_name: str) -> dict[str, Any]:
     evidence = flatten_scheduler_evidence(raw)
     action_execute = evidence["action_execute"]
     action_arguments = evidence["action_arguments"]
@@ -295,7 +304,8 @@ if ($null -eq $task) {{
   }} | ConvertTo-Json -Depth 10
 }}
 """
-    completed = subprocess.run(  # nosec B603 B607 - fixed local OS scheduler query, no shell, no secrets.
+    # Fixed local OS scheduler query, no shell interpolation and no secrets.
+    completed = subprocess.run(  # nosec B603,B607
         ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
         check=True,
         capture_output=True,
@@ -306,7 +316,7 @@ if ($null -eq $task) {{
 
 def build_report(
     *,
-    project_root: Path,
+    project_root: PurePath,
     task_name: str,
     daily_summary_path: Path,
     scheduler_payload: dict[str, Any] | None,
@@ -374,7 +384,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    project_root = Path(args.project_root).resolve()
+    project_root = resolve_project_root(args.project_root)
     daily_summary_path = Path(args.daily_summary)
     report_path = Path(args.report)
     scheduler_payload = load_json(Path(args.scheduler_json)) if args.scheduler_json else None
