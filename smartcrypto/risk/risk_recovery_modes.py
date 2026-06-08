@@ -346,7 +346,7 @@ def evaluate_findings(
     if as_bool(readiness.get("prediction_stale_block"), default=False) or normalized_status(readiness.get("prediction_freshness")) == "blocked":
         critical.append("prediction_stale_block")
     if normalized_status(readiness.get("status")) == "blocked":
-        critical.append("readiness_block")
+        warnings.append("readiness_block_observed")
     if normalized_status(monte.get("status")) == "warning":
         warnings.append("monte_carlo_warning")
     if normalized_status(backtest.get("status")) == "warning":
