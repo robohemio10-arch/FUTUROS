@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5404198b5db065c026b69212b696a289107c2cc112bb5dbea4aa041395b00c79",
+  "aggregate_sha256": "484585aef5c3c531d937e144c91b4805c16058961794bf880cd205f7c10a02dd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 97,
-    "manifested_files_total": 622,
-    "python_files": 440,
+    "docs_files": 98,
+    "manifested_files_total": 625,
+    "python_files": 442,
     "runtime_excluded_files_total": 0,
-    "test_files": 104,
-    "tracked_files_total": 623,
+    "test_files": 105,
+    "tracked_files_total": 626,
     "workflows": 1
   },
   "deterministic": true,
@@ -1046,6 +1046,12 @@
       "sha256": "d6d029e7d7a42324db0dbac7fab88584cccfa52acdc8a038c94186fec4d68a33"
     },
     {
+      "bytes": 2728,
+      "hash_mode": "text_lf",
+      "path": "docs/ZIP_STANDALONE_AUDIT_FALLBACK.md",
+      "sha256": "8e5f5c4f79566b6cf838a662c5c18068504f56ed29949ccef5581ab6bd5f7a1e"
+    },
+    {
       "bytes": 2934,
       "hash_mode": "text_lf",
       "path": "docs/security_audit_exceptions.md",
@@ -1658,10 +1664,10 @@
       "sha256": "0994387c11939ba4e8336e1184ae59298719e9f7d121633ac0a59ed289f4a52e"
     },
     {
-      "bytes": 5987,
+      "bytes": 5515,
       "hash_mode": "text_lf",
       "path": "scripts/generate_project_manifest.py",
-      "sha256": "30d8d6b397ebc13b21700681c122b03bf8876e93354cf41e60d4307245fbdef3"
+      "sha256": "31bcd2eaf9d9a2f99afe7eeee9cfb1ed3d98808667377866fa94b3c4e5b60228"
     },
     {
       "bytes": 1420,
@@ -2252,10 +2258,10 @@
       "sha256": "f190917d21c50cf73b315d78d1656b214f2a49248af326e600a5a9d7f1bb8fbb"
     },
     {
-      "bytes": 3644,
+      "bytes": 3606,
       "hash_mode": "text_lf",
       "path": "scripts/scan_versioned_secrets.py",
-      "sha256": "87129719aafd31f3290b61378d1a5dc53d32b90bdf232ce3d69d09afe188c713"
+      "sha256": "2b785c17e5015578763f2c588f287ff7ace616592e6af5cc3e2710dea8e0b22f"
     },
     {
       "bytes": 559,
@@ -2928,6 +2934,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/system_healthcheck.py",
       "sha256": "e6a6936ac4435d29c13b04f7791bd57212b6e8ea408f8da45e0e6f9a047e2140"
+    },
+    {
+      "bytes": 6459,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/versioned_file_discovery.py",
+      "sha256": "acdaa72f9178176c8240ea6d0caf79a3acc3dfeb190717df266a97213a95fe6e"
     },
     {
       "bytes": 0,
@@ -3744,6 +3756,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_walkforward_split.py",
       "sha256": "7ed7d24bf852446490e67f168646407e1496495dd6c5e8e843fc737e4d87a42b"
+    },
+    {
+      "bytes": 6234,
+      "hash_mode": "text_lf",
+      "path": "tests/test_zip_standalone_audit_fallback.py",
+      "sha256": "a0d30e7412e68280d01aa35f012630034005e34c12c22652978704eab3b93d3c"
     }
   ],
   "generated_by_script": "scripts/generate_project_manifest.py",
@@ -3754,6 +3772,7 @@
     "excluded_tracked_paths": [],
     "prefixes": [
       "data/",
+      "evidence/",
       "logs/",
       "models/",
       "reports/",

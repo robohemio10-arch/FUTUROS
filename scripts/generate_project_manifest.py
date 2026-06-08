@@ -3,48 +3,28 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
+import sys
 from pathlib import Path
 from typing import Any
+
+ROOT_IMPORT_PATH = Path(__file__).resolve().parents[1]
+if str(ROOT_IMPORT_PATH) not in sys.path:
+    sys.path.insert(0, str(ROOT_IMPORT_PATH))
+
+from smartcrypto.ops.versioned_file_discovery import (
+    RUNTIME_PREFIXES,
+    RUNTIME_SUFFIXES,
+    discover_versioned_files,
+    is_runtime_artifact,
+)
 
 
 DEFAULT_OUTPUT = Path("PROJECT_MANIFEST_CLEAN.json")
 GENERATED_BY = "scripts/generate_project_manifest.py"
-RUNTIME_PREFIXES = (
-    "data/",
-    "logs/",
-    "models/",
-    "reports/",
-    "freqtrade/user_data/logs/",
-    "freqtrade/user_data/data/",
-    "bitradex_realtime_candle_collector_v1/data/",
-    "bitradex_realtime_candle_collector_v1/logs/",
-)
-RUNTIME_SUFFIXES = (
-    ".parquet",
-    ".sqlite",
-    ".sqlite3",
-    ".db",
-    ".csv",
-    ".xlsx",
-    ".jsonl",
-    ".zip",
-    ".log",
-)
 SELF_PATH = "PROJECT_MANIFEST_CLEAN.json"
 MANIFEST_VERSION = 3
 TEXT_HASH_MODE = "text_lf"
 BINARY_HASH_MODE = "binary_raw"
-
-
-def git_tracked_files(root: Path) -> list[str]:
-    output = subprocess.check_output(["git", "ls-files"], cwd=root, text=True)
-    return sorted(path.strip().replace("\\", "/") for path in output.splitlines() if path.strip())
-
-
-def is_runtime_artifact(path: str) -> bool:
-    normalized = path.replace("\\", "/")
-    return normalized.startswith(RUNTIME_PREFIXES) or normalized.lower().endswith(RUNTIME_SUFFIXES)
 
 
 def is_utf8_text(content: bytes) -> bool:
@@ -95,8 +75,9 @@ def aggregate_hash(manifest_files: list[dict[str, Any]], counts: dict[str, int])
 
 
 def build_manifest(root: Path) -> dict[str, Any]:
-    tracked = git_tracked_files(root)
-    runtime_excluded = [path for path in tracked if is_runtime_artifact(path)]
+    discovery = discover_versioned_files(root, manifest_path=SELF_PATH)
+    tracked = discovery.files
+    runtime_excluded = discovery.runtime_excluded_files
     included = [path for path in tracked if path != SELF_PATH and not is_runtime_artifact(path)]
     files = []
     for path in included:
