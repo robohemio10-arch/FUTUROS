@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
-ROOT_IMPORT_PATH = Path(__file__).resolve().parents[1]
-if str(ROOT_IMPORT_PATH) not in sys.path:
-    sys.path.insert(0, str(ROOT_IMPORT_PATH))
-
-from smartcrypto.ops.versioned_file_discovery import discover_versioned_files, is_runtime_artifact
+try:
+    from smartcrypto.ops.versioned_file_discovery import discover_versioned_files, is_runtime_artifact
+except ModuleNotFoundError:
+    _DISCOVERY_PATH = Path(__file__).resolve().parents[1] / "smartcrypto" / "ops" / "versioned_file_discovery.py"
+    _DISCOVERY_SPEC = importlib.util.spec_from_file_location("smartcrypto.ops.versioned_file_discovery", _DISCOVERY_PATH)
+    if _DISCOVERY_SPEC is None or _DISCOVERY_SPEC.loader is None:
+        raise
+    _DISCOVERY_MODULE = importlib.util.module_from_spec(_DISCOVERY_SPEC)
+    _DISCOVERY_SPEC.loader.exec_module(_DISCOVERY_MODULE)
+    discover_versioned_files = _DISCOVERY_MODULE.discover_versioned_files
+    is_runtime_artifact = _DISCOVERY_MODULE.is_runtime_artifact
 
 SKIP_SUFFIXES = (
     ".png",

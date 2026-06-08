@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "484585aef5c3c531d937e144c91b4805c16058961794bf880cd205f7c10a02dd",
+  "aggregate_sha256": "e22d670d894a679cdfab91104e5a069f03db545e8dd2c44f8f6ae371a355192e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1664,10 +1664,10 @@
       "sha256": "0994387c11939ba4e8336e1184ae59298719e9f7d121633ac0a59ed289f4a52e"
     },
     {
-      "bytes": 5515,
+      "bytes": 6140,
       "hash_mode": "text_lf",
       "path": "scripts/generate_project_manifest.py",
-      "sha256": "31bcd2eaf9d9a2f99afe7eeee9cfb1ed3d98808667377866fa94b3c4e5b60228"
+      "sha256": "a803688d84ccc0735d3f33321e1776e771afb494948e9f9e0605d370010db3c4"
     },
     {
       "bytes": 1420,
@@ -2258,10 +2258,10 @@
       "sha256": "f190917d21c50cf73b315d78d1656b214f2a49248af326e600a5a9d7f1bb8fbb"
     },
     {
-      "bytes": 3606,
+      "bytes": 4095,
       "hash_mode": "text_lf",
       "path": "scripts/scan_versioned_secrets.py",
-      "sha256": "2b785c17e5015578763f2c588f287ff7ace616592e6af5cc3e2710dea8e0b22f"
+      "sha256": "f65fccbc4d440b4ee487715e01d1f705132e171c66f125093cf7716e14b2acc7"
     },
     {
       "bytes": 559,
