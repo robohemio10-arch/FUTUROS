@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "5414d6a6551a3f2c11882ceb299442f52540324bd83f0bd536ee96694a527f33",
+  "aggregate_sha256": "8253f06e8f80a352af1aabe5faa9cc2e6666ae6072cf509d1b99f418d7abb5f5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1322,10 +1322,10 @@
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
     },
     {
-      "bytes": 4077,
+      "bytes": 4635,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_shadow_soak_report.py",
-      "sha256": "c1b779aa95f69d20aa6993eb75397ea1767d318bd1e5e7c80241f36691adf0a5"
+      "sha256": "3662180b3fa8151f26433a91fef34b64f33be35cb335c55560db55a2936a219e"
     },
     {
       "bytes": 30341,
@@ -2396,10 +2396,10 @@
       "sha256": "1784def5e6e123feeaf49ece159f95943397bf0455320389a79521eed2eaa5d4"
     },
     {
-      "bytes": 31907,
+      "bytes": 32875,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/risk_readiness_soak_panel.py",
-      "sha256": "5449c529585863fcfa9e0c096acdbbab133f878e7e622759330a900ea8b338fd"
+      "sha256": "5a92bfe7d6a6de67e67b422f573bb75c3682ea65da7dcabdcdfd6fbc95175aa2"
     },
     {
       "bytes": 174,
@@ -2876,10 +2876,10 @@
       "sha256": "fa723027daf162944dfa9c79b6e88bbfe06ad5235d846bf408c6453e95272239"
     },
     {
-      "bytes": 29509,
+      "bytes": 32903,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_shadow_soak_report.py",
-      "sha256": "6089d9121825a7ac847037e138c943e762f50bbb0bb10793ee21baf2a2cae810"
+      "sha256": "c3af8cd44648c045d3e829ef893a4b193129540d8c837e1e24eaf228a46c2825"
     },
     {
       "bytes": 5949,

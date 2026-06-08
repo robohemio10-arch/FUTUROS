@@ -138,7 +138,7 @@ def load_risk_readiness_soak_state(
     status = aggregate_status(blocked_reasons, warnings, sources, strict=strict)
     paper_days_observed = soak["paper_days"]
     paper_days_required = required_paper_days
-    paper_days_remaining = max(int(required_paper_days) - soak["paper_days"], 0)
+    paper_days_remaining = max(float(required_paper_days) - float(soak["paper_days"]), 0.0)
     no_trade_present = monte_carlo_policy["no_trade_policy_present"]
     return {
         "status": status,
@@ -159,6 +159,8 @@ def load_risk_readiness_soak_state(
         "paper_days_required": paper_days_required,
         "remaining_paper_days": paper_days_remaining,
         "paper_days_remaining": paper_days_remaining,
+        "freqtrade_paper_db_selected": soak["freqtrade_paper_db_selected"],
+        "freqtrade_paper_db_stale_candidates": soak["freqtrade_paper_db_stale_candidates"],
         "clean_streak_days": soak["clean_streak_days"],
         "duplicate_orders_count": soak["duplicate_orders_count"],
         "unknown_state_count": soak["unknown_state_count"],
@@ -277,8 +279,15 @@ def load_jsonl_source(name: str, path: Path) -> dict[str, Any]:
     return {"name": name, "path": str(path), "exists": True, "status": "ok", "rows": rows}
 
 
-def summarize_soak(payload: dict[str, Any], *, required_paper_days: int) -> dict[str, int]:
-    paper_days = int_value(first_present(payload, ("paper_days", "soak_days", "paper_runtime_days"), default=0))
+def summarize_soak(payload: dict[str, Any], *, required_paper_days: int) -> dict[str, Any]:
+    paper_days = float_value(
+        first_present(
+            payload,
+            ("observed_soak_days", "paper_days", "soak_days", "paper_runtime_days"),
+            default=0,
+        )
+    )
+    stale_candidates = payload.get("freqtrade_paper_db_stale_candidates")
     return {
         "paper_days": paper_days,
         "required_paper_days": int_value(first_present(payload, ("required_paper_days",), default=required_paper_days)),
@@ -288,6 +297,10 @@ def summarize_soak(payload: dict[str, Any], *, required_paper_days: int) -> dict
         "divergence_count": int_value(first_present(payload, ("divergence_count", "divergences"), default=0)),
         "shadow_order_attempts": int_value(first_present(payload, ("shadow_order_attempts",), default=0)),
         "controlled_live_attempts": int_value(first_present(payload, ("controlled_live_attempts",), default=0)),
+        "freqtrade_paper_db_selected": payload.get("freqtrade_paper_db_selected"),
+        "freqtrade_paper_db_stale_candidates": stale_candidates
+        if isinstance(stale_candidates, list)
+        else [],
     }
 
 
@@ -429,14 +442,14 @@ def no_trade_exit_requirements(*, observed_days: int, required_days: int, no_tra
 
 def next_collection_targets(
     *,
-    remaining_days: int,
+    remaining_days: float,
     missing: set[str],
     stale_data_count: int,
     no_trade_policy_present: bool,
 ) -> list[str]:
     targets: list[str] = []
     if remaining_days > 0:
-        targets.append(f"collect_paper_shadow_soak_days:{remaining_days}")
+        targets.append(f"collect_paper_shadow_soak_days:{format_number(remaining_days)}")
     if missing:
         targets.append("refresh_missing_runtime_sources")
     if stale_data_count > 0:
@@ -465,6 +478,8 @@ def aggregate_warnings(
         warnings.append("missing_recent_shadow_decision")
     if soak["paper_days"] < soak["required_paper_days"]:
         warnings.append("soak_partial")
+    if soak["freqtrade_paper_db_stale_candidates"]:
+        warnings.append("freqtrade_paper_db_stale_candidates")
     if stale_data_count > 0:
         warnings.append("stale_data_detected")
     return sorted(set(warnings))
@@ -688,6 +703,18 @@ def int_value(value: Any) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return 0
+
+
+def float_value(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def format_number(value: float | int) -> str:
+    numeric = float(value)
+    return str(int(numeric)) if numeric.is_integer() else str(round(numeric, 6))
 
 
 def as_bool(value: Any, *, default: bool) -> bool:

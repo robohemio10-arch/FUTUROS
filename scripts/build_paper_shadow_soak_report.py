@@ -19,6 +19,7 @@ from smartcrypto.ops.paper_shadow_soak_report import (  # noqa: E402
     DEFAULT_EVENT_BACKTEST_REPORT,
     DEFAULT_FINANCIAL_EVENT_LOG,
     DEFAULT_FINANCIAL_THRESHOLD_REPORT,
+    DEFAULT_FREQTRADE_PAPER_DB_AUTHORITY_REPORT,
     DEFAULT_LEDGER_REPORT,
     DEFAULT_MARKET_HEALTH_REPORT,
     DEFAULT_MONTE_CARLO_REPORT,
@@ -50,6 +51,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dataset-manifest", default=str(DEFAULT_DATASET_MANIFEST))
     parser.add_argument("--report", default=str(DEFAULT_REPORT_PATH))
     parser.add_argument("--required-soak-days", type=int, default=7)
+    parser.add_argument("--freqtrade-paper-db", default=None)
+    parser.add_argument("--freqtrade-paper-db-auto-discover", action="store_true")
+    parser.add_argument(
+        "--freqtrade-paper-db-authority-report",
+        default=str(DEFAULT_FREQTRADE_PAPER_DB_AUTHORITY_REPORT),
+    )
     parser.add_argument("--strict", action="store_true")
     return parser.parse_args(argv)
 
@@ -76,6 +83,9 @@ def main(argv: list[str] | None = None) -> int:
         report_path=args.report,
         required_soak_days=args.required_soak_days,
         strict=args.strict,
+        freqtrade_paper_db=args.freqtrade_paper_db,
+        freqtrade_paper_db_auto_discover=args.freqtrade_paper_db_auto_discover,
+        freqtrade_paper_db_authority_report=args.freqtrade_paper_db_authority_report,
     )
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     return 1 if report.get("status") in {"blocked", "insufficient_soak"} else 0
