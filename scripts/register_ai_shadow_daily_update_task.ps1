@@ -3,6 +3,8 @@ param(
     [string]$ProjectRoot = "E:\FUTUROS",
     [string]$TaskName = "SmartCripto_AI_Daily_Update",
     [string]$DailyTime = "00:00",
+    [ValidateSet("Limited", "Highest")]
+    [string]$RunLevel = "Limited",
     [switch]$DryRun
 )
 
@@ -30,7 +32,7 @@ $Settings = New-ScheduledTaskSettingsSet `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
     -MultipleInstances IgnoreNew
-$Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel LeastPrivilege
+$Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel $RunLevel
 $Task = New-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal
 
 $Payload = [ordered]@{
@@ -42,6 +44,7 @@ $Payload = [ordered]@{
     working_directory = $ResolvedProjectRoot
     daily_time = $DailyTime
     daily_script = $DailyScript
+    run_level = $RunLevel
     paper_only = $true
     shadow_only = $true
     live_trading_enabled = $false
