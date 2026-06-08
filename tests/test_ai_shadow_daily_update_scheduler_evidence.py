@@ -83,10 +83,14 @@ def test_register_script_has_current_daily_action_and_no_old_path() -> None:
     text = REGISTER_PATH.read_text(encoding="utf-8")
 
     assert OLD_PROJECT_ROOT not in text
+    assert "LeastPrivilege" not in text
     assert "RUN_DAILY_AI_SHADOW_UPDATE.ps1" in text
     assert "powershell.exe" in text
     assert "-NoProfile -ExecutionPolicy Bypass -File" in text
     assert "New-ScheduledTaskTrigger -Daily" in text
+    assert '[ValidateSet("Limited", "Highest")]' in text
+    assert '[string]$RunLevel = "Limited"' in text
+    assert "-RunLevel $RunLevel" in text
     assert "ORDER_SUBMISSION_ENABLED" not in text
     assert "REAL_ORDER_SUBMISSION_ENABLED" not in text
 
@@ -127,6 +131,32 @@ def test_score_and_log_only_is_update_ok_not_daily_training() -> None:
     assert classification["inserted"] == 0
     assert classification["model_promoted"] is False
     assert classification["registry_updated"] is False
+
+
+def test_load_json_accepts_utf8_with_and_without_bom(tmp_path: Path) -> None:
+    module = load_audit_module()
+    normal_path = tmp_path / "normal.json"
+    bom_path = tmp_path / "bom.json"
+    payload = daily_summary(new_rows_scored=0, inserted=0)
+    normal_path.write_text(json.dumps(payload), encoding="utf-8")
+    bom_path.write_text(json.dumps(payload), encoding="utf-8-sig")
+
+    assert module.load_json(normal_path) == payload
+    assert module.load_json(bom_path) == payload
+
+
+def test_invalid_json_is_reported_without_traceback(tmp_path: Path) -> None:
+    module = load_audit_module()
+    invalid_path = tmp_path / "invalid.json"
+    invalid_path.write_text("{bad-json", encoding="utf-8")
+
+    loaded = module.load_json(invalid_path)
+    classification = module.classify_daily_update_summary(loaded)
+
+    assert loaded["__invalid_json__"] is True
+    assert classification["daily_update_classification"] == "daily_update_summary_invalid_json"
+    assert classification["daily_update_ok"] is False
+    assert classification["daily_training_classification"] == "daily_training_not_performed"
 
 
 def test_nonzero_last_task_result_classifies_scheduler_broken() -> None:
@@ -223,3 +253,36 @@ def test_cli_uses_fixture_without_touching_project_runtime(tmp_path: Path, capsy
     assert payload["daily_update_classification"] == "daily_shadow_update_ok"
     assert payload["daily_training_classification"] == "daily_training_not_performed"
     assert report_path.exists()
+
+
+def test_cli_generates_ok_report_with_bom_daily_summary(tmp_path: Path, capsys) -> None:
+    module = load_audit_module()
+    scheduler_path = tmp_path / "scheduler.json"
+    daily_summary_path = tmp_path / "reports" / "daily_ai_shadow_update_summary.json"
+    report_path = tmp_path / "reports" / "ai_shadow_daily_update_scheduler_audit_report.json"
+    daily_summary_path.parent.mkdir(parents=True)
+    scheduler_path.write_text(json.dumps(scheduler_payload(CURRENT_PROJECT_ROOT)), encoding="utf-8")
+    daily_summary_path.write_text(json.dumps(daily_summary()), encoding="utf-8-sig")
+
+    exit_code = module.main(
+        [
+            "--project-root",
+            str(CURRENT_PROJECT_ROOT),
+            "--scheduler-json",
+            str(scheduler_path),
+            "--daily-summary",
+            str(daily_summary_path),
+            "--report",
+            str(report_path),
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["daily_update_classification"] == "daily_shadow_update_ok"
+    assert payload["live_trading_enabled"] is False
+    assert payload["order_submission_enabled"] is False
+    assert payload["real_order_submission_enabled"] is False
+    assert payload["sends_orders"] is False
+    assert payload["exchange_private_access"] is False

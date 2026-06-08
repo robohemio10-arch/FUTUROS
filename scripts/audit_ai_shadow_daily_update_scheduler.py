@@ -216,6 +216,21 @@ def classify_daily_update_summary(summary: dict[str, Any] | None) -> dict[str, A
             "summary_status": None,
             "summary_mode": None,
         }
+    if summary.get("__invalid_json__") is True:
+        return {
+            "daily_update_classification": "daily_update_summary_invalid_json",
+            "daily_training_classification": "daily_training_not_performed",
+            "daily_update_ok": False,
+            "daily_training_performed": False,
+            "new_rows_scored": None,
+            "inserted": None,
+            "model_promoted": False,
+            "registry_updated": False,
+            "summary_status": None,
+            "summary_mode": None,
+            "json_error": summary.get("error"),
+            "json_path": summary.get("path"),
+        }
 
     policy_allowed = nested_get(summary, "policy", "allowed_mode")
     policy_sends_orders = nested_get(summary, "policy", "sends_orders")
@@ -274,7 +289,14 @@ def classify_daily_update_summary(summary: dict[str, Any] | None) -> dict[str, A
 def load_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        return {
+            "__invalid_json__": True,
+            "path": str(path),
+            "error": str(exc),
+        }
 
 
 def query_windows_scheduled_task(task_name: str) -> dict[str, Any]:

@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "0db078c1050b9e03adf6dbd5c044715ba90e1734968592f7c2864f119c13b9c9",
+  "aggregate_sha256": "5414d6a6551a3f2c11882ceb299442f52540324bd83f0bd536ee96694a527f33",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1160,10 +1160,10 @@
       "sha256": "3f8de125ee7f2e9d71de0919cfbbb573e445d526de4a2f9914aa439f6e7a3656"
     },
     {
-      "bytes": 15494,
+      "bytes": 16302,
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_daily_update_scheduler.py",
-      "sha256": "9da1fb8a1c806ebb0e3800498ee13ec1ac76581a8cb28ea609eeabac60bab91e"
+      "sha256": "461b7d14a00048c1816f0d96abe1f15e698322890347d9931cc28eebeb0f72ab"
     },
     {
       "bytes": 9151,
@@ -1958,10 +1958,10 @@
       "sha256": "5f6fead596e06debb8f840191bbe0cb7b6860a5dfc74755f83534d2222a7cfd4"
     },
     {
-      "bytes": 2378,
+      "bytes": 2474,
       "hash_mode": "text_lf",
       "path": "scripts/register_ai_shadow_daily_update_task.ps1",
-      "sha256": "23d4625d35f8e949e7256fb7915ac0de028721909597cb70cf7f5cb8b12d1c39"
+      "sha256": "6a308353d15ed6e1e44c793a4bde9181f4a6eac7019c849a7661b7141a6ac2ec"
     },
     {
       "bytes": 4367,
@@ -3092,10 +3092,10 @@
       "sha256": "2ad23242b1c0bccfcf083b2992cf2c227328247547a3b17b24dff9102b0e42dc"
     },
     {
-      "bytes": 8216,
+      "bytes": 10870,
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_daily_update_scheduler_evidence.py",
-      "sha256": "f2bd6be662f8214c3efe7c42bd372744a9c43e4a08fda149bcefb93154d213fe"
+      "sha256": "8486a8c7844b74d6c67f6fefe34920c7e7ae17aa54b70aa56e8567eec0071bef"
     },
     {
       "bytes": 5220,
