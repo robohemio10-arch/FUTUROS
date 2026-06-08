@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1545462bdc621700509bc4a82e9630fbc3ae53e36b704a5e52aadbc3292fe3d0",
+  "aggregate_sha256": "5404198b5db065c026b69212b696a289107c2cc112bb5dbea4aa041395b00c79",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 96,
-    "manifested_files_total": 618,
-    "python_files": 439,
+    "docs_files": 97,
+    "manifested_files_total": 622,
+    "python_files": 440,
     "runtime_excluded_files_total": 0,
-    "test_files": 103,
-    "tracked_files_total": 619,
+    "test_files": 104,
+    "tracked_files_total": 623,
     "workflows": 1
   },
   "deterministic": true,
@@ -26,10 +26,10 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 3622,
+      "bytes": 3632,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "6a44e158517b5cf634c98f10342f71257440b1794f69304735151f3d811abbdb"
+      "sha256": "4f8417632f03233abad5c259c235081de5d620b22695ed670caa63980432ce52"
     },
     {
       "bytes": 2050,
@@ -50,10 +50,10 @@
       "sha256": "508599ae25c910119dfbb13f034e0271992269942cfdf90f4882dfaee7eade14"
     },
     {
-      "bytes": 2184,
+      "bytes": 2170,
       "hash_mode": "text_lf",
       "path": "Makefile",
-      "sha256": "f9420c10ca03e78bbe0737d7b6d4937813e7986a3e5cca955004a631c6e26806"
+      "sha256": "0766f4f4becbc251cd736fd981b2f075109823ce8058d15d4c1b9b19cb91a50c"
     },
     {
       "bytes": 1675,
@@ -488,6 +488,12 @@
       "sha256": "0c3b56391467617da214d39e8b31ae5a14bb2d78c8471aa046dd011358f2f0de"
     },
     {
+      "bytes": 146,
+      "hash_mode": "text_lf",
+      "path": "constraints.txt",
+      "sha256": "62ca6d80b735dc9fea44f6bdbe5864f0abef7aa0d66908bb8c13f4b146a0ba2f"
+    },
+    {
       "bytes": 1087,
       "hash_mode": "text_lf",
       "path": "docker-compose.live.example.yml",
@@ -500,28 +506,28 @@
       "sha256": "1adb155cce83018f19935079e866a81bdc97c81acca06c8e35fbcff6d6c7bfb9"
     },
     {
-      "bytes": 1073,
+      "bytes": 1156,
       "hash_mode": "text_lf",
       "path": "docker/dashboard/Dockerfile",
-      "sha256": "c6cfe152136b2e1430613543e44cc1e46fc224c61f3b9728be6c552830eea5c7"
+      "sha256": "ded7a6a28cdf1149732ca9947f6e6c5eb541c14177253e3286b0228e3dfe3aed"
     },
     {
-      "bytes": 1288,
+      "bytes": 1432,
       "hash_mode": "text_lf",
       "path": "docker/qlib/Dockerfile",
-      "sha256": "c16f09228ca6e247867a110ab7a3636011b3473b89cd00e06e37974de9e59337"
+      "sha256": "1a36c49cda57c56bd3791ed73c866365b19a91d7e399da86ddec0c47bbf8f0a9"
     },
     {
-      "bytes": 173,
+      "bytes": 159,
       "hash_mode": "text_lf",
       "path": "docker/qlib/requirements.txt",
-      "sha256": "810221b01cabbe6a46629d80b3e9deaae99170b49e66ace6ead34ef44bbe6b92"
+      "sha256": "aef6987b6e9a1cd6e71aec4f89d41c25d24fa6d1f69dd3410122ff4f5ca76134"
     },
     {
-      "bytes": 1098,
+      "bytes": 1183,
       "hash_mode": "text_lf",
       "path": "docker/smartcrypto/Dockerfile",
-      "sha256": "13aee1f4e0ac8a11f0698335398d0de5595579a706845a873c91e9c686520643"
+      "sha256": "faf82418f29e7890f2a6b56dc919c7264d3164fce66ec358af7955468f7edb18"
     },
     {
       "bytes": 1421,
@@ -614,10 +620,10 @@
       "sha256": "b324cbcab23b392b9ce6c0e740c9f96d815b895365e09c1dfc3a6a56b53ec10f"
     },
     {
-      "bytes": 5160,
+      "bytes": 5181,
       "hash_mode": "text_lf",
       "path": "docs/COMPLETE_CI_SECURITY_TYPECHECK_RUNTIME_READINESS.md",
-      "sha256": "85384b1d73ef9260c0185e1114dc562e1125614c7ddded1aa26fff60fddd7025"
+      "sha256": "f84c1409f7f3ee655c736f3df9e5a7dba3e951823007546f2ef4e5e5cdfaae5b"
     },
     {
       "bytes": 4383,
@@ -956,10 +962,10 @@
       "sha256": "8a2b1d1f7c531bf6c27cd104af50a3d518b9bd1de2a2c3f705a17c23753ef108"
     },
     {
-      "bytes": 3515,
+      "bytes": 3647,
       "hash_mode": "text_lf",
       "path": "docs/REPRODUCIBLE_DEV_ENVIRONMENT_CI_MAKEFILE.md",
-      "sha256": "b085d81249910ec4c190735424b32412989e576f80edc4e946911da228c2c184"
+      "sha256": "763b685e120f40903834279fa1acc8de02c81e7271a5ab404415a5238838df4b"
     },
     {
       "bytes": 2296,
@@ -1016,6 +1022,12 @@
       "sha256": "fbd6b671cd8629eba2a37e9dd41416319aafdc59c7f26b13b37409ec5156ff77"
     },
     {
+      "bytes": 3511,
+      "hash_mode": "text_lf",
+      "path": "docs/TRANSITIVE_LOCK_DOCKER_RUNTIME_REPRODUCIBILITY.md",
+      "sha256": "86cd46e280c53902e61c729b8de0a0dcb15569f6a7374dd674a467acfb34b88a"
+    },
+    {
       "bytes": 5899,
       "hash_mode": "text_lf",
       "path": "docs/VITAL_OCR_CANONICO_BITRADEX_v1.md",
@@ -1034,10 +1046,10 @@
       "sha256": "d6d029e7d7a42324db0dbac7fab88584cccfa52acdc8a038c94186fec4d68a33"
     },
     {
-      "bytes": 2954,
+      "bytes": 2934,
       "hash_mode": "text_lf",
       "path": "docs/security_audit_exceptions.md",
-      "sha256": "6acae512781ac61971c79bea5209e51fda7bf39218fd68481b9cee9bc30e5cb9"
+      "sha256": "265a10d088ed01dfa3c3258f8038a4ce6b6a1961f975cf98d2309bed9a3c2312"
     },
     {
       "bytes": 353,
@@ -1148,10 +1160,16 @@
       "sha256": "46b8d030b9384896cf7cebadd14f785f3b4c09f5a55a71209fb5d7e7a819ecd0"
     },
     {
-      "bytes": 440,
+      "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "137fe1aa097efd6a32f76d8a400f172c37009d11f370111e2faf58714ba868b3"
+      "sha256": "acfb9c4f7e64a037534dee5e09800bdd0a4b661f6dad226d79aa42624fa93e97"
+    },
+    {
+      "bytes": 1209,
+      "hash_mode": "text_lf",
+      "path": "requirements-runtime.lock",
+      "sha256": "1c3ed801f7b37970c6a5df9b1417314db7b1948ec2a917a2ece0b7a1f3fb83dc"
     },
     {
       "bytes": 528,
@@ -3714,6 +3732,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trade_financial_input_repair.py",
       "sha256": "d5f822b15c8df4f269cabf4189ee3a822cceed673283218047232fa4e6cbe8d1"
+    },
+    {
+      "bytes": 5485,
+      "hash_mode": "text_lf",
+      "path": "tests/test_transitive_lock_docker_runtime_reproducibility.py",
+      "sha256": "6135c560d2f961353e88c3078e603d6f3c7dd07fa2da703a196149b1fa2c2847"
     },
     {
       "bytes": 2053,

@@ -23,13 +23,15 @@ RUN groupadd --system --gid "${SMARTCRYPTO_GID}" smartcrypto \
     && useradd --system --uid "${SMARTCRYPTO_UID}" --gid smartcrypto --home-dir /app --shell /usr/sbin/nologin smartcrypto
 
 COPY docker/qlib/requirements.txt ./docker/qlib/requirements.txt
+COPY requirements-runtime.lock constraints.txt ./
 COPY pyproject.toml README.md ./
 COPY smartcrypto ./smartcrypto
 COPY scripts ./scripts
 COPY config ./config
 
 RUN python -m pip install --upgrade pip setuptools wheel \
-    && python -m pip install --no-cache-dir -r docker/qlib/requirements.txt
+    && python -m pip install --no-cache-dir -r docker/qlib/requirements.txt -c requirements-runtime.lock -c constraints.txt \
+    && python -m pip install --no-deps -e .
 
 RUN mkdir -p /app/data /app/data/reports /app/data/runtime /app/data/features /app/data/predictions /app/logs \
     && chown -R smartcrypto:smartcrypto /app

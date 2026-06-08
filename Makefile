@@ -9,7 +9,7 @@ BANDIT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcry
 install:
 	$(PIP) install --upgrade pip setuptools wheel
 	$(PIP) install -r requirements-dev.lock
-	$(PIP) install -e .
+	$(PIP) install --no-deps -e .
 
 compile:
 	$(PYTHON) -m compileall scripts smartcrypto tests
@@ -29,7 +29,7 @@ typecheck:
 security:
 	$(PYTHON) -m pytest tests/test_reproducible_dev_environment_ci_makefile.py -q
 	$(PYTHON) -m bandit -q -r $(BANDIT_TARGETS) --severity-level medium --confidence-level medium
-	$(PYTHON) -m pip_audit -r requirements-dev.lock --no-deps --disable-pip --progress-spinner off
+	$(PYTHON) -m pip_audit -r requirements-dev.lock --progress-spinner off
 	$(PYTHON) scripts/scan_versioned_secrets.py --json
 
 audit: compile lint typecheck security test-fast

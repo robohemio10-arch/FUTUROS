@@ -19,7 +19,7 @@ Sem Makefile:
 ```bash
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements-dev.lock
-python -m pip install -e .
+python -m pip install --no-deps -e .
 python -m compileall scripts smartcrypto tests
 python -m pytest -q
 ```
@@ -40,17 +40,20 @@ Isso evita falhas em ambiente externo quando testes ou scripts usam parquet via 
 
 ## Lockfile
 
-`requirements-dev.lock` registra pins conservadores diretos do ambiente local validado.
+`requirements-dev.lock` registra pins transitivos do ambiente local validado.
+`requirements-runtime.lock` registra os pins transitivos usados pelos containers
+SmartCrypto e dashboard.
 
 Uso recomendado no CI e em clone limpo:
 
 ```bash
 python -m pip install -r requirements-dev.lock
-python -m pip install -e .
+python -m pip install --no-deps -e .
 ```
 
-O `pyproject.toml` continua declarando os extras `dev` e `test`. O lock completo
-com resolução transitive e hashes permanece uma evolução operacional possível.
+O `pyproject.toml` continua declarando os extras `dev` e `test`, mas CI e Docker
+usam os locks como fonte de verdade antes de instalar o pacote local com
+`--no-deps`.
 
 ## Makefile
 
@@ -70,7 +73,7 @@ Targets disponíveis:
 `lint` roda `ruff check` de verdade no escopo institucional configurado.
 `typecheck` roda `mypy` de verdade e falha se a ferramenta estiver ausente ou
 se o escopo configurado quebrar. `security` roda testes locais, `bandit`,
-`pip-audit` no lock direto e secret scan sobre arquivos versionados.
+`pip-audit` no lock transitivo e secret scan sobre arquivos versionados.
 
 ## CI
 
@@ -78,7 +81,7 @@ O workflow `.github/workflows/ci.yml` executa:
 
 - checkout;
 - Python 3.12;
-- instalação reproduzível com `requirements-dev.lock` e `python -m pip install -e .`;
+- instalação reproduzível com `requirements-dev.lock` e `python -m pip install --no-deps -e .`;
 - validação de flags paper/shadow;
 - `python -m compileall scripts smartcrypto tests`;
 - `ruff check`;
