@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5414d6a6551a3f2c11882ceb299442f52540324bd83f0bd536ee96694a527f33",
+  "aggregate_sha256": "1545462bdc621700509bc4a82e9630fbc3ae53e36b704a5e52aadbc3292fe3d0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 95,
-    "manifested_files_total": 615,
-    "python_files": 437,
+    "docs_files": 96,
+    "manifested_files_total": 618,
+    "python_files": 439,
     "runtime_excluded_files_total": 0,
-    "test_files": 102,
-    "tracked_files_total": 616,
+    "test_files": 103,
+    "tracked_files_total": 619,
     "workflows": 1
   },
   "deterministic": true,
@@ -710,6 +710,12 @@
       "sha256": "aa20bf232bd2cc20558c628f0dc33f1e956aeef0153954ea96f419e6d613c8da"
     },
     {
+      "bytes": 3842,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_DB_AUTHORITY_AND_SOAK_RECALCULATION.md",
+      "sha256": "8a79726a1d762579d3ac6665897624cbd93e0baa374b5a6f4fa15fefaec88986"
+    },
+    {
       "bytes": 2224,
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_DB_PERSISTENCE.md",
@@ -1322,10 +1328,10 @@
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
     },
     {
-      "bytes": 4077,
+      "bytes": 4635,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_shadow_soak_report.py",
-      "sha256": "c1b779aa95f69d20aa6993eb75397ea1767d318bd1e5e7c80241f36691adf0a5"
+      "sha256": "3662180b3fa8151f26433a91fef34b64f33be35cb335c55560db55a2936a219e"
     },
     {
       "bytes": 30341,
@@ -2396,10 +2402,10 @@
       "sha256": "1784def5e6e123feeaf49ece159f95943397bf0455320389a79521eed2eaa5d4"
     },
     {
-      "bytes": 31907,
+      "bytes": 32875,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/risk_readiness_soak_panel.py",
-      "sha256": "5449c529585863fcfa9e0c096acdbbab133f878e7e622759330a900ea8b338fd"
+      "sha256": "5a92bfe7d6a6de67e67b422f573bb75c3682ea65da7dcabdcdfd6fbc95175aa2"
     },
     {
       "bytes": 174,
@@ -2864,6 +2870,12 @@
       "sha256": "52d5a4bf6f98c9df5637923e0983075c9ad50f2d1c966681a0b371ae8ae31de2"
     },
     {
+      "bytes": 8124,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/freqtrade_paper_db_authority.py",
+      "sha256": "4a7cb597e85ccac2f51d38003129daa02fd380f5b7972ffbc47d266dd0a93484"
+    },
+    {
       "bytes": 553,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/metrics_exporter.py",
@@ -2876,10 +2888,10 @@
       "sha256": "fa723027daf162944dfa9c79b6e88bbfe06ad5235d846bf408c6453e95272239"
     },
     {
-      "bytes": 29509,
+      "bytes": 32903,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_shadow_soak_report.py",
-      "sha256": "6089d9121825a7ac847037e138c943e762f50bbb0bb10793ee21baf2a2cae810"
+      "sha256": "c3af8cd44648c045d3e829ef893a4b193129540d8c837e1e24eaf228a46c2825"
     },
     {
       "bytes": 5949,
@@ -3300,6 +3312,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_financial_event_log_and_alerting.py",
       "sha256": "0a73f089a78fa4fc2114ccc0aa3c3408d6935617ca3e89bfe7bd28fe47e9444d"
+    },
+    {
+      "bytes": 14241,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_db_authority_and_soak_recalculation.py",
+      "sha256": "57ee0bd6e648412f6e447ebbbd04e538ac37b848fbbf7b18be3fb53f38ede9b7"
     },
     {
       "bytes": 5074,

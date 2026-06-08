@@ -5,6 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from smartcrypto.ops.freqtrade_paper_db_authority import (
+    resolve_freqtrade_paper_db_authority,
+)
+
 
 DEFAULT_FINANCIAL_EVENT_LOG = Path("data/reports/financial_event_log.jsonl")
 DEFAULT_CRITICAL_ALERTING_REPORT = Path("data/reports/critical_alerting_report.json")
@@ -23,6 +27,9 @@ DEFAULT_EVENT_BACKTEST_REPORT = Path("data/reports/event_driven_backtest_report.
 DEFAULT_DATA_QUALITY_REPORT = Path("data/reports/data_quality_report.json")
 DEFAULT_DATASET_MANIFEST = Path("data/reports/dataset_manifest.json")
 DEFAULT_REPORT_PATH = Path("data/reports/paper_soak_report.json")
+DEFAULT_FREQTRADE_PAPER_DB_AUTHORITY_REPORT = Path(
+    "data/reports/freqtrade_paper_db_authority_report.json"
+)
 SAFE_FALSE_FLAGS = (
     "live_trading_enabled",
     "order_submission_enabled",
@@ -67,8 +74,16 @@ def build_paper_shadow_soak_report(
     strict: bool = False,
     now: datetime | None = None,
     safety_overrides: Mapping[str, Any] | None = None,
+    freqtrade_paper_db: str | Path | None = None,
+    freqtrade_paper_db_auto_discover: bool = False,
+    freqtrade_paper_db_authority_report: str | Path | None = None,
 ) -> dict[str, Any]:
     current_time = ensure_utc(now or datetime.now(timezone.utc))
+    db_authority = maybe_resolve_freqtrade_paper_db(
+        explicit_path=freqtrade_paper_db,
+        auto_discover=freqtrade_paper_db_auto_discover,
+        authority_report=freqtrade_paper_db_authority_report,
+    )
     paths = {
         "financial_event_log": financial_event_log,
         "critical_alerting_report": critical_alerting_report,
@@ -102,9 +117,27 @@ def build_paper_shadow_soak_report(
         if isinstance(payload, dict)
     ]
     times.extend(value for value in source_times if value is not None)
-    soak_start = min(times) if times else None
-    soak_end = current_time if times else None
+    selected_db = selected_freqtrade_candidate(db_authority)
+    trade_history_start = parse_utc(selected_db.get("first_open_date")) if selected_db else None
+    trade_history_end = parse_utc(selected_db.get("last_activity_date")) if selected_db else None
+    if trade_history_start and trade_history_end:
+        soak_start = trade_history_start
+        soak_end = trade_history_end
+    else:
+        soak_start = min(times) if times else None
+        soak_end = current_time if times else None
     soak_days = round(((soak_end - soak_start).total_seconds() / 86400.0), 6) if soak_start and soak_end else 0.0
+    trade_history_days = (
+        round(((trade_history_end - trade_history_start).total_seconds() / 86400.0), 6)
+        if trade_history_start and trade_history_end
+        else None
+    )
+    trade_history_hours = round(trade_history_days * 24.0, 3) if trade_history_days is not None else None
+    remaining_trade_history_days = (
+        max(0.0, round(float(required_soak_days) - trade_history_days, 6))
+        if trade_history_days is not None
+        else None
+    )
     safety = safety_payload(safety_overrides)
     monte_carlo_policy = monte_carlo_policy_summary(
         payloads.get("monte_carlo_risk_budget_policy_report", {}),
@@ -122,6 +155,20 @@ def build_paper_shadow_soak_report(
         "required_soak_days": int(required_soak_days),
         "remaining_soak_days": max(0.0, round(float(required_soak_days) - soak_days, 6)),
         "remaining_soak_hours": round(max(0.0, float(required_soak_days) - soak_days) * 24.0, 3),
+        "freqtrade_paper_db_selected": selected_db.get("path") if selected_db else None,
+        "freqtrade_paper_db_selection_reason": db_authority.get("reason") if db_authority else None,
+        "freqtrade_paper_db_candidates": db_authority.get("candidates", []) if db_authority else [],
+        "freqtrade_paper_db_stale_candidates": db_authority.get("stale_candidates", [])
+        if db_authority
+        else [],
+        "trades_total": int_value(selected_db.get("total_trades")) if selected_db else 0,
+        "trades_open": int_value(selected_db.get("open_trades")) if selected_db else 0,
+        "trades_closed": int_value(selected_db.get("closed_trades")) if selected_db else 0,
+        "first_trade_open_date": selected_db.get("first_open_date") if selected_db else None,
+        "last_trade_activity_date": selected_db.get("last_activity_date") if selected_db else None,
+        "observed_soak_days_from_trade_history": trade_history_days,
+        "observed_soak_hours_from_trade_history": trade_history_hours,
+        "remaining_soak_days_from_trade_history": remaining_trade_history_days,
         "clean_streak_days": int_value(first_present(payloads["risk_readiness_report"], "clean_streak_days", default=0)),
         "paper_events_count": count_events(events, "paper"),
         "shadow_events_count": count_events(events, "shadow"),
@@ -262,6 +309,31 @@ def evaluate_soak_blockers(report: dict[str, Any], payloads: dict[str, dict[str,
         if int_value(report.get(key)) > 0:
             blockers.append(f"{key}_gt_0")
     return blockers, warnings
+
+
+def maybe_resolve_freqtrade_paper_db(
+    *,
+    explicit_path: str | Path | None,
+    auto_discover: bool,
+    authority_report: str | Path | None,
+) -> dict[str, Any] | None:
+    if explicit_path is None and not auto_discover:
+        return None
+    report = resolve_freqtrade_paper_db_authority(explicit_path=explicit_path)
+    write_report(report, authority_report)
+    return report
+
+
+def selected_freqtrade_candidate(authority_report: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    if not authority_report:
+        return None
+    candidates = authority_report.get("candidates")
+    if not isinstance(candidates, list):
+        return None
+    for candidate in candidates:
+        if isinstance(candidate, dict) and candidate.get("selected"):
+            return candidate
+    return None
 
 
 def performance_summary(report: Mapping[str, Any], payloads: dict[str, dict[str, Any]]) -> dict[str, Any]:
