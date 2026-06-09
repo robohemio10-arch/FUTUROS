@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ce99fe4b7562b1f6633474b702360d2fb1ed3f460cffa6105e359ee47ff9d8f9",
+  "aggregate_sha256": "773810a2b7b8f5e3b6f29e492dbb0c221175b15f73835d18bcf48ee1f630fd90",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 110,
-    "manifested_files_total": 668,
-    "python_files": 472,
+    "docs_files": 111,
+    "manifested_files_total": 671,
+    "python_files": 474,
     "runtime_excluded_files_total": 0,
-    "test_files": 116,
-    "tracked_files_total": 669,
+    "test_files": 117,
+    "tracked_files_total": 672,
     "workflows": 1
   },
   "deterministic": true,
@@ -648,6 +648,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
+    },
+    {
+      "bytes": 2204,
+      "hash_mode": "text_lf",
+      "path": "docs/CRITICAL_NOTIFICATIONS_DASHBOARD_PANEL.md",
+      "sha256": "e7e78a9e99cc9549b07011576682e0387a9a3ec8b456b76ec0011830c41533c5"
     },
     {
       "bytes": 1687,
@@ -2564,6 +2570,12 @@
       "sha256": "434381a55089649275b04101f20f8a6f0541f2d810a6112a6c4c2c85ad9df01e"
     },
     {
+      "bytes": 18220,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/critical_notifications_panel.py",
+      "sha256": "b6c0a0ef96e17cadc8c19ec3b5929ae40d2505da7e91e612531337556baf5f5d"
+    },
+    {
       "bytes": 3792,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/freqtrade_snapshot_reader.py",
@@ -3450,6 +3462,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 9422,
+      "hash_mode": "text_lf",
+      "path": "tests/test_critical_notifications_dashboard_panel.py",
+      "sha256": "ebf20d49c310b352a6eb9247bb29c2a68da1accd08342ccf8e06ac80f7d6b932"
     },
     {
       "bytes": 3736,
