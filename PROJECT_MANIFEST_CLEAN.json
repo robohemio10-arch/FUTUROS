@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "86c2b8881ab1d03e47ea542d45646c5518b38c4027ff0dcc9da0e5101b986de0",
+  "aggregate_sha256": "8e0d3f6592993f46378818b0451e6fa511cf079944a1374bfe04a301c591c1d6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 104,
-    "manifested_files_total": 648,
-    "python_files": 459,
+    "docs_files": 105,
+    "manifested_files_total": 652,
+    "python_files": 462,
     "runtime_excluded_files_total": 0,
-    "test_files": 111,
-    "tracked_files_total": 649,
+    "test_files": 112,
+    "tracked_files_total": 653,
     "workflows": 1
   },
   "deterministic": true,
@@ -776,6 +776,12 @@
       "sha256": "bf0bdabb39e8335bc465f74047bf6eef064aabebae1ad72bfa6c4c7d578e43ef"
     },
     {
+      "bytes": 1985,
+      "hash_mode": "text_lf",
+      "path": "docs/LIVE_CANARY_CONTRACT_WITH_HARD_BLOCKS.md",
+      "sha256": "773c6012e42997754a6cf6c28e5f1a271d476be399e990449bcddd55ec93c5dd"
+    },
+    {
       "bytes": 1869,
       "hash_mode": "text_lf",
       "path": "docs/MANUAL_GO_NO_GO_LIVE_CANARY_GOVERNANCE.md",
@@ -1284,6 +1290,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_freqtrade_paper_db_persistence.py",
       "sha256": "bcda963ce93ced0c81476afff24c3462f5163cd3aec4461206fb61c5728a7bc5"
+    },
+    {
+      "bytes": 2287,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_live_canary_contract.py",
+      "sha256": "7a32d0d9b7f8c17c389986a8c7e3ced13322f4de7e7bf7707b21cd0865e478d3"
     },
     {
       "bytes": 1920,
@@ -2978,6 +2990,12 @@
       "sha256": "4a7cb597e85ccac2f51d38003129daa02fd380f5b7972ffbc47d266dd0a93484"
     },
     {
+      "bytes": 15848,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/live_canary_contract.py",
+      "sha256": "7594ef546f250cd8fd8036129814c032309258cff9b8ebf918d5b5f3385c3088"
+    },
+    {
       "bytes": 11975,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/manual_go_no_go_governance.py",
@@ -3516,6 +3534,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_leverage_pnl_return_consistency.py",
       "sha256": "6893fcf2190e3b8e53248dfa0afd2bdd6af4497c67661e4259ee08fbdad5d98f"
+    },
+    {
+      "bytes": 10831,
+      "hash_mode": "text_lf",
+      "path": "tests/test_live_canary_contract_with_hard_blocks.py",
+      "sha256": "f6f24e9cda43cbeff8965bdda92b4121adf86d07a504336c95e753adfd10ccc8"
     },
     {
       "bytes": 7142,
