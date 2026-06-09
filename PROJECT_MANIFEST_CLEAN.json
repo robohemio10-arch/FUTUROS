@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4ffd5f79dda6087c2ecea860cfb17e8ae2a37604bec0700d99fa05388d79df7b",
+  "aggregate_sha256": "57b6b7fd928dca8499718885c4e0b3e257b6ef7a86fd9e032dbc876e28955b63",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 99,
-    "manifested_files_total": 629,
-    "python_files": 445,
+    "docs_files": 100,
+    "manifested_files_total": 632,
+    "python_files": 447,
     "runtime_excluded_files_total": 0,
-    "test_files": 106,
-    "tracked_files_total": 630,
+    "test_files": 107,
+    "tracked_files_total": 633,
     "workflows": 1
   },
   "deterministic": true,
@@ -824,6 +824,12 @@
       "sha256": "b71af88b29fb38f71dada120e6e9bbbfde8b1b41642dfc3512521cc53a808341"
     },
     {
+      "bytes": 3877,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_BITRADEX_OFFICIAL_APPLY_SCRIPT_CANONIZATION.md",
+      "sha256": "f2b37791defffb399e0d8669ce87920a346ee682b3ebdd362267c2870e84162b"
+    },
+    {
       "bytes": 2229,
       "hash_mode": "text_lf",
       "path": "docs/OPEN_DECISION_CLEAN_DATASET.md",
@@ -1194,6 +1200,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/analyze_v13_quality_gated_threshold_uplift.py",
       "sha256": "3f8de125ee7f2e9d71de0919cfbbb573e445d526de4a2f9914aa439f6e7a3656"
+    },
+    {
+      "bytes": 20677,
+      "hash_mode": "text_lf",
+      "path": "scripts/apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master.py",
+      "sha256": "42318a33e0de4afa9263b8c55819206d7b5517e315cf64827e760ab39c8bc06a"
     },
     {
       "bytes": 16302,
@@ -3240,6 +3252,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_15s_shadow_pipeline_contract.py",
       "sha256": "b564f0755fa4ba7290f5d064387150851f88d5e8478b47a1de0d4129472528d2"
+    },
+    {
+      "bytes": 10683,
+      "hash_mode": "text_lf",
+      "path": "tests/test_bitradex_ocr_official_apply_script.py",
+      "sha256": "d1b910b61240e55f56e6208b8bbc2fab44504063eb612a86885443c2dd5a97a1"
     },
     {
       "bytes": 5003,
