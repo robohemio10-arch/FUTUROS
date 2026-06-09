@@ -1,0 +1,33 @@
+runtime_mode: paper
+paper_only: true
+shadow_only: true
+
+safety:
+  live_trading_enabled: false
+  order_submission_enabled: false
+  real_order_submission_enabled: false
+  exchange_private_access: false
+  sends_orders: false
+  changes_risk: false
+
+inputs:
+  alert_report: data/reports/critical_alerting_report.json
+
+outputs:
+  dispatch_report: data/reports/critical_notification_dispatch_report.json
+
+channels:
+  ntfy:
+    enabled_env: SMARTCRYPTO_NTFY_ENABLED
+    server_url_env: SMARTCRYPTO_NTFY_SERVER_URL
+    topic_env: SMARTCRYPTO_NTFY_TOPIC
+    token_env: SMARTCRYPTO_NTFY_TOKEN
+    username_env: SMARTCRYPTO_NTFY_USERNAME
+    password_env: SMARTCRYPTO_NTFY_PASSWORD
+  telegram:
+    enabled_env: SMARTCRYPTO_TELEGRAM_ENABLED
+    bot_token_env: SMARTCRYPTO_TELEGRAM_BOT_TOKEN
+    chat_id_env: SMARTCRYPTO_TELEGRAM_CHAT_ID
+    api_base_url_env: SMARTCRYPTO_TELEGRAM_API_BASE_URL
+    parse_mode_env: SMARTCRYPTO_TELEGRAM_PARSE_MODE
+    disable_notification_env: SMARTCRYPTO_TELEGRAM_DISABLE_NOTIFICATION

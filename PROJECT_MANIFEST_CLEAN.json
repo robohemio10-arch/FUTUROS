@@ -1,23 +1,23 @@
 {
-  "aggregate_sha256": "8aa35baeedd49152b230aec8e93ade26889f6cbef32cdc4c1c8d0b2e97d5689e",
+  "aggregate_sha256": "358179f4dcd4a2ad3a42ed424680f5b2b1865508999108d9e6a2d393ac54be03",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 107,
-    "manifested_files_total": 659,
-    "python_files": 467,
+    "docs_files": 108,
+    "manifested_files_total": 664,
+    "python_files": 470,
     "runtime_excluded_files_total": 0,
-    "test_files": 114,
-    "tracked_files_total": 660,
+    "test_files": 115,
+    "tracked_files_total": 665,
     "workflows": 1
   },
   "deterministic": true,
   "files": [
     {
-      "bytes": 260,
+      "bytes": 957,
       "hash_mode": "text_lf",
       "path": ".env.example",
-      "sha256": "c6f8e8a331d53c0c8f09162ef6d76023c0689030aed83ee4d43f2f9f8511badd"
+      "sha256": "02bc71c46eb651ab5462546b756cb680fee5ae2d092d0a0ea6245a15cb3bc07e"
     },
     {
       "bytes": 200,
@@ -276,6 +276,12 @@
       "hash_mode": "text_lf",
       "path": "bitradex_realtime_collector_v6_safe_ticker_hotfix/src/bitradex_realtime_collector/processor.py",
       "sha256": "50005d33659b97c2514af9ff8cc2e447dbb3ee3592025acc9f88d967a6a7a6f1"
+    },
+    {
+      "bytes": 1004,
+      "hash_mode": "text_lf",
+      "path": "config/critical_notifications.example.yml",
+      "sha256": "5b5eee8e5ddc58fac4e71ea11681c87cc05483d96a5f6a16b263f1dd83249dc6"
     },
     {
       "bytes": 541,
@@ -716,10 +722,10 @@
       "sha256": "455e7f7ac8a55fbff6b4b5ee0865d452be2eb1c3c1fcd46053dd20fa412cbe0c"
     },
     {
-      "bytes": 3410,
+      "bytes": 4108,
       "hash_mode": "text_lf",
       "path": "docs/FINANCIAL_EVENT_LOG_AND_ALERTING.md",
-      "sha256": "aa20bf232bd2cc20558c628f0dc33f1e956aeef0153954ea96f419e6d613c8da"
+      "sha256": "2329feb4c2df2618936aa75ef4ee776b109c8de5bb274b9f55361cf1a9936188"
     },
     {
       "bytes": 3842,
@@ -846,6 +852,12 @@
       "hash_mode": "text_lf",
       "path": "docs/NO_DUPLICATE_EXECUTION_POLICY.md",
       "sha256": "b71af88b29fb38f71dada120e6e9bbbfde8b1b41642dfc3512521cc53a808341"
+    },
+    {
+      "bytes": 4380,
+      "hash_mode": "text_lf",
+      "path": "docs/NTFY_TELEGRAM_CRITICAL_NOTIFICATIONS.md",
+      "sha256": "2b0a7718f8e305733d70620c65ae8e2e3ad5fa1f1759b156ce5e8de89d77e449"
     },
     {
       "bytes": 3877,
@@ -2168,6 +2180,12 @@
       "sha256": "c559f3d062e3e0e2d76ab3a8248182fbf0ffa9fb8a2aa46c314b3a361c5b8380"
     },
     {
+      "bytes": 1758,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_critical_notification_dispatch.py",
+      "sha256": "8cd97f58ca5198678537b832132a074b392b556b039c0480e8fa3377657b0afc"
+    },
+    {
       "bytes": 2561,
       "hash_mode": "text_lf",
       "path": "scripts/run_event_driven_backtest.py",
@@ -3038,6 +3056,12 @@
       "sha256": "d2c57e95fe84d291d7ab168d335fa20508679ec5b1ad9f8334dc1582fda0d22a"
     },
     {
+      "bytes": 20004,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/notification_channels.py",
+      "sha256": "cf62b84e1802e6e3e18fa1c630ca0fa13eebb5923c42a8fd74b9422805fbe73d"
+    },
+    {
       "bytes": 8702,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_session.py",
@@ -3660,6 +3684,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_normalized_return.py",
       "sha256": "fe3ca8bd26f3a7c0fe6da1457fb05f87538527302c0f6a0ee9a4f5459c9b7fba"
+    },
+    {
+      "bytes": 9259,
+      "hash_mode": "text_lf",
+      "path": "tests/test_notification_channels.py",
+      "sha256": "8abce0a6ed81c83bf1b257553249f3386c1432d7ed5ed1b15636c58e7cc928b6"
     },
     {
       "bytes": 6121,
