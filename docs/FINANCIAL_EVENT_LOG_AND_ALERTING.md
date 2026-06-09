@@ -134,3 +134,22 @@ Flags esperadas:
 - `changes_risk=false`
 
 Nenhum arquivo em `data/`, `models/`, `reports/`, parquet, SQLite, CSV, XLSX, logs ou evidence deve ser versionado.
+
+## Entrega externa por ntfy e Telegram
+
+A camada de entrega externa foi isolada em:
+
+- `smartcrypto/ops/notification_channels.py`
+- `scripts/run_critical_notification_dispatch.py`
+
+Ela consome o relatório `data/reports/critical_alerting_report.json` e, se houver status `blocked`, `warning` ou `missing_data`, envia resumo para ntfy e/ou Telegram quando os canais estiverem explicitamente habilitados por variáveis de ambiente.
+
+Arquivo de configuração documental:
+
+- `config/critical_notifications.example.yml`
+
+Documentação operacional:
+
+- `docs/NTFY_TELEGRAM_CRITICAL_NOTIFICATIONS.md`
+
+A entrega externa continua paper/shadow only e preserva `sends_orders=false` e `changes_risk=false`.

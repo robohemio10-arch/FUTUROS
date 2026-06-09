@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "8aa35baeedd49152b230aec8e93ade26889f6cbef32cdc4c1c8d0b2e97d5689e",
+  "aggregate_sha256": "02b5e536cf8b2b36552587b2b1097cb5f158e2c4d1ae7fd343b97ca4a1da004f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -14,10 +14,10 @@
   "deterministic": true,
   "files": [
     {
-      "bytes": 260,
+      "bytes": 957,
       "hash_mode": "text_lf",
       "path": ".env.example",
-      "sha256": "c6f8e8a331d53c0c8f09162ef6d76023c0689030aed83ee4d43f2f9f8511badd"
+      "sha256": "02bc71c46eb651ab5462546b756cb680fee5ae2d092d0a0ea6245a15cb3bc07e"
     },
     {
       "bytes": 200,
@@ -716,10 +716,10 @@
       "sha256": "455e7f7ac8a55fbff6b4b5ee0865d452be2eb1c3c1fcd46053dd20fa412cbe0c"
     },
     {
-      "bytes": 3410,
+      "bytes": 4108,
       "hash_mode": "text_lf",
       "path": "docs/FINANCIAL_EVENT_LOG_AND_ALERTING.md",
-      "sha256": "aa20bf232bd2cc20558c628f0dc33f1e956aeef0153954ea96f419e6d613c8da"
+      "sha256": "2329feb4c2df2618936aa75ef4ee776b109c8de5bb274b9f55361cf1a9936188"
     },
     {
       "bytes": 3842,
