@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fc3def05d95307c8b32e54d959afef7f56b5a411fc58b2f74eaac2c09ffb8f9c",
+  "aggregate_sha256": "773810a2b7b8f5e3b6f29e492dbb0c221175b15f73835d18bcf48ee1f630fd90",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 110,
-    "manifested_files_total": 668,
-    "python_files": 472,
+    "docs_files": 111,
+    "manifested_files_total": 671,
+    "python_files": 474,
     "runtime_excluded_files_total": 0,
-    "test_files": 116,
-    "tracked_files_total": 669,
+    "test_files": 117,
+    "tracked_files_total": 672,
     "workflows": 1
   },
   "deterministic": true,
@@ -648,6 +648,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
+    },
+    {
+      "bytes": 2204,
+      "hash_mode": "text_lf",
+      "path": "docs/CRITICAL_NOTIFICATIONS_DASHBOARD_PANEL.md",
+      "sha256": "e7e78a9e99cc9549b07011576682e0387a9a3ec8b456b76ec0011830c41533c5"
     },
     {
       "bytes": 1687,
@@ -2552,16 +2558,22 @@
       "sha256": "04c51755af0383d8fd144c6d53a444e8cc2195a4f5035b7d38d67b55b23ef2ea"
     },
     {
-      "bytes": 14231,
+      "bytes": 14444,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
-      "sha256": "e317758ab88c3cddda925affae958a7edaaf5487db702aabd429fcd75038ffac"
+      "sha256": "91b63e90dcd129f00a2a13d78ccf674ca42e3ad8766498c62947e30cfe2f3201"
     },
     {
       "bytes": 7976,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/command_bus.py",
       "sha256": "434381a55089649275b04101f20f8a6f0541f2d810a6112a6c4c2c85ad9df01e"
+    },
+    {
+      "bytes": 18220,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/critical_notifications_panel.py",
+      "sha256": "b6c0a0ef96e17cadc8c19ec3b5929ae40d2505da7e91e612531337556baf5f5d"
     },
     {
       "bytes": 3792,
@@ -3450,6 +3462,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 9422,
+      "hash_mode": "text_lf",
+      "path": "tests/test_critical_notifications_dashboard_panel.py",
+      "sha256": "ebf20d49c310b352a6eb9247bb29c2a68da1accd08342ccf8e06ac80f7d6b932"
     },
     {
       "bytes": 3736,

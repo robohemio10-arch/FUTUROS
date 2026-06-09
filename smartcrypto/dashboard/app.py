@@ -11,6 +11,7 @@ import streamlit as st
 import yaml
 
 from smartcrypto.dashboard.ai_shadow_panel import render_ai_shadow_panel
+from smartcrypto.dashboard.critical_notifications_panel import render_critical_notifications_panel
 from smartcrypto.dashboard.freqtrade_snapshot_reader import (
     load_freqtrade_trades_snapshot,
     perf_metrics as freqtrade_perf_metrics,
@@ -171,7 +172,7 @@ def dataframe(title: str, frame: pd.DataFrame, height: int = 360) -> None:
 
 
 st.title("SmartCrypto — Operação Paper")
-page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "AI Shadow", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Evidências"])
+page = st.sidebar.radio("Página", ["Visão geral", "Qlib / Predições", "AI Shadow", "Sinais", "Freqtrade", "Trades paper", "Performance", "Feedback dataset", "Logs", "Risco / Kill switch", "Notificações críticas", "Evidências"])
 
 freqtrade_state = load_freqtrade_trades_snapshot(PATHS.get("freqtrade_sqlite_candidates", []))
 trades = freqtrade_state["trades"]
@@ -309,6 +310,9 @@ elif page == "Risco / Kill switch":
     st.json(read_json(PATHS.get("paper_exit_control", "data/runtime/paper_exit_control.json")))
     st.subheader("Risk report")
     st.json(read_json("data/reports/phase20_risk_report.json"))
+
+elif page == "Notificações críticas":
+    render_critical_notifications_panel(st)
 
 elif page == "Evidências":
     dataframe("Evidências ZIP", latest_evidence(), height=420)
