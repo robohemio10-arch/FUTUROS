@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "bf1dace041a26c4298333fcc3cbd840508e7bae403ad9408410c2faa15f9dd56",
+  "aggregate_sha256": "48a34d6a6b2490ee388f0d9fbc97988a08d0ca76bd7617bd74e70a09c1bf065e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 102,
-    "manifested_files_total": 640,
-    "python_files": 453,
+    "docs_files": 103,
+    "manifested_files_total": 644,
+    "python_files": 456,
     "runtime_excluded_files_total": 0,
-    "test_files": 109,
-    "tracked_files_total": 641,
+    "test_files": 110,
+    "tracked_files_total": 645,
     "workflows": 1
   },
   "deterministic": true,
@@ -594,6 +594,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_SHADOW_THRESHOLD_EVALUATION_INPUT_BUILDER.md",
       "sha256": "f2a7a496e4a0af7eb5024b7338b8377423fc8eb4e054e50a46694f7a14367255"
+    },
+    {
+      "bytes": 3282,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_SHADOW_THRESHOLD_LIVE_READINESS_EVIDENCE.md",
+      "sha256": "1d4848230005b047b9de81a1d31db530c32f7131cf0b8dc7c6415ae356a7ebfa"
     },
     {
       "bytes": 8114,
@@ -1236,6 +1242,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_quality_gated_schema_v1.py",
       "sha256": "7bcfd63034c2656dfc4d868ae2f303d3111e041cda849edffb589d1211afde40"
+    },
+    {
+      "bytes": 2376,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_ai_shadow_threshold_readiness.py",
+      "sha256": "0c4de623d3c4e6b54f86ce9e3d09acbb400aa708f6b5066bd3bc5555fe6d568c"
     },
     {
       "bytes": 531,
@@ -2918,6 +2930,12 @@
       "sha256": "00caa65d676b65ef1913641f811804de3b652ca075dbf6e37bac6378ad965a72"
     },
     {
+      "bytes": 14043,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/ai_shadow_threshold_readiness.py",
+      "sha256": "1b17efa6bb9d97979883d7e1509382bebdc1393af52292e5b84e09bd79939c4f"
+    },
+    {
       "bytes": 13007,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/backup_restore.py",
@@ -3258,6 +3276,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_threshold_evaluation_input_builder.py",
       "sha256": "82e132dbe6d49bff6a784ccecbd8c19c6a98fab6733a36e05877f11aefad4411"
+    },
+    {
+      "bytes": 5698,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_shadow_threshold_readiness_evidence.py",
+      "sha256": "233c7aaee817649dac36c76c8d1407bb8fd762369c56577ee089501a3c05252a"
     },
     {
       "bytes": 2753,
