@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "197b419eff53d65706c623237cc014edbe37481581b2a68b4d67c2f8c969b85d",
+  "aggregate_sha256": "8aa35baeedd49152b230aec8e93ade26889f6cbef32cdc4c1c8d0b2e97d5689e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 106,
-    "manifested_files_total": 656,
-    "python_files": 465,
+    "docs_files": 107,
+    "manifested_files_total": 659,
+    "python_files": 467,
     "runtime_excluded_files_total": 0,
-    "test_files": 113,
-    "tracked_files_total": 657,
+    "test_files": 114,
+    "tracked_files_total": 660,
     "workflows": 1
   },
   "deterministic": true,
@@ -956,6 +956,12 @@
       "sha256": "44e83e741cef88157d06a736656526a6b3abbfa7d7caaea3269a894c3cc8db61"
     },
     {
+      "bytes": 3071,
+      "hash_mode": "text_lf",
+      "path": "docs/POST_ROADMAP_FINAL_CONSOLIDATION_SNAPSHOT.md",
+      "sha256": "78f47c75ec6c82999415c811d1b5649005c7a701229480a568179558f74e0530"
+    },
+    {
       "bytes": 4778,
       "hash_mode": "text_lf",
       "path": "docs/PRICE_SCALE_OCR_REPAIR.md",
@@ -1326,6 +1332,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_shadow_soak_continuity.py",
       "sha256": "b466c1d565b42cee333188a2264f81cebd8e0bf8bade9f59939dda2ac48f5442"
+    },
+    {
+      "bytes": 7550,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_post_roadmap_final_snapshot.py",
+      "sha256": "32484e351a5299d345987c2232836d5d64ead3a3f5d1950824db94ff04794d11"
     },
     {
       "bytes": 3520,
@@ -3786,6 +3798,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_phase8_contract.py",
       "sha256": "9cf6768507a48af927f079f7add4a77ca820c4385cb66890d5a6d0f9b37599b4"
+    },
+    {
+      "bytes": 4242,
+      "hash_mode": "text_lf",
+      "path": "tests/test_post_roadmap_final_snapshot.py",
+      "sha256": "bff462dc59110b8fde10878a2a0ed075489b61955447ef7e83a720bd87f5bbd9"
     },
     {
       "bytes": 6833,
