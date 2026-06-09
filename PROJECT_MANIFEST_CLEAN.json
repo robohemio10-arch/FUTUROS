@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8e0d3f6592993f46378818b0451e6fa511cf079944a1374bfe04a301c591c1d6",
+  "aggregate_sha256": "197b419eff53d65706c623237cc014edbe37481581b2a68b4d67c2f8c969b85d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 105,
-    "manifested_files_total": 652,
-    "python_files": 462,
+    "docs_files": 106,
+    "manifested_files_total": 656,
+    "python_files": 465,
     "runtime_excluded_files_total": 0,
-    "test_files": 112,
-    "tracked_files_total": 653,
+    "test_files": 113,
+    "tracked_files_total": 657,
     "workflows": 1
   },
   "deterministic": true,
@@ -1046,6 +1046,12 @@
       "sha256": "fb0cc706a4c29ee67d1b976cf75299e660b4622f0d07456c82aee77cfd55ea38"
     },
     {
+      "bytes": 3168,
+      "hash_mode": "text_lf",
+      "path": "docs/SAAS_TENANT_SECURITY_BASELINE.md",
+      "sha256": "dbcc5dd4adc0b0e06ac1947cbfbcfd35adcd628e2d019462323c3e8f08d49f74"
+    },
+    {
       "bytes": 3765,
       "hash_mode": "text_lf",
       "path": "docs/SKLEARN_MODEL_VERSION_COMPATIBILITY_GUARD.md",
@@ -1326,6 +1332,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_return_pct_scale.py",
       "sha256": "a92e1200bfab2804a30fe988ab4cb5d43747faa9895e42cb039475f99066c47e"
+    },
+    {
+      "bytes": 2270,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_saas_tenant_security_baseline.py",
+      "sha256": "9e55183481576b080631822f72c046cd6def11cd00930d3ea60adc50c7647816"
     },
     {
       "bytes": 541,
@@ -3050,6 +3062,12 @@
       "sha256": "37d95d964da41cabbf2dbf2a60bbe6a46818859c23722cb645154b272f2f331b"
     },
     {
+      "bytes": 15892,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/saas_tenant_security_baseline.py",
+      "sha256": "ed12548f912b69e9102be4debd7f7b32482c8cf94feef113a8f7caf228d1828b"
+    },
+    {
       "bytes": 15999,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/system_healthcheck.py",
@@ -3864,6 +3882,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_preflight_orchestrator.py",
       "sha256": "7c405bdb90cc55273611a316d253baca87a8a2513cfa9675985c8b2d76e69b6b"
+    },
+    {
+      "bytes": 9280,
+      "hash_mode": "text_lf",
+      "path": "tests/test_saas_tenant_security_baseline.py",
+      "sha256": "b3139cc50c110b233bc01494e3652f408f0274e82dbd67195747ffd931a70fda"
     },
     {
       "bytes": 11538,
