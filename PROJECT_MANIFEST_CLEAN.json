@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c964b2959d38efec06e96a61b8555819e52438b2ca38904d9aa39d3b9d20c749",
+  "aggregate_sha256": "bf1dace041a26c4298333fcc3cbd840508e7bae403ad9408410c2faa15f9dd56",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 101,
-    "manifested_files_total": 636,
-    "python_files": 450,
+    "docs_files": 102,
+    "manifested_files_total": 640,
+    "python_files": 453,
     "runtime_excluded_files_total": 0,
-    "test_files": 108,
-    "tracked_files_total": 637,
+    "test_files": 109,
+    "tracked_files_total": 641,
     "workflows": 1
   },
   "deterministic": true,
@@ -800,6 +800,12 @@
       "sha256": "9f21c7272718dbd11ef74c066a1f82ba87d9a923bdc2bacf434be8a17bfa8772"
     },
     {
+      "bytes": 3801,
+      "hash_mode": "text_lf",
+      "path": "docs/MONTE_CARLO_NO_TRADE_RECOVERY_DIAGNOSTICS.md",
+      "sha256": "a2aaa258985a32661198516aab1344f72ea798e618a933370d4ccde4be5239dc"
+    },
+    {
       "bytes": 3126,
       "hash_mode": "text_lf",
       "path": "docs/MONTE_CARLO_RISK_BUDGET_POSITION_SIZING_POLICY.md",
@@ -1266,6 +1272,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_market_features_runtime_writers.py",
       "sha256": "144779f1c0114a0228c3ee75e5b7ca818b7e6164bf8a2246839429017340b975"
+    },
+    {
+      "bytes": 1891,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_monte_carlo_no_trade_recovery.py",
+      "sha256": "4deb60b6990d9387780aaf061a1933c0e42092c99cf0d1cdb38d3522d0901a74"
     },
     {
       "bytes": 2626,
@@ -2942,6 +2954,12 @@
       "sha256": "ae1b33f175f8b019c08b64b576500bf95fc814120f84baab14f25e1af62f7d63"
     },
     {
+      "bytes": 13889,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/monte_carlo_no_trade_recovery.py",
+      "sha256": "d2c57e95fe84d291d7ab168d335fa20508679ec5b1ad9f8334dc1582fda0d22a"
+    },
+    {
       "bytes": 8702,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_session.py",
@@ -3510,6 +3528,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_model_vs_baseline_financial_evaluation.py",
       "sha256": "26154d5f6f778b060322db5a9bf9a637103ff9930df1ea7c463745367a3ce4f5"
+    },
+    {
+      "bytes": 7982,
+      "hash_mode": "text_lf",
+      "path": "tests/test_monte_carlo_no_trade_recovery_diagnostics.py",
+      "sha256": "d84125a0cba9f1bd995feaca08b0491302e7ffbbbc3b2ece121052c57a1c695c"
     },
     {
       "bytes": 8547,
