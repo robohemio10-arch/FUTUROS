@@ -121,8 +121,6 @@ def build_ai_shadow_threshold_readiness_evidence(
         blocking_reasons.extend(safety_violations)
     if invalid_evidence:
         warning_reasons.append("invalid_evidence_present")
-    if missing_evidence:
-        warning_reasons.append("missing_evidence_present")
 
     core_present = any(name in payloads for name in CORE_AI_SHADOW_EVIDENCE)
     if not core_present:
