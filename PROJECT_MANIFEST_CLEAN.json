@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "57b6b7fd928dca8499718885c4e0b3e257b6ef7a86fd9e032dbc876e28955b63",
+  "aggregate_sha256": "c964b2959d38efec06e96a61b8555819e52438b2ca38904d9aa39d3b9d20c749",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 100,
-    "manifested_files_total": 632,
-    "python_files": 447,
+    "docs_files": 101,
+    "manifested_files_total": 636,
+    "python_files": 450,
     "runtime_excluded_files_total": 0,
-    "test_files": 107,
-    "tracked_files_total": 633,
+    "test_files": 108,
+    "tracked_files_total": 637,
     "workflows": 1
   },
   "deterministic": true,
@@ -860,6 +860,12 @@
       "sha256": "dd045f117a81c39c566622fc644c465bde8851e1a768ccbd8b792ad89d3328e2"
     },
     {
+      "bytes": 5127,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_SHADOW_SOAK_CONTINUITY_AND_GAP_ACCOUNTING.md",
+      "sha256": "8f59e47a6f91d0171e03e8f3ef8a5d2494ef4e203d112b0e0cf501f6492cbc3c"
+    },
+    {
       "bytes": 4320,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SHADOW_SOAK_REPORTING_AND_READINESS_GATE.md",
@@ -1260,6 +1266,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_market_features_runtime_writers.py",
       "sha256": "144779f1c0114a0228c3ee75e5b7ca818b7e6164bf8a2246839429017340b975"
+    },
+    {
+      "bytes": 2626,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_shadow_soak_continuity.py",
+      "sha256": "b466c1d565b42cee333188a2264f81cebd8e0bf8bade9f59939dda2ac48f5442"
     },
     {
       "bytes": 3520,
@@ -2936,6 +2948,12 @@
       "sha256": "fa723027daf162944dfa9c79b6e88bbfe06ad5235d846bf408c6453e95272239"
     },
     {
+      "bytes": 19606,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_shadow_soak_continuity.py",
+      "sha256": "954281e5719edcb02dd345cf1a31bedf1f3817617fda6bc8d14d8d5fda8ae171"
+    },
+    {
       "bytes": 32903,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_shadow_soak_report.py",
@@ -3570,6 +3588,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_session_singleton_lock.py",
       "sha256": "fa53a3a743fa9353c3efd297161260ad1c1ba3e35c876df698054092aeece55a"
+    },
+    {
+      "bytes": 8776,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_soak_continuity_and_gap_accounting.py",
+      "sha256": "d374a05b8bb9f602181110078774bd4b60d976ce12d2285069b66913479b0078"
     },
     {
       "bytes": 27888,
