@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "02b5e536cf8b2b36552587b2b1097cb5f158e2c4d1ae7fd343b97ca4a1da004f",
+  "aggregate_sha256": "cbddce51d4eabbf3db9fecb6f8bb9d37a54e4655d21e70963f0df3c98a2375a8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 107,
-    "manifested_files_total": 659,
-    "python_files": 467,
+    "docs_files": 108,
+    "manifested_files_total": 664,
+    "python_files": 470,
     "runtime_excluded_files_total": 0,
-    "test_files": 114,
-    "tracked_files_total": 660,
+    "test_files": 115,
+    "tracked_files_total": 665,
     "workflows": 1
   },
   "deterministic": true,
@@ -276,6 +276,12 @@
       "hash_mode": "text_lf",
       "path": "bitradex_realtime_collector_v6_safe_ticker_hotfix/src/bitradex_realtime_collector/processor.py",
       "sha256": "50005d33659b97c2514af9ff8cc2e447dbb3ee3592025acc9f88d967a6a7a6f1"
+    },
+    {
+      "bytes": 1004,
+      "hash_mode": "text_lf",
+      "path": "config/critical_notifications.example.yml",
+      "sha256": "5b5eee8e5ddc58fac4e71ea11681c87cc05483d96a5f6a16b263f1dd83249dc6"
     },
     {
       "bytes": 541,
@@ -846,6 +852,12 @@
       "hash_mode": "text_lf",
       "path": "docs/NO_DUPLICATE_EXECUTION_POLICY.md",
       "sha256": "b71af88b29fb38f71dada120e6e9bbbfde8b1b41642dfc3512521cc53a808341"
+    },
+    {
+      "bytes": 4380,
+      "hash_mode": "text_lf",
+      "path": "docs/NTFY_TELEGRAM_CRITICAL_NOTIFICATIONS.md",
+      "sha256": "2b0a7718f8e305733d70620c65ae8e2e3ad5fa1f1759b156ce5e8de89d77e449"
     },
     {
       "bytes": 3877,
@@ -2168,6 +2180,12 @@
       "sha256": "c559f3d062e3e0e2d76ab3a8248182fbf0ffa9fb8a2aa46c314b3a361c5b8380"
     },
     {
+      "bytes": 1758,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_critical_notification_dispatch.py",
+      "sha256": "8cd97f58ca5198678537b832132a074b392b556b039c0480e8fa3377657b0afc"
+    },
+    {
       "bytes": 2561,
       "hash_mode": "text_lf",
       "path": "scripts/run_event_driven_backtest.py",
@@ -3038,6 +3056,12 @@
       "sha256": "d2c57e95fe84d291d7ab168d335fa20508679ec5b1ad9f8334dc1582fda0d22a"
     },
     {
+      "bytes": 19468,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/notification_channels.py",
+      "sha256": "bf3265cfd9458e51c79d7da40d588cd54c0f870f9c9eb00a1e1e16ac8d74ed3b"
+    },
+    {
       "bytes": 8702,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_session.py",
@@ -3660,6 +3684,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_normalized_return.py",
       "sha256": "fe3ca8bd26f3a7c0fe6da1457fb05f87538527302c0f6a0ee9a4f5459c9b7fba"
+    },
+    {
+      "bytes": 9259,
+      "hash_mode": "text_lf",
+      "path": "tests/test_notification_channels.py",
+      "sha256": "8abce0a6ed81c83bf1b257553249f3386c1432d7ed5ed1b15636c58e7cc928b6"
     },
     {
       "bytes": 6121,
