@@ -8,6 +8,21 @@ Branch canônica: `dev`
 Estado operacional: paper/shadow only  
 Live/canary: bloqueados por contrato
 
+## Marcadores canônicos obrigatórios
+
+```text
+e18c6a1cbdcba9e864ed53cc0f55ee1f5f923e3b
+PR #125
+ntfy-telegram-critical-notifications
+codex/zip-standalone-dynamic-import-audit-fix
+codex/critical-notifications-dashboard-panel
+paper_only=true
+shadow_only=true
+sends_orders=false
+changes_risk=false
+exchange_private_access=false
+```
+
 ## Último marco mergeado
 
 ```text
@@ -21,10 +36,10 @@ merge commit: e18c6a1cbdcba9e864ed53cc0f55ee1f5f923e3b
 pytest: 1138 passed, 40 warnings
 PROJECT_MANIFEST_CLEAN.json: manifest_current
 scan_versioned_secrets.py: status ok
-paper_only: true
-shadow_only: true
-sends_orders: false
-exchange_private_access: false
+paper_only=true
+shadow_only=true
+sends_orders=false
+exchange_private_access=false
 git status: clean
 ```
 

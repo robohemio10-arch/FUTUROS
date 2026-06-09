@@ -4,9 +4,19 @@
 
 Este documento define a hierarquia operacional de fontes de verdade do projeto FUTUROS após o fechamento do roadmap técnico/readiness 9/10 e após a incorporação do módulo de notificações críticas NTFY/Telegram.
 
+## Marcadores canônicos obrigatórios
+
+```text
+repositório Git
+docs canônicos versionados
+PROJECT_MANIFEST_CLEAN.json
+data/reports
+handover técnico atualizado
+```
+
 ## Hierarquia canônica
 
-### 1. Repositório Git
+### 1. repositório Git
 
 A branch `dev` é a fonte primária versionada para:
 
@@ -21,7 +31,7 @@ contratos de segurança
 
 Regra: qualquer mudança institucional deve entrar por branch curta, Pull Request, CI/validação local e merge na `dev`.
 
-### 2. Documentos canônicos versionados
+### 2. docs canônicos versionados
 
 Documentos base atuais:
 
@@ -32,6 +42,8 @@ docs/FINANCIAL_EVENT_LOG_AND_ALERTING.md
 docs/LIVE_CANARY_CONTRACT_WITH_HARD_BLOCKS.md
 docs/MANUAL_GO_NO_GO_LIVE_CANARY_GOVERNANCE.md
 docs/SAAS_TENANT_SECURITY_BASELINE.md
+docs/CANONICAL_SOURCE_OF_TRUTH_INDEX.md
+docs/CURRENT_PROJECT_HANDOVER_AFTER_NTFY_TELEGRAM.md
 ```
 
 Documentos externos/históricos anexados ao projeto continuam úteis, mas a versão operacional deve ser consolidada em documentos versionados dentro de `docs/`.
@@ -53,7 +65,7 @@ python .\scripts\generate_project_manifest.py --project-root . --output PROJECT_
 python .\scripts\generate_project_manifest.py --check
 ```
 
-### 4. Relatórios runtime em data/reports
+### 4. data/reports
 
 Relatórios em `data/reports/` são evidência operacional e não devem ser tratados como fonte primária versionada.
 
@@ -73,7 +85,7 @@ data/reports/post_roadmap_final_consolidation_snapshot.json
 data/reports/current_project_handover_audit_report.json
 ```
 
-### 5. Handover técnico atualizado
+### 5. handover técnico atualizado
 
 O handover técnico versionado atual deve ser usado para abrir novo chat e retomar o projeto sem depender da memória conversacional.
 

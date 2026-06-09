@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "358179f4dcd4a2ad3a42ed424680f5b2b1865508999108d9e6a2d393ac54be03",
+  "aggregate_sha256": "ede9eb9c1cac326466c90aa261d7a7a772e21ce3bc59ba34de17645eb21e24d2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 108,
-    "manifested_files_total": 664,
-    "python_files": 470,
+    "docs_files": 110,
+    "manifested_files_total": 668,
+    "python_files": 472,
     "runtime_excluded_files_total": 0,
-    "test_files": 115,
-    "tracked_files_total": 665,
+    "test_files": 116,
+    "tracked_files_total": 669,
     "workflows": 1
   },
   "deterministic": true,
@@ -626,6 +626,12 @@
       "sha256": "6a5f0a7e88a8d80e68a1519cc54b10a3f0382a1fe3576309465483c89134544f"
     },
     {
+      "bytes": 3243,
+      "hash_mode": "text_lf",
+      "path": "docs/CANONICAL_SOURCE_OF_TRUTH_INDEX.md",
+      "sha256": "24296af0525d59b1cdfd0a4328afdf5124f3824e89c23b542b03466c43f55a8d"
+    },
+    {
       "bytes": 1269,
       "hash_mode": "text_lf",
       "path": "docs/CLEANUP_REPORT.md",
@@ -648,6 +654,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CURRENT_OPERATION_RUNBOOK.md",
       "sha256": "082889fc56e979dba4f55d77bdf6e5a35c220d72715a3d38622f11fa81d01140"
+    },
+    {
+      "bytes": 4794,
+      "hash_mode": "text_lf",
+      "path": "docs/CURRENT_PROJECT_HANDOVER_AFTER_NTFY_TELEGRAM.md",
+      "sha256": "f0524d05ad3016625c6a714fcae96b0b4c5170327cb6ddcb517a80b68d2d67c1"
     },
     {
       "bytes": 4153,
@@ -1302,6 +1314,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_bitradex_15s_complete_minutes_v4.py",
       "sha256": "77acc116f20ac658ac8a700b80a2fdedf8ba8e3b7fc594c1954c5b595c217a6e"
+    },
+    {
+      "bytes": 6578,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_current_project_handover.py",
+      "sha256": "71a71d2b6df11e0429de9cd0685a44459b0b7b5e9d4abe9c53d13922c4f3b2ba"
     },
     {
       "bytes": 7231,
@@ -3432,6 +3450,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 3736,
+      "hash_mode": "text_lf",
+      "path": "tests/test_current_project_handover_audit.py",
+      "sha256": "1181f5de5121c60cd69a5b31dd0eacd5376d2152768c58099945ce9b7c345c0e"
     },
     {
       "bytes": 14607,
