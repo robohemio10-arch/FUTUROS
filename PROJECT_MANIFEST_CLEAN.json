@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "48a34d6a6b2490ee388f0d9fbc97988a08d0ca76bd7617bd74e70a09c1bf065e",
+  "aggregate_sha256": "86c2b8881ab1d03e47ea542d45646c5518b38c4027ff0dcc9da0e5101b986de0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 103,
-    "manifested_files_total": 644,
-    "python_files": 456,
+    "docs_files": 104,
+    "manifested_files_total": 648,
+    "python_files": 459,
     "runtime_excluded_files_total": 0,
-    "test_files": 110,
-    "tracked_files_total": 645,
+    "test_files": 111,
+    "tracked_files_total": 649,
     "workflows": 1
   },
   "deterministic": true,
@@ -776,6 +776,12 @@
       "sha256": "bf0bdabb39e8335bc465f74047bf6eef064aabebae1ad72bfa6c4c7d578e43ef"
     },
     {
+      "bytes": 1869,
+      "hash_mode": "text_lf",
+      "path": "docs/MANUAL_GO_NO_GO_LIVE_CANARY_GOVERNANCE.md",
+      "sha256": "c0421991700e6a4c9dbdceacebbc0d0214305490077122079e8f9b0e1d85066b"
+    },
+    {
       "bytes": 3459,
       "hash_mode": "text_lf",
       "path": "docs/MARKET_DATA_HEALTH_RUNTIME_SOURCES.md",
@@ -1278,6 +1284,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_freqtrade_paper_db_persistence.py",
       "sha256": "bcda963ce93ced0c81476afff24c3462f5163cd3aec4461206fb61c5728a7bc5"
+    },
+    {
+      "bytes": 1920,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_manual_go_no_go_governance.py",
+      "sha256": "223eb123e5efc1585f9ac849ad712a77f6a4e2e0af0cab86062aa928d734b498"
     },
     {
       "bytes": 9080,
@@ -2966,6 +2978,12 @@
       "sha256": "4a7cb597e85ccac2f51d38003129daa02fd380f5b7972ffbc47d266dd0a93484"
     },
     {
+      "bytes": 11975,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/manual_go_no_go_governance.py",
+      "sha256": "db1590212bf113adc275632cfe171a9e2030de11a8b845c977fb7ce4816e3382"
+    },
+    {
       "bytes": 553,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/metrics_exporter.py",
@@ -3498,6 +3516,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_leverage_pnl_return_consistency.py",
       "sha256": "6893fcf2190e3b8e53248dfa0afd2bdd6af4497c67661e4259ee08fbdad5d98f"
+    },
+    {
+      "bytes": 7142,
+      "hash_mode": "text_lf",
+      "path": "tests/test_manual_go_no_go_live_canary_governance.py",
+      "sha256": "c51e0dc500e93fe23e0d4b2e80d108264c449e8f529cb48333d335f2511b4454"
     },
     {
       "bytes": 4315,
