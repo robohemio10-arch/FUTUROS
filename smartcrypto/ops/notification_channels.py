@@ -6,6 +6,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -17,7 +18,7 @@ DEFAULT_TIMEOUT_SECONDS = 10.0
 MAX_TELEGRAM_TEXT_CHARS = 4096
 MAX_NTFY_BODY_CHARS = 4096
 MAX_TITLE_CHARS = 200
-SAFE_RESULT_FLAGS = {
+SAFE_RESULT_FLAGS: dict[str, Any] = {
     "paper_only": True,
     "shadow_only": True,
     "runtime_mode": "paper",
@@ -116,7 +117,7 @@ class NotificationError(RuntimeError):
 class NtfyNotifier:
     def __init__(self, config: NtfyConfig, *, opener: UrlOpen | None = None) -> None:
         self.config = config
-        self.opener = opener or urllib.request.urlopen
+        self.opener: UrlOpen = opener if opener is not None else default_urlopen
 
     def send(self, message: NotificationMessage, *, dry_run: bool = False) -> DeliveryResult:
         if not self.config.enabled:
@@ -152,7 +153,7 @@ class NtfyNotifier:
 class TelegramNotifier:
     def __init__(self, config: TelegramConfig, *, opener: UrlOpen | None = None) -> None:
         self.config = config
-        self.opener = opener or urllib.request.urlopen
+        self.opener: UrlOpen = opener if opener is not None else default_urlopen
 
     def send(self, message: NotificationMessage, *, dry_run: bool = False) -> DeliveryResult:
         if not self.config.enabled:
@@ -196,8 +197,8 @@ class NotificationDispatcher:
         return [self.ntfy.send(message, dry_run=dry_run), self.telegram.send(message, dry_run=dry_run)]
 
 
-def settings_from_env(env: dict[str, str] | None = None) -> NotificationSettings:
-    values = env if env is not None else os.environ
+def settings_from_env(env: Mapping[str, str] | None = None) -> NotificationSettings:
+    values: Mapping[str, str] = env if env is not None else os.environ
     timeout = env_float(values, "SMARTCRYPTO_NOTIFICATION_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS)
     return NotificationSettings(
         ntfy=NtfyConfig(
@@ -228,13 +229,13 @@ def settings_from_env(env: dict[str, str] | None = None) -> NotificationSettings
 def message_from_alert_report(report: dict[str, Any], *, include_warning_alerts: bool = True) -> NotificationMessage:
     status = str(report.get("status") or "unknown")
     reason = str(report.get("reason") or "no_reason")
-    critical_alerts = report.get("critical_alerts") if isinstance(report.get("critical_alerts"), list) else []
-    warning_alerts = report.get("warning_alerts") if isinstance(report.get("warning_alerts"), list) else []
-    selected_alerts = list(critical_alerts)
+    critical_alerts = list_of_dicts(report.get("critical_alerts"))
+    warning_alerts = list_of_dicts(report.get("warning_alerts"))
+    selected_alerts: list[dict[str, Any]] = list(critical_alerts)
     if include_warning_alerts:
         selected_alerts.extend(warning_alerts)
     top_alerts = selected_alerts[:5]
-    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    summary = dict_or_empty(report.get("summary"))
     lines = [
         f"status={status}",
         f"reason={reason}",
@@ -253,6 +254,7 @@ def message_from_alert_report(report: dict[str, Any], *, include_warning_alerts:
         lines.append(f"alert_{index}={event_type}|{alert_reason}|symbol={symbol}|corr={correlation_id}")
     severity = "critical" if status == "blocked" or critical_alerts else "warning" if warning_alerts else "info"
     priority = "urgent" if severity == "critical" else "high" if severity == "warning" else "default"
+    tags: tuple[str, ...]
     if severity == "critical":
         tags = ("warning", "rotating_light")
     elif severity == "warning":
@@ -301,12 +303,12 @@ def dispatch_alert_report(
     message = message_from_alert_report(report)
     results = dispatcher.send(message, dry_run=dry_run)
     result_payloads = [result.to_dict() for result in results]
-    failed = [row for row in result_payloads if row["status"] in {"failed", "blocked"}]
+    failed_results = [row for row in result_payloads if row["status"] in {"failed", "blocked"}]
     sent_count = sum(1 for row in result_payloads if row["status"] == "sent")
     enabled_count = sum(1 for row in result_payloads if row["enabled"] is True)
-    if failed:
+    if failed_results:
         status = "blocked"
-        reason = ";".join(sorted({row["reason"] for row in failed}))
+        reason = ";".join(sorted({str(row["reason"]) for row in failed_results}))
     elif sent_count:
         status = "ok"
         reason = "sent"
@@ -355,7 +357,7 @@ def execute_request(
     timeout_seconds: float,
 ) -> DeliveryResult:
     try:
-        with opener(request, timeout=float(timeout_seconds)) as response:
+        with opener(request, float(timeout_seconds)) as response:
             status_code = int(getattr(response, "status", getattr(response, "code", 0)) or 0)
             body = response.read(512).decode("utf-8", errors="replace") if hasattr(response, "read") else ""
     except urllib.error.HTTPError as exc:
@@ -372,6 +374,10 @@ def execute_request(
     if 200 <= status_code < 300:
         return sent(channel, reason="http_ok", http_status=status_code, response_excerpt=body)
     return failed(channel, f"unexpected_http_status:{status_code}", http_status=status_code, response_excerpt=body)
+
+
+def default_urlopen(request: urllib.request.Request, timeout: float) -> Any:
+    return urllib.request.urlopen(request, timeout=timeout)
 
 
 def validate_ntfy_config(config: NtfyConfig) -> str | None:
@@ -447,14 +453,14 @@ def normalize_optional(value: Any) -> str | None:
     return normalized or None
 
 
-def env_bool(values: dict[str, str], key: str, default: bool) -> bool:
+def env_bool(values: Mapping[str, str], key: str, default: bool) -> bool:
     raw = values.get(key)
     if raw is None or raw == "":
         return default
     return str(raw).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
-def env_float(values: dict[str, str], key: str, default: float) -> float:
+def env_float(values: Mapping[str, str], key: str, default: float) -> float:
     raw = values.get(key)
     if raw is None or raw == "":
         return float(default)
@@ -465,14 +471,26 @@ def env_float(values: dict[str, str], key: str, default: float) -> float:
     return parsed if parsed > 0 else float(default)
 
 
-def first_correlation_id(alerts: list[dict[str, Any]]) -> str | None:
+def dict_or_empty(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return value
+
+
+def list_of_dicts(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def first_correlation_id(alerts: Sequence[Mapping[str, Any]]) -> str | None:
     for alert_payload in alerts:
         if alert_payload.get("correlation_id"):
             return str(alert_payload["correlation_id"])
     return None
 
 
-def first_event_type(alerts: list[dict[str, Any]]) -> str | None:
+def first_event_type(alerts: Sequence[Mapping[str, Any]]) -> str | None:
     for alert_payload in alerts:
         if alert_payload.get("event_type"):
             return str(alert_payload["event_type"])
