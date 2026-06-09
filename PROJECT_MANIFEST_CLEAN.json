@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "ede9eb9c1cac326466c90aa261d7a7a772e21ce3bc59ba34de17645eb21e24d2",
+  "aggregate_sha256": "fc3def05d95307c8b32e54d959afef7f56b5a411fc58b2f74eaac2c09ffb8f9c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4016,10 +4016,10 @@
       "sha256": "7ed7d24bf852446490e67f168646407e1496495dd6c5e8e843fc737e4d87a42b"
     },
     {
-      "bytes": 6234,
+      "bytes": 6435,
       "hash_mode": "text_lf",
       "path": "tests/test_zip_standalone_audit_fallback.py",
-      "sha256": "a0d30e7412e68280d01aa35f012630034005e34c12c22652978704eab3b93d3c"
+      "sha256": "01a0ec0b183f440448593ecfc487a9b1ca86288c1b73cfcebfe1ef79277eb3d9"
     }
   ],
   "generated_by_script": "scripts/generate_project_manifest.py",

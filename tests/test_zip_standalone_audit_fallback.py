@@ -140,11 +140,15 @@ def test_standalone_manifest_output_is_deterministic(tmp_path: Path) -> None:
     assert module.build_manifest(project) == module.build_manifest(project)
 
 
-def test_git_repository_still_prefers_git_ls_files() -> None:
+def test_repository_discovery_prefers_git_when_available_and_manifest_otherwise() -> None:
     discovered = discover_versioned_files(ROOT)
 
-    assert discovered.mode == "git"
-    assert discovered.source == "git ls-files"
+    if (ROOT / ".git").exists():
+        assert discovered.mode == "git"
+        assert discovered.source == "git ls-files"
+    else:
+        assert discovered.mode == "manifest_baseline"
+        assert discovered.source == "PROJECT_MANIFEST_CLEAN.json"
 
 
 def test_no_runtime_artifact_is_treated_as_versioned_in_standalone(tmp_path: Path) -> None:
@@ -153,3 +157,4 @@ def test_no_runtime_artifact_is_treated_as_versioned_in_standalone(tmp_path: Pat
     forbidden_fragments = ("runtime_secret", "runtime_report", "runtime.log", "features.parquet", "archive.zip")
 
     assert not any(any(fragment in path for fragment in forbidden_fragments) for path in files)
+
