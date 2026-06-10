@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "71119440056b18e9b55bdeaabd38bfe146cd70a1291c298d14f3d4930464cdc0",
+  "aggregate_sha256": "97eda69b7213013ee29fc5e63bcc6c3df050e845cff60d6eee378ed23a5ad8dc",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 116,
-    "manifested_files_total": 683,
-    "python_files": 481,
+    "manifested_files_total": 684,
+    "python_files": 482,
     "runtime_excluded_files_total": 0,
     "test_files": 120,
-    "tracked_files_total": 684,
+    "tracked_files_total": 685,
     "workflows": 1
   },
   "deterministic": true,
@@ -1758,6 +1758,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/diagnose_trade_datetime_parse.py",
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
+    },
+    {
+      "bytes": 2454,
+      "hash_mode": "text_lf",
+      "path": "scripts/docker_runtime_permissions_bootstrap.py",
+      "sha256": "e5ab8f32ff74ce9f04dc41b7cc4caa8ee239a67746287aac1af0c31b44334084"
     },
     {
       "bytes": 580,
