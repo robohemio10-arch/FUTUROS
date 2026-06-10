@@ -598,3 +598,19 @@ def test_missing_source_db_raises(tmp_path: Path) -> None:
             report_path=tmp_path / "report.json",
             dry_run=True,
         )
+
+def test_trade_event_notifications_compose_service_uses_permission_bootstrap() -> None:
+    compose_path = Path("docker-compose.paper.yml")
+    payload = compose_path.read_text(encoding="utf-8")
+
+    assert "trade-event-notifications-paper:" in payload
+    assert 'user: "0:0"' in payload
+    assert "scripts/docker_runtime_permissions_bootstrap.py" in payload
+    assert "- /app/data/reports" in payload
+    assert "- /app/data/runtime" in payload
+    assert "scripts/run_trade_event_notifications.py" in payload
+    assert "--daemon" in payload
+    assert "--send-real" in payload
+    assert "ORDER_SUBMISSION_ENABLED: \"false\"" in payload
+    assert "REAL_ORDER_SUBMISSION_ENABLED: \"false\"" in payload
+    assert "SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: \"false\"" in payload
