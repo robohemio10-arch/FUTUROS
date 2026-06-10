@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "6ee5835bd9f823bcca21d904dd538c1b08c5555217f85b7ac8bd7a3935b5cfcc",
+  "aggregate_sha256": "f5a351be5aac26dbdf845c3195f8f6de3b182ff6db3e81e6681f488d8b2eeaa8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 116,
-    "manifested_files_total": 687,
-    "python_files": 485,
+    "docs_files": 117,
+    "manifested_files_total": 691,
+    "python_files": 488,
     "runtime_excluded_files_total": 0,
-    "test_files": 122,
-    "tracked_files_total": 688,
+    "test_files": 123,
+    "tracked_files_total": 692,
     "workflows": 1
   },
   "deterministic": true,
@@ -1106,6 +1106,12 @@
       "sha256": "fb0cc706a4c29ee67d1b976cf75299e660b4622f0d07456c82aee77cfd55ea38"
     },
     {
+      "bytes": 1851,
+      "hash_mode": "text_lf",
+      "path": "docs/RUNTIME_EVIDENCE_SIDECAR_BUNDLE.md",
+      "sha256": "305204ebaec02e64f147bab1ece8a501030237e1406eb3283ae9a7bf5ccf528c"
+    },
+    {
       "bytes": 3168,
       "hash_mode": "text_lf",
       "path": "docs/SAAS_TENANT_SECURITY_BASELINE.md",
@@ -1554,6 +1560,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
       "sha256": "3e45c04256eb5f671c966d024b2f66d3916713ada58f7e0f552040f15fe012de"
+    },
+    {
+      "bytes": 1888,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_runtime_evidence_sidecar_bundle.py",
+      "sha256": "7f40aa1681f9f7c1e63a0f9f0d0316c52f41b955b5ed4ae7021a815ba76bcecf"
     },
     {
       "bytes": 751,
@@ -3188,6 +3200,12 @@
       "sha256": "401b64ac5677189ce8dd5bf24c35f3282f3604edd17329cbba016dfe1ce1f7c7"
     },
     {
+      "bytes": 13874,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/runtime_evidence_sidecar.py",
+      "sha256": "0dab34533559e05c02bdc59a69b87334e64b1b3a5e36cf15aa60fce32a630cbd"
+    },
+    {
       "bytes": 15892,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/saas_tenant_security_baseline.py",
@@ -4050,6 +4068,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_evidence_refresh_and_docker_healthcheck.py",
       "sha256": "19d4d9be0cf6bd708c29d126c61e1d74ead8f95dc7a6390e818650a439c8833c"
+    },
+    {
+      "bytes": 4955,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_evidence_sidecar_bundle.py",
+      "sha256": "df15d5df5b52b6b18d1e81d1dd2e446ed5be105773c1ccbdcc4a5e863a47429b"
     },
     {
       "bytes": 6338,
