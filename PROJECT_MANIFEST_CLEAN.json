@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "050796e19fad970f9c37184fb1dd3871f0469deb0f94b583c9d3455772e80eb4",
+  "aggregate_sha256": "6ee5835bd9f823bcca21d904dd538c1b08c5555217f85b7ac8bd7a3935b5cfcc",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3146,10 +3146,10 @@
       "sha256": "d2c57e95fe84d291d7ab168d335fa20508679ec5b1ad9f8334dc1582fda0d22a"
     },
     {
-      "bytes": 20004,
+      "bytes": 21143,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/notification_channels.py",
-      "sha256": "cf62b84e1802e6e3e18fa1c630ca0fa13eebb5923c42a8fd74b9422805fbe73d"
+      "sha256": "98c78065d110e9de1edb6e41b0233b9eebce57c44be1a40bb3a19ce48867b779"
     },
     {
       "bytes": 8702,
@@ -3794,10 +3794,10 @@
       "sha256": "fe3ca8bd26f3a7c0fe6da1457fb05f87538527302c0f6a0ee9a4f5459c9b7fba"
     },
     {
-      "bytes": 9259,
+      "bytes": 10993,
       "hash_mode": "text_lf",
       "path": "tests/test_notification_channels.py",
-      "sha256": "8abce0a6ed81c83bf1b257553249f3386c1432d7ed5ed1b15636c58e7cc928b6"
+      "sha256": "9f585457e2af24453c99ceddce53e418e338e7bcbe62d3bdf89728f7b89c6381"
     },
     {
       "bytes": 6205,

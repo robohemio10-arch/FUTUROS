@@ -266,3 +266,54 @@ def test_cli_no_write_report_does_not_create_runtime_file(tmp_path: Path) -> Non
     )
 
     assert not dispatch_report.exists()
+
+def test_ntfy_header_values_are_latin1_safe_for_unicode_title() -> None:
+    captured: list[dict[str, str]] = []
+
+    def opener(request: Any, timeout: float) -> FakeResponse:
+        headers = dict(request.header_items())
+        captured.append(headers)
+        for value in headers.values():
+            value.encode("latin-1")
+        return FakeResponse()
+
+    dispatcher = NotificationDispatcher(
+        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic")),
+        ntfy_opener=opener,
+    )
+
+    results = dispatcher.send(
+        NotificationMessage(
+            title="FUTUROS PAPER — CLOSE_LONG ETH/USDT:USDT",
+            body="corpo com unicode preservado: operação — encerrada",
+            priority="urgent",
+            tags=("warning", "rotating_light"),
+        )
+    )
+
+    assert results[0].status == "sent"
+    assert captured[0]["Title"] == "FUTUROS PAPER - CLOSE_LONG ETH/USDT:USDT"
+
+
+def test_ntfy_preserves_unicode_body_as_utf8_while_sanitizing_headers() -> None:
+    captured: list[tuple[bytes, dict[str, str]]] = []
+
+    def opener(request: Any, timeout: float) -> FakeResponse:
+        captured.append((request.data, dict(request.header_items())))
+        return FakeResponse()
+
+    dispatcher = NotificationDispatcher(
+        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic")),
+        ntfy_opener=opener,
+    )
+
+    dispatcher.send(
+        NotificationMessage(
+            title="Título — com travessão",
+            body="Mensagem UTF-8 preservada — ação simulada",
+        )
+    )
+
+    body, headers = captured[0]
+    assert headers["Title"] == "Título - com travessão"
+    assert body.decode("utf-8") == "Mensagem UTF-8 preservada — ação simulada"
