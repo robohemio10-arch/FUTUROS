@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d506068a151caab829bc8e88bd5ceab73472b199980340986d2dd954f2ba39dc",
+  "aggregate_sha256": "d03607c26da5f2a620e4b17a699db5e1dae05958f7d94f584a959ae0f08946c5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 114,
-    "manifested_files_total": 676,
-    "python_files": 476,
+    "docs_files": 115,
+    "manifested_files_total": 679,
+    "python_files": 478,
     "runtime_excluded_files_total": 0,
-    "test_files": 118,
-    "tracked_files_total": 677,
+    "test_files": 119,
+    "tracked_files_total": 680,
     "workflows": 1
   },
   "deterministic": true,
@@ -876,6 +876,12 @@
       "hash_mode": "text_lf",
       "path": "docs/NTFY_TELEGRAM_CRITICAL_NOTIFICATIONS.md",
       "sha256": "2b0a7718f8e305733d70620c65ae8e2e3ad5fa1f1759b156ce5e8de89d77e449"
+    },
+    {
+      "bytes": 1658,
+      "hash_mode": "text_lf",
+      "path": "docs/NTFY_TELEGRAM_DASHBOARD_TEST_TAB.md",
+      "sha256": "71c7e3f29e77911364f8c51c3e120c7141d00ea3f502c4a272ed6162f7fe8f6e"
     },
     {
       "bytes": 3877,
@@ -2582,10 +2588,10 @@
       "sha256": "04c51755af0383d8fd144c6d53a444e8cc2195a4f5035b7d38d67b55b23ef2ea"
     },
     {
-      "bytes": 14444,
+      "bytes": 14651,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
-      "sha256": "91b63e90dcd129f00a2a13d78ccf674ca42e3ad8766498c62947e30cfe2f3201"
+      "sha256": "a20337988f16537b9c4e452abb37e513cf06fb0dd1ea17154a45ede92d462adc"
     },
     {
       "bytes": 7976,
@@ -2604,6 +2610,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/freqtrade_snapshot_reader.py",
       "sha256": "1784def5e6e123feeaf49ece159f95943397bf0455320389a79521eed2eaa5d4"
+    },
+    {
+      "bytes": 14532,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/notification_channels_test_panel.py",
+      "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
       "bytes": 33744,
@@ -3756,6 +3768,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_notification_channels.py",
       "sha256": "8abce0a6ed81c83bf1b257553249f3386c1432d7ed5ed1b15636c58e7cc928b6"
+    },
+    {
+      "bytes": 6205,
+      "hash_mode": "text_lf",
+      "path": "tests/test_notification_channels_dashboard_test_panel.py",
+      "sha256": "2018db478a2bbce9fe08d4e7715608c6eb717765165d3466cdc8b191e1c06c4f"
     },
     {
       "bytes": 6121,
