@@ -87,6 +87,10 @@ RUNTIME_STALE_AFTER_SECONDS = {
     "phase13_signal_producer_report": 900,
 }
 
+OPTIONAL_MISSING_NEUTRAL_RUNTIME_REPORTS = {
+    "manual_notification_test_dispatch_report",
+}
+
 EXPECTED_CONTAINER_SERVICES = (
     "freqtrade-paper",
     "phase14-feedback-sync-paper",
@@ -272,13 +276,22 @@ def collect_runtime_observability_sources(root: Path, *, now: datetime | None = 
             else:
                 source["runtime_status"] = "ok"
         elif source.get("status") == "evidence_missing":
-            source["component_summary"] = {
-                "status": "missing",
-                "reason": "optional_runtime_report_missing",
-                "alerts": ["optional_runtime_report_missing"],
-                "metrics": {},
-            }
-            source["runtime_status"] = "missing"
+            if name in OPTIONAL_MISSING_NEUTRAL_RUNTIME_REPORTS:
+                source["component_summary"] = {
+                    "status": "neutral",
+                    "reason": "optional_runtime_report_missing_neutral",
+                    "alerts": [],
+                    "metrics": {},
+                }
+                source["runtime_status"] = "neutral"
+            else:
+                source["component_summary"] = {
+                    "status": "missing",
+                    "reason": "optional_runtime_report_missing",
+                    "alerts": ["optional_runtime_report_missing"],
+                    "metrics": {},
+                }
+                source["runtime_status"] = "missing"
         else:
             source["component_summary"] = {
                 "status": "blocked",
@@ -290,7 +303,6 @@ def collect_runtime_observability_sources(root: Path, *, now: datetime | None = 
         sources[name] = source
 
     return sources
-
 
 def summarize_runtime_component(name: str, payload: Mapping[str, Any], *, now: datetime) -> dict[str, Any]:
     alerts: list[str] = []
@@ -402,6 +414,7 @@ def runtime_observability_rollup(sources: Mapping[str, Mapping[str, Any]]) -> di
     blocked = sorted(name for name, source in sources.items() if source.get("runtime_status") == "blocked")
     degraded = sorted(name for name, source in sources.items() if source.get("runtime_status") == "degraded")
     missing = sorted(name for name, source in sources.items() if source.get("runtime_status") == "missing")
+    neutral = sorted(name for name, source in sources.items() if source.get("runtime_status") == "neutral")
     ok = sorted(name for name, source in sources.items() if source.get("runtime_status") == "ok")
 
     if blocked:
@@ -421,8 +434,8 @@ def runtime_observability_rollup(sources: Mapping[str, Mapping[str, Any]]) -> di
         "blocked_sources": blocked,
         "degraded_sources": degraded,
         "missing_optional_sources": missing,
+        "neutral_optional_sources": neutral,
     }
-
 
 def collect_compose_service_catalog(root: Path) -> dict[str, Any]:
     compose_path = root / "docker-compose.paper.yml"
