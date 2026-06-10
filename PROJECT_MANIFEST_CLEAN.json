@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "773810a2b7b8f5e3b6f29e492dbb0c221175b15f73835d18bcf48ee1f630fd90",
+  "aggregate_sha256": "197e63ecc9a53ba72ced8e367177b86409f61f784527d46a370bcef91a44ed09",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 111,
-    "manifested_files_total": 671,
+    "docs_files": 112,
+    "manifested_files_total": 672,
     "python_files": 474,
     "runtime_excluded_files_total": 0,
     "test_files": 117,
-    "tracked_files_total": 672,
+    "tracked_files_total": 673,
     "workflows": 1
   },
   "deterministic": true,
@@ -936,6 +936,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PHASE14_PAPER_TRADE_LIFECYCLE_FEEDBACK.md",
       "sha256": "1256c2af75ccd9de4ccdcdaf4e68e02d0a82c2d8c389e3b2093bbacca35878d0"
+    },
+    {
+      "bytes": 5850,
+      "hash_mode": "text_lf",
+      "path": "docs/PHASE14_RUNTIME_FEEDBACK_SYNC.md",
+      "sha256": "ffa18b9febe74509bfecae792124a084e2b50fac22651d464d8ea35ce46758e2"
     },
     {
       "bytes": 849,
