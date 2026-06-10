@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "197e63ecc9a53ba72ced8e367177b86409f61f784527d46a370bcef91a44ed09",
+  "aggregate_sha256": "0bf9b67aa54007e48406d2f68e97bfd2cca996950a6805d95a780534eaa7cc22",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 112,
-    "manifested_files_total": 672,
-    "python_files": 474,
+    "docs_files": 114,
+    "manifested_files_total": 676,
+    "python_files": 476,
     "runtime_excluded_files_total": 0,
-    "test_files": 117,
-    "tracked_files_total": 673,
+    "test_files": 118,
+    "tracked_files_total": 677,
     "workflows": 1
   },
   "deterministic": true,
@@ -1004,6 +1004,18 @@
       "sha256": "6bb002c5d86326fee781b191c7c78accd4a386bb396890c4367182ae1b3b6d60"
     },
     {
+      "bytes": 3823,
+      "hash_mode": "text_lf",
+      "path": "docs/PROJECT_AI_NEW_CHAT_BOOTSTRAP_PROMPT.md",
+      "sha256": "14b21ac9e2015487f9a77b793ef600c66276815bda98be98cdbc45ba19a38ae2"
+    },
+    {
+      "bytes": 16753,
+      "hash_mode": "text_lf",
+      "path": "docs/PROJECT_AI_OPERATING_INSTRUCTIONS.md",
+      "sha256": "d4a8ba279050f2ae9d8eceae58f8a67466b7d8e6571be1e2f9dc6a96d18a5113"
+    },
+    {
       "bytes": 2704,
       "hash_mode": "text_lf",
       "path": "docs/QLIB_FRESH_PREDICTION_RUNNER.md",
@@ -1380,6 +1392,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_post_roadmap_final_snapshot.py",
       "sha256": "32484e351a5299d345987c2232836d5d64ead3a3f5d1950824db94ff04794d11"
+    },
+    {
+      "bytes": 5826,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_project_ai_operating_instructions.py",
+      "sha256": "3520ea21b428e5316a2adc4696d3bc1b926ffba8e221e7aba30809522c4d28d2"
     },
     {
       "bytes": 3520,
@@ -3888,6 +3906,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_price_scale_ocr_repair.py",
       "sha256": "9445048b7edf0045f5c6e1f30a3174a214362ed207271f5c584d1d04ce7154e2"
+    },
+    {
+      "bytes": 2976,
+      "hash_mode": "text_lf",
+      "path": "tests/test_project_ai_operating_instructions.py",
+      "sha256": "19119abcb5dc80e2d1e04177741cd0499a024024aa873b1aab6c0ed5c8849e3b"
     },
     {
       "bytes": 7567,

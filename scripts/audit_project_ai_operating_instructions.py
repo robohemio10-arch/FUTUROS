@@ -83,8 +83,7 @@ def build_project_ai_operating_instructions_audit(
     instructions_path = root / "docs/PROJECT_AI_OPERATING_INSTRUCTIONS.md"
     prompt_path = root / "docs/PROJECT_AI_NEW_CHAT_BOOTSTRAP_PROMPT.md"
 
-    combined_text = "
-".join(
+    combined_text = "\n".join(
         [
             read_text_if_exists(instructions_path),
             read_text_if_exists(prompt_path),
@@ -113,8 +112,7 @@ def build_project_ai_operating_instructions_audit(
     write_performed = False
     if not no_write:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "
-", encoding="utf-8")
+        output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         write_performed = True
 
     return ProjectAiOperatingInstructionsAuditResult(
