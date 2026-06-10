@@ -155,6 +155,7 @@ services:
     restart: unless-stopped
     profiles:
       - notifications
+    user: "0:0"
     env_file:
       - .env
     depends_on:
@@ -176,6 +177,13 @@ services:
       - ./smartcrypto:/app/smartcrypto:ro
       - freqtrade_paper_db:/paper-db:ro
     command:
+      - python
+      - scripts/docker_runtime_permissions_bootstrap.py
+      - --path
+      - /app/data/reports
+      - --path
+      - /app/data/runtime
+      - --
       - python
       - scripts/run_trade_event_notifications.py
       - --source-db

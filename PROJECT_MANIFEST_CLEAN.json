@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "0f12eeecf14475ac5a9a1d798ffb79fbaff86ed8966f93139940df0f69641e40",
+  "aggregate_sha256": "71119440056b18e9b55bdeaabd38bfe146cd70a1291c298d14f3d4930464cdc0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -506,10 +506,10 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 6656,
+      "bytes": 6836,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "8163fba0509560746d90442caeec975754b87ac342af8b4eb76e6bbacb8dd4f2"
+      "sha256": "21fd5cd27be9c59329df7e4c4067d6cebbeefc2f69dc23625aa4aeda69b66da4"
     },
     {
       "bytes": 1156,
@@ -1124,10 +1124,10 @@
       "sha256": "81399d05abe2594b01f299482f944b1ab36d37ee9cd37e645e0d8b6caf85e51f"
     },
     {
-      "bytes": 7138,
+      "bytes": 8773,
       "hash_mode": "text_lf",
       "path": "docs/TELEGRAM_TRADE_EVENT_NOTIFICATIONS_BINANCE_LINKS.md",
-      "sha256": "0118b9ca4deeb6f3f82491120a829569e9407d49152e7efd2997c259effc66be"
+      "sha256": "a6ce727ae42328d4ac7dc81584ddc5ccda266b2130daed21cbbe60ad7661a3fa"
     },
     {
       "bytes": 4059,
@@ -4082,10 +4082,10 @@
       "sha256": "3e7723c0c0457946c0f47009c2b0055d4844fcede11101686d79f45280c9e907"
     },
     {
-      "bytes": 20364,
+      "bytes": 21144,
       "hash_mode": "text_lf",
       "path": "tests/test_trade_event_notifications.py",
-      "sha256": "5d1d5c63f35605032074640832ab0145dc49708056f4ed6089cceae84214ede1"
+      "sha256": "5fdd13c8e09c1b67016fbf155ffb4c102135554215b3eb10d0452fac8bc20e3e"
     },
     {
       "bytes": 6258,

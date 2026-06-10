@@ -262,3 +262,48 @@ changes_risk=false
 Esta entrega não libera live, canary ou ordens reais.
 
 O sistema continua restrito a observabilidade e comunicação paper/shadow.
+
+## Bootstrap versionado de permissões
+
+O serviço `trade-event-notifications-paper` usa bootstrap versionado para corrigir permissões de runtime em bind mount antes de iniciar o daemon.
+
+Arquivo:
+
+- scripts/docker_runtime_permissions_bootstrap.py
+
+Motivo:
+
+- Em Windows/Docker Desktop ou migração de VPS, arquivos em `data/reports` e `data/runtime` podem ficar graváveis no host, mas não graváveis pelo usuário `smartcrypto` dentro do container.
+- O erro operacional observado foi `PermissionError: [Errno 13] Permission denied` ao tentar gravar `data/reports/trade_event_notifications_report.json`.
+
+Modelo adotado:
+
+- O serviço inicia com `user: "0:0"`.
+- O bootstrap cria e ajusta permissões de:
+  - /app/data/reports
+  - /app/data/runtime
+- O bootstrap aplica owner UID/GID 10001.
+- Depois faz drop de privilégio para UID/GID 10001.
+- O daemon real roda sem privilégio root.
+
+Comando interno do serviço:
+
+python scripts/docker_runtime_permissions_bootstrap.py \
+  --path /app/data/reports \
+  --path /app/data/runtime \
+  -- \
+  python scripts/run_trade_event_notifications.py \
+  --source-db /paper-db/tradesv3.paper.sqlite \
+  --state-db /app/data/runtime/trade_event_notifications.sqlite \
+  --report /app/data/reports/trade_event_notifications_report.json \
+  --daemon \
+  --send-real \
+  --channels ${SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_CHANNELS:-all} \
+  --poll-seconds ${SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_POLL_SECONDS:-5}
+
+Safety:
+
+- O bootstrap não acessa exchange.
+- O bootstrap não envia ordens.
+- O bootstrap não altera risco.
+- O bootstrap só ajusta permissões em diretórios runtime montados.
