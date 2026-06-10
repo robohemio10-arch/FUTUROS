@@ -95,6 +95,12 @@ Freqtrade é executor paper/dry-run.
 
 Dashboard é observabilidade e governança read-only.
 
+FeatureContract é obrigatório antes de treino/inferência institucional.
+
+ModelRegistry é obrigatório antes de promoção governada de modelos.
+
+DriftMonitor é obrigatório para bloquear drift crítico, reduzir uso agressivo em warning e impedir promoção quando a distribuição de features, labels ou performance estiver instável.
+
 ## Próxima branch prioritária
 
 ```text

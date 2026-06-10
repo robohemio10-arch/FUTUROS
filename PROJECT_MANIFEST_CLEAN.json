@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "0bf9b67aa54007e48406d2f68e97bfd2cca996950a6805d95a780534eaa7cc22",
+  "aggregate_sha256": "d506068a151caab829bc8e88bd5ceab73472b199980340986d2dd954f2ba39dc",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1004,10 +1004,10 @@
       "sha256": "6bb002c5d86326fee781b191c7c78accd4a386bb396890c4367182ae1b3b6d60"
     },
     {
-      "bytes": 3823,
+      "bytes": 4164,
       "hash_mode": "text_lf",
       "path": "docs/PROJECT_AI_NEW_CHAT_BOOTSTRAP_PROMPT.md",
-      "sha256": "14b21ac9e2015487f9a77b793ef600c66276815bda98be98cdbc45ba19a38ae2"
+      "sha256": "87120ce943ff3e24ad6fb73a9b5ee12b177f7bb927d7f0c6c98310e9904dba2f"
     },
     {
       "bytes": 16753,
