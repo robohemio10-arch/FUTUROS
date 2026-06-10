@@ -24,6 +24,8 @@ WATCHED_PAIRS: dict[str, str] = {
 }
 
 VALID_CHANNEL_MODES = {"telegram", "ntfy", "all"}
+VALID_CHANNEL_NAMES = {"telegram", "ntfy"}
+COMPLETE_STATUSES = {"sent", "baseline", "dry_run"}
 
 DEFAULT_STATE_DB_PATH = Path("data/runtime/trade_event_notifications.sqlite")
 DEFAULT_REPORT_PATH = Path("data/reports/trade_event_notifications_report.json")
@@ -110,6 +112,20 @@ def required_channels(channels: str) -> tuple[str, ...]:
     if mode == "all":
         return ("ntfy", "telegram")
     return (mode,)
+
+
+def dispatch_mode_for_channels(channels: tuple[str, ...] | list[str] | set[str]) -> str:
+    normalized = tuple(sorted({str(channel).strip().lower() for channel in channels}))
+    invalid = [channel for channel in normalized if channel not in VALID_CHANNEL_NAMES]
+    if invalid:
+        raise ValueError(f"invalid_channel_names:{','.join(invalid)}")
+    if normalized == ("ntfy", "telegram"):
+        return "all"
+    if normalized == ("ntfy",):
+        return "ntfy"
+    if normalized == ("telegram",):
+        return "telegram"
+    raise ValueError("empty_dispatch_channels")
 
 
 def detect_side(row: Mapping[str, Any]) -> str:
@@ -252,6 +268,7 @@ def load_trade_events(source_db_path: str | Path) -> list[TradeEvent]:
 def ensure_state_db(path: str | Path) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
+
     with sqlite3.connect(str(target)) as connection:
         connection.execute(
             """
@@ -269,15 +286,102 @@ def ensure_state_db(path: str | Path) -> Path:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS trade_event_notification_channels (
+                notification_key TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                trade_id INTEGER NOT NULL,
+                event_type TEXT NOT NULL,
+                pair TEXT NOT NULL,
+                side TEXT NOT NULL,
+                event_time_utc TEXT,
+                status TEXT NOT NULL,
+                dry_run INTEGER NOT NULL,
+                created_at_utc TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                PRIMARY KEY (notification_key, channel)
+            )
+            """
+        )
         connection.commit()
+
     return target
 
 
-def load_sent_keys(path: str | Path) -> set[str]:
+def load_legacy_completed_keys(path: str | Path) -> set[str]:
     target = ensure_state_db(path)
     with sqlite3.connect(str(target)) as connection:
-        rows = connection.execute("SELECT notification_key FROM trade_event_notifications").fetchall()
+        rows = connection.execute(
+            """
+            SELECT notification_key
+            FROM trade_event_notifications
+            WHERE status IN ('sent', 'baseline', 'dry_run')
+            """
+        ).fetchall()
     return {str(row[0]) for row in rows}
+
+
+def load_channel_completed_keys(path: str | Path, *, channels: str) -> set[str]:
+    target = ensure_state_db(path)
+    required = set(required_channels(channels))
+    if not required:
+        return set()
+
+    grouped: dict[str, set[str]] = {}
+
+    with sqlite3.connect(str(target)) as connection:
+        rows = connection.execute(
+            """
+            SELECT notification_key, channel, status
+            FROM trade_event_notification_channels
+            WHERE status IN ('sent', 'baseline', 'dry_run')
+            """
+        ).fetchall()
+
+    for notification_key, channel, status in rows:
+        channel_name = str(channel)
+        if channel_name in required and str(status) in COMPLETE_STATUSES:
+            grouped.setdefault(str(notification_key), set()).add(channel_name)
+
+    return {key for key, completed in grouped.items() if required.issubset(completed)}
+
+
+def load_completed_event_keys(path: str | Path, *, channels: str) -> set[str]:
+    return load_legacy_completed_keys(path) | load_channel_completed_keys(path, channels=channels)
+
+
+def load_delivered_channels(path: str | Path, event: TradeEvent, *, channels: str) -> set[str]:
+    target = ensure_state_db(path)
+    required = set(required_channels(channels))
+
+    with sqlite3.connect(str(target)) as connection:
+        legacy = connection.execute(
+            """
+            SELECT status
+            FROM trade_event_notifications
+            WHERE notification_key = ?
+            """,
+            (event.notification_key,),
+        ).fetchone()
+        if legacy and str(legacy[0]) in COMPLETE_STATUSES:
+            return set(required)
+
+        rows = connection.execute(
+            """
+            SELECT channel, status
+            FROM trade_event_notification_channels
+            WHERE notification_key = ?
+            """,
+            (event.notification_key,),
+        ).fetchall()
+
+    delivered = {
+        str(channel)
+        for channel, status in rows
+        if str(channel) in required and str(status) in COMPLETE_STATUSES
+    }
+    return delivered
 
 
 def record_event_state(
@@ -308,6 +412,61 @@ def record_event_state(
             """,
             (
                 event.notification_key,
+                event.trade_id,
+                event.event_type,
+                event.pair,
+                event.side,
+                event.event_time_utc,
+                status,
+                int(bool(dry_run)),
+                utc_now(),
+                json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            ),
+        )
+        connection.commit()
+
+
+def record_channel_state(
+    path: str | Path,
+    event: TradeEvent,
+    *,
+    channel: str,
+    status: str,
+    dry_run: bool,
+    payload: Mapping[str, Any],
+) -> None:
+    channel_name = str(channel).strip().lower()
+    if channel_name not in VALID_CHANNEL_NAMES:
+        raise ValueError(f"invalid_channel:{channel}")
+
+    target = ensure_state_db(path)
+
+    with sqlite3.connect(str(target)) as connection:
+        connection.execute(
+            """
+            INSERT INTO trade_event_notification_channels (
+                notification_key,
+                channel,
+                trade_id,
+                event_type,
+                pair,
+                side,
+                event_time_utc,
+                status,
+                dry_run,
+                created_at_utc,
+                payload_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(notification_key, channel) DO UPDATE SET
+                status = excluded.status,
+                dry_run = excluded.dry_run,
+                created_at_utc = excluded.created_at_utc,
+                payload_json = excluded.payload_json
+            """,
+            (
+                event.notification_key,
+                channel_name,
                 event.trade_id,
                 event.event_type,
                 event.pair,
@@ -403,8 +562,8 @@ def baseline_trade_events(
     state_db_path: str | Path = DEFAULT_STATE_DB_PATH,
     limit: int | None = None,
 ) -> dict[str, Any]:
-    sent_keys = load_sent_keys(state_db_path)
-    pending = [event for event in events if event.notification_key not in sent_keys]
+    completed_keys = load_completed_event_keys(state_db_path, channels="all")
+    pending = [event for event in events if event.notification_key not in completed_keys]
     if limit is not None:
         pending = pending[: max(0, int(limit))]
 
@@ -415,9 +574,19 @@ def baseline_trade_events(
             "event": asdict(event),
             "baseline": True,
             "results": [],
+            "required_channels": required_channels("all"),
             **SAFE_FLAGS,
         }
         record_event_state(state_db_path, event, status="baseline", dry_run=True, payload=row)
+        for channel in required_channels("all"):
+            record_channel_state(
+                state_db_path,
+                event,
+                channel=channel,
+                status="baseline",
+                dry_run=True,
+                payload={**row, "channel": channel},
+            )
         baselined.append(row)
 
     return {
@@ -458,25 +627,33 @@ def dispatch_trade_events(
     if baseline:
         return baseline_trade_events(events, state_db_path=state_db_path, limit=limit)
 
-    sent_keys = load_sent_keys(state_db_path)
-    pending = [event for event in events if event.notification_key not in sent_keys]
+    completed_keys = load_completed_event_keys(state_db_path, channels=mode)
+    pending = [event for event in events if event.notification_key not in completed_keys]
     if limit is not None:
         pending = pending[: max(0, int(limit))]
-
-    dispatcher = NotificationDispatcher(
-        channel_settings(env, channels=mode),
-        ntfy_opener=ntfy_opener,
-        telegram_opener=telegram_opener,
-    )
 
     dispatches: list[dict[str, Any]] = []
     marked_sent = 0
     blocked_or_failed = False
 
     for event in pending:
+        required = tuple(required_channels(mode))
+        delivered_before = load_delivered_channels(state_db_path, event, channels=mode)
+        channels_to_send = tuple(channel for channel in required if channel not in delivered_before)
+
+        if not channels_to_send:
+            continue
+
+        dispatch_mode = dispatch_mode_for_channels(channels_to_send)
+        dispatcher = NotificationDispatcher(
+            channel_settings(env, channels=dispatch_mode),
+            ntfy_opener=ntfy_opener,
+            telegram_opener=telegram_opener,
+        )
+
         message = build_message(event)
         results = [result.to_dict() for result in dispatcher.send(message, dry_run=bool(dry_run))]
-        delivery_ok = required_delivery_succeeded(results, channels=mode)
+        dispatch_ok = required_delivery_succeeded(results, channels=dispatch_mode)
 
         row = {
             "event": asdict(event),
@@ -487,15 +664,41 @@ def dispatch_trade_events(
                 "click_url": message.click_url,
             },
             "results": results,
-            "required_channels": required_channels(mode),
+            "required_channels": required,
+            "delivered_channels_before": sorted(delivered_before),
+            "attempted_channels": channels_to_send,
+            "dispatch_mode": dispatch_mode,
             **SAFE_FLAGS,
         }
         dispatches.append(row)
 
-        if not delivery_ok:
+        successful_channels = {
+            str(result.get("channel"))
+            for result in results
+            if str(result.get("channel")) in channels_to_send and result.get("status") == "sent"
+        }
+
+        if not dispatch_ok:
             blocked_or_failed = True
 
-        if delivery_ok and (not dry_run or persist_dry_run):
+        if successful_channels and (not dry_run or persist_dry_run):
+            status = "sent" if not dry_run else "dry_run"
+            for channel in successful_channels:
+                record_channel_state(
+                    state_db_path,
+                    event,
+                    channel=channel,
+                    status=status,
+                    dry_run=dry_run,
+                    payload={**row, "channel": channel},
+                )
+
+        delivered_after = delivered_before | (successful_channels if (not dry_run or persist_dry_run) else set())
+        row["successful_channels"] = sorted(successful_channels)
+        row["delivered_channels_after"] = sorted(delivered_after)
+        row["remaining_channels_after"] = sorted(set(required) - delivered_after)
+
+        if set(required).issubset(delivered_after):
             record_event_state(
                 state_db_path,
                 event,
