@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5bd3844bf2e288dfef52868291c9a428e1ea07c4274ba050425428cc9cd5838e",
+  "aggregate_sha256": "869bfb52e5f34fcdb58e5ab7231b8734c7c2966832490624c3feb04554f961b1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 116,
-    "manifested_files_total": 686,
-    "python_files": 484,
+    "manifested_files_total": 687,
+    "python_files": 485,
     "runtime_excluded_files_total": 0,
-    "test_files": 121,
-    "tracked_files_total": 687,
+    "test_files": 122,
+    "tracked_files_total": 688,
     "workflows": 1
   },
   "deterministic": true,
@@ -1094,10 +1094,10 @@
       "sha256": "a8f5c5e4d1e0fdbc97d6f9f5bf86822af5d9cb423e6f6c093b95ee95ff3dc4d2"
     },
     {
-      "bytes": 3595,
+      "bytes": 2867,
       "hash_mode": "text_lf",
       "path": "docs/RUNTIME_EVIDENCE_PACK_AND_READINESS_SNAPSHOT_V2.md",
-      "sha256": "2eb456bbb34729749bd3d4bc7cda12adbad24ba1009c0d1d62e3b78d9f089d89"
+      "sha256": "af5332d585c6d9fbc5fd280e1d6a107020c97a769dee9755e40d5f90a4919d0e"
     },
     {
       "bytes": 2736,
@@ -1550,10 +1550,10 @@
       "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
     },
     {
-      "bytes": 2371,
+      "bytes": 3189,
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
-      "sha256": "45105809d7c9fd633c6e6a96abcb9f35d8c4f1baeeea84cac79b5dfe2902c08f"
+      "sha256": "3e45c04256eb5f671c966d024b2f66d3916713ada58f7e0f552040f15fe012de"
     },
     {
       "bytes": 751,
@@ -3182,10 +3182,10 @@
       "sha256": "419e050fb7ff0bfb8c350b614b6d6c7dbd4ab77915461bd6efb3d70c49d2ec71"
     },
     {
-      "bytes": 20585,
+      "bytes": 37267,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/runtime_evidence_pack.py",
-      "sha256": "37d95d964da41cabbf2dbf2a60bbe6a46818859c23722cb645154b272f2f331b"
+      "sha256": "34bef6be1e1fb2d9e367266a95370fb9048e0edf56fb8df5f41fa78d50f40f98"
     },
     {
       "bytes": 15892,
@@ -4038,6 +4038,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_evidence_pack_and_readiness_snapshot_v2.py",
       "sha256": "9183c3da78fc5f53a4f23d40875c5b24eb094302449733a9b007bdfa893d023e"
+    },
+    {
+      "bytes": 5367,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_evidence_pack_v2_observability.py",
+      "sha256": "63b80cc1e4fb2e06da0bc95f87f33a81cb50b945c53c749f67e1e5c509968bac"
     },
     {
       "bytes": 11067,
