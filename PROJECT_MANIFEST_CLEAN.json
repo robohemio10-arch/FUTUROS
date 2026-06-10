@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d03607c26da5f2a620e4b17a699db5e1dae05958f7d94f584a959ae0f08946c5",
+  "aggregate_sha256": "f08ca19dc4aa644ea85918060106ebb0dcd44e183d545af67544921c9eba8325",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 115,
-    "manifested_files_total": 679,
-    "python_files": 478,
+    "docs_files": 116,
+    "manifested_files_total": 683,
+    "python_files": 481,
     "runtime_excluded_files_total": 0,
-    "test_files": 119,
-    "tracked_files_total": 680,
+    "test_files": 120,
+    "tracked_files_total": 684,
     "workflows": 1
   },
   "deterministic": true,
@@ -1122,6 +1122,12 @@
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
       "sha256": "81399d05abe2594b01f299482f944b1ab36d37ee9cd37e645e0d8b6caf85e51f"
+    },
+    {
+      "bytes": 2600,
+      "hash_mode": "text_lf",
+      "path": "docs/TELEGRAM_TRADE_EVENT_NOTIFICATIONS_BINANCE_LINKS.md",
+      "sha256": "bbf851e02854eb969ec810d89ec8ef79efad9be102468900ac8e64c92cd3c70a"
     },
     {
       "bytes": 4059,
@@ -2402,6 +2408,12 @@
       "sha256": "1d94e0bf9a7efaf1ae0265e303136bd0cbd81cee52ef300d22d789ad660fe9c2"
     },
     {
+      "bytes": 2289,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_trade_event_notifications.py",
+      "sha256": "0a9c7a3ec601c3ef6f92edc1cbd4c270224739f000da80f4776e88e38aa9369a"
+    },
+    {
       "bytes": 8060,
       "hash_mode": "text_lf",
       "path": "scripts/run_trade_monte_carlo_10_workers.py",
@@ -3174,6 +3186,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/system_healthcheck.py",
       "sha256": "e6a6936ac4435d29c13b04f7791bd57212b6e8ea408f8da45e0e6f9a047e2140"
+    },
+    {
+      "bytes": 14114,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/trade_event_notifications.py",
+      "sha256": "fb50b84611905f6eaf0c21774c6d82d94f0981cd1bfa70b0103f931ee75d7e5f"
     },
     {
       "bytes": 6459,
@@ -4062,6 +4080,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_state_repository_reconciliation_hardening.py",
       "sha256": "3e7723c0c0457946c0f47009c2b0055d4844fcede11101686d79f45280c9e907"
+    },
+    {
+      "bytes": 6216,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trade_event_notifications.py",
+      "sha256": "f6efd18c895934992baf4ce54302b128d66127714fd5f5f366a86ec9ed183f0a"
     },
     {
       "bytes": 6258,
