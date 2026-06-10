@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,6 +14,7 @@ from smartcrypto.ops.notification_channels import (
     NotificationMessage,
     NotificationSettings,
     NtfyConfig,
+    TelegramConfig,
     settings_from_env,
 )
 
@@ -20,6 +22,8 @@ WATCHED_PAIRS: dict[str, str] = {
     "BTC/USDT:USDT": "https://www.binance.com/en/futures/BTCUSDT",
     "ETH/USDT:USDT": "https://www.binance.com/en/futures/ETHUSDT",
 }
+
+VALID_CHANNEL_MODES = {"telegram", "ntfy", "all"}
 
 DEFAULT_STATE_DB_PATH = Path("data/runtime/trade_event_notifications.sqlite")
 DEFAULT_REPORT_PATH = Path("data/reports/trade_event_notifications_report.json")
@@ -92,6 +96,20 @@ def optional_float(value: Any) -> float | None:
 
 def normalize_pair(value: Any) -> str:
     return str(value or "").strip().upper()
+
+
+def normalize_channels(channels: str) -> str:
+    value = str(channels or "").strip().lower()
+    if value not in VALID_CHANNEL_MODES:
+        raise ValueError(f"invalid_channels:{channels}")
+    return value
+
+
+def required_channels(channels: str) -> tuple[str, ...]:
+    mode = normalize_channels(channels)
+    if mode == "all":
+        return ("ntfy", "telegram")
+    return (mode,)
 
 
 def detect_side(row: Mapping[str, Any]) -> str:
@@ -262,7 +280,14 @@ def load_sent_keys(path: str | Path) -> set[str]:
     return {str(row[0]) for row in rows}
 
 
-def record_sent_event(path: str | Path, event: TradeEvent, *, dry_run: bool, payload: Mapping[str, Any]) -> None:
+def record_event_state(
+    path: str | Path,
+    event: TradeEvent,
+    *,
+    status: str,
+    dry_run: bool,
+    payload: Mapping[str, Any],
+) -> None:
     target = ensure_state_db(path)
     with sqlite3.connect(str(target)) as connection:
         connection.execute(
@@ -288,7 +313,7 @@ def record_sent_event(path: str | Path, event: TradeEvent, *, dry_run: bool, pay
                 event.pair,
                 event.side,
                 event.event_time_utc,
-                "sent",
+                status,
                 int(bool(dry_run)),
                 utc_now(),
                 json.dumps(payload, ensure_ascii=False, sort_keys=True),
@@ -297,9 +322,17 @@ def record_sent_event(path: str | Path, event: TradeEvent, *, dry_run: bool, pay
         connection.commit()
 
 
-def telegram_only_settings(env: Mapping[str, str] | None = None) -> NotificationSettings:
+def channel_settings(env: Mapping[str, str] | None = None, *, channels: str = "telegram") -> NotificationSettings:
+    mode = normalize_channels(channels)
     settings = settings_from_env(env if env is not None else os.environ)
-    return NotificationSettings(ntfy=NtfyConfig(enabled=False), telegram=settings.telegram)
+
+    if mode == "telegram":
+        return NotificationSettings(ntfy=NtfyConfig(enabled=False), telegram=settings.telegram)
+
+    if mode == "ntfy":
+        return NotificationSettings(ntfy=settings.ntfy, telegram=TelegramConfig(enabled=False))
+
+    return settings
 
 
 def format_rate(value: float | None) -> str:
@@ -313,8 +346,6 @@ def format_amount(value: float | None) -> str:
 def build_message(event: TradeEvent) -> NotificationMessage:
     title = f"FUTUROS PAPER — {event.event_type} {event.pair}"
     lines = [
-        title,
-        "",
         f"Par: {event.pair}",
         f"Trade ID: {event.trade_id}",
         f"Lado: {event.side}",
@@ -349,8 +380,64 @@ def build_message(event: TradeEvent) -> NotificationMessage:
     ).normalized()
 
 
-def telegram_sent(results: list[dict[str, Any]]) -> bool:
-    return any(row.get("channel") == "telegram" and row.get("status") == "sent" for row in results)
+def results_by_channel(results: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {str(row.get("channel")): row for row in results}
+
+
+def required_delivery_succeeded(results: list[dict[str, Any]], *, channels: str) -> bool:
+    indexed = results_by_channel(results)
+    for channel in required_channels(channels):
+        row = indexed.get(channel)
+        if not row or row.get("status") != "sent":
+            return False
+    return True
+
+
+def required_delivery_failed(results: list[dict[str, Any]], *, channels: str) -> bool:
+    return not required_delivery_succeeded(results, channels=channels)
+
+
+def baseline_trade_events(
+    events: list[TradeEvent],
+    *,
+    state_db_path: str | Path = DEFAULT_STATE_DB_PATH,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    sent_keys = load_sent_keys(state_db_path)
+    pending = [event for event in events if event.notification_key not in sent_keys]
+    if limit is not None:
+        pending = pending[: max(0, int(limit))]
+
+    baselined: list[dict[str, Any]] = []
+
+    for event in pending:
+        row = {
+            "event": asdict(event),
+            "baseline": True,
+            "results": [],
+            **SAFE_FLAGS,
+        }
+        record_event_state(state_db_path, event, status="baseline", dry_run=True, payload=row)
+        baselined.append(row)
+
+    return {
+        "status": "ok",
+        "reason": "baseline_completed",
+        "created_at": utc_now(),
+        "telegram_only": False,
+        "channels": "none",
+        "baseline": True,
+        "dry_run": True,
+        "state_db_path": str(state_db_path),
+        "events_detected": len(events),
+        "events_pending": len(pending),
+        "events_dispatched": 0,
+        "events_marked_sent": 0,
+        "events_baselined": len(baselined),
+        "watched_pairs": WATCHED_PAIRS,
+        "dispatches": baselined,
+        **SAFE_FLAGS,
+    }
 
 
 def dispatch_trade_events(
@@ -361,21 +448,36 @@ def dispatch_trade_events(
     env: Mapping[str, str] | None = None,
     limit: int | None = None,
     persist_dry_run: bool = False,
+    channels: str = "telegram",
+    baseline: bool = False,
+    ntfy_opener: Any = None,
     telegram_opener: Any = None,
 ) -> dict[str, Any]:
+    mode = normalize_channels(channels)
+
+    if baseline:
+        return baseline_trade_events(events, state_db_path=state_db_path, limit=limit)
+
     sent_keys = load_sent_keys(state_db_path)
     pending = [event for event in events if event.notification_key not in sent_keys]
     if limit is not None:
         pending = pending[: max(0, int(limit))]
 
-    dispatcher = NotificationDispatcher(telegram_only_settings(env), telegram_opener=telegram_opener)
+    dispatcher = NotificationDispatcher(
+        channel_settings(env, channels=mode),
+        ntfy_opener=ntfy_opener,
+        telegram_opener=telegram_opener,
+    )
 
     dispatches: list[dict[str, Any]] = []
     marked_sent = 0
+    blocked_or_failed = False
 
     for event in pending:
         message = build_message(event)
         results = [result.to_dict() for result in dispatcher.send(message, dry_run=bool(dry_run))]
+        delivery_ok = required_delivery_succeeded(results, channels=mode)
+
         row = {
             "event": asdict(event),
             "message": {
@@ -385,35 +487,56 @@ def dispatch_trade_events(
                 "click_url": message.click_url,
             },
             "results": results,
+            "required_channels": required_channels(mode),
             **SAFE_FLAGS,
         }
         dispatches.append(row)
 
-        if telegram_sent(results) and (not dry_run or persist_dry_run):
-            record_sent_event(state_db_path, event, dry_run=dry_run, payload=row)
+        if not delivery_ok:
+            blocked_or_failed = True
+
+        if delivery_ok and (not dry_run or persist_dry_run):
+            record_event_state(
+                state_db_path,
+                event,
+                status="sent" if not dry_run else "dry_run",
+                dry_run=dry_run,
+                payload=row,
+            )
             marked_sent += 1
 
     status = "ok"
     reason = "processed"
-    if any(any(result.get("channel") == "telegram" and result.get("status") in {"blocked", "failed"} for result in row["results"]) for row in dispatches):
+    if blocked_or_failed:
         status = "blocked"
-        reason = "telegram_delivery_blocked_or_failed"
+        reason = "required_channel_delivery_blocked_or_failed"
+    elif not dispatches:
+        reason = "no_pending_events"
 
     return {
         "status": status,
         "reason": reason,
         "created_at": utc_now(),
-        "telegram_only": True,
+        "telegram_only": mode == "telegram",
+        "channels": mode,
+        "baseline": False,
         "dry_run": bool(dry_run),
         "state_db_path": str(state_db_path),
         "events_detected": len(events),
         "events_pending": len(pending),
         "events_dispatched": len(dispatches),
         "events_marked_sent": marked_sent,
+        "events_baselined": 0,
         "watched_pairs": WATCHED_PAIRS,
         "dispatches": dispatches,
         **SAFE_FLAGS,
     }
+
+
+def write_report(report: Mapping[str, Any], report_path: str | Path) -> None:
+    target = Path(report_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def run_trade_event_notification_scan(
@@ -425,6 +548,9 @@ def run_trade_event_notification_scan(
     env: Mapping[str, str] | None = None,
     limit: int | None = None,
     persist_dry_run: bool = False,
+    channels: str = "telegram",
+    baseline: bool = False,
+    ntfy_opener: Any = None,
     telegram_opener: Any = None,
 ) -> dict[str, Any]:
     events = load_trade_events(source_db_path)
@@ -435,9 +561,53 @@ def run_trade_event_notification_scan(
         env=env,
         limit=limit,
         persist_dry_run=persist_dry_run,
+        channels=channels,
+        baseline=baseline,
+        ntfy_opener=ntfy_opener,
         telegram_opener=telegram_opener,
     )
-    target = Path(report_path)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_report(report, report_path)
     return report
+
+
+def run_trade_event_notification_daemon(
+    *,
+    source_db_path: str | Path,
+    state_db_path: str | Path = DEFAULT_STATE_DB_PATH,
+    report_path: str | Path = DEFAULT_REPORT_PATH,
+    dry_run: bool = True,
+    env: Mapping[str, str] | None = None,
+    limit: int | None = None,
+    channels: str = "all",
+    poll_seconds: float = 10.0,
+    max_iterations: int | None = None,
+) -> dict[str, Any]:
+    iterations = 0
+    last_report: dict[str, Any] = {
+        "status": "ok",
+        "reason": "daemon_not_started",
+        **SAFE_FLAGS,
+    }
+
+    while True:
+        iterations += 1
+        last_report = run_trade_event_notification_scan(
+            source_db_path=source_db_path,
+            state_db_path=state_db_path,
+            report_path=report_path,
+            dry_run=dry_run,
+            env=env,
+            limit=limit,
+            channels=channels,
+            baseline=False,
+        )
+        last_report["daemon"] = True
+        last_report["daemon_iteration"] = iterations
+        write_report(last_report, report_path)
+
+        if max_iterations is not None and iterations >= max_iterations:
+            last_report["reason"] = f"{last_report.get('reason')};daemon_max_iterations_reached"
+            write_report(last_report, report_path)
+            return last_report
+
+        time.sleep(max(1.0, float(poll_seconds)))
