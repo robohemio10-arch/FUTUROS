@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "f08ca19dc4aa644ea85918060106ebb0dcd44e183d545af67544921c9eba8325",
+  "aggregate_sha256": "dce592798ad996d059640e243e99a71e6a0ff0db12b5a2ef8435007cdfe62a2b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1124,10 +1124,10 @@
       "sha256": "81399d05abe2594b01f299482f944b1ab36d37ee9cd37e645e0d8b6caf85e51f"
     },
     {
-      "bytes": 2600,
+      "bytes": 4048,
       "hash_mode": "text_lf",
       "path": "docs/TELEGRAM_TRADE_EVENT_NOTIFICATIONS_BINANCE_LINKS.md",
-      "sha256": "bbf851e02854eb969ec810d89ec8ef79efad9be102468900ac8e64c92cd3c70a"
+      "sha256": "85a5ab7df3146f0df634cb03aded0339128ea8b0dc460cd8935ce9b8fffd8376"
     },
     {
       "bytes": 4059,
@@ -2408,10 +2408,10 @@
       "sha256": "1d94e0bf9a7efaf1ae0265e303136bd0cbd81cee52ef300d22d789ad660fe9c2"
     },
     {
-      "bytes": 2289,
+      "bytes": 4111,
       "hash_mode": "text_lf",
       "path": "scripts/run_trade_event_notifications.py",
-      "sha256": "0a9c7a3ec601c3ef6f92edc1cbd4c270224739f000da80f4776e88e38aa9369a"
+      "sha256": "e5085f66eb2f47466360c3acd29ddc577e2cbdc0bc16661bc76b99df93dab5bc"
     },
     {
       "bytes": 8060,
@@ -3188,10 +3188,10 @@
       "sha256": "e6a6936ac4435d29c13b04f7791bd57212b6e8ea408f8da45e0e6f9a047e2140"
     },
     {
-      "bytes": 14114,
+      "bytes": 18912,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/trade_event_notifications.py",
-      "sha256": "fb50b84611905f6eaf0c21774c6d82d94f0981cd1bfa70b0103f931ee75d7e5f"
+      "sha256": "12dd1f5c06075651982da500f26faa9a16d21d563c25b8ca17c2575648a2a455"
     },
     {
       "bytes": 6459,
@@ -4082,10 +4082,10 @@
       "sha256": "3e7723c0c0457946c0f47009c2b0055d4844fcede11101686d79f45280c9e907"
     },
     {
-      "bytes": 6216,
+      "bytes": 10335,
       "hash_mode": "text_lf",
       "path": "tests/test_trade_event_notifications.py",
-      "sha256": "f6efd18c895934992baf4ce54302b128d66127714fd5f5f366a86ec9ed183f0a"
+      "sha256": "a1ea820adc7fbadc21b4c01f4d571b3e4e6fb4948d407dac159a66327b842cda"
     },
     {
       "bytes": 6258,
