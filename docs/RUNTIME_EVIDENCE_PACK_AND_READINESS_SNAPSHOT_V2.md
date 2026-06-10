@@ -92,3 +92,19 @@ python scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py --json -
 - algum componente runtime declarou status bloqueante ou flag unsafe.
 
 O readiness final permanece bloqueado enquanto não houver 30 dias canônicos de soak, readiness gate aprovado e ausência de P0/P1 live-blocking.
+
+## Neutralidade de dispatch manual
+
+O report `manual_notification_test_dispatch_report.json` é evidência opcional informativa.
+
+Regra:
+
+- se ausente, não degrada `runtime_observability.status`;
+- se presente e `ok`, permanece informativo;
+- se presente e inválido, `blocked`, `failed`, `critical` ou com unsafe flags, passa a degradar/bloquear conforme severidade.
+
+Motivo:
+
+- o dispatch manual NTFY/Telegram não é daemon operacional obrigatório;
+- a ausência desse report não indica falha de runtime;
+- o estado operacional deve refletir serviços permanentes e reports automáticos.

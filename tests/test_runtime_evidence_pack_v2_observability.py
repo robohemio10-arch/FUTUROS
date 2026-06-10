@@ -166,3 +166,29 @@ def test_build_runtime_evidence_pack_exposes_runtime_observability(tmp_path: Pat
     assert pack["runtime_sources"]["trade_event_notifications_report"]["runtime_status"] == "ok"
     assert pack["container_snapshot"]["status"] == "disabled"
     assert result.write_performed is False
+
+def test_missing_manual_dispatch_report_is_neutral_runtime_source(tmp_path: Path) -> None:
+    sources = collect_runtime_observability_sources(
+        tmp_path,
+        now=datetime(2026, 6, 10, 19, 30, 0, tzinfo=timezone.utc),
+    )
+
+    manual = sources["manual_notification_test_dispatch_report"]
+
+    assert manual["runtime_status"] == "neutral"
+    assert manual["component_summary"]["status"] == "neutral"
+    assert manual["component_summary"]["alerts"] == []
+
+
+def test_runtime_rollup_ignores_neutral_optional_sources() -> None:
+    rollup = runtime_observability_rollup(
+        {
+            "trade_event_notifications_report": {"runtime_status": "ok"},
+            "manual_notification_test_dispatch_report": {"runtime_status": "neutral"},
+        }
+    )
+
+    assert rollup["status"] == "ok"
+    assert rollup["reason"] == "ok"
+    assert rollup["missing_optional_sources"] == []
+    assert rollup["neutral_optional_sources"] == ["manual_notification_test_dispatch_report"]
