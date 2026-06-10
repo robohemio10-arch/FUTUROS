@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "97eda69b7213013ee29fc5e63bcc6c3df050e845cff60d6eee378ed23a5ad8dc",
+  "aggregate_sha256": "5bd3844bf2e288dfef52868291c9a428e1ea07c4274ba050425428cc9cd5838e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 116,
-    "manifested_files_total": 684,
-    "python_files": 482,
+    "manifested_files_total": 686,
+    "python_files": 484,
     "runtime_excluded_files_total": 0,
-    "test_files": 120,
-    "tracked_files_total": 685,
+    "test_files": 121,
+    "tracked_files_total": 687,
     "workflows": 1
   },
   "deterministic": true,
@@ -1124,10 +1124,10 @@
       "sha256": "81399d05abe2594b01f299482f944b1ab36d37ee9cd37e645e0d8b6caf85e51f"
     },
     {
-      "bytes": 8773,
+      "bytes": 9829,
       "hash_mode": "text_lf",
       "path": "docs/TELEGRAM_TRADE_EVENT_NOTIFICATIONS_BINANCE_LINKS.md",
-      "sha256": "a6ce727ae42328d4ac7dc81584ddc5ccda266b2130daed21cbbe60ad7661a3fa"
+      "sha256": "00f7ef5d8f2f95dd39f3a83b7c6180fa0ca5eb7f960d03c372290c8185535d9e"
     },
     {
       "bytes": 4059,
@@ -2606,10 +2606,10 @@
       "sha256": "04c51755af0383d8fd144c6d53a444e8cc2195a4f5035b7d38d67b55b23ef2ea"
     },
     {
-      "bytes": 14651,
+      "bytes": 14887,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
-      "sha256": "a20337988f16537b9c4e452abb37e513cf06fb0dd1ea17154a45ede92d462adc"
+      "sha256": "c35eaaab3ad327351a1750a74b806e193591d995eabe89a788bd01b371f4fa83"
     },
     {
       "bytes": 7976,
@@ -2640,6 +2640,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/risk_readiness_soak_panel.py",
       "sha256": "0a4492d9c4060722e91eb8cdd387ad5138bad73c18a412b91adee0f19699db8b"
+    },
+    {
+      "bytes": 12044,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/trade_event_notifications_runtime_panel.py",
+      "sha256": "3afd6cef58728b257c2778907903813e421c6fdf00afdca541011298974ce5c5"
     },
     {
       "bytes": 174,
@@ -4092,6 +4098,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trade_event_notifications.py",
       "sha256": "5fdd13c8e09c1b67016fbf155ffb4c102135554215b3eb10d0452fac8bc20e3e"
+    },
+    {
+      "bytes": 4689,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trade_event_notifications_runtime_dashboard_panel.py",
+      "sha256": "40776d1fc6a61c77589c447852ce6ea4848a204e408b5d562cb12bb53e23e08b"
     },
     {
       "bytes": 6258,

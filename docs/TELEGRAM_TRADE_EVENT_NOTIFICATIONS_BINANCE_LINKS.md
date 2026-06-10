@@ -307,3 +307,56 @@ Safety:
 - O bootstrap não envia ordens.
 - O bootstrap não altera risco.
 - O bootstrap só ajusta permissões em diretórios runtime montados.
+## Painel runtime read-only de notificações de trade
+
+O dashboard possui uma página `Trade notifications` para monitorar o daemon permanente `trade-event-notifications-paper`.
+
+Fonte de dados:
+
+- `data/reports/trade_event_notifications_report.json`
+
+O painel é estritamente read-only:
+
+- não envia NTFY;
+- não envia Telegram;
+- não acessa exchange;
+- não envia ordens;
+- não altera risco;
+- não modifica SQLite de estado.
+
+Campos monitorados:
+
+- `created_at`
+- `daemon`
+- `daemon_iteration`
+- `dry_run`
+- `channels`
+- `events_detected`
+- `events_pending`
+- `events_dispatched`
+- `events_marked_sent`
+- `reason`
+- `status`
+- flags de safety
+
+Alertas institucionais:
+
+- `report_missing`
+- `report_stale`
+- `daemon_not_true`
+- `dry_run_not_false`
+- `channels_not_all`
+- `events_pending_positive`
+- `daemon_status_not_ok`
+- qualquer flag unsafe de live/order/private exchange/risk
+
+Condição operacional esperada:
+
+daemon=true
+dry_run=false
+channels=all
+events_pending=0
+status=ok
+sends_orders=false
+changes_risk=false
+exchange_private_access=false
