@@ -114,6 +114,39 @@ class NotificationError(RuntimeError):
     pass
 
 
+NTFY_HEADER_SAFE_TRANSLATION = str.maketrans(
+    {
+        "\u2014": "-",
+        "\u2013": "-",
+        "\u2212": "-",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2026": "...",
+        "\u00a0": " ",
+    }
+)
+
+
+def normalize_ntfy_header_value(value: Any, max_chars: int = MAX_TITLE_CHARS, *, fallback: str = "FUTUROS notification") -> str:
+    text = normalize_space(value).translate(NTFY_HEADER_SAFE_TRANSLATION)
+    text = text.encode("latin-1", errors="ignore").decode("latin-1")
+    text = normalize_space(text)
+    if not text:
+        text = fallback
+    return text[:max_chars]
+
+
+def normalize_ntfy_tags(tags: Sequence[str]) -> str:
+    safe_tags = [
+        normalize_ntfy_header_value(tag, 64, fallback="")
+        for tag in tags
+        if tag and normalize_ntfy_header_value(tag, 64, fallback="")
+    ]
+    return ",".join(safe_tags)
+
+
 class NtfyNotifier:
     def __init__(self, config: NtfyConfig, *, opener: UrlOpen | None = None) -> None:
         self.config = config
@@ -125,22 +158,27 @@ class NtfyNotifier:
         validation_error = validate_ntfy_config(self.config)
         if validation_error:
             return blocked("ntfy", validation_error, dry_run=dry_run)
+
         msg = message.normalized()
         url = build_ntfy_url(self.config.server_url, self.config.topic)
         headers = {
             "Content-Type": "text/plain; charset=utf-8",
-            "Title": msg.title,
-            "Priority": msg.priority,
+            "Title": normalize_ntfy_header_value(msg.title, MAX_TITLE_CHARS),
+            "Priority": normalize_ntfy_header_value(msg.priority, 20, fallback="default"),
         }
         if msg.tags:
-            headers["Tags"] = ",".join(msg.tags)
+            tags_header = normalize_ntfy_tags(msg.tags)
+            if tags_header:
+                headers["Tags"] = tags_header
         if msg.click_url:
-            headers["Click"] = msg.click_url
+            headers["Click"] = normalize_ntfy_header_value(msg.click_url, 2048, fallback="")
         auth = ntfy_authorization_header(self.config)
         if auth:
             headers["Authorization"] = auth
+
         if dry_run:
             return sent("ntfy", reason="dry_run", dry_run=True)
+
         request = urllib.request.Request(
             url=url,
             data=msg.body.encode("utf-8"),
