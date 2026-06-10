@@ -128,6 +128,8 @@ services:
       context: .
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       SMARTCRYPTO_RUNTIME_MODE: paper
       LIVE_ENABLED: "false"
@@ -145,6 +147,49 @@ services:
       - ./smartcrypto:/app/smartcrypto:ro
       - freqtrade_paper_db:/paper-db:ro
     command: python scripts/run_phase14_runtime_feedback_sync.py --source-db /paper-db/tradesv3.paper.sqlite --interval-seconds 120
+
+  trade-event-notifications-paper:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: unless-stopped
+    profiles:
+      - notifications
+    env_file:
+      - .env
+    depends_on:
+      - freqtrade-paper
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+      SMARTCRYPTO_PHASE14_OPERATIONAL_DB_PATH: /paper-db/tradesv3.paper.sqlite
+      SMARTCRYPTO_FREQTRADE_DB_PATH: /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+      - freqtrade_paper_db:/paper-db:ro
+    command:
+      - python
+      - scripts/run_trade_event_notifications.py
+      - --source-db
+      - /paper-db/tradesv3.paper.sqlite
+      - --state-db
+      - /app/data/runtime/trade_event_notifications.sqlite
+      - --report
+      - /app/data/reports/trade_event_notifications_report.json
+      - --daemon
+      - --send-real
+      - --channels
+      - ${SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_CHANNELS:-all}
+      - --poll-seconds
+      - ${SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_POLL_SECONDS:-5}
 
   redis:
     image: redis:7-alpine

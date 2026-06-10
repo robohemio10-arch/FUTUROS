@@ -1,95 +1,251 @@
-# Trade Event Notifications Daemon NTFY Telegram
+# Trade Event Notifications — NTFY + Telegram + Daemon Permanente
 
-Objetivo:
-Ativar notificacoes NTFY e Telegram para eventos de trade paper/shadow, com daemon polling read-only, baseline de historico e idempotencia por trade_id + event_type.
+## Objetivo
 
-Branch:
-codex/trade-event-notifications-daemon-ntfy-telegram
+Implementar notificações de eventos de trade paper/shadow para NTFY e Telegram com:
 
-Arquivos alterados:
+- daemon polling read-only;
+- baseline seguro de histórico;
+- idempotência por evento e por canal;
+- retry parcial sem duplicar canal já entregue;
+- serviço Docker permanente protegido por profile;
+- preservação total dos invariantes paper/shadow.
+
+## Branch
+
+codex/trade-event-notifications-service-and-channel-idempotency
+
+## Arquivos alterados
+
 - smartcrypto/ops/trade_event_notifications.py
 - scripts/run_trade_event_notifications.py
 - tests/test_trade_event_notifications.py
+- docker-compose.paper.yml
 - docs/TELEGRAM_TRADE_EVENT_NOTIFICATIONS_BINANCE_LINKS.md
+- PROJECT_MANIFEST_CLEAN.json
 
-Eventos suportados:
+## Eventos suportados
+
 - OPEN_LONG
 - OPEN_SHORT
 - CLOSE_LONG
 - CLOSE_SHORT
 
-Pares monitorados:
+## Pares monitorados
+
 - BTC/USDT:USDT -> https://www.binance.com/en/futures/BTCUSDT
 - ETH/USDT:USDT -> https://www.binance.com/en/futures/ETHUSDT
 
-Canais:
-- --channels telegram
-- --channels ntfy
-- --channels all
+## Canais suportados
 
-Modo baseline:
-Marca todos os eventos historicos atualmente detectados como conhecidos sem enviar notificacoes.
-Uso obrigatorio antes de ativar daemon real, para impedir envio em massa de eventos antigos.
+- telegram
+- ntfy
+- all
 
-Comando baseline:
-python scripts/run_trade_event_notifications.py --source-db data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite --baseline --channels all
+## Idempotência
 
-Modo dry-run:
-Valida deteccao, canais e payload sem chamada real de rede.
-Nao persiste idempotencia, exceto se --persist-dry-run for usado explicitamente em teste.
+A versão anterior persistia o evento completo por:
 
-Comando dry-run:
-python scripts/run_trade_event_notifications.py --source-db data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite --dry-run --channels all --limit 1
-
-Modo envio real controlado:
-Envia notificacoes reais pelos canais selecionados.
-Persistencia so ocorre quando todos os canais obrigatorios do modo selecionado retornam status sent.
-
-Comando real controlado:
-python scripts/run_trade_event_notifications.py --source-db data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite --send-real --channels all --limit 1
-
-Modo daemon:
-Executa polling continuo sobre SQLite paper em modo read-only.
-Recomendado somente apos baseline concluido.
-
-Comando daemon dry-run:
-python scripts/run_trade_event_notifications.py --source-db data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite --daemon --dry-run --channels all --poll-seconds 10
-
-Comando daemon real:
-python scripts/run_trade_event_notifications.py --source-db data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite --daemon --send-real --channels all --poll-seconds 10
-
-Estado runtime:
-- data/runtime/trade_event_notifications.sqlite
-- Nao versionar
-
-Relatorio runtime:
-- data/reports/trade_event_notifications_report.json
-- Nao versionar
-- Pode conter response_excerpt de NTFY/Telegram; nao compartilhar publicamente
-
-Fonte de dados:
-- SQLite/snapshot paper Freqtrade
-- Tabela: trades
-- Acesso read-only: PRAGMA query_only=ON
-- Nao acessa exchange privada
-
-Idempotencia:
 - notification_key = trade_id:event_type
-- Evita duplicidade apos restart
-- Eventos baseline tambem bloqueiam envio posterior do historico
 
-Requisitos de ambiente:
-- SMARTCRYPTO_NTFY_ENABLED=true
-- SMARTCRYPTO_NTFY_SERVER_URL=https://ntfy.sh
-- SMARTCRYPTO_NTFY_TOPIC configurado
-- SMARTCRYPTO_TELEGRAM_ENABLED=true
-- SMARTCRYPTO_TELEGRAM_BOT_TOKEN configurado
-- SMARTCRYPTO_TELEGRAM_CHAT_ID configurado
-- SMARTCRYPTO_TELEGRAM_API_BASE_URL=https://api.telegram.org
+A versão atual preserva compatibilidade com essa tabela legada e adiciona idempotência por canal:
 
-Nunca versionar tokens, chat_id privado, topicos privados ou qualquer segredo.
+- notification_key + channel
 
-Invariantes:
+Tabela legada:
+
+- trade_event_notifications
+
+Tabela nova:
+
+- trade_event_notification_channels
+
+Efeito operacional:
+
+- Se NTFY entrega e Telegram falha, NTFY fica marcado como entregue.
+- No retry, apenas Telegram é tentado.
+- Se Telegram entrega e NTFY falha, Telegram fica marcado como entregue.
+- No retry, apenas NTFY é tentado.
+- O evento só entra como completo quando todos os canais requeridos do modo selecionado estiverem entregues.
+- Registros legados com status sent, baseline ou dry_run continuam sendo tratados como completos para backward compatibility.
+
+## Baseline
+
+O baseline deve ser executado antes de iniciar o daemon real.
+
+Comando canônico:
+
+docker compose -f ".\docker-compose.paper.yml" run --rm --no-deps phase14-feedback-sync-paper `
+  python scripts/run_trade_event_notifications.py `
+  --source-db /paper-db/tradesv3.paper.sqlite `
+  --baseline `
+  --channels all
+
+Efeito:
+
+- Marca todo o histórico conhecido como baseline.
+- Não envia NTFY.
+- Não envia Telegram.
+- Previne avalanche de mensagens antigas.
+- Popula a tabela legada e a tabela por canal.
+
+## Daemon manual
+
+Uso operacional temporário:
+
+docker compose -f ".\docker-compose.paper.yml" run --rm --no-deps `
+  -e SMARTCRYPTO_NTFY_ENABLED `
+  -e SMARTCRYPTO_NTFY_SERVER_URL `
+  -e SMARTCRYPTO_NTFY_TOPIC `
+  -e SMARTCRYPTO_NTFY_TOKEN `
+  -e SMARTCRYPTO_NTFY_USERNAME `
+  -e SMARTCRYPTO_NTFY_PASSWORD `
+  -e SMARTCRYPTO_TELEGRAM_ENABLED `
+  -e SMARTCRYPTO_TELEGRAM_BOT_TOKEN `
+  -e SMARTCRYPTO_TELEGRAM_CHAT_ID `
+  -e SMARTCRYPTO_TELEGRAM_API_BASE_URL `
+  -e SMARTCRYPTO_TELEGRAM_PARSE_MODE `
+  -e SMARTCRYPTO_TELEGRAM_DISABLE_NOTIFICATION `
+  -e SMARTCRYPTO_NOTIFICATION_TIMEOUT_SECONDS `
+  phase14-feedback-sync-paper `
+  python scripts/run_trade_event_notifications.py `
+  --source-db /paper-db/tradesv3.paper.sqlite `
+  --daemon `
+  --send-real `
+  --channels all `
+  --poll-seconds 5
+
+## Serviço Docker permanente
+
+Serviço adicionado:
+
+- trade-event-notifications-paper
+
+Profile:
+
+- notifications
+
+O serviço não sobe em um `docker compose up -d` comum.
+
+Comando para iniciar explicitamente:
+
+docker compose -f ".\docker-compose.paper.yml" --profile notifications up -d trade-event-notifications-paper
+
+Comando para parar:
+
+docker compose -f ".\docker-compose.paper.yml" --profile notifications stop trade-event-notifications-paper
+
+Comando para logs:
+
+docker compose -f ".\docker-compose.paper.yml" --profile notifications logs -f trade-event-notifications-paper
+
+## Configuração do serviço
+
+O serviço usa:
+
+- build: docker/smartcrypto/Dockerfile
+- restart: unless-stopped
+- env_file: .env
+- volume read-only para /paper-db
+- state oficial em /app/data/runtime/trade_event_notifications.sqlite
+- report oficial em /app/data/reports/trade_event_notifications_report.json
+- source DB: /paper-db/tradesv3.paper.sqlite
+- channels default: all
+- poll default: 5 segundos
+
+Variáveis opcionais:
+
+- SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_CHANNELS=all
+- SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_POLL_SECONDS=5
+
+## Validação de ambiente sanitizada
+
+Nunca imprimir tokens, chat_id integral, tópico privado ou qualquer segredo.
+
+Inspecionar apenas presença e tamanho:
+
+python -c "import os,json; print(json.dumps({'ntfy_enabled': os.getenv('SMARTCRYPTO_NTFY_ENABLED'), 'ntfy_topic_present': bool(os.getenv('SMARTCRYPTO_NTFY_TOPIC')), 'ntfy_topic_len': len(os.getenv('SMARTCRYPTO_NTFY_TOPIC') or ''), 'telegram_enabled': os.getenv('SMARTCRYPTO_TELEGRAM_ENABLED'), 'telegram_token_present': bool(os.getenv('SMARTCRYPTO_TELEGRAM_BOT_TOKEN')), 'telegram_token_len': len(os.getenv('SMARTCRYPTO_TELEGRAM_BOT_TOKEN') or ''), 'telegram_chat_id_present': bool(os.getenv('SMARTCRYPTO_TELEGRAM_CHAT_ID')), 'telegram_chat_id_len': len(os.getenv('SMARTCRYPTO_TELEGRAM_CHAT_ID') or '')}, sort_keys=True))"
+
+## Relatório runtime
+
+Arquivo:
+
+- data/reports/trade_event_notifications_report.json
+
+Campos principais:
+
+- status
+- reason
+- daemon
+- daemon_iteration
+- channels
+- dry_run
+- events_detected
+- events_pending
+- events_dispatched
+- events_marked_sent
+- dispatches
+- sends_orders
+- changes_risk
+- exchange_private_access
+
+O relatório é runtime e não deve ser versionado.
+
+## State runtime
+
+Arquivo:
+
+- data/runtime/trade_event_notifications.sqlite
+
+Tabelas:
+
+- trade_event_notifications
+- trade_event_notification_channels
+
+O state é runtime e não deve ser versionado.
+
+## Comportamento esperado
+
+Sem evento novo:
+
+- status=ok
+- reason=no_pending_events
+- events_pending=0
+- events_dispatched=0
+- events_marked_sent=0
+
+Com evento novo e ambos os canais entregues:
+
+- status=ok
+- reason=processed
+- events_pending=1
+- events_dispatched=1
+- events_marked_sent=1
+- successful_channels=["ntfy", "telegram"]
+- remaining_channels_after=[]
+
+Com falha parcial:
+
+- status=blocked
+- reason=required_channel_delivery_blocked_or_failed
+- canal entregue é persistido em trade_event_notification_channels
+- canal pendente permanece em remaining_channels_after
+- próximo ciclo tenta apenas o canal pendente
+
+## Validações
+
+docker compose -f ".\docker-compose.paper.yml" config
+
+python -m compileall smartcrypto/ops/trade_event_notifications.py tests/test_trade_event_notifications.py
+
+python -m pytest tests/test_trade_event_notifications.py tests/test_notification_channels_dashboard_test_panel.py tests/test_critical_notifications_dashboard_panel.py -q
+
+python scripts/generate_project_manifest.py --check
+
+python scripts/scan_versioned_secrets.py --json
+
+## Invariantes
+
 paper_only=true
 shadow_only=true
 live_trading_enabled=false
@@ -101,12 +257,8 @@ exchange_private_access=false
 sends_orders=false
 changes_risk=false
 
-Validacao:
-python -m compileall scripts/run_trade_event_notifications.py smartcrypto/ops/trade_event_notifications.py tests/test_trade_event_notifications.py
-python -m pytest tests/test_trade_event_notifications.py -q
-python scripts/generate_project_manifest.py --check
-python scripts/scan_versioned_secrets.py --json
+## Limites
 
-Limite:
-Esta branch e exclusivamente observabilidade/comunicacao paper-shadow.
-Nao libera live, canary, readiness ou envio de ordens.
+Esta entrega não libera live, canary ou ordens reais.
+
+O sistema continua restrito a observabilidade e comunicação paper/shadow.
