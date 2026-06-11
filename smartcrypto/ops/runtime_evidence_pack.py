@@ -150,7 +150,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     evidence_pack_path = output_path / DEFAULT_EVIDENCE_PACK_PATH
     readiness_snapshot_path = output_path / DEFAULT_READINESS_SNAPSHOT_PATH
 
-    sources = collect_evidence_sources(root)
+    sources = collect_evidence_sources(root, materialize_gap_accounting_report=not no_write)
     runtime_sources = collect_runtime_observability_sources(root, now=current_time)
     service_catalog = collect_compose_service_catalog(root)
     container_snapshot = collect_docker_container_snapshot(timeout_seconds=container_timeout_seconds) if include_containers else {
@@ -210,6 +210,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "output_paths": {
             "runtime_evidence_pack_v2": str(evidence_pack_path),
             "readiness_snapshot_v2": str(readiness_snapshot_path),
+            "paper_shadow_soak_gap_accounting_report": str(root / EVIDENCE_PATHS["paper_shadow_soak_gap_accounting"]),
         },
         **safety,
     }
@@ -264,13 +265,20 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     )
 
 
-def collect_evidence_sources(root: Path) -> dict[str, dict[str, Any]]:
+def collect_evidence_sources(
+    root: Path,
+    *,
+    materialize_gap_accounting_report: bool = False,
+) -> dict[str, dict[str, Any]]:
     sources = {
         name: load_json_evidence(root / relative_path, required=name in REQUIRED_EVIDENCE)
         for name, relative_path in EVIDENCE_PATHS.items()
         if name != "paper_shadow_soak_gap_accounting"
     }
-    sources["paper_shadow_soak_gap_accounting"] = collect_paper_shadow_soak_gap_accounting(root)
+    sources["paper_shadow_soak_gap_accounting"] = collect_paper_shadow_soak_gap_accounting(
+        root,
+        write=materialize_gap_accounting_report,
+    )
     sources["manifest_check"] = collect_manifest_check(root)
     sources["secret_scan"] = collect_secret_scan(root)
     return sources
@@ -612,7 +620,7 @@ def load_json_evidence(path: Path, *, required: bool) -> dict[str, Any]:
     }
 
 
-def collect_paper_shadow_soak_gap_accounting(root: Path) -> dict[str, Any]:
+def collect_paper_shadow_soak_gap_accounting(root: Path, *, write: bool = False) -> dict[str, Any]:
     path = root / EVIDENCE_PATHS["paper_shadow_soak_gap_accounting"]
     try:
         from smartcrypto.ops.paper_shadow_soak_gap_accounting import (
@@ -622,7 +630,7 @@ def collect_paper_shadow_soak_gap_accounting(root: Path) -> dict[str, Any]:
         result = audit_paper_shadow_soak_continuity_and_gap_accounting(
             project_root=root,
             output=path,
-            write=False,
+            write=write,
         )
         report = result.report if hasattr(result, "report") else {}
     except Exception as exc:
@@ -653,6 +661,7 @@ def collect_paper_shadow_soak_gap_accounting(root: Path) -> dict[str, Any]:
         path,
         required=True,
         payload=report,
+        materialized=bool(write and path.exists()),
     )
 
 
@@ -699,6 +708,7 @@ def generated_source(
     required: bool,
     payload: Mapping[str, Any] | None = None,
     error: str | None = None,
+    materialized: bool = False,
 ) -> dict[str, Any]:
     source = {
         "status": status,
@@ -707,6 +717,7 @@ def generated_source(
         "exists": status != "evidence_missing",
         "required": required,
         "generated": True,
+        "materialized": materialized,
         "payload": dict(payload or {}),
     }
     if error:
@@ -814,6 +825,7 @@ def public_source_summary(source: Mapping[str, Any]) -> dict[str, Any]:
         "required": bool(source.get("required")),
         "source_status": source.get("source_status") or (payload.get("status") if isinstance(payload, Mapping) else None),
         "last_modified_utc": source.get("last_modified_utc"),
+        "materialized": bool(source.get("materialized")),
     }
     if source.get("error"):
         summary["error"] = source.get("error")
@@ -939,6 +951,8 @@ def gap_accounting_readiness_summary(payload: Mapping[str, Any]) -> dict[str, An
         "canary_release_allowed": False,
         "live_release_allowed": False,
         "manual_go_no_go_required": True,
+        "write_performed": payload.get("write_performed") is True,
+        "report_materialized": payload.get("write_performed") is True,
     }
 
 

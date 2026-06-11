@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "4305d005768a7c7d882d918d5af6f4249971c5b1fcbccb3d13b0c56b4f675f5d",
+  "aggregate_sha256": "ec2167628c4926c340853f491e7bbeab4439463695c2e5391be19cbf40ca4eb5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1628,10 +1628,10 @@
       "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
     },
     {
-      "bytes": 3875,
+      "bytes": 4339,
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
-      "sha256": "e1c3281ce52470bc9cd93b13abba87397a53332a215a04a500dc229198b801fa"
+      "sha256": "7f95e855bc9c7be93c11490b30c869380b65a4a52318176ec8d4951f63fdcac7"
     },
     {
       "bytes": 1888,
@@ -3740,10 +3740,10 @@
       "sha256": "419e050fb7ff0bfb8c350b614b6d6c7dbd4ab77915461bd6efb3d70c49d2ec71"
     },
     {
-      "bytes": 43347,
+      "bytes": 43987,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/runtime_evidence_pack.py",
-      "sha256": "749d1fb99823137c6b25f3a0cbd941e5e3a1c47db226f7734993aa3bc38236a4"
+      "sha256": "69b35bc605c945d82f598d012bc8b1f03ef1540b03734c01f6e5d3d6c1765aae"
     },
     {
       "bytes": 13874,

@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     runtime = result.evidence_pack.get("runtime_observability", {})
     containers = result.evidence_pack.get("container_snapshot", {})
     gap_accounting = result.readiness_snapshot.get("paper_shadow_soak_gap_accounting", {})
+    output_paths = result.evidence_pack.get("output_paths", {}) if isinstance(result.evidence_pack.get("output_paths"), dict) else {}
     summary = {
         "status": result.readiness_snapshot["status"],
         "reason": result.readiness_snapshot["reason"],
@@ -53,6 +54,9 @@ def main(argv: list[str] | None = None) -> int:
         "container_snapshot_reason": containers.get("reason"),
         "runtime_evidence_pack_path": str(result.evidence_pack_path),
         "readiness_snapshot_path": str(result.readiness_snapshot_path),
+        "paper_shadow_soak_gap_accounting_report_path": output_paths.get("paper_shadow_soak_gap_accounting_report"),
+        "paper_shadow_soak_gap_accounting_report_write_performed": gap_accounting.get("write_performed"),
+        "paper_shadow_soak_gap_accounting_report_materialized": gap_accounting.get("report_materialized"),
         "write_performed": result.write_performed,
         "missing_evidence": result.readiness_snapshot["missing_evidence"],
         "blocking_reasons": result.readiness_snapshot["blocking_reasons"],
