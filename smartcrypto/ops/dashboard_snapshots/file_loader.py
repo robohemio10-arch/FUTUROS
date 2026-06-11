@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import importlib
 import json
 from pathlib import Path
@@ -35,6 +36,15 @@ def load_dashboard_file(
             data = _load_jsonl(target)
         elif suffix == ".parquet":
             data = _load_parquet(target)
+        elif suffix == ".csv":
+            data = _load_csv(target)
+        elif suffix in {".sqlite", ".sqlite3", ".db"}:
+            data = {
+                "path": str(target),
+                "size_bytes": target.stat().st_size,
+                "read_only": True,
+                "database_opened": False,
+            }
         else:
             return DashboardLoadResult(
                 exists=True,
@@ -117,6 +127,11 @@ def _load_parquet(path: Path) -> Any:
     importlib.import_module("pyarrow")
     pandas = importlib.import_module("pandas")
     return pandas.read_parquet(path)
+
+
+def _load_csv(path: Path) -> list[dict[str, Any]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
 
 
 def _missing_status(source_kind: SourceKind) -> DashboardSectionStatus:
