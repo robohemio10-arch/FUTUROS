@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "3272ab41e49eb4bb3779e17e4c65f9e09f284ae46a902e49bccb5bcd5cb7ea3d",
+  "aggregate_sha256": "49830c2b7a4685455ff2a513525d4fa5e71a0ee2ce0b574195e5fa1a8840d463",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 126,
-    "manifested_files_total": 837,
-    "python_files": 621,
+    "docs_files": 127,
+    "manifested_files_total": 843,
+    "python_files": 626,
     "runtime_excluded_files_total": 0,
-    "test_files": 174,
-    "tracked_files_total": 838,
+    "test_files": 175,
+    "tracked_files_total": 844,
     "workflows": 1
   },
   "deterministic": true,
@@ -920,6 +920,12 @@
       "sha256": "8cad8cf62b5ce04bea9d37bf71aa449637aad3afe7c7deccb7f29aefd6cc49bf"
     },
     {
+      "bytes": 3048,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_RUNTIME_HEALTH_AND_FRESHNESS_EVIDENCE_V1.md",
+      "sha256": "ca791535e3803b59fd215cc5bfe427783f49b4eb8b72aa0b5a68d044d0506875"
+    },
+    {
       "bytes": 2020,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SESSION_SINGLETON_LOCK.md",
@@ -1458,6 +1464,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_monte_carlo_no_trade_recovery.py",
       "sha256": "4deb60b6990d9387780aaf061a1933c0e42092c99cf0d1cdb38d3522d0901a74"
+    },
+    {
+      "bytes": 1619,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_runtime_health_and_freshness.py",
+      "sha256": "ef70a7ab1d6d58640cdf91fececff87616d2ce30f607f59fb9fda0eb2d544941"
     },
     {
       "bytes": 2516,
@@ -3668,6 +3680,24 @@
       "sha256": "98c78065d110e9de1edb6e41b0233b9eebce57c44be1a40bb3a19ce48867b779"
     },
     {
+      "bytes": 154,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_runtime_health_and_freshness/__init__.py",
+      "sha256": "ffe3266d40d9d238e836c6918819d9b4ac9d0adabd2eae74ae8459881568c039"
+    },
+    {
+      "bytes": 20921,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_runtime_health_and_freshness/auditor.py",
+      "sha256": "e64bdf7ef5497d022a578b8cca17bdca360b0354af3851a28149c4974bffe16f"
+    },
+    {
+      "bytes": 3870,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_runtime_health_and_freshness/contracts.py",
+      "sha256": "784c820d0de5fa9202c9b000adbb1bb3dce0fe0445ad67fef7d41bea17115e5d"
+    },
+    {
       "bytes": 8702,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_session.py",
@@ -4692,6 +4722,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_risk_controller.py",
       "sha256": "3ad7b5db31a69b0f89b193b57b183dc4623649ca5990ead57683cbd480ec34fc"
+    },
+    {
+      "bytes": 11702,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_runtime_health_and_freshness_evidence_v1.py",
+      "sha256": "37e12d8929919cc03a672cafd9f2f5476945bfbe199937c9966aa3188ac2b999"
     },
     {
       "bytes": 4784,
