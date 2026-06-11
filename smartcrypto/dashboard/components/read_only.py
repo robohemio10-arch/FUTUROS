@@ -8,6 +8,10 @@ from smartcrypto.dashboard.security.dashboard_readonly_guard import (
     build_readonly_audit_footer,
     get_global_banners,
 )
+from smartcrypto.dashboard.ui.footer import render_footer_audit_bar
+from smartcrypto.dashboard.ui.cards import render_metric_card
+from smartcrypto.dashboard.ui.layout import render_readonly_banner as render_theme_readonly_banner
+from smartcrypto.dashboard.ui.states import render_unknown_state as unknown_state_html
 
 from .snapshot_cards import MetricSpec, render_metric_cards, render_snapshot_header
 from .snapshot_tables import render_section_details, render_section_status_table
@@ -31,7 +35,7 @@ def get_streamlit() -> Any:
 
 
 def render_readonly_banner(*, ui: Any) -> None:
-    ui.warning("PAPER / SHADOW ONLY | SMART FUTUROS Command Center em modo read-only")
+    render_theme_readonly_banner(ui=ui)
 
 
 def render_global_safety_badges(*, ui: Any) -> None:
@@ -39,7 +43,7 @@ def render_global_safety_badges(*, ui: Any) -> None:
 
 
 def render_unknown_state(message: str, *, ui: Any) -> None:
-    ui.info(f"UNKNOWN: {message}")
+    ui.markdown(unknown_state_html(message), unsafe_allow_html=True)
 
 
 def render_missing_snapshot_state(snapshot_path: str, *, ui: Any) -> None:
@@ -50,7 +54,16 @@ def render_missing_snapshot_state(snapshot_path: str, *, ui: Any) -> None:
 
 
 def render_disabled_control_stub(label: str, reason: str, *, ui: Any) -> None:
-    ui.info(f"{label}: disabled ({reason})")
+    ui.markdown(
+        render_metric_card(
+            label,
+            f"disabled ({reason})",
+            status="disabled",
+            helper=f"{label}: disabled ({reason})",
+            size="sm",
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def render_audit_footer(audit: Any, *, ui: Any) -> None:
@@ -69,12 +82,16 @@ def render_snapshot_page(
     section_order: Sequence[str],
     metric_specs: Sequence[MetricSpec] = (),
     ui: Any | None = None,
+    render_chrome: bool = True,
 ) -> None:
     target_ui = ui or get_streamlit()
     assert_dashboard_readonly(snapshot)
-    render_readonly_banner(ui=target_ui)
-    render_global_safety_badges(ui=target_ui)
-    render_snapshot_header(title, snapshot, ui=target_ui)
+    if render_chrome:
+        render_readonly_banner(ui=target_ui)
+        render_global_safety_badges(ui=target_ui)
+        render_snapshot_header(title, snapshot, ui=target_ui)
+    else:
+        render_snapshot_header_metadata(snapshot, ui=target_ui)
     if str(snapshot.get("status", "")).upper() == "UNKNOWN":
         render_missing_snapshot_state(snapshot_path, ui=target_ui)
     render_metric_cards(snapshot, metric_specs, ui=target_ui)
@@ -82,4 +99,17 @@ def render_snapshot_page(
     target_ui.subheader("Status das seções")
     render_section_status_table(sections, ui=target_ui, section_order=section_order)
     render_section_details(sections, ui=target_ui, section_order=section_order)
-    render_audit_footer(snapshot.get("audit"), ui=target_ui)
+    if render_chrome:
+        render_audit_footer(snapshot.get("audit"), ui=target_ui)
+        render_footer_audit_bar(snapshot_path, ui=target_ui)
+
+
+def render_snapshot_header_metadata(snapshot: Mapping[str, Any], *, ui: Any) -> None:
+    status_summary = snapshot.get("status_summary")
+    status = status_summary.get("status") if isinstance(status_summary, Mapping) else None
+    status = status or snapshot.get("overall_status") or snapshot.get("status") or "UNKNOWN"
+    from .status_badges import render_status_badge
+
+    render_status_badge(status, ui=ui)
+    ui.caption(f"Last updated UTC: {snapshot.get('last_updated_utc') or 'UNKNOWN'}")
+    ui.caption(f"Schema: {snapshot.get('schema_version') or 'UNKNOWN'}")

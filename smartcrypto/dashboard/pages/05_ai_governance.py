@@ -5,10 +5,21 @@ from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
+from smartcrypto.dashboard.ui import (
+    inject_smart_futuros_command_center_css,
+    render_footer_audit_bar,
+    render_global_topbar,
+    render_page_title,
+    render_sidebar,
+)
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
 
 PAGE_TITLE = "05. IA / Qlib Governance"
+PAGE_NUMBER = "05"
+PAGE_NAME = "IA / Qlib Governance"
+PAGE_SUBTITLE = "MLOps, challenger governance, drift e atribuição IA Shadow."
+ACTIVE_PAGE = "05_ai_governance"
 SNAPSHOT_PATH = "data/reports/dashboard_ai_governance_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_ai_governance_snapshot_v1"
 REQUIRED_SECTIONS = (
@@ -30,10 +41,17 @@ METRICS = (
 
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
+    target_ui = ui or get_streamlit()
+    inject_smart_futuros_command_center_css(ui=target_ui)
+    render_global_topbar(last_updated=snapshot.get("last_updated_utc"), ui=target_ui)
+    render_sidebar(ACTIVE_PAGE, {"environment": "shadow", "snapshot": SNAPSHOT_PATH}, ui=target_ui)
+    render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
     render_snapshot_page(
         title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=ui,
+        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+        render_chrome=False,
     )
+    render_footer_audit_bar(SNAPSHOT_PATH, ["Auto-promotion disabled"], ui=target_ui)
 
 
 def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:

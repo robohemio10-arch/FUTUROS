@@ -5,9 +5,6 @@ from typing import Any
 
 from smartcrypto.dashboard.components.read_only import (
     get_streamlit,
-    render_audit_footer,
-    render_global_safety_badges,
-    render_readonly_banner,
     render_unknown_state,
 )
 from smartcrypto.dashboard.components.snapshot_cards import render_snapshot_header
@@ -17,6 +14,14 @@ from smartcrypto.dashboard.security.dashboard_readonly_guard import (
     assert_dashboard_readonly,
 )
 from smartcrypto.dashboard.services.dashboard_snapshot_service import load_dashboard_snapshot
+from smartcrypto.dashboard.ui import (
+    inject_smart_futuros_command_center_css,
+    render_footer_audit_bar,
+    render_global_topbar,
+    render_page_title,
+    render_readonly_banner,
+    render_sidebar,
+)
 from smartcrypto.ops.dashboard_snapshots.contracts import (
     DASHBOARD_GLOBAL_STATUS_SCHEMA_VERSION,
     DASHBOARD_SNAPSHOT_BUILD_SUMMARY_SCHEMA_VERSION,
@@ -74,10 +79,21 @@ def render_app(
     *,
     ui: Any,
 ) -> None:
+    inject_smart_futuros_command_center_css(ui=ui)
+    render_global_topbar(last_updated=global_snapshot.get("last_updated_utc"), ui=ui)
+    render_sidebar(
+        "",
+        {
+            "account": "PAPER / SHADOW",
+            "environment": global_snapshot.get("runtime_mode", "paper"),
+            "dashboard_version": "theme-v1",
+            "snapshot": GLOBAL_STATUS_SNAPSHOT_FILENAME,
+            "data_source": "read-only snapshots",
+        },
+        ui=ui,
+    )
+    render_page_title("", DASHBOARD_TITLE, DASHBOARD_DOCUMENT_NAME, ui=ui)
     render_readonly_banner(ui=ui)
-    render_global_safety_badges(ui=ui)
-    ui.title(DASHBOARD_TITLE)
-    ui.caption(DASHBOARD_DOCUMENT_NAME)
 
     try:
         assert_dashboard_readonly(global_snapshot)
@@ -92,8 +108,7 @@ def render_app(
     render_section_status_table(global_snapshot.get("sections"), ui=ui)
 
     ui.subheader("Páginas read-only")
-    for label, target in PAGE_LINKS:
-        ui.page_link(target, label=label)
+    ui.caption("Use a navegação institucional na barra lateral para acessar as oito vistas.")
 
     ui.subheader("Último build de snapshots")
     ui.json(
@@ -105,7 +120,7 @@ def render_app(
             "future_sources_pending": build_summary.get("future_sources_pending", []),
         }
     )
-    render_audit_footer(global_snapshot.get("audit"), ui=ui)
+    render_footer_audit_bar(GLOBAL_STATUS_SNAPSHOT_FILENAME, ui=ui)
 
 
 def main(project_root: str | Path = ".") -> None:

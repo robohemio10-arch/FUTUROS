@@ -3,6 +3,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from smartcrypto.dashboard.ui.cards import render_metric_card
+from smartcrypto.dashboard.ui.status import normalize_status
+
 from .status_badges import render_status_badge
 
 
@@ -32,7 +35,11 @@ def render_metric_cards(
         chunk = values[start : start + 4]
         columns = ui.columns(len(chunk))
         for column, (label, value) in zip(columns, chunk, strict=True):
-            column.metric(label, format_display_value(value))
+            status = normalize_status(value) if isinstance(value, str) else "neutral"
+            column.markdown(
+                render_metric_card(label, format_display_value(value), status=status),
+                unsafe_allow_html=True,
+            )
 
 
 def render_key_value_grid(data: Any, *, ui: Any) -> None:

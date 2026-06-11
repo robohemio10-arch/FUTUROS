@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from smartcrypto.dashboard.ui.status import normalize_status as normalize_visual_status
+from smartcrypto.dashboard.ui.status import status_to_label
+
 
 STATUS_SYMBOLS = {
     "OK": "[OK]",
@@ -24,13 +27,10 @@ def normalize_status(value: Any) -> str:
 
 def render_status_badge(status: Any, *, ui: Any) -> str:
     normalized = normalize_status(status)
-    label = f"{STATUS_SYMBOLS[normalized]} {normalized}"
-    if normalized == "OK":
-        ui.success(label)
-    elif normalized in {"WARNING", "DEGRADED", "STALE", "MISSING_OPTIONAL"}:
-        ui.warning(label)
-    elif normalized in {"BLOCKED", "ERROR", "MISSING_REQUIRED", "HARD_BLOCKED"}:
-        ui.error(label)
-    else:
-        ui.info(label)
+    visual_status = normalize_visual_status(normalized)
+    label = status_to_label(visual_status)
+    ui.markdown(
+        f'<span class="sfc-status-pill sfc-status-{visual_status}">{label}</span>',
+        unsafe_allow_html=True,
+    )
     return normalized

@@ -11,10 +11,22 @@ from smartcrypto.dashboard.components.decision_trace import (
     render_financial_event_log_decision_trace,
 )
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
+from smartcrypto.dashboard.ui import (
+    inject_smart_futuros_command_center_css,
+    render_chart_placeholder,
+    render_footer_audit_bar,
+    render_global_topbar,
+    render_page_title,
+    render_sidebar,
+)
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
 
 PAGE_TITLE = "07. Relatórios Quantitativos & TCA"
+PAGE_NUMBER = "07"
+PAGE_NAME = "Relatórios Quantitativos & TCA"
+PAGE_SUBTITLE = "Performance, risco ajustado, custos de execução e trilha decisória."
+ACTIVE_PAGE = "07_quantitative_reports"
 SNAPSHOT_PATH = "data/reports/dashboard_quantitative_reports_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_quantitative_reports_snapshot_v1"
 REQUIRED_SECTIONS = (
@@ -39,12 +51,22 @@ METRICS = (
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     target_ui = ui or get_streamlit()
+    inject_smart_futuros_command_center_css(ui=target_ui)
+    render_global_topbar(last_updated=snapshot.get("last_updated_utc"), ui=target_ui)
+    render_sidebar(ACTIVE_PAGE, {"environment": "paper", "snapshot": SNAPSHOT_PATH}, ui=target_ui)
+    render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
     render_snapshot_page(
         title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
         section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+        render_chrome=False,
+    )
+    target_ui.markdown(
+        render_chart_placeholder("Equity Curve / Drawdown", "Série temporal indisponível no snapshot"),
+        unsafe_allow_html=True,
     )
     render_financial_event_log_decision_trace(snapshot, ui=target_ui)
     render_dataset_ocr_training_pipeline_status(snapshot, ui=target_ui)
+    render_footer_audit_bar(SNAPSHOT_PATH, ["TCA read-only"], ui=target_ui)
 
 
 def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:

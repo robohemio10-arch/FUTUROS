@@ -21,10 +21,21 @@ from smartcrypto.dashboard.controls.command_classifier import list_dashboard_com
 from smartcrypto.dashboard.controls.command_stub_adapter import evaluate_dashboard_command_intent
 from smartcrypto.dashboard.controls.contracts import DashboardCommandIntent
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
+from smartcrypto.dashboard.ui import (
+    inject_smart_futuros_command_center_css,
+    render_footer_audit_bar,
+    render_global_topbar,
+    render_page_title,
+    render_sidebar,
+)
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
 
 PAGE_TITLE = "06. Controles Ativos"
+PAGE_NUMBER = "06"
+PAGE_NAME = "Controles Ativos"
+PAGE_SUBTITLE = "Governança de comandos em dry-run/stub; N4 permanece HARD_BLOCKED."
+ACTIVE_PAGE = "06_active_controls"
 SNAPSHOT_PATH = "data/reports/dashboard_active_controls_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_active_controls_snapshot_v1"
 REQUIRED_SECTIONS = (
@@ -48,9 +59,14 @@ METRICS = (
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     target_ui = ui or get_streamlit()
+    inject_smart_futuros_command_center_css(ui=target_ui)
+    render_global_topbar(last_updated=snapshot.get("last_updated_utc"), ui=target_ui)
+    render_sidebar(ACTIVE_PAGE, {"environment": "paper", "snapshot": SNAPSHOT_PATH}, ui=target_ui)
+    render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
     render_snapshot_page(
         title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
         section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+        render_chrome=False,
     )
     target_ui.subheader("Controles governados")
     render_stub_only_banner(ui=target_ui)
@@ -65,6 +81,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     for command in LEVEL4_ALWAYS_BLOCKED:
         render_disabled_control_stub(command, "HARD_BLOCKED", ui=target_ui)
     render_readiness_gates_snapshot_view(snapshot, ui=target_ui)
+    render_footer_audit_bar(SNAPSHOT_PATH, ["N4 HARD-BLOCKED"], ui=target_ui)
 
 
 def _example_intents() -> tuple[DashboardCommandIntent, ...]:
