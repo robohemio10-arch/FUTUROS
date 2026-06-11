@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "98b1e8161f96daa596437188569beba8e88bd20b0e88a1832999567f263d24f5",
+  "aggregate_sha256": "79fd4f9ee44ef66ee00e08423813dd9e7a3156f6b89e8033cc47c163967585d8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 118,
     "manifested_files_total": 712,
     "python_files": 505,
-    "runtime_excluded_files_total": 1,
+    "runtime_excluded_files_total": 0,
     "test_files": 128,
-    "tracked_files_total": 714,
+    "tracked_files_total": 713,
     "workflows": 1
   },
   "deterministic": true,
@@ -3674,10 +3674,10 @@
       "sha256": "ab2849cd36ed7edf5bf13241e82c084be7d09f06f79fa01c9be9614ed5201a61"
     },
     {
-      "bytes": 3630,
+      "bytes": 4032,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_file_loader_v2.py",
-      "sha256": "c173459dd858c7767547af28edffb80dc396e79509dfa5cb419f4c865b930c42"
+      "sha256": "3c9f45e91ec9fda78874d925a47a49bac8918b5fa101aa041d2e919a84a3bf4e"
     },
     {
       "bytes": 4259,
@@ -4291,9 +4291,7 @@
   "manifest_version": 3,
   "runtime_artifacts_not_in_zip": true,
   "runtime_exclusions": {
-    "excluded_tracked_paths": [
-      "tests/fixtures/dashboard_sources/sample.jsonl"
-    ],
+    "excluded_tracked_paths": [],
     "prefixes": [
       "data/",
       "evidence/",

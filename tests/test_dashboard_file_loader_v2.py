@@ -25,14 +25,26 @@ def test_missing_sources_return_status_by_source_kind_without_creating_paths(tmp
     assert not target.parent.exists()
 
 
-def test_valid_json_and_jsonl_load_readonly() -> None:
+def test_valid_json_and_jsonl_load_readonly(tmp_path: Path) -> None:
     json_result = load_dashboard_file(FIXTURES / "dashboard_sources" / "sample.json")
-    jsonl_result = load_dashboard_file(FIXTURES / "dashboard_sources" / "sample.jsonl")
+
+    sample_jsonl = tmp_path / "sample.jsonl"
+    sample_jsonl.write_text(
+        '{"source": "synthetic_fixture", "event": "one", "status": "OK"}\n'
+        '{"source": "synthetic_fixture", "event": "two", "status": "WARNING"}\n',
+        encoding="utf-8",
+    )
+    jsonl_result = load_dashboard_file(sample_jsonl)
 
     assert json_result.status is DashboardSectionStatus.OK
     assert json_result.data["source"] == "synthetic_fixture"
+
     assert jsonl_result.status is DashboardSectionStatus.OK
-    assert [row["sequence"] for row in jsonl_result.data] == [1, 2]
+    assert jsonl_result.exists is True
+    assert isinstance(jsonl_result.data, list)
+    assert len(jsonl_result.data) == 2
+    assert jsonl_result.data[0]["event"] == "one"
+    assert jsonl_result.data[1]["event"] == "two"
 
 
 def test_invalid_json_returns_controlled_error() -> None:
