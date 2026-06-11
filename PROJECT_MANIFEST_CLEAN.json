@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c93e78657baab2c4eee1ba577d04ae20d589363e809a820f5dd5bce4d713de82",
+  "aggregate_sha256": "43cde6ba73a0d8582ddbe1de64b71c0ea8e197f1301553f00d6ff97074c8edb5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 122,
-    "manifested_files_total": 804,
-    "python_files": 592,
+    "docs_files": 123,
+    "manifested_files_total": 814,
+    "python_files": 601,
     "runtime_excluded_files_total": 0,
-    "test_files": 160,
-    "tracked_files_total": 805,
+    "test_files": 164,
+    "tracked_files_total": 815,
     "workflows": 1
   },
   "deterministic": true,
@@ -1154,6 +1154,12 @@
       "sha256": "81564ca7315f9899910f8c6b7c74464c5fb4ce937ed6296aae546e1a3284de1c"
     },
     {
+      "bytes": 2756,
+      "hash_mode": "text_lf",
+      "path": "docs/SMART_FUTUROS_DASHBOARD_SEMANTIC_COVERAGE_AUDIT_V2.md",
+      "sha256": "ef10f1c21a0818138ee6827d189a2c4263cabf800d133e7706fe36f004d60031"
+    },
+    {
       "bytes": 4981,
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
@@ -1392,6 +1398,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_current_project_handover.py",
       "sha256": "71a71d2b6df11e0429de9cd0685a44459b0b7b5e9d4abe9c53d13922c4f3b2ba"
+    },
+    {
+      "bytes": 1796,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_dashboard_semantic_coverage_v2.py",
+      "sha256": "62ed100b95fee69ac730cac95a8058adbc2bbaf79120961014dbeb8f9dc1e0d3"
     },
     {
       "bytes": 7231,
@@ -3452,6 +3464,30 @@
       "sha256": "7b22fed4e6004149a0fe15bdd640c47b1844b29f4c3c79d6614aa566e3d5e3dc"
     },
     {
+      "bytes": 757,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_semantic_audit/__init__.py",
+      "sha256": "cb3ca5c8c11bc9537ff0fd016227c7855856786962bd57879140e338ac484b40"
+    },
+    {
+      "bytes": 8077,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_semantic_audit/auditor.py",
+      "sha256": "0d5834fc439ca535745adcfe6d16204138b3813328cc0223edbd61a2382272d1"
+    },
+    {
+      "bytes": 9449,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_semantic_audit/catalog.py",
+      "sha256": "67b024dcd4e6b49cc633cde325cd1fdf39ddd8f6c0668f6ff5a78f54f6245845"
+    },
+    {
+      "bytes": 3051,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_semantic_audit/contracts.py",
+      "sha256": "dd6e6bf4481d52575d26b05ece1839ad91a148c767b146f5d8e9b4890cfce27c"
+    },
+    {
       "bytes": 1749,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/__init__.py",
@@ -4188,6 +4224,30 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_safe_math_v2.py",
       "sha256": "6061e9148516961d635569cddbc7e91815232afaf83fd0504d79b385b3b8d6eb"
+    },
+    {
+      "bytes": 1173,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_semantic_coverage_auditor_v2.py",
+      "sha256": "327f3e804e4348b1fc57a11e4071ad0a0d1a3ea965b15c76180966a44fd8d431"
+    },
+    {
+      "bytes": 1571,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_semantic_coverage_contracts_v2.py",
+      "sha256": "dda1b13e1e01c4cd9f631c12eeb4ae488916fcda3f2017b3fbab85ef2f6de852"
+    },
+    {
+      "bytes": 1276,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_semantic_coverage_script_v2.py",
+      "sha256": "9ee84fc5dca977242805aeccb697ebca1392f998ce8466f17274e60b9782745b"
+    },
+    {
+      "bytes": 1692,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_semantic_coverage_static_safety_v2.py",
+      "sha256": "852608c092ae322e1960c3be4ec1ed92b5b6f995cbdb85b934eb161b986534ee"
     },
     {
       "bytes": 2844,
