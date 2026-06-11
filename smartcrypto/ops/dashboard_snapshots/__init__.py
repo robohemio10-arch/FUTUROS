@@ -41,3 +41,14 @@ __all__ = [
     "RuntimeMode",
     "SourceKind",
 ]
+
+
+def build_all_dashboard_snapshots(context):
+    from smartcrypto.ops.dashboard_snapshots.builder_registry import (
+        build_all_dashboard_snapshots as _build,
+    )
+
+    return _build(context)
+
+
+__all__.append("build_all_dashboard_snapshots")

@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "79fd4f9ee44ef66ee00e08423813dd9e7a3156f6b89e8033cc47c163967585d8",
+  "aggregate_sha256": "6b41e2d59b92eb42dbe91e2c5c36a994d8ee2d3e5c6f0eb8fba66e1873aaed65",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 118,
-    "manifested_files_total": 712,
-    "python_files": 505,
+    "docs_files": 119,
+    "manifested_files_total": 735,
+    "python_files": 527,
     "runtime_excluded_files_total": 0,
-    "test_files": 128,
-    "tracked_files_total": 713,
+    "test_files": 139,
+    "tracked_files_total": 736,
     "workflows": 1
   },
   "deterministic": true,
@@ -1130,6 +1130,12 @@
       "sha256": "f80a037241e0da4bdd1d08059b09946969ba55e83bd2d915f54ed8b255575ae8"
     },
     {
+      "bytes": 4748,
+      "hash_mode": "text_lf",
+      "path": "docs/SMART_FUTUROS_COMMAND_CENTER_V2_SNAPSHOT_BUILDERS.md",
+      "sha256": "f02abf10fbd929bd7d49a81c1017cbff354d84d3e978e11528d4ddc9b87df958"
+    },
+    {
       "bytes": 4981,
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
@@ -1470,6 +1476,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 1907,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_dashboard_snapshots.py",
+      "sha256": "bdea217132a03b89f684769e1d808be7d571ce80935f683860bf0d3cadec9f2f"
     },
     {
       "bytes": 1736,
@@ -3152,10 +3164,28 @@
       "sha256": "7b22fed4e6004149a0fe15bdd640c47b1844b29f4c3c79d6614aa566e3d5e3dc"
     },
     {
-      "bytes": 1499,
+      "bytes": 1749,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/__init__.py",
-      "sha256": "78d4427519f280515d9638b8bc994a3cd4146fb84256b5cf614eef5383a6d967"
+      "sha256": "9833634b6fc2472eeaa9f1d10d22a60ec463c76d6aed322fed1fd6b3122247e9"
+    },
+    {
+      "bytes": 5431,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/active_controls_snapshot_builder.py",
+      "sha256": "5e7d3903c12735bf5e99b20932df2706343957fe1c3c86258f504e559d3d7f52"
+    },
+    {
+      "bytes": 7202,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/ai_governance_snapshot_builder.py",
+      "sha256": "97b479619a6b59380d2dac815e658e0258af792ef84297721333a388a4ae1b53"
+    },
+    {
+      "bytes": 7333,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/alerts_messaging_snapshot_builder.py",
+      "sha256": "a02488c5855417d24932e68763c9d408e33743a1a27efcbfe17190536336daf2"
     },
     {
       "bytes": 1563,
@@ -3164,16 +3194,58 @@
       "sha256": "c5e7a1a140a1a1fb7fbfafe9711267145f038dee026b9c8ec585669cabb498bc"
     },
     {
+      "bytes": 12602,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/builder_common.py",
+      "sha256": "26fa5c1f75d50844573faa0f93f9227a62214716f0dac94fea2046e59c914024"
+    },
+    {
+      "bytes": 10699,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/builder_registry.py",
+      "sha256": "c6860218fd1c8d260d4a7c0e99d3643bfee201ed935e34b98603f2928c4f5ac2"
+    },
+    {
       "bytes": 6966,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/contracts.py",
       "sha256": "059ad6493eb270a2be0440d39d4fc6a45e8856c21a002698f29960f41376cd0f"
     },
     {
-      "bytes": 4180,
+      "bytes": 4699,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/file_loader.py",
-      "sha256": "abd0a55fc6dff696b1c683cee2374feed3b6299f824f93826485dbc147f37f83"
+      "sha256": "e2c510e82fb70ece0486fe1cf58dc21ae44cd531b477580cc1d8c39275c4d9e9"
+    },
+    {
+      "bytes": 8535,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/grid_monitor_snapshot_builder.py",
+      "sha256": "72ba548daf670ff0ed71d9c44e4fe1f47e7c9055e7b0d835c01ca5a94e419dca"
+    },
+    {
+      "bytes": 6912,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/infrastructure_snapshot_builder.py",
+      "sha256": "a358b7c1641b5ec187ed94614f6a9d756e18bee6c4532b64c67b8e748cded3ab"
+    },
+    {
+      "bytes": 5673,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/opportunity_scanner_snapshot_builder.py",
+      "sha256": "6dfb8edb4c7de1de7b3300760f6ba33852f6a3af26bdef3c503c92719e3de183"
+    },
+    {
+      "bytes": 7278,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/portfolio_risk_snapshot_builder.py",
+      "sha256": "b6f4fa9470d2e84f73db54c00cbe3f6274fb95ab288eb4e612acec0d752cbaa8"
+    },
+    {
+      "bytes": 9277,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/quantitative_reports_snapshot_builder.py",
+      "sha256": "d13ec12f2eddd9faf51278965cf1db2c3d749eead11f5047b94e6ba77cae0656"
     },
     {
       "bytes": 3850,
@@ -3500,6 +3572,12 @@
       "sha256": "2ad23242b1c0bccfcf083b2992cf2c227328247547a3b17b24dff9102b0e42dc"
     },
     {
+      "bytes": 2154,
+      "hash_mode": "text_lf",
+      "path": "tests/dashboard_builder_test_support.py",
+      "sha256": "f2b7fac58d4398d01a089fa0fed7ee4dcb3de860f24fec3576fc46e86d75297e"
+    },
+    {
       "bytes": 618,
       "hash_mode": "text_lf",
       "path": "tests/fixtures/dashboard_snapshots/valid_snapshot.json",
@@ -3656,10 +3734,34 @@
       "sha256": "1181f5de5121c60cd69a5b31dd0eacd5376d2152768c58099945ce9b7c345c0e"
     },
     {
+      "bytes": 2160,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_active_controls_snapshot_builder_v2.py",
+      "sha256": "78a924a1521b46cbfc44304fba87b8fdc3915aff4d5839272703f99f1dcb8c8d"
+    },
+    {
       "bytes": 14607,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_ai_governance_panel.py",
       "sha256": "e8e1fe03b37f2ff5017b2133fdf79277acf093196d428c977e784505d815d5f5"
+    },
+    {
+      "bytes": 2325,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_ai_governance_snapshot_builder_v2.py",
+      "sha256": "ac689416d34be654b449c2413ef2fba719852c59d1f039b7d1702bf754b6a7be"
+    },
+    {
+      "bytes": 2352,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_alerts_messaging_snapshot_builder_v2.py",
+      "sha256": "c69617ae516c4b06aa8fcc0fa2c1d2cef2737c21dd3499de17fcc91f349e77c0"
+    },
+    {
+      "bytes": 2505,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_build_snapshots_script_v2.py",
+      "sha256": "229b58c6f79bc36d01e6d4183ca1d370cc669509837ca3d863b5239152b1076c"
     },
     {
       "bytes": 4351,
@@ -3686,6 +3788,36 @@
       "sha256": "630b17bddb9861fd4c403084efd8b736f6d19c34c6d3e74ac71360477b9d7589"
     },
     {
+      "bytes": 1754,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_grid_monitor_snapshot_builder_v2.py",
+      "sha256": "7e3306420e2da65d34ca876f3eba3b5982fe0250271d48c478d947a2fbfc3f0e"
+    },
+    {
+      "bytes": 1930,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_infrastructure_snapshot_builder_v2.py",
+      "sha256": "71b044fc9c3b6120edc0f9dbd2dd71ff2a6ba5d093814821798dfa010d2ab956"
+    },
+    {
+      "bytes": 1858,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_opportunity_scanner_snapshot_builder_v2.py",
+      "sha256": "1d48b3face57559f51ca9dc77eb0f987a1b60d63366cb4ea08e660507a1d53e2"
+    },
+    {
+      "bytes": 2028,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_portfolio_risk_snapshot_builder_v2.py",
+      "sha256": "1b1af97e32a7b3a2c316f0fe4bac30f55932baf6cb76d7db2b37bf13ffa96d0d"
+    },
+    {
+      "bytes": 1889,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_quantitative_reports_snapshot_builder_v2.py",
+      "sha256": "5a039cc544f988f6d583ded52a0c867ca291a59bb34f017ecc94b60b2a9fb77e"
+    },
+    {
       "bytes": 19053,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_risk_readiness_soak_panel.py",
@@ -3696,6 +3828,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_safe_math_v2.py",
       "sha256": "6061e9148516961d635569cddbc7e91815232afaf83fd0504d79b385b3b8d6eb"
+    },
+    {
+      "bytes": 2844,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_snapshot_builders_static_safety_v2.py",
+      "sha256": "ead15c319753b1fe82bcaa9e76ab912531f9843f9a4f3e49996c698bee5c642a"
     },
     {
       "bytes": 5042,
