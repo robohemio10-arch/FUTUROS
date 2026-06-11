@@ -31,6 +31,7 @@ REQUIRED_SECTIONS = (
     "tca",
     "regime_comparison",
     "asset_comparison",
+    "soak_gap_accounting",
     "exports",
     "institutional_score",
     "audit",
@@ -162,6 +163,16 @@ def build_quantitative_reports_snapshot(context: DashboardBuildContext) -> dict[
     )
     score_inputs = {name: _number(first_value(data, (name,)), 0.0) for name in ("robustness_score", "risk_score", "tca_score", "recovery_score", "consistency_score", "winrate_score")}
     institutional = calculate_institutional_score(**score_inputs)
+    gap_payload = first_payload(sources, "paper_shadow_soak_gap_accounting_report")
+    if not gap_payload:
+        gap_payload = first_payload(sources, "readiness_snapshot_v2")
+    gap_status = str(first_value(gap_payload, ("status",), "unknown")).lower()
+    critical_gaps = int(_number(first_value(gap_payload, ("critical_gap_count",), 0)))
+    gap_section_status = (
+        DashboardSectionStatus.BLOCKED
+        if gap_status in {"blocked", "critical", "failed"} or critical_gaps > 0
+        else DashboardSectionStatus.OK if gap_payload else DashboardSectionStatus.UNKNOWN
+    )
     sections = {
         "periods": section(DashboardSectionStatus.OK, available_periods=first_value(data, ("periods", "available_periods"), [])),
         "performance": section(DashboardSectionStatus.OK if pnl_values else DashboardSectionStatus.UNKNOWN, **metrics, **drawdown, net_pnl=tca["net_pnl"]),
@@ -170,6 +181,20 @@ def build_quantitative_reports_snapshot(context: DashboardBuildContext) -> dict[
         "tca": section(DashboardSectionStatus.OK, **tca),
         "regime_comparison": section(DashboardSectionStatus.UNKNOWN, regimes=first_value(data, ("regime_summary", "regime_comparison"), {})),
         "asset_comparison": section(DashboardSectionStatus.UNKNOWN, assets=first_value(data, ("symbol_summary", "asset_comparison"), {})),
+        "soak_gap_accounting": section(
+            gap_section_status,
+            "gap_accounting_blocks_readiness" if gap_section_status is DashboardSectionStatus.BLOCKED else "gap_accounting_readonly",
+            continuous_valid_soak_days=_number(first_value(gap_payload, ("continuous_valid_soak_days",), 0.0)),
+            observed_calendar_days=_number(first_value(gap_payload, ("observed_calendar_days",), 0.0)),
+            critical_gap_count=critical_gaps,
+            warning_gap_count=int(_number(first_value(gap_payload, ("warning_gap_count",), 0))),
+            max_gap_minutes=_number(first_value(gap_payload, ("max_gap_minutes",), 0.0)),
+            seven_day_diagnostic_status=first_value(gap_payload, ("seven_day_diagnostic_status",), "unknown"),
+            thirty_day_readiness_status=first_value(gap_payload, ("thirty_day_readiness_status",), "blocked"),
+            readiness_gap_free=first_value(gap_payload, ("readiness_gap_free",), False) is True and critical_gaps == 0,
+            canary_release_allowed=False,
+            live_release_allowed=False,
+        ),
         "exports": section(DashboardSectionStatus.OK, readonly=True, writes_training_dataset=False, writes_trades_master=False),
         "institutional_score": section(DashboardSectionStatus.OK, score=institutional, weights={"robustness": 0.25, "risk": 0.25, "tca": 0.20, "recovery": 0.15, "consistency": 0.10, "winrate": 0.05}),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True),

@@ -68,6 +68,7 @@ REQUIRED_SECTIONS = (
     "kill_switch",
     "grid_parameter_change",
     "security_state",
+    "readiness_gap_accounting",
     "command_events",
     "audit",
 )
@@ -93,6 +94,16 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
     old_grid = finite_float(first_value(data, ("current_grid_capital_usdt", "old_value")), 0.0) or 0.0
     new_grid = finite_float(first_value(data, ("new_grid_capital_usdt", "new_value")), old_grid) or 0.0
     grid_diff = calculate_grid_parameter_diff(old_grid, new_grid)
+    gap_payload = first_payload(sources, "paper_shadow_soak_gap_accounting_report")
+    if not gap_payload:
+        gap_payload = first_payload(sources, "readiness_snapshot_v2")
+    gap_status = str(first_value(gap_payload, ("status",), "unknown")).lower()
+    critical_gaps = int(finite_float(first_value(gap_payload, ("critical_gap_count",), 0), 0) or 0)
+    gap_section_status = (
+        DashboardSectionStatus.BLOCKED
+        if gap_status in {"blocked", "critical", "failed"} or critical_gaps > 0
+        else DashboardSectionStatus.OK if gap_payload else DashboardSectionStatus.UNKNOWN
+    )
 
     sections = {
         "active_layer_status": section(active_status, command_execution_enabled=False, paper_entry_allowed=not kill_active and not reconciliation_lock and risk_approval),
@@ -103,6 +114,21 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
         "kill_switch": section(DashboardSectionStatus.BLOCKED if kill_active else DashboardSectionStatus.OK, global_kill_switch_active=kill_active, kill_switch_effective=kill_active),
         "grid_parameter_change": section(DashboardSectionStatus.OK, current_grid_capital_usdt=old_grid, new_grid_capital_usdt=new_grid, grid_capital_change_usdt=grid_diff["diff_abs"], grid_capital_change_pct=grid_diff["diff_pct"], informational_only=True),
         "security_state": section(DashboardSectionStatus.BLOCKED if reconciliation_lock else DashboardSectionStatus.OK, reconciliation_lock_active=reconciliation_lock, riskmanager_authority=True, live_authority=False, real_order_submission_enabled=False),
+        "readiness_gap_accounting": section(
+            gap_section_status,
+            "gap_accounting_blocks_readiness" if gap_section_status is DashboardSectionStatus.BLOCKED else "gap_accounting_readonly",
+            continuous_valid_soak_days=finite_float(first_value(gap_payload, ("continuous_valid_soak_days",), 0.0), 0.0),
+            observed_calendar_days=finite_float(first_value(gap_payload, ("observed_calendar_days",), 0.0), 0.0),
+            critical_gap_count=critical_gaps,
+            warning_gap_count=int(finite_float(first_value(gap_payload, ("warning_gap_count",), 0), 0) or 0),
+            max_gap_minutes=finite_float(first_value(gap_payload, ("max_gap_minutes",), 0.0), 0.0),
+            seven_day_diagnostic_status=first_value(gap_payload, ("seven_day_diagnostic_status",), "unknown"),
+            thirty_day_readiness_status=first_value(gap_payload, ("thirty_day_readiness_status",), "blocked"),
+            readiness_gap_free=first_value(gap_payload, ("readiness_gap_free",), False) is True and critical_gaps == 0,
+            canary_release_allowed=False,
+            live_release_allowed=False,
+            manual_go_no_go_required=True,
+        ),
         "command_events": section(DashboardSectionStatus.OK, events=records(first_payload(sources, "dashboard_command_audit_log"))[-50:]),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True, command_bus_called=False, changes_config=False),
     }

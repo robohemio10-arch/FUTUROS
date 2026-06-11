@@ -8,7 +8,9 @@ from .snapshot_cards import render_key_value_grid
 
 READINESS_FIELDS = (
     "seven_day_diagnostic_status", "thirty_day_readiness_status", "paper_shadow_soak_days",
-    "required_soak_days", "soak_gap_count", "uptime_pct", "p0_incident_count",
+    "required_soak_days", "continuous_valid_soak_days", "observed_calendar_days",
+    "critical_gap_count", "warning_gap_count", "max_gap_minutes", "readiness_gap_free",
+    "soak_gap_count", "uptime_pct", "p0_incident_count",
     "p1_incident_count", "readiness_gate_status", "monte_carlo_status",
     "no_trade_gate_status", "evidence_pack_status", "sidecar_status",
     "manual_go_no_go_required", "blocking_reasons",
