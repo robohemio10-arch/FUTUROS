@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1e2dff374400e615dfe926a81621e26d9143ab8f767d12a88934abef4f095810",
+  "aggregate_sha256": "4305d005768a7c7d882d918d5af6f4249971c5b1fcbccb3d13b0c56b4f675f5d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 124,
-    "manifested_files_total": 833,
-    "python_files": 619,
+    "docs_files": 125,
+    "manifested_files_total": 835,
+    "python_files": 620,
     "runtime_excluded_files_total": 0,
-    "test_files": 172,
-    "tracked_files_total": 834,
+    "test_files": 173,
+    "tracked_files_total": 836,
     "workflows": 1
   },
   "deterministic": true,
@@ -1098,6 +1098,12 @@
       "hash_mode": "text_lf",
       "path": "docs/RUNTIME_AUTHORITY_MATRIX.md",
       "sha256": "a8f5c5e4d1e0fdbc97d6f9f5bf86822af5d9cb423e6f6c093b95ee95ff3dc4d2"
+    },
+    {
+      "bytes": 3974,
+      "hash_mode": "text_lf",
+      "path": "docs/RUNTIME_EVIDENCE_GAP_ACCOUNTING_INTEGRATION_V1.md",
+      "sha256": "4e215a2684619b47e8ae42e3e03900f719015ebcba8faeb14ef1c54dca17ac85"
     },
     {
       "bytes": 3462,
@@ -4902,6 +4908,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_authority_docs.py",
       "sha256": "562c589d76e8ec96bf3f740b9a5de3d710f6b4554d596d2bd243c2aec1a24457"
+    },
+    {
+      "bytes": 6642,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_evidence_gap_accounting_integration_v1.py",
+      "sha256": "c1cf03b824f41f093ce903bbd1a7a7a72c480720ad83c8fe20fb533fcef9a976"
     },
     {
       "bytes": 8358,
