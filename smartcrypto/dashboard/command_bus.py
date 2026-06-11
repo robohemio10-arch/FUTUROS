@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
+from smartcrypto.runtime.preflight_orchestrator import env_enabled
 from smartcrypto.state.financial_event_log import (
     DASHBOARD_COMMAND_EVENT_TYPES,
     KNOWN_EVENT_TYPES,
@@ -15,7 +15,6 @@ from smartcrypto.state.financial_event_log import (
 )
 
 
-TRUE_VALUES = {"1", "true", "yes", "y", "on"}
 SAFE_RUNTIME_MODES = {"paper", "research", "shadow"}
 ACCEPTED = "ACCEPTED"
 REJECTED = "REJECTED"
@@ -198,10 +197,6 @@ class DashboardReadonlyCommandBus:
             source=command.source,
             payload=command.to_dict(),
         )
-
-
-def env_enabled(name: str) -> bool:
-    return str(os.getenv(name, "")).strip().lower() in TRUE_VALUES
 
 
 def has_runtime_guard_reason(reasons: list[str]) -> bool:

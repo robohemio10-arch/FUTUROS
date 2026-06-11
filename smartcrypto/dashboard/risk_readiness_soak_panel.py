@@ -426,6 +426,8 @@ def aggregate_blockers(
     if monte_carlo_policy["no_trade_policy_present"]:
         blockers.append("monte_carlo_no_trade_policy_active")
     for name, payload in payloads.items():
+        if name in OPTIONAL_SOURCE_NAMES:
+            continue
         if name == "monte_carlo_report" and normalize_status(payload.get("status")) == "blocked" and monte_carlo_policy["no_trade_policy_present"]:
             continue
         if name == "monte_carlo_risk_budget_policy_report" and normalize_status(payload.get("status")) == "blocked" and monte_carlo_policy["no_trade_policy_present"]:

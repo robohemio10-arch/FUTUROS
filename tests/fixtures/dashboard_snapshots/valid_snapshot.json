@@ -1,0 +1,22 @@
+{
+  "schema_version": "dashboard_infrastructure_snapshot_v1",
+  "runtime_mode": "paper",
+  "dashboard_readonly": true,
+  "live_locked": true,
+  "order_submission_enabled": false,
+  "real_order_submission_enabled": false,
+  "last_updated_utc": "2026-06-11T10:00:00Z",
+  "sections": {},
+  "audit": {
+    "dashboard_reads_only": true,
+    "uses_private_exchange": false,
+    "uses_ccxt": false,
+    "sends_orders": false,
+    "changes_risk": false,
+    "promotes_model": false,
+    "changes_config": false,
+    "changes_model": false,
+    "changes_active_signals": false,
+    "snapshot_source": "synthetic_fixture"
+  }
+}
