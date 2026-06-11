@@ -58,6 +58,7 @@ EVIDENCE_PATHS = {
     "ai_shadow_drift_report": "data/reports/ai_shadow_drift_monitor_report.json",
     "ai_shadow_threshold_readiness_evidence": "data/reports/ai_shadow_threshold_readiness_evidence.json",
     "ai_shadow_filter_decision_db_audit_summary": "data/reports/ai_shadow_filter_decision_db_audit_summary.json",
+    "paper_runtime_health_and_freshness": "data/reports/paper_runtime_health_and_freshness_report.json",
 }
 
 RUNTIME_OBSERVABILITY_PATHS = {
@@ -150,7 +151,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     evidence_pack_path = output_path / DEFAULT_EVIDENCE_PACK_PATH
     readiness_snapshot_path = output_path / DEFAULT_READINESS_SNAPSHOT_PATH
 
-    sources = collect_evidence_sources(root, materialize_gap_accounting_report=not no_write)
+    sources = collect_evidence_sources(root, materialize_gap_accounting_report=not no_write, now=current_time)
     runtime_sources = collect_runtime_observability_sources(root, now=current_time)
     service_catalog = collect_compose_service_catalog(root)
     container_snapshot = collect_docker_container_snapshot(timeout_seconds=container_timeout_seconds) if include_containers else {
@@ -182,6 +183,8 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     readiness_soak_reached = observed_soak_days >= REQUIRED_SOAK_DAYS
     gap_accounting_payload = source_payload(sources.get("paper_shadow_soak_gap_accounting", {}))
     gap_accounting_summary = gap_accounting_readiness_summary(gap_accounting_payload)
+    paper_runtime_payload = source_payload(sources.get("paper_runtime_health_and_freshness", {}))
+    paper_runtime_health_summary = paper_runtime_health_readiness_summary(paper_runtime_payload)
     evidence_sources = {name: public_source_summary(source) for name, source in sorted(sources.items())}
     runtime_observability = runtime_observability_rollup(runtime_sources)
     runtime_source_summaries = {name: public_runtime_source_summary(source) for name, source in sorted(runtime_sources.items())}
@@ -200,6 +203,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "required_evidence": sorted(REQUIRED_EVIDENCE),
         "evidence_sources": evidence_sources,
         "paper_shadow_soak_gap_accounting": gap_accounting_summary,
+        "paper_runtime_health_and_freshness": paper_runtime_health_summary,
         "runtime_observability": runtime_observability,
         "runtime_sources": runtime_source_summaries,
         "container_snapshot": container_snapshot,
@@ -211,6 +215,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
             "runtime_evidence_pack_v2": str(evidence_pack_path),
             "readiness_snapshot_v2": str(readiness_snapshot_path),
             "paper_shadow_soak_gap_accounting_report": str(root / EVIDENCE_PATHS["paper_shadow_soak_gap_accounting"]),
+            "paper_runtime_health_and_freshness_report": str(root / EVIDENCE_PATHS["paper_runtime_health_and_freshness"]),
         },
         **safety,
     }
@@ -238,13 +243,18 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "seven_day_diagnostic_status": gap_accounting_summary["seven_day_diagnostic_status"],
         "thirty_day_readiness_status": gap_accounting_summary["thirty_day_readiness_status"],
         "paper_shadow_soak_gap_accounting": gap_accounting_summary,
+        "paper_runtime_health_and_freshness": paper_runtime_health_summary,
+        "paper_runtime_alive": paper_runtime_health_summary["paper_runtime_alive"],
+        "paper_runtime_fresh": paper_runtime_health_summary["paper_runtime_fresh"],
+        "paper_runtime_health_status": paper_runtime_health_summary["status"],
+        "paper_runtime_critical_stale_count": paper_runtime_health_summary["critical_stale_count"],
+        "paper_runtime_warning_stale_count": paper_runtime_health_summary["warning_stale_count"],
         "missing_evidence": missing_evidence,
         "invalid_evidence": invalid_evidence,
         "blocking_reasons": blocking_reasons,
         "warning_reasons": warning_reasons,
         "next_required_actions": next_required_actions(blocking_reasons, missing_evidence, invalid_evidence, warning_reasons),
         "evidence_sources": evidence_sources,
-        "paper_shadow_soak_gap_accounting": gap_accounting_summary,
         "runtime_observability": runtime_observability,
         "runtime_sources": runtime_source_summaries,
         "container_snapshot": container_snapshot,
@@ -269,15 +279,21 @@ def collect_evidence_sources(
     root: Path,
     *,
     materialize_gap_accounting_report: bool = False,
+    now: datetime | None = None,
 ) -> dict[str, dict[str, Any]]:
     sources = {
         name: load_json_evidence(root / relative_path, required=name in REQUIRED_EVIDENCE)
         for name, relative_path in EVIDENCE_PATHS.items()
-        if name != "paper_shadow_soak_gap_accounting"
+        if name not in {"paper_shadow_soak_gap_accounting", "paper_runtime_health_and_freshness"}
     }
     sources["paper_shadow_soak_gap_accounting"] = collect_paper_shadow_soak_gap_accounting(
         root,
         write=materialize_gap_accounting_report,
+    )
+    sources["paper_runtime_health_and_freshness"] = collect_paper_runtime_health_and_freshness(
+        root,
+        write=materialize_gap_accounting_report,
+        now=now,
     )
     sources["manifest_check"] = collect_manifest_check(root)
     sources["secret_scan"] = collect_secret_scan(root)
@@ -665,6 +681,50 @@ def collect_paper_shadow_soak_gap_accounting(root: Path, *, write: bool = False)
     )
 
 
+def collect_paper_runtime_health_and_freshness(root: Path, *, write: bool = False, now: datetime | None = None) -> dict[str, Any]:
+    path = root / EVIDENCE_PATHS["paper_runtime_health_and_freshness"]
+    try:
+        from smartcrypto.ops.paper_runtime_health_and_freshness import audit_paper_runtime_health_and_freshness
+
+        report = audit_paper_runtime_health_and_freshness(
+            project_root=root,
+            output=path,
+            write=write,
+            include_containers=False,
+            now=now,
+        )
+    except Exception as exc:
+        return generated_source(
+            "paper_runtime_health_and_freshness",
+            "blocked",
+            "paper_runtime_health_collection_failed",
+            path,
+            required=False,
+            error=str(exc),
+        )
+
+    if not isinstance(report, Mapping):
+        return generated_source(
+            "paper_runtime_health_and_freshness",
+            "invalid_schema",
+            "paper_runtime_health_payload_not_object",
+            path,
+            required=False,
+        )
+
+    source_status = str(report.get("status", "unknown")).lower()
+    source_state = "blocked" if source_status in {"blocked", "failed", "critical"} else "ok"
+    return generated_source(
+        "paper_runtime_health_and_freshness",
+        source_state,
+        f"source_status_{source_status}" if source_state == "blocked" else "paper_runtime_health_collected",
+        path,
+        required=False,
+        payload=report,
+        materialized=bool(write and path.exists()),
+    )
+
+
 def collect_manifest_check(root: Path) -> dict[str, Any]:
     manifest_path = root / "PROJECT_MANIFEST_CLEAN.json"
     if not manifest_path.exists():
@@ -953,6 +1013,25 @@ def gap_accounting_readiness_summary(payload: Mapping[str, Any]) -> dict[str, An
         "manual_go_no_go_required": True,
         "write_performed": payload.get("write_performed") is True,
         "report_materialized": payload.get("write_performed") is True,
+    }
+
+
+def paper_runtime_health_readiness_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "status": str(payload.get("status") or "missing"),
+        "reason": str(payload.get("reason") or "paper_runtime_health_not_available"),
+        "paper_runtime_alive": payload.get("paper_runtime_alive") is True,
+        "paper_runtime_fresh": payload.get("paper_runtime_fresh") is True,
+        "paper_runtime_health_status": str(payload.get("paper_runtime_health_status") or payload.get("status") or "missing"),
+        "critical_stale_count": int_value(payload.get("critical_stale_count")),
+        "warning_stale_count": int_value(payload.get("warning_stale_count")),
+        "missing_required_sources": list(payload.get("missing_required_sources") or []),
+        "stale_sources": list(payload.get("stale_sources") or []),
+        "component_rollup": payload.get("component_rollup") if isinstance(payload.get("component_rollup"), Mapping) else {},
+        "write_performed": payload.get("write_performed") is True,
+        "report_materialized": payload.get("report_materialized") is True,
+        "canary_release_allowed": False,
+        "live_release_allowed": False,
     }
 
 

@@ -82,6 +82,7 @@ def build_infrastructure_snapshot(context: DashboardBuildContext) -> dict[str, A
     sources = load_page_sources(context, DashboardPageId.infrastructure)
     data = all_source_payloads(sources)
     health = first_payload(sources, "system_healthcheck_report")
+    paper_runtime = first_payload(sources, "paper_runtime_health_and_freshness_report")
     market = first_payload(sources, "market_data_health_runtime_sources_report")
     latency_values = _numbers(data, ("latency_ms", "response_time_ms", "exchange_latency_ms"))
     bid = _number(first_value(market, ("best_bid", "bid_price")))
@@ -113,10 +114,23 @@ def build_infrastructure_snapshot(context: DashboardBuildContext) -> dict[str, A
     max_ws_age = _number(first_value(data, ("max_ws_age_seconds",)), 60.0)
     stale_ws = ws_age is not None and ws_age > max_ws_age
 
+    paper_runtime_status = _paper_runtime_section_status(paper_runtime)
+
     sections = {
         "status_summary": section(
             DashboardSectionStatus.OK,
             component_status=str(first_value(health, ("status", "overall_status"), "unknown")),
+        ),
+        "paper_runtime_health": section(
+            paper_runtime_status,
+            paper_runtime_health_status=first_value(paper_runtime, ("paper_runtime_health_status", "status"), "unknown"),
+            paper_runtime_alive=first_value(paper_runtime, ("paper_runtime_alive",), False) is True,
+            paper_runtime_fresh=first_value(paper_runtime, ("paper_runtime_fresh",), False) is True,
+            critical_stale_count=int(_number(first_value(paper_runtime, ("critical_stale_count",), 0))),
+            warning_stale_count=int(_number(first_value(paper_runtime, ("warning_stale_count",), 0))),
+            stale_sources=first_value(paper_runtime, ("stale_sources",), []),
+            live_release_allowed=False,
+            canary_release_allowed=False,
         ),
         "host": section(host_status, cpu_pct=cpu, ram_pct=ram, disk_pct=disk),
         "docker": section(
@@ -178,3 +192,16 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _paper_runtime_section_status(payload: Any) -> DashboardSectionStatus:
+    if not payload:
+        return DashboardSectionStatus.UNKNOWN
+    status = str(first_value(payload, ("status", "paper_runtime_health_status"), "unknown")).lower()
+    if status in {"blocked", "critical", "failed", "error"}:
+        return DashboardSectionStatus.BLOCKED
+    if status in {"degraded", "warning", "stale"}:
+        return DashboardSectionStatus.WARNING
+    if status == "ok":
+        return DashboardSectionStatus.OK
+    return DashboardSectionStatus.UNKNOWN

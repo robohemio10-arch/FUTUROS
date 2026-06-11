@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     runtime = result.evidence_pack.get("runtime_observability", {})
     containers = result.evidence_pack.get("container_snapshot", {})
     gap_accounting = result.readiness_snapshot.get("paper_shadow_soak_gap_accounting", {})
+    paper_runtime = result.readiness_snapshot.get("paper_runtime_health_and_freshness", {})
     output_paths = result.evidence_pack.get("output_paths", {}) if isinstance(result.evidence_pack.get("output_paths"), dict) else {}
     summary = {
         "status": result.readiness_snapshot["status"],
@@ -57,6 +58,14 @@ def main(argv: list[str] | None = None) -> int:
         "paper_shadow_soak_gap_accounting_report_path": output_paths.get("paper_shadow_soak_gap_accounting_report"),
         "paper_shadow_soak_gap_accounting_report_write_performed": gap_accounting.get("write_performed"),
         "paper_shadow_soak_gap_accounting_report_materialized": gap_accounting.get("report_materialized"),
+        "paper_runtime_health_and_freshness_report_path": output_paths.get("paper_runtime_health_and_freshness_report"),
+        "paper_runtime_health_and_freshness_report_write_performed": paper_runtime.get("write_performed"),
+        "paper_runtime_health_and_freshness_report_materialized": paper_runtime.get("report_materialized"),
+        "paper_runtime_alive": paper_runtime.get("paper_runtime_alive"),
+        "paper_runtime_fresh": paper_runtime.get("paper_runtime_fresh"),
+        "paper_runtime_health_status": paper_runtime.get("status"),
+        "paper_runtime_critical_stale_count": paper_runtime.get("critical_stale_count"),
+        "paper_runtime_warning_stale_count": paper_runtime.get("warning_stale_count"),
         "write_performed": result.write_performed,
         "missing_evidence": result.readiness_snapshot["missing_evidence"],
         "blocking_reasons": result.readiness_snapshot["blocking_reasons"],

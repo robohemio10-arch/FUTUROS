@@ -46,6 +46,7 @@ def _generated(page_id: DashboardPageId) -> DashboardSourceContract:
 SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
     DashboardPageId.infrastructure: (
         _source(DashboardPageId.infrastructure, "data/reports/system_healthcheck_report.json", SourceKind.REQUIRED_EXISTING_SOURCE),
+        _source(DashboardPageId.infrastructure, "data/reports/paper_runtime_health_and_freshness_report.json"),
         _source(DashboardPageId.infrastructure, "data/reports/market_data_health_audit_report.json", SourceKind.REQUIRED_EXISTING_SOURCE),
         _source(DashboardPageId.infrastructure, "data/reports/market_data_health_runtime_sources_report.json"),
         _source(DashboardPageId.infrastructure, "data/reports/critical_alerting_report.json"),
@@ -131,6 +132,7 @@ SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
         _source(DashboardPageId.active_controls, "data/reports/runtime_evidence_refresh_report.json"),
         _source(DashboardPageId.active_controls, "data/reports/runtime_evidence_pack_v2.json"),
         _source(DashboardPageId.active_controls, "data/reports/readiness_snapshot_v2.json"),
+        _source(DashboardPageId.active_controls, "data/reports/paper_runtime_health_and_freshness_report.json"),
         _source(DashboardPageId.active_controls, "data/reports/paper_shadow_soak_gap_accounting_report.json"),
         _source(DashboardPageId.active_controls, "data/reports/dashboard_command_audit_log.jsonl", SourceKind.FUTURE_SOURCE),
         _source(DashboardPageId.active_controls, "data/reports/dashboard_command_status_snapshot.json", SourceKind.FUTURE_SOURCE),
@@ -163,6 +165,7 @@ SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
         _source(DashboardPageId.alerts_messaging, "data/reports/financial_event_log.jsonl"),
         _source(DashboardPageId.alerts_messaging, "data/reports/runtime_evidence_refresh_report.json"),
         _source(DashboardPageId.alerts_messaging, "data/reports/system_healthcheck_report.json"),
+        _source(DashboardPageId.alerts_messaging, "data/reports/paper_runtime_health_and_freshness_report.json"),
         _source(DashboardPageId.alerts_messaging, "data/reports/market_data_health_audit_report.json"),
         _source(DashboardPageId.alerts_messaging, "data/reports/state_reconciliation_audit_report.json"),
         _source(DashboardPageId.alerts_messaging, "data/reports/risk_recovery_mode_audit_report.json"),

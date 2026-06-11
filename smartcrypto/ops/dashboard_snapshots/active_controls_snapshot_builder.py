@@ -69,6 +69,7 @@ REQUIRED_SECTIONS = (
     "grid_parameter_change",
     "security_state",
     "readiness_gap_accounting",
+    "paper_runtime_health",
     "command_events",
     "audit",
 )
@@ -97,6 +98,9 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
     gap_payload = first_payload(sources, "paper_shadow_soak_gap_accounting_report")
     if not gap_payload:
         gap_payload = first_payload(sources, "readiness_snapshot_v2")
+    paper_runtime_payload = first_payload(sources, "paper_runtime_health_and_freshness_report")
+    if not paper_runtime_payload:
+        paper_runtime_payload = first_payload(sources, "readiness_snapshot_v2")
     gap_status = str(first_value(gap_payload, ("status",), "unknown")).lower()
     critical_gaps = int(finite_float(first_value(gap_payload, ("critical_gap_count",), 0), 0) or 0)
     gap_section_status = (
@@ -104,6 +108,8 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
         if gap_status in {"blocked", "critical", "failed"} or critical_gaps > 0
         else DashboardSectionStatus.OK if gap_payload else DashboardSectionStatus.UNKNOWN
     )
+
+    paper_runtime_status = _paper_runtime_section_status(paper_runtime_payload)
 
     sections = {
         "active_layer_status": section(active_status, command_execution_enabled=False, paper_entry_allowed=not kill_active and not reconciliation_lock and risk_approval),
@@ -129,6 +135,17 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
             live_release_allowed=False,
             manual_go_no_go_required=True,
         ),
+        "paper_runtime_health": section(
+            paper_runtime_status,
+            "paper_runtime_health_readonly",
+            paper_runtime_alive=first_value(paper_runtime_payload, ("paper_runtime_alive",), False) is True,
+            paper_runtime_fresh=first_value(paper_runtime_payload, ("paper_runtime_fresh",), False) is True,
+            critical_stale_count=int(finite_float(first_value(paper_runtime_payload, ("critical_stale_count",), 0), 0) or 0),
+            warning_stale_count=int(finite_float(first_value(paper_runtime_payload, ("warning_stale_count",), 0), 0) or 0),
+            stale_sources=first_value(paper_runtime_payload, ("stale_sources",), []),
+            canary_release_allowed=False,
+            live_release_allowed=False,
+        ),
         "command_events": section(DashboardSectionStatus.OK, events=records(first_payload(sources, "dashboard_command_audit_log"))[-50:]),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True, command_bus_called=False, changes_config=False),
     }
@@ -139,3 +156,16 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
         sections=sections,
         source_state=sources,
     )
+
+
+def _paper_runtime_section_status(payload: Any) -> DashboardSectionStatus:
+    if not payload:
+        return DashboardSectionStatus.UNKNOWN
+    status = str(first_value(payload, ("status", "paper_runtime_health_status"), "unknown")).lower()
+    if status in {"blocked", "critical", "failed", "error"}:
+        return DashboardSectionStatus.BLOCKED
+    if status in {"degraded", "warning", "stale"}:
+        return DashboardSectionStatus.WARNING
+    if status == "ok":
+        return DashboardSectionStatus.OK
+    return DashboardSectionStatus.UNKNOWN
