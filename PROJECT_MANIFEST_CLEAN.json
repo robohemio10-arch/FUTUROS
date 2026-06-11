@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b6b018796da68f58f2d655da486469f877902266e75cca8828f06c9af7c8b007",
+  "aggregate_sha256": "c93e78657baab2c4eee1ba577d04ae20d589363e809a820f5dd5bce4d713de82",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 121,
-    "manifested_files_total": 784,
-    "python_files": 574,
+    "docs_files": 122,
+    "manifested_files_total": 804,
+    "python_files": 592,
     "runtime_excluded_files_total": 0,
-    "test_files": 155,
-    "tracked_files_total": 785,
+    "test_files": 160,
+    "tracked_files_total": 805,
     "workflows": 1
   },
   "deterministic": true,
@@ -1122,6 +1122,12 @@
       "hash_mode": "text_lf",
       "path": "docs/SKLEARN_MODEL_VERSION_COMPATIBILITY_GUARD.md",
       "sha256": "0d39d24bd08d0f724a7dbecf01c4a6f59cae88105f75f02ed4dedc3e7f138588"
+    },
+    {
+      "bytes": 3942,
+      "hash_mode": "text_lf",
+      "path": "docs/SMART_FUTUROS_COMMAND_CENTER_THEME_V1.md",
+      "sha256": "4e1595cb665ba5e2416774e7a3818648405da1a3edc9e348c9cad28bf468aa5d"
     },
     {
       "bytes": 4530,
@@ -2678,10 +2684,16 @@
       "sha256": "b24d6f728977c926b90f0ff5a0f7942850e9524c394f09bb52bc158c72184239"
     },
     {
-      "bytes": 4372,
+      "bytes": 4965,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
-      "sha256": "1f4b0ee665823cf9d1ce58c16b367f7d54e6c45bb05d748fee2ad29d0ba5a58b"
+      "sha256": "bb7d57a048234c52b6fd62b989b0c02d54af47cfbecb5bf7b9de729f724a3585"
+    },
+    {
+      "bytes": 11545,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/assets/futuros_command_center.css",
+      "sha256": "ec729718b8d89832ab66e682a6306959187f1e886dc518912793e95567826c7e"
     },
     {
       "bytes": 7882,
@@ -2696,16 +2708,16 @@
       "sha256": "a2529277d9ad64c3fd62dd38d8ba0e1be1cfe43c08cd074fda0c4837abd5389f"
     },
     {
-      "bytes": 684,
+      "bytes": 1120,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/alert_stubs.py",
-      "sha256": "b1b33f9aba2e2e5cf297299948909c2b8f37be6b84130ad3a9a747b30dd04268"
+      "sha256": "3dc4d1e1c83c02c57d2df96af43c5de063b6672ae867658b322cbe7d7d3e9a73"
     },
     {
-      "bytes": 945,
+      "bytes": 1498,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/control_stubs.py",
-      "sha256": "2859076dc6e3ef3af8e0877c9b093858f12137d15e4e76ee96f453c92facbaf8"
+      "sha256": "74964d922ebfa6ce328cc459226f38d987098286ea56fd1f947b57419cd2f03b"
     },
     {
       "bytes": 1933,
@@ -2720,10 +2732,10 @@
       "sha256": "0550311e0492480244149d832b2dde095acc253bb427df976d99f6f79f0d3352"
     },
     {
-      "bytes": 2689,
+      "bytes": 4002,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/read_only.py",
-      "sha256": "a77e05a0f26df69b6c2e6b9ff14d0da97c39c3a66fda3022b4540e4c6e02b887"
+      "sha256": "532fadf3a843cb98bcb8fc69f5732a3028d8b080cf677c11c9ccdc892cc72724"
     },
     {
       "bytes": 2501,
@@ -2732,22 +2744,22 @@
       "sha256": "8e6590731f75ee89f722860a48ae407b813abe977d61814cad1f725f3b14c132"
     },
     {
-      "bytes": 2544,
+      "bytes": 2862,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/snapshot_cards.py",
-      "sha256": "78222a715fa1e115d33875a73b23b7faec390b34f9c33231c20da3da8ac388fb"
+      "sha256": "1c12768d2e98b99822472a8bf409de41d40225b93ac134f7e6f59a48f2e20332"
     },
     {
-      "bytes": 1420,
+      "bytes": 1827,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/snapshot_tables.py",
-      "sha256": "798defd7b2b51bdd444533ca543f658be698eda18275ffb7cff1b7f7b459bf5b"
+      "sha256": "333ab2277956e64f5577746ba622bf348fa01a501c5a8b504cae06bd43a3a7fc"
     },
     {
-      "bytes": 1006,
+      "bytes": 1042,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/status_badges.py",
-      "sha256": "9061f5bfa058a250fca2b1b57433b176bc5a827bb60ed94f0bae29a0ce1bd2d7"
+      "sha256": "a03beaa50fa6c793fd8162a30f5436cac72632c4230270eca0e42da7ed7f3a9d"
     },
     {
       "bytes": 773,
@@ -2804,52 +2816,52 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 1796,
+      "bytes": 2927,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "1536717c28a8ae95d7799853b33f274c86836e34fc3169924b465deb0ad0b27c"
+      "sha256": "7ad1a8fcc2c1f49f160b6aeda758aece6a38470947f8dd058e97869ebe2a8145"
     },
     {
-      "bytes": 1991,
+      "bytes": 2802,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/02_portfolio_risk.py",
-      "sha256": "67e82235b9e8f442ac3e7f1b8685d6f9dd4643f521a5d7da3541816ddad14f45"
+      "sha256": "0c1acc8eaf40844a96d9645a8b92a59a90656b64e7a3b1ca4e3b0fa58188aa18"
     },
     {
-      "bytes": 1940,
+      "bytes": 2940,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/03_grid_monitor.py",
-      "sha256": "260369323dc94d0991f1ac97b78961abbc77ba1379d3d2ee307ec62682e37991"
+      "sha256": "512c59ced882efa06a5e516c5a5aaa69632d04c9d001d8fb161734a63448713c"
     },
     {
-      "bytes": 1817,
+      "bytes": 2634,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/04_opportunity_scanner.py",
-      "sha256": "494fa153a720eb04f9b39289265a8f6384e0d15e4b1f3948ecc1c379a537a6f4"
+      "sha256": "6024bfbd6c43192edea6c1cdefbfacc379f34d08ead2fb89d9fb31494ab62e56"
     },
     {
-      "bytes": 1990,
+      "bytes": 2820,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/05_ai_governance.py",
-      "sha256": "fb2f5d555814a346f9040c537e482da4b0c13424569c76f8efd972d1bfd3414a"
+      "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
     },
     {
-      "bytes": 4038,
+      "bytes": 4818,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "4bf3cb15f968a7b79e9037ddcc3c22098535f0079815948cb39e3bf89039b78c"
+      "sha256": "52f570a7c204c53c487afed215acf0a425ed6b817f9f180488ff10988f770ca4"
     },
     {
-      "bytes": 2482,
+      "bytes": 3481,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/07_quantitative_reports.py",
-      "sha256": "29dd01b3d3902487228728dfa282901c26051dd296b2e5ab30d102a902b65bce"
+      "sha256": "06d5d4e2fb1553d197982717c21662b34d9fcd4ca6710290b13bc94f2b4a4192"
     },
     {
-      "bytes": 2908,
+      "bytes": 3750,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/08_alerts_messaging.py",
-      "sha256": "7f34d0349e16bc942778f9f8b65f6b0ff498e3498309b5d25cacf8a48bceddbf"
+      "sha256": "acec619d1fcb35e41509cc00a3ce70e138e5fc570a62c2fa8c0a968cea931675"
     },
     {
       "bytes": 66,
@@ -2904,6 +2916,84 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/trade_event_notifications_runtime_panel.py",
       "sha256": "3afd6cef58728b257c2778907903813e421c6fdf00afdca541011298974ce5c5"
+    },
+    {
+      "bytes": 1560,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/__init__.py",
+      "sha256": "c7a6b1abe4d936d0235bd663b710df447a983fc815cc1a26219a5ca64eb622e3"
+    },
+    {
+      "bytes": 884,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/badges.py",
+      "sha256": "d9858509ab472d33bf67ecb624545649fe97eb34fe9fcc5b997118bcdb1a339c"
+    },
+    {
+      "bytes": 2045,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/cards.py",
+      "sha256": "a5e3bf95e0d8a01905b09a551c41d7966ff214deacb751ff25ce2d844e9e983d"
+    },
+    {
+      "bytes": 886,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/charts.py",
+      "sha256": "7f60c2b765e8d216807a9c4c53e4a6ffd86e63be5270b19780af30a10e250d38"
+    },
+    {
+      "bytes": 1341,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/footer.py",
+      "sha256": "6b63845e0b2bc4f10a434604b39750ccba96354d6a4a9a34a6abf4b951c1864d"
+    },
+    {
+      "bytes": 1899,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/layout.py",
+      "sha256": "8939bdb7462440fbf68c3d4020e785156134d01e42cfdbd8a150b054fd596dac"
+    },
+    {
+      "bytes": 905,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/sections.py",
+      "sha256": "9b5d065b2ce92d25043ab6cbfd1bf80014a4131a8081d1f1c54c10a21e0f434a"
+    },
+    {
+      "bytes": 2157,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/sidebar.py",
+      "sha256": "6c5dd2f49d9b993b2cdf2f2ad869ddd6f3453a382cff12d3bdb239219a0f9482"
+    },
+    {
+      "bytes": 864,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/states.py",
+      "sha256": "7050fc8daa15ec8a3d730814bd4a2e539d78a1836e48257c98c939766d57486c"
+    },
+    {
+      "bytes": 1906,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/status.py",
+      "sha256": "990e62b8dfa19bfafeb10e24338c2272179f143e66010f03fd770830fb4861e1"
+    },
+    {
+      "bytes": 1457,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/tables.py",
+      "sha256": "a8e4c5e9b8fc3ba5cb8d8182d8da5cff44c4036d4431bc3ed857f7629ebb211e"
+    },
+    {
+      "bytes": 999,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/theme.py",
+      "sha256": "15dadf9b99b1c5695da6fe78dee5a6c58fb1ad049603a600768f65c8bf8207e7"
+    },
+    {
+      "bytes": 2230,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/ui/tokens.py",
+      "sha256": "bb265fe36818ec97683ec3de0595e2a07dc44fe087e49c6f99a6c3184b97d3e4"
     },
     {
       "bytes": 174,
@@ -4140,6 +4230,36 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_streamlit_pages_static_safety_v2.py",
       "sha256": "2901bc7b2307413a97a0fcf35e409f62a2a10ee22369ad9b2166a93707b72201"
+    },
+    {
+      "bytes": 1611,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_theme_pages_snapshot_contract_v1.py",
+      "sha256": "81972013bf6ed16ae38a0e67ee8eba7ffc49cb4c45000cc9e2128ddc95309dec"
+    },
+    {
+      "bytes": 2119,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_theme_static_safety_v1.py",
+      "sha256": "ecfea24ae7f9ecf1056cb8dbeb050dab95acacd0416c6705877c79d1f39b9eb9"
+    },
+    {
+      "bytes": 1509,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_theme_tokens_v1.py",
+      "sha256": "e01098bbf3e65c0303cb90a28fe1a407202b626647d31018c72621977f7f857a"
+    },
+    {
+      "bytes": 2169,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_ui_components_v1.py",
+      "sha256": "c4cf810feda57832c0e66f9b1717222f29c95a3d261c6b40e966421887c78b25"
+    },
+    {
+      "bytes": 1617,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_visual_contract_v1.py",
+      "sha256": "508c834776771e733791e1c7d22c2449d33826ed0f6f9ca5b90fb08de3ff7b04"
     },
     {
       "bytes": 349,
