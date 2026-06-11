@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1f01ca9c952b2c65a18f3e8f93fd481e98312cbca8bc6d9c03845ab70b6f5b30",
+  "aggregate_sha256": "b6b018796da68f58f2d655da486469f877902266e75cca8828f06c9af7c8b007",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 120,
-    "manifested_files_total": 756,
-    "python_files": 547,
+    "docs_files": 121,
+    "manifested_files_total": 784,
+    "python_files": 574,
     "runtime_excluded_files_total": 0,
-    "test_files": 144,
-    "tracked_files_total": 757,
+    "test_files": 155,
+    "tracked_files_total": 785,
     "workflows": 1
   },
   "deterministic": true,
@@ -1128,6 +1128,12 @@
       "hash_mode": "text_lf",
       "path": "docs/SMART_FUTUROS_COMMAND_CENTER_V2_CONTRACTS.md",
       "sha256": "f80a037241e0da4bdd1d08059b09946969ba55e83bd2d915f54ed8b255575ae8"
+    },
+    {
+      "bytes": 4154,
+      "hash_mode": "text_lf",
+      "path": "docs/SMART_FUTUROS_COMMAND_CENTER_V2_CONTROLS_ALERTS_STUBS.md",
+      "sha256": "888b2b7a1a189bbe26087e387a37610fce9cca69e5e37bc4ffcee684a4502993"
     },
     {
       "bytes": 4748,
@@ -2624,10 +2630,10 @@
       "sha256": "2224290fec4d22cbcb61152a7dab1d2322aad8f1bd37e55e647fa08eae99b0af"
     },
     {
-      "bytes": 513,
+      "bytes": 745,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/__init__.py",
-      "sha256": "c86bd426b2a84a07235da8c89c8330ef66bf2ec177721c1c1c0bcc91c46803a4"
+      "sha256": "fa41b733b617c7b07e3b5a2c501a9395ca03bad6f918c97ff90a7ed371073de0"
     },
     {
       "bytes": 22224,
@@ -2642,6 +2648,36 @@
       "sha256": "04c51755af0383d8fd144c6d53a444e8cc2195a4f5035b7d38d67b55b23ef2ea"
     },
     {
+      "bytes": 722,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/alerts/__init__.py",
+      "sha256": "e3e43742c650d743d0e2ff0578f75a254af55178b6593db5751a30a31fdfa6bc"
+    },
+    {
+      "bytes": 2395,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/alerts/contracts.py",
+      "sha256": "2f892aa77da726dbadc69fb053db65283c1314fb574bf04789e52c26e0dec6df"
+    },
+    {
+      "bytes": 2637,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/alerts/notification_stub_dispatcher.py",
+      "sha256": "31cb942c6fcdea34d64420dac851207d4379e5bbceb1bc94c122cedb4ae615b9"
+    },
+    {
+      "bytes": 651,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/alerts/policies.py",
+      "sha256": "8605077b4955caf84b564a43dd12fbfb0f3fa0170d1d40f181198b75439e1d9a"
+    },
+    {
+      "bytes": 1025,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/alerts/routing.py",
+      "sha256": "b24d6f728977c926b90f0ff5a0f7942850e9524c394f09bb52bc158c72184239"
+    },
+    {
       "bytes": 4372,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
@@ -2654,16 +2690,46 @@
       "sha256": "27750ae32e53fe46f933170164aa37896f966531e250e0747c761510bb8769a6"
     },
     {
-      "bytes": 888,
+      "bytes": 1748,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/__init__.py",
-      "sha256": "a9b4d5f95625bc66fb00bffceb4134b0a33dc57b4e7f556d51ebdd602e448e23"
+      "sha256": "a2529277d9ad64c3fd62dd38d8ba0e1be1cfe43c08cd074fda0c4837abd5389f"
+    },
+    {
+      "bytes": 684,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/alert_stubs.py",
+      "sha256": "b1b33f9aba2e2e5cf297299948909c2b8f37be6b84130ad3a9a747b30dd04268"
+    },
+    {
+      "bytes": 945,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/control_stubs.py",
+      "sha256": "2859076dc6e3ef3af8e0877c9b093858f12137d15e4e76ee96f453c92facbaf8"
+    },
+    {
+      "bytes": 1933,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/dataset_pipeline.py",
+      "sha256": "2387bd71bc88f98254c4d24ef576c39df58df0a594a8447f95adc92293d2211d"
+    },
+    {
+      "bytes": 1902,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/decision_trace.py",
+      "sha256": "0550311e0492480244149d832b2dde095acc253bb427df976d99f6f79f0d3352"
     },
     {
       "bytes": 2689,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/read_only.py",
       "sha256": "a77e05a0f26df69b6c2e6b9ff14d0da97c39c3a66fda3022b4540e4c6e02b887"
+    },
+    {
+      "bytes": 2501,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/readiness_gates.py",
+      "sha256": "8e6590731f75ee89f722860a48ae407b813abe977d61814cad1f725f3b14c132"
     },
     {
       "bytes": 2544,
@@ -2682,6 +2748,42 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/status_badges.py",
       "sha256": "9061f5bfa058a250fca2b1b57433b176bc5a827bb60ed94f0bae29a0ce1bd2d7"
+    },
+    {
+      "bytes": 773,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/__init__.py",
+      "sha256": "67bcb04ea9c8f76a99ef7d3cc820321ae977147012894f9da0c331acf3f0d195"
+    },
+    {
+      "bytes": 1665,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/audit.py",
+      "sha256": "92b8c3646a5aa736b2fa699dff54d1e6f97d30bc50496625eee644fc634f1cd6"
+    },
+    {
+      "bytes": 3521,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/command_classifier.py",
+      "sha256": "a54e207ea25b024414ba1cc10faab36246bacfe68d3d18c463d8b689c1756d37"
+    },
+    {
+      "bytes": 2584,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/command_stub_adapter.py",
+      "sha256": "d5df97a7891d467d8be7bf809a393ec472580eaf84e9e44df4e3900019f0d403"
+    },
+    {
+      "bytes": 2772,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/contracts.py",
+      "sha256": "e66d87e06af314fa7e1eedff208837a68e3df01bda02ce7b4da1112599c1a722"
+    },
+    {
+      "bytes": 2387,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/controls/policies.py",
+      "sha256": "8d0db5435fad299318cfa360904038d29ef03bcd4bba050717dd8e454b4ee4a2"
     },
     {
       "bytes": 18220,
@@ -2732,22 +2834,22 @@
       "sha256": "fb2f5d555814a346f9040c537e482da4b0c13424569c76f8efd972d1bfd3414a"
     },
     {
-      "bytes": 2416,
+      "bytes": 4038,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "758f837053bde4c6bf4f8b27da636ebbee4dd9f14970a27e137674b8743dc001"
+      "sha256": "4bf3cb15f968a7b79e9037ddcc3c22098535f0079815948cb39e3bf89039b78c"
     },
     {
-      "bytes": 2069,
+      "bytes": 2482,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/07_quantitative_reports.py",
-      "sha256": "604d9619664ce8f28dd2be012ec4c515f44118e0d1723b3e187adce0ab25177b"
+      "sha256": "29dd01b3d3902487228728dfa282901c26051dd296b2e5ab30d102a902b65bce"
     },
     {
-      "bytes": 1895,
+      "bytes": 2908,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/08_alerts_messaging.py",
-      "sha256": "f06a1beb9292c9926c22751d3cf918fe8a2291e5e69cfa0f4d1d8cd213787519"
+      "sha256": "7f34d0349e16bc942778f9f8b65f6b0ff498e3498309b5d25cacf8a48bceddbf"
     },
     {
       "bytes": 66,
@@ -3854,10 +3956,22 @@
       "sha256": "ac689416d34be654b449c2413ef2fba719852c59d1f039b7d1702bf754b6a7be"
     },
     {
+      "bytes": 1232,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_alerts_contracts_v2.py",
+      "sha256": "2654b58eacea8fa675f7c8665408fea35b373f4f6d944562489a8a8370b6af47"
+    },
+    {
       "bytes": 2352,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_alerts_messaging_snapshot_builder_v2.py",
       "sha256": "c69617ae516c4b06aa8fcc0fa2c1d2cef2737c21dd3499de17fcc91f349e77c0"
+    },
+    {
+      "bytes": 995,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_alerts_page_stubs_v2.py",
+      "sha256": "882f7ffeb8854278fdf3b0b663f5c302239d65d0cafc7d211a4c614523228a34"
     },
     {
       "bytes": 2505,
@@ -3878,10 +3992,52 @@
       "sha256": "ab2849cd36ed7edf5bf13241e82c084be7d09f06f79fa01c9be9614ed5201a61"
     },
     {
+      "bytes": 2059,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_command_classifier_v2.py",
+      "sha256": "1b690ed0c792a8dafdab88fe7c6544fe37120a76ca55ef0e166a686eb45c0ed4"
+    },
+    {
+      "bytes": 2246,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_command_stub_adapter_v2.py",
+      "sha256": "898cbb9104bfda258fac6c70f7fbb522cf78d20eabe236338d0e08628959c8fc"
+    },
+    {
+      "bytes": 2825,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_controls_alerts_static_safety_v2.py",
+      "sha256": "2c769ee29c564328de92778a306ba71b7dc9dd3e62e90506934883c1fb6d3797"
+    },
+    {
+      "bytes": 1579,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_controls_contracts_v2.py",
+      "sha256": "b57fd7d9d5ed3e2aa7722f12571cf01ae2324ae01dae9fe128226485c8c519d5"
+    },
+    {
+      "bytes": 1026,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_controls_page_stubs_v2.py",
+      "sha256": "1051774d5b0bfe2430446f142b99a8214673cbeb90e931113ea83b5ebbd5becf"
+    },
+    {
+      "bytes": 1360,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_dataset_ocr_pipeline_status_v2.py",
+      "sha256": "4fdfae964c9c7a78a672822e8b952c1e647fdda18873e0740ef7478420cac301"
+    },
+    {
       "bytes": 4032,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_file_loader_v2.py",
       "sha256": "3c9f45e91ec9fda78874d925a47a49bac8918b5fa101aa041d2e919a84a3bf4e"
+    },
+    {
+      "bytes": 1141,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_financial_event_log_decision_trace_v2.py",
+      "sha256": "821a0b5406b287f7be67aefc577b7e3148ef03eb1826bc13ad953f5cf52d2d7e"
     },
     {
       "bytes": 4259,
@@ -3902,6 +4058,12 @@
       "sha256": "71b044fc9c3b6120edc0f9dbd2dd71ff2a6ba5d093814821798dfa010d2ab956"
     },
     {
+      "bytes": 1513,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_notification_stub_dispatcher_v2.py",
+      "sha256": "3144fffb8981d7514c874ce92566967fa097440ace115620de39931950a9455b"
+    },
+    {
       "bytes": 1858,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_opportunity_scanner_snapshot_builder_v2.py",
@@ -3918,6 +4080,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_quantitative_reports_snapshot_builder_v2.py",
       "sha256": "5a039cc544f988f6d583ded52a0c867ca291a59bb34f017ecc94b60b2a9fb77e"
+    },
+    {
+      "bytes": 1666,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_readiness_gates_snapshot_view_v2.py",
+      "sha256": "18560e259cfd10020acc6c92c141dca57565ce0dd7b2606d553176f18375d387"
     },
     {
       "bytes": 19053,
