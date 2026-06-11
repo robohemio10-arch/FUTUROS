@@ -8,6 +8,7 @@ from .command_bus import (
     DashboardCommandValidationError,
     DashboardReadonlyCommandBus,
 )
+from .services.page_snapshot_loader import PAGE_SNAPSHOT_SPECS, load_page_snapshot
 
 
 __all__ = [
@@ -17,4 +18,6 @@ __all__ = [
     "DashboardCommand",
     "DashboardCommandValidationError",
     "DashboardReadonlyCommandBus",
+    "PAGE_SNAPSHOT_SPECS",
+    "load_page_snapshot",
 ]

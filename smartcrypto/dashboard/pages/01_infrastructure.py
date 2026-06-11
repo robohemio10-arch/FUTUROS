@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
+from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
+
+
+PAGE_TITLE = "01. Infraestrutura"
+SNAPSHOT_PATH = "data/reports/dashboard_infrastructure_snapshot.json"
+EXPECTED_SCHEMA_VERSION = "dashboard_infrastructure_snapshot_v1"
+REQUIRED_SECTIONS = (
+    "status_summary", "host", "docker", "redis", "latency", "websockets",
+    "rate_limits", "market_data_health", "events", "audit",
+)
+METRICS = (
+    ("Runtime Mode", "status_summary", "component_status"),
+    ("Redis Status", "redis", "status"),
+    ("WebSocket Status", "websockets", "stale_ws"),
+    ("Latency p50", "latency", "latency_p50_ms"),
+    ("Latency p90", "latency", "latency_p90_ms"),
+    ("Latency p99", "latency", "latency_p99_ms"),
+    ("Rate Limit Used", "rate_limits", "api_weight_pct"),
+    ("Market Data Age", "market_data_health", "data_age_seconds"),
+)
+
+
+def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
+    render_snapshot_page(
+        title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
+        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=ui,
+    )
+
+
+def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:
+    target_ui = ui or get_streamlit()
+    target_ui.info(f"UNKNOWN: {reason}")
+
+
+def main(project_root: str | Path = ".") -> None:
+    ui = get_streamlit()
+    ui.set_page_config(page_title=PAGE_TITLE, layout="wide")
+    render_page(load_page_snapshot(DashboardPageId.infrastructure, project_root=project_root), ui=ui)
+
+
+if __name__ == "__main__":
+    main()
