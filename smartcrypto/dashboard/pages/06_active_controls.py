@@ -8,6 +8,18 @@ from smartcrypto.dashboard.components.read_only import (
     render_disabled_control_stub,
     render_snapshot_page,
 )
+from smartcrypto.dashboard.components.control_stubs import (
+    render_command_policy_table,
+    render_command_result_stub,
+    render_n4_hard_block_panel,
+    render_stub_only_banner,
+)
+from smartcrypto.dashboard.components.readiness_gates import (
+    render_readiness_gates_snapshot_view,
+)
+from smartcrypto.dashboard.controls.command_classifier import list_dashboard_command_policies
+from smartcrypto.dashboard.controls.command_stub_adapter import evaluate_dashboard_command_intent
+from smartcrypto.dashboard.controls.contracts import DashboardCommandIntent
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
@@ -41,10 +53,34 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
     )
     target_ui.subheader("Controles governados")
+    render_stub_only_banner(ui=target_ui)
+    policies = list_dashboard_command_policies()
+    render_command_policy_table(policies, ui=target_ui)
+    render_n4_hard_block_panel(policies, ui=target_ui)
+    target_ui.subheader("Exemplos estáticos de avaliação dry-run")
+    for intent in _example_intents():
+        render_command_result_stub(evaluate_dashboard_command_intent(intent), ui=target_ui)
     render_disabled_control_stub("N2", "DRY-RUN/STUB FUTURO", ui=target_ui)
     render_disabled_control_stub("N3", "DRY-RUN/STUB FUTURO", ui=target_ui)
     for command in LEVEL4_ALWAYS_BLOCKED:
         render_disabled_control_stub(command, "HARD_BLOCKED", ui=target_ui)
+    render_readiness_gates_snapshot_view(snapshot, ui=target_ui)
+
+
+def _example_intents() -> tuple[DashboardCommandIntent, ...]:
+    return (
+        DashboardCommandIntent(command_id="example-n1", command_name="REFRESH_VIEW"),
+        DashboardCommandIntent(
+            command_id="example-n2",
+            command_name="REQUEST_ALERT_TEST_DRY_RUN",
+            payload={"severity": "WARNING", "channel": "TELEGRAM"},
+        ),
+        DashboardCommandIntent(
+            command_id="example-n3",
+            command_name="REQUEST_DATASET_AUDIT_DRY_RUN",
+            payload={"dataset_scope": "summary", "reason": "dashboard_example"},
+        ),
+    )
 
 
 def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:

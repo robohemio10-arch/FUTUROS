@@ -4,6 +4,12 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.components.dataset_pipeline import (
+    render_dataset_ocr_training_pipeline_status,
+)
+from smartcrypto.dashboard.components.decision_trace import (
+    render_financial_event_log_decision_trace,
+)
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
@@ -32,10 +38,13 @@ METRICS = (
 
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
+    target_ui = ui or get_streamlit()
     render_snapshot_page(
         title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=ui,
+        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
     )
+    render_financial_event_log_decision_trace(snapshot, ui=target_ui)
+    render_dataset_ocr_training_pipeline_status(snapshot, ui=target_ui)
 
 
 def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:

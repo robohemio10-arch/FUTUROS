@@ -4,6 +4,14 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.alerts.contracts import NotificationIntent
+from smartcrypto.dashboard.alerts.notification_stub_dispatcher import evaluate_notification_intent
+from smartcrypto.dashboard.alerts.routing import list_notification_routing_policies
+from smartcrypto.dashboard.components.alert_stubs import (
+    render_notification_dispatch_stub,
+    render_notification_routing_table,
+    render_notification_stub_only_banner,
+)
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
 
@@ -29,9 +37,23 @@ METRICS = (
 
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
+    target_ui = ui or get_streamlit()
     render_snapshot_page(
         title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=ui,
+        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+    )
+    render_notification_stub_only_banner(ui=target_ui)
+    render_notification_routing_table(list_notification_routing_policies(), ui=target_ui)
+    render_notification_dispatch_stub(
+        evaluate_notification_intent(
+            NotificationIntent(
+                notification_id="dashboard-warning-example",
+                severity="WARNING",
+                title="Dry-run notification example",
+                message="No delivery is attempted by this dashboard stub.",
+            )
+        ),
+        ui=target_ui,
     )
 
 
