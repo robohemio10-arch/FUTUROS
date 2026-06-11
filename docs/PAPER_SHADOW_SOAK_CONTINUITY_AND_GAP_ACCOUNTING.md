@@ -1,161 +1,102 @@
-# Paper/Shadow Soak Continuity and Gap Accounting
+# SMART FUTUROS — Paper/Shadow Soak Continuity and Gap Accounting
 
 ## Objetivo
 
-Esta frente adiciona uma auditoria institucional de continuidade do soak paper/shadow. O relatório mede se há evidência temporal suficiente, identifica lacunas operacionais e preserva o contrato de segurança do projeto FUTUROS: nenhuma liberação live pode ser derivada automaticamente de métricas de soak.
+Esta frente adiciona uma auditoria read-only de continuidade do soak paper/shadow com contabilidade explícita de gaps por janela, cobertura diária/hora e separação entre diagnóstico de 7 dias e readiness de 30 dias.
 
-## Contrato canônico
+## Arquivos
 
-- 7 dias: janela diagnóstica operacional.
-- 30 dias: requisito mínimo de readiness.
-- 30 dias não liberam live automaticamente.
-- Live/canário continua dependente de gates adicionais, governança manual e ausência de bloqueios P0/P1.
+- `smartcrypto/ops/paper_shadow_soak_gap_accounting/`
+- `scripts/audit_paper_shadow_soak_continuity_and_gap_accounting.py`
+- `tests/test_paper_shadow_soak_gap_accounting_*.py`
 
-## Relatório gerado
+## Contrato de segurança
 
-A CLI `scripts/audit_paper_shadow_soak_continuity.py` gera, por padrão:
+A auditoria não executa ordens, não acessa exchange privada, não altera risco, não altera modelo, não altera datasets, não executa OCR, não limpa SQLite e não libera canary/live.
 
-```text
-data/reports/paper_shadow_soak_continuity_audit.json
-```
+Flags fixas:
 
-O schema é:
+- `paper_only=true`
+- `shadow_only=true`
+- `live_trading_enabled=false`
+- `order_submission_enabled=false`
+- `real_order_submission_enabled=false`
+- `exchange_private_access=false`
+- `sends_orders=false`
+- `sends_notifications=false`
+- `changes_risk=false`
+- `live_release_allowed=false`
+- `canary_release_allowed=false`
+- `manual_go_no_go_required=true`
 
-```text
-paper_shadow_soak_continuity_v1
-```
+## Evidências consumidas
 
-Campos centrais:
-
-- `status`: `ok`, `degraded`, `blocked` ou `evidence_missing`.
-- `observed_calendar_days`: janela calendário observada.
-- `observed_active_days`: soma de intervalos ativos quando disponível.
-- `diagnostic_soak_reached`: verdadeiro quando atinge 7 dias.
-- `readiness_soak_reached`: verdadeiro quando atinge 30 dias.
-- `continuity_approved`: verdadeiro apenas quando a continuidade passa sem bloqueios.
-- `live_release_allowed`: sempre `false`.
-- `critical_gap_count`: número de gaps críticos.
-- `warning_gap_count`: número de gaps de alerta.
-- `missing_evidence`: evidências ausentes.
-- `invalid_evidence`: evidências JSON inválidas.
-- `safety_flags`: contrato paper/shadow only.
-
-## Classificação dos gaps
-
-A auditoria coleta timestamps e intervalos presentes nos relatórios existentes. Quando existem eventos temporais suficientes:
-
-- Gap de alerta: intervalo maior que `--max-warning-gap-minutes`.
-- Gap crítico: intervalo maior que `--max-critical-gap-minutes`.
-
-Defaults:
-
-```text
---max-warning-gap-minutes 60
---max-critical-gap-minutes 360
-```
-
-Um gap crítico bloqueia readiness mesmo que a janela de 30 dias tenha sido atingida.
-
-## Fontes de evidência
-
-A leitura é defensiva e tolerante a ausência de arquivos. Quando existirem, são consumidos relatórios como:
+A auditoria lê, quando presentes:
 
 - `data/reports/paper_shadow_soak_report.json`
-- `data/reports/paper_soak_report.json`
+- `data/reports/paper_shadow_soak_continuity_audit.json`
+- `data/reports/paper_shadow_soak_anchor_continuity_pack.json`
 - `data/reports/runtime_evidence_pack_v2.json`
 - `data/reports/readiness_snapshot_v2.json`
+- `data/reports/paper_soak_report.json`
 - `data/reports/freqtrade_paper_db_authority_report.json`
-- `data/reports/phase14_feedback_sync_summary.json`
-- `data/reports/ai_shadow_filter_incremental_daily_summary.json`
-- `data/reports/ai_shadow_filter_decision_db_audit_summary.json`
+- `data/reports/monte_carlo_risk_simulation_report.json`
+- `data/reports/dashboard_snapshot_build_summary.json`
+- `docs/SMART_FUTUROS_DASHBOARD_SEMANTIC_COVERAGE_AUDIT_V2.md`
 
-Arquivo ausente entra em `missing_evidence`. JSON inválido entra em `invalid_evidence`. A auditoria não deve quebrar com stacktrace por evidência parcial.
+## Saída
 
-## Status
+Por padrão, a CLI é read-only e não escreve arquivo. Com `--write`, materializa:
 
-### evidence_missing
+- `data/reports/paper_shadow_soak_gap_accounting_report.json`
 
-Sem evidência mínima para estimar continuidade. Exemplos:
+Esse arquivo é runtime e não deve ser versionado.
 
-- falta `paper_shadow_soak_report`, `paper_soak_report`, `runtime_evidence_pack_v2` e `readiness_snapshot_v2`;
-- evidências mínimas existem, mas estão inválidas.
+## Campos principais
 
-### blocked
+- `observed_calendar_days`
+- `observed_active_days`
+- `continuous_valid_soak_days`
+- `effective_soak_start_utc`
+- `effective_soak_end_utc`
+- `covered_intervals`
+- `gap_windows`
+- `hourly_coverage`
+- `daily_coverage`
+- `critical_gap_count`
+- `warning_gap_count`
+- `max_gap_minutes`
+- `seven_day_diagnostic_status`
+- `thirty_day_readiness_status`
+- `readiness_gap_free`
+- `blocking_reasons`
+- `next_required_actions`
 
-Há evidência mínima, mas existe bloqueio. Exemplos:
+## Interpretação
 
-- menos de 30 dias observados;
-- gap crítico;
-- `sends_orders=true`;
-- `changes_risk=true`;
-- `exchange_private_access=true`;
-- snapshot de readiness bloqueado;
-- qualquer evidência sugerindo `live_release_allowed=true`.
-
-### degraded
-
-Há evidência suficiente, sem bloqueio crítico, mas com warning. Exemplos:
-
-- gaps de alerta;
-- evidências opcionais ausentes;
-- JSON opcional inválido.
-
-### ok
-
-A janela mínima foi atingida, não há gaps críticos, não há violações de segurança e não há warnings. Mesmo assim, `live_release_allowed=false` permanece obrigatório.
+- 7 dias: diagnóstico operacional inicial.
+- 30 dias: requisito mínimo de readiness.
+- 30 dias não liberam canary/live automaticamente.
+- Qualquer gap crítico bloqueia readiness.
+- O output `blocked` é esperado enquanto a janela contínua não atingir 30 dias ou enquanto houver gaps críticos.
 
 ## Uso
 
-Auditoria sem escrita:
+```powershell
+python scripts/audit_paper_shadow_soak_continuity_and_gap_accounting.py --project-root . --json
+```
+
+Para materializar runtime output:
 
 ```powershell
-python .\scripts\audit_paper_shadow_soak_continuity.py --no-write --json
+python scripts/audit_paper_shadow_soak_continuity_and_gap_accounting.py --project-root . --write --json
 ```
 
-Auditoria com escrita padrão:
+## Validação
 
 ```powershell
-python .\scripts\audit_paper_shadow_soak_continuity.py
+python -m compileall scripts smartcrypto tests
+python -m pytest tests/test_paper_shadow_soak_gap_accounting_contracts_v1.py tests/test_paper_shadow_soak_gap_accounting_auditor_v1.py tests/test_paper_shadow_soak_gap_accounting_script_v1.py tests/test_paper_shadow_soak_gap_accounting_static_safety_v1.py -q
+python scripts/generate_project_manifest.py --check
+python scripts/scan_versioned_secrets.py --json
 ```
-
-Parâmetros principais:
-
-```powershell
-python .\scripts\audit_paper_shadow_soak_continuity.py `
-  --project-root . `
-  --output data/reports/paper_shadow_soak_continuity_audit.json `
-  --required-soak-days 30 `
-  --diagnostic-soak-days 7 `
-  --max-warning-gap-minutes 60 `
-  --max-critical-gap-minutes 360
-```
-
-## Integração com Runtime Evidence Pack v2
-
-O relatório é desenhado para ser consumido pelo Runtime Evidence Pack v2 e pelo Readiness Snapshot v2 como evidência read-only adicional. Ele não altera risco, não altera dataset, não escreve no `trades_master` e não envia ordens.
-
-## Safety flags
-
-O relatório sempre declara:
-
-```json
-{
-  "paper_only": true,
-  "shadow_only": true,
-  "live_trading_enabled": false,
-  "order_submission_enabled": false,
-  "real_order_submission_enabled": false,
-  "exchange_private_access": false,
-  "sends_orders": false,
-  "changes_risk": false,
-  "changes_training_dataset": false,
-  "writes_trades_master": false,
-  "live_release_allowed": false
-}
-```
-
-Qualquer evidência de runtime que contradiga esse contrato bloqueia a auditoria.
-
-## Fora de escopo
-
-Esta branch não executa trading, não importa OCR, não reconstrói datasets, não altera IA Shadow e não habilita canário/live.

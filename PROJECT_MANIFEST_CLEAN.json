@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d9fe909c28449a0d0a2547f3ef360ce792c64b104a12b9857fa85a8cf25ac201",
+  "aggregate_sha256": "0f496c269b8b83eb99ede5e13a2423a6f28bf1ea7bf63e92de7472b9cc91f1c1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 124,
-    "manifested_files_total": 824,
-    "python_files": 610,
+    "manifested_files_total": 833,
+    "python_files": 619,
     "runtime_excluded_files_total": 0,
-    "test_files": 168,
-    "tracked_files_total": 825,
+    "test_files": 172,
+    "tracked_files_total": 834,
     "workflows": 1
   },
   "deterministic": true,
@@ -926,10 +926,10 @@
       "sha256": "19be9a373c2b130fea26b9c9516bf15b2b1f3ae9b72e74321be8d9bfe1f12cf4"
     },
     {
-      "bytes": 5127,
+      "bytes": 3366,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SHADOW_SOAK_CONTINUITY_AND_GAP_ACCOUNTING.md",
-      "sha256": "8f59e47a6f91d0171e03e8f3ef8a5d2494ef4e203d112b0e0cf501f6492cbc3c"
+      "sha256": "cc6061ee0b8f4aaa289bf586c0513b5ec7905b0917f4be0011eee75a5ec3a03c"
     },
     {
       "bytes": 4320,
@@ -1458,6 +1458,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_shadow_soak_continuity.py",
       "sha256": "b466c1d565b42cee333188a2264f81cebd8e0bf8bade9f59939dda2ac48f5442"
+    },
+    {
+      "bytes": 2648,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_shadow_soak_continuity_and_gap_accounting.py",
+      "sha256": "28edad0cdd297229b1bb850e7e9b25f85d5612374eb6c9e5fbbd34241e47a259"
     },
     {
       "bytes": 7550,
@@ -3686,6 +3692,30 @@
       "sha256": "954281e5719edcb02dd345cf1a31bedf1f3817617fda6bc8d14d8d5fda8ae171"
     },
     {
+      "bytes": 906,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_shadow_soak_gap_accounting/__init__.py",
+      "sha256": "8e2ba5612880bcfb3fb5f9c51f63ecb0d9eae842730f95385cefe0fa6701f8de"
+    },
+    {
+      "bytes": 29202,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_shadow_soak_gap_accounting/auditor.py",
+      "sha256": "413289556bb0967d0648917e0d87f5cd921accf193e391207d4c16ce4d0f495c"
+    },
+    {
+      "bytes": 3288,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_shadow_soak_gap_accounting/catalog.py",
+      "sha256": "37cfadf594ba08719a881d836955a3942fa2e054a05f909e32bafdd65bb8fe41"
+    },
+    {
+      "bytes": 2817,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_shadow_soak_gap_accounting/contracts.py",
+      "sha256": "01326cc34b4487946c1d9e2ef3f366ad664f8fc75ed32da73ef26af4ebd49c4d"
+    },
+    {
       "bytes": 32903,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_shadow_soak_report.py",
@@ -4680,6 +4710,30 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_shadow_soak_continuity_and_gap_accounting.py",
       "sha256": "d374a05b8bb9f602181110078774bd4b60d976ce12d2285069b66913479b0078"
+    },
+    {
+      "bytes": 9343,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_soak_gap_accounting_auditor_v1.py",
+      "sha256": "7267979e066f33e8c23a04410332743d060b4735e355a0d51f7d26a50d3231b5"
+    },
+    {
+      "bytes": 1965,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_soak_gap_accounting_contracts_v1.py",
+      "sha256": "6ca2c9647045820662914b4ca8d68c41153a65e7fe7e65d0fb924f7f6daeb5a4"
+    },
+    {
+      "bytes": 1357,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_soak_gap_accounting_script_v1.py",
+      "sha256": "e401d88949af17e77ebc08edb963d8c328c81112b58d30cfe006e0ba5fd2f741"
+    },
+    {
+      "bytes": 1918,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_soak_gap_accounting_static_safety_v1.py",
+      "sha256": "3b5df62cc6256ef10154ce83f3c6a527e71f1f0c499727c57c53dfdce3dfd914"
     },
     {
       "bytes": 27888,
