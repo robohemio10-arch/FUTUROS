@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4305d005768a7c7d882d918d5af6f4249971c5b1fcbccb3d13b0c56b4f675f5d",
+  "aggregate_sha256": "e0a070a840343b9c76ce5d1cca7f5895615a49dc74d1b9620acc068d70df932a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 125,
-    "manifested_files_total": 835,
-    "python_files": 620,
+    "docs_files": 126,
+    "manifested_files_total": 837,
+    "python_files": 621,
     "runtime_excluded_files_total": 0,
-    "test_files": 173,
-    "tracked_files_total": 836,
+    "test_files": 174,
+    "tracked_files_total": 838,
     "workflows": 1
   },
   "deterministic": true,
@@ -830,6 +830,12 @@
       "sha256": "456f34bdda28f6368216e775451a3762ffe796f9fd58b7ec0570b4db6ae3016b"
     },
     {
+      "bytes": 3926,
+      "hash_mode": "text_lf",
+      "path": "docs/MATERIALIZE_GAP_ACCOUNTING_RUNTIME_REPORT_V1.md",
+      "sha256": "e6df811b048619ae8c005c2eb17d51aada992e3440a638eb7047de7d0b1b4b63"
+    },
+    {
       "bytes": 3020,
       "hash_mode": "text_lf",
       "path": "docs/MODEL_REGISTRY_CHAMPION_CHALLENGER_PROMOTION_GATE.md",
@@ -1628,10 +1634,10 @@
       "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
     },
     {
-      "bytes": 3875,
+      "bytes": 4339,
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
-      "sha256": "e1c3281ce52470bc9cd93b13abba87397a53332a215a04a500dc229198b801fa"
+      "sha256": "7f95e855bc9c7be93c11490b30c869380b65a4a52318176ec8d4951f63fdcac7"
     },
     {
       "bytes": 1888,
@@ -3740,10 +3746,10 @@
       "sha256": "419e050fb7ff0bfb8c350b614b6d6c7dbd4ab77915461bd6efb3d70c49d2ec71"
     },
     {
-      "bytes": 43347,
+      "bytes": 43987,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/runtime_evidence_pack.py",
-      "sha256": "749d1fb99823137c6b25f3a0cbd941e5e3a1c47db226f7734993aa3bc38236a4"
+      "sha256": "69b35bc605c945d82f598d012bc8b1f03ef1540b03734c01f6e5d3d6c1765aae"
     },
     {
       "bytes": 13874,
@@ -4566,6 +4572,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_market_features_runtime_writer_audit.py",
       "sha256": "20db566a322fb8147fe3873c27833901e08b1a904bdf8305f09924a5f697cfbe"
+    },
+    {
+      "bytes": 5476,
+      "hash_mode": "text_lf",
+      "path": "tests/test_materialize_gap_accounting_runtime_report_v1.py",
+      "sha256": "019a23262014a85d908c7eec78cfe97b27a702034a93da09a82f01de3abf76e7"
     },
     {
       "bytes": 1753,
