@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0f496c269b8b83eb99ede5e13a2423a6f28bf1ea7bf63e92de7472b9cc91f1c1",
+  "aggregate_sha256": "4305d005768a7c7d882d918d5af6f4249971c5b1fcbccb3d13b0c56b4f675f5d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 124,
-    "manifested_files_total": 833,
-    "python_files": 619,
+    "docs_files": 125,
+    "manifested_files_total": 835,
+    "python_files": 620,
     "runtime_excluded_files_total": 0,
-    "test_files": 172,
-    "tracked_files_total": 834,
+    "test_files": 173,
+    "tracked_files_total": 836,
     "workflows": 1
   },
   "deterministic": true,
@@ -1100,6 +1100,12 @@
       "sha256": "a8f5c5e4d1e0fdbc97d6f9f5bf86822af5d9cb423e6f6c093b95ee95ff3dc4d2"
     },
     {
+      "bytes": 3974,
+      "hash_mode": "text_lf",
+      "path": "docs/RUNTIME_EVIDENCE_GAP_ACCOUNTING_INTEGRATION_V1.md",
+      "sha256": "4e215a2684619b47e8ae42e3e03900f719015ebcba8faeb14ef1c54dca17ac85"
+    },
+    {
       "bytes": 3462,
       "hash_mode": "text_lf",
       "path": "docs/RUNTIME_EVIDENCE_PACK_AND_READINESS_SNAPSHOT_V2.md",
@@ -1622,10 +1628,10 @@
       "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
     },
     {
-      "bytes": 3189,
+      "bytes": 3875,
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
-      "sha256": "3e45c04256eb5f671c966d024b2f66d3916713ada58f7e0f552040f15fe012de"
+      "sha256": "e1c3281ce52470bc9cd93b13abba87397a53332a215a04a500dc229198b801fa"
     },
     {
       "bytes": 1888,
@@ -2768,10 +2774,10 @@
       "sha256": "532fadf3a843cb98bcb8fc69f5732a3028d8b080cf677c11c9ccdc892cc72724"
     },
     {
-      "bytes": 2501,
+      "bytes": 2649,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/readiness_gates.py",
-      "sha256": "8e6590731f75ee89f722860a48ae407b813abe977d61814cad1f725f3b14c132"
+      "sha256": "4bbfa6ca4ff45a3a7afd28ff5b01969c1065ee760f11cbe839483c5f7b2906c4"
     },
     {
       "bytes": 2862,
@@ -2876,16 +2882,16 @@
       "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
     },
     {
-      "bytes": 4818,
+      "bytes": 5002,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "52f570a7c204c53c487afed215acf0a425ed6b817f9f180488ff10988f770ca4"
+      "sha256": "e96d44eb22daaf66800a1dd19966ba65d19adebd13ce96c0e812d47585b6931f"
     },
     {
-      "bytes": 3481,
+      "bytes": 3639,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/07_quantitative_reports.py",
-      "sha256": "06d5d4e2fb1553d197982717c21662b34d9fcd4ca6710290b13bc94f2b4a4192"
+      "sha256": "edd5617f328ee8475a95e87e083c37bc2675b7f98b7b09e85c7ce2dc94c89442"
     },
     {
       "bytes": 3750,
@@ -3512,10 +3518,10 @@
       "sha256": "9833634b6fc2472eeaa9f1d10d22a60ec463c76d6aed322fed1fd6b3122247e9"
     },
     {
-      "bytes": 5431,
+      "bytes": 7243,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/active_controls_snapshot_builder.py",
-      "sha256": "5e7d3903c12735bf5e99b20932df2706343957fe1c3c86258f504e559d3d7f52"
+      "sha256": "a91b5355b153b07ce4d624c070a823009b871ae6f92c71b0ad3856f6ead0dbf5"
     },
     {
       "bytes": 7202,
@@ -3584,10 +3590,10 @@
       "sha256": "b6f4fa9470d2e84f73db54c00cbe3f6274fb95ab288eb4e612acec0d752cbaa8"
     },
     {
-      "bytes": 9277,
+      "bytes": 10980,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/quantitative_reports_snapshot_builder.py",
-      "sha256": "d13ec12f2eddd9faf51278965cf1db2c3d749eead11f5047b94e6ba77cae0656"
+      "sha256": "7f6f547a6dabe800f9e8cec5ea52581c30ff4b5b6670b06716b11593783cbb62"
     },
     {
       "bytes": 3850,
@@ -3596,10 +3602,10 @@
       "sha256": "9edc93e546b9e143ad63aa4fc9f6fe4da6a5ba9fff2a1b5f0ea4ecaa7071f191"
     },
     {
-      "bytes": 14158,
+      "bytes": 14773,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/source_catalog.py",
-      "sha256": "ac902167865658e4fc74b5216a1eb38e465415380fd3822aa9928330c62cb375"
+      "sha256": "0bd913a1ae7b24948f78689aac4ba0755e82471380fedac68902ef1e593f1925"
     },
     {
       "bytes": 1628,
@@ -3734,10 +3740,10 @@
       "sha256": "419e050fb7ff0bfb8c350b614b6d6c7dbd4ab77915461bd6efb3d70c49d2ec71"
     },
     {
-      "bytes": 37927,
+      "bytes": 43347,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/runtime_evidence_pack.py",
-      "sha256": "401b64ac5677189ce8dd5bf24c35f3282f3604edd17329cbba016dfe1ce1f7c7"
+      "sha256": "749d1fb99823137c6b25f3a0cbd941e5e3a1c47db226f7734993aa3bc38236a4"
     },
     {
       "bytes": 13874,
@@ -4902,6 +4908,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_authority_docs.py",
       "sha256": "562c589d76e8ec96bf3f740b9a5de3d710f6b4554d596d2bd243c2aec1a24457"
+    },
+    {
+      "bytes": 6642,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_evidence_gap_accounting_integration_v1.py",
+      "sha256": "c1cf03b824f41f093ce903bbd1a7a7a72c480720ad83c8fe20fb533fcef9a976"
     },
     {
       "bytes": 8358,

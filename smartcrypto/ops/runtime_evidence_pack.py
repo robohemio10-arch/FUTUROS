@@ -22,6 +22,7 @@ REQUIRED_EVIDENCE = {
     "freqtrade_paper_db_authority_report",
     "readiness_gate_report",
     "monte_carlo_report",
+    "paper_shadow_soak_gap_accounting",
     "manifest_check",
     "secret_scan",
 }
@@ -30,6 +31,7 @@ EVIDENCE_PATHS = {
     "paper_soak_report": "data/reports/paper_soak_report.json",
     "paper_shadow_soak_report": "data/reports/paper_shadow_soak_report.json",
     "paper_shadow_soak_continuity_audit": "data/reports/paper_shadow_soak_continuity_audit.json",
+    "paper_shadow_soak_gap_accounting": "data/reports/paper_shadow_soak_gap_accounting_report.json",
     "freqtrade_paper_db_authority_report": "data/reports/freqtrade_paper_db_authority_report.json",
     "freqtrade_paper_db_snapshot_export": "data/reports/freqtrade_paper_db_snapshot_export.json",
     "readiness_gate_report": "data/reports/readiness_gate_report.json",
@@ -168,7 +170,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     )
 
     safety = safety_payload()
-    observed_soak_days = observed_soak_days_from_source(sources.get("paper_soak_report", {}))
+    observed_soak_days = observed_soak_days_from_sources(sources)
     blocking_reasons, warning_reasons = classify_readiness(
         sources=sources,
         runtime_sources=runtime_sources,
@@ -178,6 +180,8 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
 
     diagnostic_soak_reached = observed_soak_days >= DIAGNOSTIC_SOAK_DAYS
     readiness_soak_reached = observed_soak_days >= REQUIRED_SOAK_DAYS
+    gap_accounting_payload = source_payload(sources.get("paper_shadow_soak_gap_accounting", {}))
+    gap_accounting_summary = gap_accounting_readiness_summary(gap_accounting_payload)
     evidence_sources = {name: public_source_summary(source) for name, source in sorted(sources.items())}
     runtime_observability = runtime_observability_rollup(runtime_sources)
     runtime_source_summaries = {name: public_runtime_source_summary(source) for name, source in sorted(runtime_sources.items())}
@@ -195,6 +199,7 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "invalid_evidence": invalid_evidence,
         "required_evidence": sorted(REQUIRED_EVIDENCE),
         "evidence_sources": evidence_sources,
+        "paper_shadow_soak_gap_accounting": gap_accounting_summary,
         "runtime_observability": runtime_observability,
         "runtime_sources": runtime_source_summaries,
         "container_snapshot": container_snapshot,
@@ -223,12 +228,22 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "observed_soak_days": observed_soak_days,
         "diagnostic_soak_reached": diagnostic_soak_reached,
         "readiness_soak_reached": readiness_soak_reached,
+        "continuous_valid_soak_days": gap_accounting_summary["continuous_valid_soak_days"],
+        "observed_calendar_days": gap_accounting_summary["observed_calendar_days"],
+        "readiness_gap_free": gap_accounting_summary["readiness_gap_free"],
+        "critical_gap_count": gap_accounting_summary["critical_gap_count"],
+        "warning_gap_count": gap_accounting_summary["warning_gap_count"],
+        "max_gap_minutes": gap_accounting_summary["max_gap_minutes"],
+        "seven_day_diagnostic_status": gap_accounting_summary["seven_day_diagnostic_status"],
+        "thirty_day_readiness_status": gap_accounting_summary["thirty_day_readiness_status"],
+        "paper_shadow_soak_gap_accounting": gap_accounting_summary,
         "missing_evidence": missing_evidence,
         "invalid_evidence": invalid_evidence,
         "blocking_reasons": blocking_reasons,
         "warning_reasons": warning_reasons,
         "next_required_actions": next_required_actions(blocking_reasons, missing_evidence, invalid_evidence, warning_reasons),
         "evidence_sources": evidence_sources,
+        "paper_shadow_soak_gap_accounting": gap_accounting_summary,
         "runtime_observability": runtime_observability,
         "runtime_sources": runtime_source_summaries,
         "container_snapshot": container_snapshot,
@@ -253,7 +268,9 @@ def collect_evidence_sources(root: Path) -> dict[str, dict[str, Any]]:
     sources = {
         name: load_json_evidence(root / relative_path, required=name in REQUIRED_EVIDENCE)
         for name, relative_path in EVIDENCE_PATHS.items()
+        if name != "paper_shadow_soak_gap_accounting"
     }
+    sources["paper_shadow_soak_gap_accounting"] = collect_paper_shadow_soak_gap_accounting(root)
     sources["manifest_check"] = collect_manifest_check(root)
     sources["secret_scan"] = collect_secret_scan(root)
     return sources
@@ -595,6 +612,50 @@ def load_json_evidence(path: Path, *, required: bool) -> dict[str, Any]:
     }
 
 
+def collect_paper_shadow_soak_gap_accounting(root: Path) -> dict[str, Any]:
+    path = root / EVIDENCE_PATHS["paper_shadow_soak_gap_accounting"]
+    try:
+        from smartcrypto.ops.paper_shadow_soak_gap_accounting import (
+            audit_paper_shadow_soak_continuity_and_gap_accounting,
+        )
+
+        result = audit_paper_shadow_soak_continuity_and_gap_accounting(
+            project_root=root,
+            output=path,
+            write=False,
+        )
+        report = result.report if hasattr(result, "report") else {}
+    except Exception as exc:
+        return generated_source(
+            "paper_shadow_soak_gap_accounting",
+            "blocked",
+            "gap_accounting_collection_failed",
+            path,
+            required=True,
+            error=str(exc),
+        )
+
+    if not isinstance(report, Mapping):
+        return generated_source(
+            "paper_shadow_soak_gap_accounting",
+            "invalid_schema",
+            "gap_accounting_payload_not_object",
+            path,
+            required=True,
+        )
+
+    source_status = str(report.get("status", "blocked")).lower()
+    status = "blocked" if source_status in {"blocked", "failed", "critical"} else "ok"
+    return generated_source(
+        "paper_shadow_soak_gap_accounting",
+        status,
+        f"source_status_{source_status}" if status == "blocked" else "gap_accounting_collected",
+        path,
+        required=True,
+        payload=report,
+    )
+
+
 def collect_manifest_check(root: Path) -> dict[str, Any]:
     manifest_path = root / "PROJECT_MANIFEST_CLEAN.json"
     if not manifest_path.exists():
@@ -665,6 +726,15 @@ def load_local_script_module(script_name: str) -> Any:
     return module
 
 
+def load_local_module(module_name: str, module_path: Path) -> Any:
+    spec = importlib.util.spec_from_file_location(f"runtime_evidence_{module_name}", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot_load_module:{module_name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def classify_readiness(
     *,
     sources: Mapping[str, Mapping[str, Any]],
@@ -706,6 +776,16 @@ def classify_readiness(
     if sources.get("readiness_gate_report", {}).get("exists"):
         if isinstance(readiness, Mapping) and (status_is_blocked(readiness) or readiness.get("readiness_approved") is False):
             blockers.append("readiness_gate_blocked")
+
+    gap_source = sources.get("paper_shadow_soak_gap_accounting", {})
+    gap_payload = source_payload(gap_source)
+    if gap_source.get("status") in {"blocked", "invalid_schema"}:
+        blockers.append("paper_shadow_soak_gap_accounting_blocked")
+    critical_gap_count = int_value(gap_payload.get("critical_gap_count")) if isinstance(gap_payload, Mapping) else 0
+    if critical_gap_count > 0:
+        blockers.append("paper_shadow_soak_critical_gaps_present")
+    if isinstance(gap_payload, Mapping) and gap_payload.get("readiness_gap_free") is False:
+        blockers.append("paper_shadow_soak_not_gap_free")
 
     unsafe = unsafe_safety_flags(safety)
     unsafe.extend(source_unsafe_flags(sources))
@@ -825,11 +905,41 @@ def next_required_actions(
     return sorted(set(actions))
 
 
-def observed_soak_days_from_source(source: Mapping[str, Any]) -> float:
+def observed_soak_days_from_sources(sources: Mapping[str, Mapping[str, Any]]) -> float:
+    gap_payload = source_payload(sources.get("paper_shadow_soak_gap_accounting", {}))
+    if isinstance(gap_payload, Mapping):
+        continuous = float_value(gap_payload.get("continuous_valid_soak_days"))
+        if continuous > 0.0:
+            return continuous
+    paper_payload = source_payload(sources.get("paper_soak_report", {}))
+    if isinstance(paper_payload, Mapping):
+        return float_value(first_present(paper_payload, "observed_soak_days", "soak_days", "paper_days", default=0.0))
+    return 0.0
+
+
+def source_payload(source: Mapping[str, Any]) -> Mapping[str, Any]:
     payload = source.get("payload")
-    if not isinstance(payload, Mapping):
-        return 0.0
-    return float_value(first_present(payload, "observed_soak_days", "soak_days", "paper_days", default=0.0))
+    return payload if isinstance(payload, Mapping) else {}
+
+
+def gap_accounting_readiness_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
+    critical_gap_count = int_value(payload.get("critical_gap_count"))
+    warning_gap_count = int_value(payload.get("warning_gap_count"))
+    return {
+        "status": str(payload.get("status") or "missing"),
+        "reason": str(payload.get("reason") or "gap_accounting_not_available"),
+        "continuous_valid_soak_days": float_value(payload.get("continuous_valid_soak_days")),
+        "observed_calendar_days": float_value(payload.get("observed_calendar_days")),
+        "critical_gap_count": critical_gap_count,
+        "warning_gap_count": warning_gap_count,
+        "max_gap_minutes": float_value(payload.get("max_gap_minutes")),
+        "readiness_gap_free": payload.get("readiness_gap_free") is True and critical_gap_count == 0,
+        "seven_day_diagnostic_status": str(payload.get("seven_day_diagnostic_status") or "not_reached"),
+        "thirty_day_readiness_status": str(payload.get("thirty_day_readiness_status") or "blocked"),
+        "canary_release_allowed": False,
+        "live_release_allowed": False,
+        "manual_go_no_go_required": True,
+    }
 
 
 def safety_payload() -> dict[str, bool]:

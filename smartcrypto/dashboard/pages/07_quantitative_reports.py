@@ -31,7 +31,7 @@ SNAPSHOT_PATH = "data/reports/dashboard_quantitative_reports_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_quantitative_reports_snapshot_v1"
 REQUIRED_SECTIONS = (
     "periods", "performance", "risk_adjusted_metrics", "operational_metrics", "tca",
-    "regime_comparison", "asset_comparison", "exports", "institutional_score", "audit",
+    "regime_comparison", "asset_comparison", "soak_gap_accounting", "exports", "institutional_score", "audit",
 )
 METRICS = (
     ("Net PnL", "performance", "net_pnl_usdt"),
@@ -46,6 +46,8 @@ METRICS = (
     ("Total TCA Cost", "tca", "total_tca_cost_usdt"),
     ("Cost to Alpha Ratio", "tca", "cost_to_alpha_ratio"),
     ("Institutional Score", "institutional_score", "score"),
+    ("Critical Gaps", "soak_gap_accounting", "critical_gap_count"),
+    ("Max Gap Minutes", "soak_gap_accounting", "max_gap_minutes"),
 )
 
 

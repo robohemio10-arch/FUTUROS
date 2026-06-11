@@ -41,7 +41,7 @@ EXPECTED_SCHEMA_VERSION = "dashboard_active_controls_snapshot_v1"
 REQUIRED_SECTIONS = (
     "active_layer_status", "level1_commands", "level2_commands", "level3_commands",
     "level4_hard_blocks", "kill_switch", "grid_parameter_change", "security_state",
-    "command_events", "audit",
+    "readiness_gap_accounting", "command_events", "audit",
 )
 LEVEL4_ALWAYS_BLOCKED = (
     "LIVE_ORDER", "MARKET_SELL_ALL_REAL", "SNIPER_REAL", "CANCEL_ALL_LIVE_ORDERS",
@@ -54,6 +54,8 @@ METRICS = (
     ("Kill Switch Active", "kill_switch", "global_kill_switch_active"),
     ("RiskManager Authority", "security_state", "riskmanager_authority"),
     ("Live Authority", "security_state", "live_authority"),
+    ("Critical Gaps", "readiness_gap_accounting", "critical_gap_count"),
+    ("Continuous Soak", "readiness_gap_accounting", "continuous_valid_soak_days"),
 )
 
 

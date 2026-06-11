@@ -41,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     runtime = result.evidence_pack.get("runtime_observability", {})
     containers = result.evidence_pack.get("container_snapshot", {})
+    gap_accounting = result.readiness_snapshot.get("paper_shadow_soak_gap_accounting", {})
     summary = {
         "status": result.readiness_snapshot["status"],
         "reason": result.readiness_snapshot["reason"],
@@ -55,6 +56,13 @@ def main(argv: list[str] | None = None) -> int:
         "write_performed": result.write_performed,
         "missing_evidence": result.readiness_snapshot["missing_evidence"],
         "blocking_reasons": result.readiness_snapshot["blocking_reasons"],
+        "paper_shadow_soak_gap_accounting_status": gap_accounting.get("status"),
+        "continuous_valid_soak_days": result.readiness_snapshot.get("continuous_valid_soak_days"),
+        "observed_calendar_days": result.readiness_snapshot.get("observed_calendar_days"),
+        "critical_gap_count": result.readiness_snapshot.get("critical_gap_count"),
+        "warning_gap_count": result.readiness_snapshot.get("warning_gap_count"),
+        "max_gap_minutes": result.readiness_snapshot.get("max_gap_minutes"),
+        "readiness_gap_free": result.readiness_snapshot.get("readiness_gap_free"),
         "paper_only": True,
         "shadow_only": True,
         "live_trading_enabled": False,
