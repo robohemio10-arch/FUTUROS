@@ -1,23 +1,42 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import importlib.util
 import json
 import re
+import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
-try:
-    from smartcrypto.ops.versioned_file_discovery import discover_versioned_files, is_runtime_artifact
-except ModuleNotFoundError:
+
+def load_versioned_file_discovery() -> ModuleType:
+    module_name = "smartcrypto.ops.versioned_file_discovery"
+    try:
+        return importlib.import_module(module_name)
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"smartcrypto", "smartcrypto.ops", module_name}:
+            raise
+
     _DISCOVERY_PATH = Path(__file__).resolve().parents[1] / "smartcrypto" / "ops" / "versioned_file_discovery.py"
-    _DISCOVERY_SPEC = importlib.util.spec_from_file_location("smartcrypto.ops.versioned_file_discovery", _DISCOVERY_PATH)
+    _DISCOVERY_SPEC = importlib.util.spec_from_file_location(module_name, _DISCOVERY_PATH)
     if _DISCOVERY_SPEC is None or _DISCOVERY_SPEC.loader is None:
-        raise
+        raise ModuleNotFoundError(f"cannot_load_standalone_module:{_DISCOVERY_PATH}")
     _DISCOVERY_MODULE = importlib.util.module_from_spec(_DISCOVERY_SPEC)
-    _DISCOVERY_SPEC.loader.exec_module(_DISCOVERY_MODULE)
-    discover_versioned_files = _DISCOVERY_MODULE.discover_versioned_files
-    is_runtime_artifact = _DISCOVERY_MODULE.is_runtime_artifact
+    sys.modules[module_name] = _DISCOVERY_MODULE
+    try:
+        _DISCOVERY_SPEC.loader.exec_module(_DISCOVERY_MODULE)
+    except Exception:
+        if sys.modules.get(module_name) is _DISCOVERY_MODULE:
+            del sys.modules[module_name]
+        raise
+    return _DISCOVERY_MODULE
+
+
+_DISCOVERY_MODULE = load_versioned_file_discovery()
+discover_versioned_files = _DISCOVERY_MODULE.discover_versioned_files
+is_runtime_artifact = _DISCOVERY_MODULE.is_runtime_artifact
 
 SKIP_SUFFIXES = (
     ".png",
@@ -97,6 +116,9 @@ def run_secret_scan(root: Path) -> dict[str, Any]:
         "real_order_submission_enabled": False,
         "exchange_private_access": False,
         "sends_orders": False,
+        "changes_risk": False,
+        "canary_release_allowed": False,
+        "live_release_allowed": False,
     }
 
 

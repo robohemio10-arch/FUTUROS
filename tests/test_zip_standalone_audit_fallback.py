@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -53,18 +55,47 @@ def standalone_project(tmp_path: Path) -> Path:
     return project
 
 
-def run_script(relative_path: str, *args: str) -> subprocess.CompletedProcess[str]:
+def clean_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    env["PYTHONNOUSERSITE"] = "1"
+    return env
+
+
+def install_standalone_audit_tooling(project: Path) -> None:
+    for relative_path in (
+        "scripts/generate_project_manifest.py",
+        "scripts/scan_versioned_secrets.py",
+        "smartcrypto/ops/versioned_file_discovery.py",
+    ):
+        destination = project / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / relative_path, destination)
+
+
+def run_script(
+    relative_path: str,
+    *args: str,
+    root: Path = ROOT,
+    isolated: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    command = [sys.executable]
+    if isolated:
+        command.extend(("-I", "-S"))
+    command.extend([str(root / relative_path), *args])
     return subprocess.run(
-        [sys.executable, str(ROOT / relative_path), *args],
-        cwd=ROOT,
+        command,
+        cwd=root.parent if isolated else root,
         capture_output=True,
         check=False,
         text=True,
+        env=clean_subprocess_env(),
     )
 
 
 def test_manifest_check_works_in_standalone_copy_without_git(tmp_path: Path) -> None:
     project = standalone_project(tmp_path)
+    install_standalone_audit_tooling(project)
 
     generate = run_script(
         "scripts/generate_project_manifest.py",
@@ -72,10 +103,19 @@ def test_manifest_check_works_in_standalone_copy_without_git(tmp_path: Path) -> 
         str(project),
         "--output",
         "PROJECT_MANIFEST_CLEAN.json",
+        root=project,
+        isolated=True,
     )
     assert generate.returncode == 0, generate.stderr
 
-    check = run_script("scripts/generate_project_manifest.py", "--project-root", str(project), "--check")
+    check = run_script(
+        "scripts/generate_project_manifest.py",
+        "--project-root",
+        str(project),
+        "--check",
+        root=project,
+        isolated=True,
+    )
     payload = json.loads(check.stdout)
 
     assert check.returncode == 0
@@ -85,9 +125,25 @@ def test_manifest_check_works_in_standalone_copy_without_git(tmp_path: Path) -> 
 
 def test_secret_scan_works_in_standalone_copy_without_git(tmp_path: Path) -> None:
     project = standalone_project(tmp_path)
-    run_script("scripts/generate_project_manifest.py", "--project-root", str(project), "--output", "PROJECT_MANIFEST_CLEAN.json")
+    install_standalone_audit_tooling(project)
+    run_script(
+        "scripts/generate_project_manifest.py",
+        "--project-root",
+        str(project),
+        "--output",
+        "PROJECT_MANIFEST_CLEAN.json",
+        root=project,
+        isolated=True,
+    )
 
-    completed = run_script("scripts/scan_versioned_secrets.py", "--project-root", str(project), "--json")
+    completed = run_script(
+        "scripts/scan_versioned_secrets.py",
+        "--project-root",
+        str(project),
+        "--json",
+        root=project,
+        isolated=True,
+    )
     payload = json.loads(completed.stdout)
 
     assert completed.returncode == 0
@@ -100,6 +156,38 @@ def test_secret_scan_works_in_standalone_copy_without_git(tmp_path: Path) -> Non
     assert payload["real_order_submission_enabled"] is False
     assert payload["exchange_private_access"] is False
     assert payload["sends_orders"] is False
+    assert payload["changes_risk"] is False
+    assert payload["canary_release_allowed"] is False
+    assert payload["live_release_allowed"] is False
+
+
+def test_repository_audits_run_directly_without_pythonpath() -> None:
+    manifest = run_script("scripts/generate_project_manifest.py", "--check")
+    secrets = run_script("scripts/scan_versioned_secrets.py", "--json")
+
+    assert manifest.returncode == 0, manifest.stderr
+    assert json.loads(manifest.stdout)["status"] == "ok"
+    assert secrets.returncode == 0, secrets.stderr
+    assert json.loads(secrets.stdout)["status"] == "ok"
+
+
+def test_standalone_loader_registers_dataclass_module(tmp_path: Path) -> None:
+    project = standalone_project(tmp_path)
+    install_standalone_audit_tooling(project)
+
+    completed = run_script(
+        "scripts/generate_project_manifest.py",
+        "--project-root",
+        str(project),
+        "--output",
+        "PROJECT_MANIFEST_CLEAN.json",
+        root=project,
+        isolated=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "dataclass" not in completed.stderr.lower()
+    assert json.loads(completed.stdout)["status"] == "ok"
 
 
 def test_standalone_fallback_ignores_runtime_paths_and_artifact_suffixes(tmp_path: Path) -> None:
@@ -157,4 +245,3 @@ def test_no_runtime_artifact_is_treated_as_versioned_in_standalone(tmp_path: Pat
     forbidden_fragments = ("runtime_secret", "runtime_report", "runtime.log", "features.parquet", "archive.zip")
 
     assert not any(any(fragment in path for fragment in forbidden_fragments) for path in files)
-
