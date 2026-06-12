@@ -18,7 +18,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--output", default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--write", action="store_true")
-    parser.add_argument("--include-containers", action="store_true")
+    parser.add_argument(
+        "--collect-containers",
+        action="store_true",
+        help="Collect a read-only Docker Compose service snapshot.",
+    )
+    parser.add_argument(
+        "--include-containers",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--container-timeout-seconds", type=float, default=3.0)
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -30,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root=args.project_root,
         output=args.output,
         write=bool(args.write),
-        include_containers=bool(args.include_containers),
+        collect_containers=bool(args.collect_containers or args.include_containers),
         container_timeout_seconds=float(args.container_timeout_seconds),
     )
     if args.json:

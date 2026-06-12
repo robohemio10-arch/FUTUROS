@@ -110,6 +110,7 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
     )
 
     paper_runtime_status = _paper_runtime_section_status(paper_runtime_payload)
+    container_snapshot = first_value(paper_runtime_payload, ("container_snapshot",), {})
 
     sections = {
         "active_layer_status": section(active_status, command_execution_enabled=False, paper_entry_allowed=not kill_active and not reconciliation_lock and risk_approval),
@@ -143,6 +144,37 @@ def build_active_controls_snapshot(context: DashboardBuildContext) -> dict[str, 
             critical_stale_count=int(finite_float(first_value(paper_runtime_payload, ("critical_stale_count",), 0), 0) or 0),
             warning_stale_count=int(finite_float(first_value(paper_runtime_payload, ("warning_stale_count",), 0), 0) or 0),
             stale_sources=first_value(paper_runtime_payload, ("stale_sources",), []),
+            container_collection_requested=first_value(
+                paper_runtime_payload,
+                ("container_collection_requested",),
+                False,
+            ) is True,
+            container_snapshot_status=first_value(
+                paper_runtime_payload,
+                ("container_snapshot_status", "docker_services_status"),
+                "disabled",
+            ),
+            docker_services_status=first_value(
+                paper_runtime_payload,
+                ("docker_services_status",),
+                "disabled",
+            ),
+            freqtrade_paper_status=first_value(
+                paper_runtime_payload,
+                ("freqtrade_paper_status",),
+                "unknown",
+            ),
+            smartcrypto_bot_status=first_value(
+                paper_runtime_payload,
+                ("smartcrypto_bot_status",),
+                "unknown",
+            ),
+            missing_expected_services=first_value(
+                container_snapshot,
+                ("missing_expected_services",),
+                [],
+            ),
+            unhealthy_services=first_value(container_snapshot, ("unhealthy_services",), []),
             canary_release_allowed=False,
             live_release_allowed=False,
         ),

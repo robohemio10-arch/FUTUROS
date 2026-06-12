@@ -81,6 +81,16 @@ Com escrita runtime local não versionada:
 python scripts/audit_paper_runtime_health_and_freshness.py --project-root . --write --json
 ```
 
+Com evidência opcional de containers Compose:
+
+```powershell
+python scripts/audit_paper_runtime_health_and_freshness.py --project-root . --collect-containers --json
+```
+
+Sem `--collect-containers`, o auditor mantém `container_snapshot_status=disabled`,
+`paper_runtime_alive=false` e `reason=container_collection_not_requested`. Relatórios
+frescos, isoladamente, não provam que os processos estão vivos.
+
 Integração via runtime evidence:
 
 ```powershell
@@ -89,4 +99,4 @@ python scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py --projec
 
 ## Segurança
 
-O auditor não usa `ccxt`, não acessa exchange privada, não envia notificações, não chama CommandBus e não altera risco/modelo/config/dataset. A coleta de container via `docker ps` é opcional, read-only e desabilitada por default.
+O auditor não usa `ccxt`, não acessa exchange privada, não envia notificações, não chama CommandBus e não altera risco/modelo/config/dataset. A coleta usa `docker compose -f docker-compose.paper.yml ps --format json`, é opcional, read-only e desabilitada por default.

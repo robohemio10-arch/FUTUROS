@@ -3,11 +3,17 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
-import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+
+from smartcrypto.ops.paper_runtime_health_and_freshness.auditor import (
+    collect_docker_container_snapshot as collect_paper_container_snapshot,
+)
+from smartcrypto.ops.paper_runtime_health_and_freshness.contracts import (
+    EXPECTED_PAPER_SERVICES,
+)
 
 
 SCHEMA_VERSION = "runtime_evidence_pack_v2"
@@ -94,14 +100,7 @@ OPTIONAL_MISSING_NEUTRAL_RUNTIME_REPORTS = {
     "manual_notification_test_dispatch_report",
 }
 
-EXPECTED_CONTAINER_SERVICES = (
-    "freqtrade-paper",
-    "phase14-feedback-sync-paper",
-    "qlib-refresh-supervisor-paper",
-    "smartcrypto-bot-paper",
-    "smartcrypto-dashboard-paper",
-    "trade-event-notifications-paper",
-)
+EXPECTED_CONTAINER_SERVICES = EXPECTED_PAPER_SERVICES
 
 SAFE_FALSE_FLAGS = (
     "live_trading_enabled",
@@ -141,7 +140,8 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     output_dir: str | Path = DEFAULT_OUTPUT_DIR,
     no_write: bool = False,
     now: datetime | None = None,
-    include_containers: bool = False,
+    collect_containers: bool = False,
+    include_containers: bool | None = None,
     container_timeout_seconds: float = 3.0,
 ) -> BuildResult:
     root = Path(project_root).resolve()
@@ -151,17 +151,34 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
     evidence_pack_path = output_path / DEFAULT_EVIDENCE_PACK_PATH
     readiness_snapshot_path = output_path / DEFAULT_READINESS_SNAPSHOT_PATH
 
-    sources = collect_evidence_sources(root, materialize_gap_accounting_report=not no_write, now=current_time)
+    collection_requested = bool(collect_containers or include_containers is True)
+    sources = collect_evidence_sources(
+        root,
+        materialize_gap_accounting_report=not no_write,
+        now=current_time,
+        collect_containers=collection_requested,
+        container_timeout_seconds=container_timeout_seconds,
+    )
     runtime_sources = collect_runtime_observability_sources(root, now=current_time)
-    service_catalog = collect_compose_service_catalog(root)
-    container_snapshot = collect_docker_container_snapshot(timeout_seconds=container_timeout_seconds) if include_containers else {
-        "status": "disabled",
-        "reason": "container_collection_not_requested",
-        "containers": [],
-        "expected_services": list(EXPECTED_CONTAINER_SERVICES),
-        "missing_expected_services": [],
-        "unhealthy_services": [],
-    }
+    paper_runtime_source_payload = source_payload(sources.get("paper_runtime_health_and_freshness", {}))
+    service_catalog = (
+        dict(paper_runtime_source_payload.get("compose_service_catalog", {}))
+        if isinstance(paper_runtime_source_payload.get("compose_service_catalog"), Mapping)
+        else collect_compose_service_catalog(root)
+    )
+    container_snapshot = (
+        dict(paper_runtime_source_payload.get("container_snapshot", {}))
+        if isinstance(paper_runtime_source_payload.get("container_snapshot"), Mapping)
+        else {
+            "status": "disabled",
+            "reason": "container_collection_not_requested",
+            "collection_requested": False,
+            "containers": [],
+            "expected_services": list(EXPECTED_CONTAINER_SERVICES),
+            "missing_expected_services": [],
+            "unhealthy_services": [],
+        }
+    )
 
     missing_evidence = sorted(
         name for name, source in sources.items() if source["status"] == "evidence_missing" and source.get("required")
@@ -204,6 +221,11 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "evidence_sources": evidence_sources,
         "paper_shadow_soak_gap_accounting": gap_accounting_summary,
         "paper_runtime_health_and_freshness": paper_runtime_health_summary,
+        "paper_runtime_alive": paper_runtime_health_summary["paper_runtime_alive"],
+        "paper_runtime_fresh": paper_runtime_health_summary["paper_runtime_fresh"],
+        "paper_runtime_health_status": paper_runtime_health_summary["status"],
+        "paper_runtime_container_snapshot_status": paper_runtime_health_summary["container_snapshot_status"],
+        "paper_runtime_docker_services_status": paper_runtime_health_summary["docker_services_status"],
         "runtime_observability": runtime_observability,
         "runtime_sources": runtime_source_summaries,
         "container_snapshot": container_snapshot,
@@ -247,6 +269,10 @@ def build_runtime_evidence_pack_and_readiness_snapshot_v2(
         "paper_runtime_alive": paper_runtime_health_summary["paper_runtime_alive"],
         "paper_runtime_fresh": paper_runtime_health_summary["paper_runtime_fresh"],
         "paper_runtime_health_status": paper_runtime_health_summary["status"],
+        "paper_runtime_container_snapshot_status": paper_runtime_health_summary["container_snapshot_status"],
+        "paper_runtime_docker_services_status": paper_runtime_health_summary["docker_services_status"],
+        "freqtrade_paper_status": paper_runtime_health_summary["freqtrade_paper_status"],
+        "smartcrypto_bot_status": paper_runtime_health_summary["smartcrypto_bot_status"],
         "paper_runtime_critical_stale_count": paper_runtime_health_summary["critical_stale_count"],
         "paper_runtime_warning_stale_count": paper_runtime_health_summary["warning_stale_count"],
         "missing_evidence": missing_evidence,
@@ -280,6 +306,8 @@ def collect_evidence_sources(
     *,
     materialize_gap_accounting_report: bool = False,
     now: datetime | None = None,
+    collect_containers: bool = False,
+    container_timeout_seconds: float = 3.0,
 ) -> dict[str, dict[str, Any]]:
     sources = {
         name: load_json_evidence(root / relative_path, required=name in REQUIRED_EVIDENCE)
@@ -294,6 +322,8 @@ def collect_evidence_sources(
         root,
         write=materialize_gap_accounting_report,
         now=now,
+        collect_containers=collect_containers,
+        container_timeout_seconds=container_timeout_seconds,
     )
     sources["manifest_check"] = collect_manifest_check(root)
     sources["secret_scan"] = collect_secret_scan(root)
@@ -510,83 +540,16 @@ def collect_compose_service_catalog(root: Path) -> dict[str, Any]:
     }
 
 
-def collect_docker_container_snapshot(*, timeout_seconds: float = 3.0) -> dict[str, Any]:
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{json .}}"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-        )
-    except Exception as exc:
-        return {
-            "status": "unavailable",
-            "reason": f"docker_ps_unavailable:{type(exc).__name__}",
-            "error": str(exc),
-            "containers": [],
-            "expected_services": list(EXPECTED_CONTAINER_SERVICES),
-            "missing_expected_services": [],
-            "unhealthy_services": [],
-        }
-
-    if result.returncode != 0:
-        return {
-            "status": "unavailable",
-            "reason": "docker_ps_failed",
-            "stderr": result.stderr[-500:],
-            "containers": [],
-            "expected_services": list(EXPECTED_CONTAINER_SERVICES),
-            "missing_expected_services": [],
-            "unhealthy_services": [],
-        }
-
-    containers: list[dict[str, Any]] = []
-    for line in result.stdout.splitlines():
-        if not line.strip():
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict):
-            containers.append(
-                {
-                    "name": row.get("Names"),
-                    "image": row.get("Image"),
-                    "status": row.get("Status"),
-                    "command": row.get("Command"),
-                }
-            )
-
-    names = {str(item.get("name") or "") for item in containers}
-    missing = sorted(
-        service for service in EXPECTED_CONTAINER_SERVICES
-        if not any(service in name for name in names)
+def collect_docker_container_snapshot(
+    *,
+    timeout_seconds: float = 3.0,
+    project_root: str | Path = ".",
+) -> dict[str, Any]:
+    """Compatibility wrapper around the canonical Compose-scoped collector."""
+    return collect_paper_container_snapshot(
+        project_root=project_root,
+        timeout_seconds=timeout_seconds,
     )
-    unhealthy = sorted(
-        str(item.get("name"))
-        for item in containers
-        if "unhealthy" in str(item.get("status") or "").lower()
-    )
-
-    status = "ok"
-    reason = "ok"
-    if unhealthy:
-        status = "blocked"
-        reason = "unhealthy_containers:" + ",".join(unhealthy)
-    elif missing:
-        status = "degraded"
-        reason = "missing_expected_containers:" + ",".join(missing)
-
-    return {
-        "status": status,
-        "reason": reason,
-        "containers": containers,
-        "expected_services": list(EXPECTED_CONTAINER_SERVICES),
-        "missing_expected_services": missing,
-        "unhealthy_services": unhealthy,
-    }
 
 
 def load_json_evidence(path: Path, *, required: bool) -> dict[str, Any]:
@@ -681,7 +644,14 @@ def collect_paper_shadow_soak_gap_accounting(root: Path, *, write: bool = False)
     )
 
 
-def collect_paper_runtime_health_and_freshness(root: Path, *, write: bool = False, now: datetime | None = None) -> dict[str, Any]:
+def collect_paper_runtime_health_and_freshness(
+    root: Path,
+    *,
+    write: bool = False,
+    now: datetime | None = None,
+    collect_containers: bool = False,
+    container_timeout_seconds: float = 3.0,
+) -> dict[str, Any]:
     path = root / EVIDENCE_PATHS["paper_runtime_health_and_freshness"]
     try:
         from smartcrypto.ops.paper_runtime_health_and_freshness import audit_paper_runtime_health_and_freshness
@@ -690,7 +660,8 @@ def collect_paper_runtime_health_and_freshness(root: Path, *, write: bool = Fals
             project_root=root,
             output=path,
             write=write,
-            include_containers=False,
+            collect_containers=collect_containers,
+            container_timeout_seconds=container_timeout_seconds,
             now=now,
         )
     except Exception as exc:
@@ -1023,6 +994,20 @@ def paper_runtime_health_readiness_summary(payload: Mapping[str, Any]) -> dict[s
         "paper_runtime_alive": payload.get("paper_runtime_alive") is True,
         "paper_runtime_fresh": payload.get("paper_runtime_fresh") is True,
         "paper_runtime_health_status": str(payload.get("paper_runtime_health_status") or payload.get("status") or "missing"),
+        "container_collection_requested": payload.get("container_collection_requested") is True,
+        "container_snapshot_status": str(payload.get("container_snapshot_status") or "disabled"),
+        "docker_services_status": str(payload.get("docker_services_status") or "disabled"),
+        "freqtrade_paper_status": str(payload.get("freqtrade_paper_status") or "unknown"),
+        "smartcrypto_bot_status": str(payload.get("smartcrypto_bot_status") or "unknown"),
+        "phase14_feedback_sync_status": str(payload.get("phase14_feedback_sync_status") or "unknown"),
+        "qlib_refresh_status": str(payload.get("qlib_refresh_status") or "unknown"),
+        "dashboard_status": str(payload.get("dashboard_status") or "unknown"),
+        "notifications_status": str(payload.get("notifications_status") or "unknown"),
+        "container_snapshot": (
+            dict(payload.get("container_snapshot", {}))
+            if isinstance(payload.get("container_snapshot"), Mapping)
+            else {}
+        ),
         "critical_stale_count": int_value(payload.get("critical_stale_count")),
         "warning_stale_count": int_value(payload.get("warning_stale_count")),
         "missing_required_sources": list(payload.get("missing_required_sources") or []),

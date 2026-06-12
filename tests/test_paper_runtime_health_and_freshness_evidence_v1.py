@@ -123,15 +123,20 @@ def complete_health_project(tmp_path: Path) -> Path:
     return root
 
 
-def test_health_auditor_default_is_read_only_and_fresh(tmp_path: Path) -> None:
+def test_health_auditor_default_is_read_only_fresh_and_liveness_unknown(tmp_path: Path) -> None:
     root = complete_health_project(tmp_path)
     report_path = root / PAPER_RUNTIME_REPORT
 
     report = audit_paper_runtime_health_and_freshness(project_root=root, write=False, now=FIXED_NOW)
 
-    assert report["status"] == "ok"
-    assert report["paper_runtime_alive"] is True
+    assert report["status"] == "blocked"
+    assert report["reason"] == "container_collection_not_requested"
+    assert report["paper_runtime_alive"] is False
     assert report["paper_runtime_fresh"] is True
+    assert report["container_snapshot_status"] == "disabled"
+    assert report["docker_services_status"] == "disabled"
+    assert report["freqtrade_paper_status"] == "unknown"
+    assert report["smartcrypto_bot_status"] == "unknown"
     assert report["critical_stale_count"] == 0
     assert report["write_performed"] is False
     assert report["report_materialized"] is False
@@ -181,8 +186,9 @@ def test_runtime_evidence_materializes_and_embeds_health_report(tmp_path: Path) 
 
     summary = result.readiness_snapshot["paper_runtime_health_and_freshness"]
     assert report_path.exists()
-    assert summary["paper_runtime_alive"] is True
+    assert summary["paper_runtime_alive"] is False
     assert summary["paper_runtime_fresh"] is True
+    assert summary["container_snapshot_status"] == "disabled"
     assert summary["report_materialized"] is True
     assert result.evidence_pack["output_paths"]["paper_runtime_health_and_freshness_report"] == str(report_path)
     assert result.readiness_snapshot["live_release_allowed"] is False
@@ -242,8 +248,9 @@ def test_dashboard_snapshots_surface_paper_runtime_health(tmp_path: Path) -> Non
 
     assert str(PAPER_RUNTIME_REPORT) not in infrastructure["missing_optional_sources"]
     assert str(PAPER_RUNTIME_REPORT) not in active_controls["missing_optional_sources"]
-    assert infrastructure["sections"]["paper_runtime_health"]["status"] == "OK"
-    assert active_controls["sections"]["paper_runtime_health"]["status"] == "OK"
+    assert infrastructure["sections"]["paper_runtime_health"]["status"] == "BLOCKED"
+    assert active_controls["sections"]["paper_runtime_health"]["status"] == "BLOCKED"
+    assert infrastructure["sections"]["docker"]["status"] == "UNKNOWN"
     assert active_controls["sections"]["paper_runtime_health"]["live_release_allowed"] is False
 
 
