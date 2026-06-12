@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "49830c2b7a4685455ff2a513525d4fa5e71a0ee2ce0b574195e5fa1a8840d463",
+  "aggregate_sha256": "daab6ecf9203c514b0ddc3d4b00fcb058b4e87787f73b95968e6f03613d557b3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 127,
-    "manifested_files_total": 843,
-    "python_files": 626,
+    "docs_files": 128,
+    "manifested_files_total": 845,
+    "python_files": 627,
     "runtime_excluded_files_total": 0,
-    "test_files": 175,
-    "tracked_files_total": 844,
+    "test_files": 176,
+    "tracked_files_total": 846,
     "workflows": 1
   },
   "deterministic": true,
@@ -920,10 +920,16 @@
       "sha256": "8cad8cf62b5ce04bea9d37bf71aa449637aad3afe7c7deccb7f29aefd6cc49bf"
     },
     {
-      "bytes": 3048,
+      "bytes": 3178,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_RUNTIME_CONTAINER_SNAPSHOT_EVIDENCE_V1.md",
+      "sha256": "ceef50c47200b148a87d25e94696b22d9a81dc788e85aaca60beee76dfea9e88"
+    },
+    {
+      "bytes": 3495,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_RUNTIME_HEALTH_AND_FRESHNESS_EVIDENCE_V1.md",
-      "sha256": "ca791535e3803b59fd215cc5bfe427783f49b4eb8b72aa0b5a68d044d0506875"
+      "sha256": "e89223f95a10770ba3a6f646d83f5bbc096dbda60cb761b0eba91fd75b034b20"
     },
     {
       "bytes": 2020,
@@ -1466,10 +1472,10 @@
       "sha256": "4deb60b6990d9387780aaf061a1933c0e42092c99cf0d1cdb38d3522d0901a74"
     },
     {
-      "bytes": 1619,
+      "bytes": 1862,
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_runtime_health_and_freshness.py",
-      "sha256": "ef70a7ab1d6d58640cdf91fececff87616d2ce30f607f59fb9fda0eb2d544941"
+      "sha256": "188351aa4488f989de53dd9cac408d972f49e88997270d8f7f5da0f6cb2e8bc6"
     },
     {
       "bytes": 2516,
@@ -1646,10 +1652,10 @@
       "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
     },
     {
-      "bytes": 5157,
+      "bytes": 5632,
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_pack_and_readiness_snapshot_v2.py",
-      "sha256": "5c19aebdd8e1b8c68cec381602def912eb309d8c27dc5a4540f4b1c8d88ca970"
+      "sha256": "667ebff568efeaf432077bea14da3ff2f21c079834d82c1430c0f8998887a41c"
     },
     {
       "bytes": 1888,
@@ -3536,10 +3542,10 @@
       "sha256": "9833634b6fc2472eeaa9f1d10d22a60ec463c76d6aed322fed1fd6b3122247e9"
     },
     {
-      "bytes": 8883,
+      "bytes": 10158,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/active_controls_snapshot_builder.py",
-      "sha256": "924dcf0b18522816c3bdd4bbe88761c67ca35b56c04eec2ecc21ae0a4c4349b1"
+      "sha256": "fbde1809d82cf20a3f7b0937f9550447efcadd3bb934a025fe26fc0d07151357"
     },
     {
       "bytes": 7202,
@@ -3590,10 +3596,10 @@
       "sha256": "72ba548daf670ff0ed71d9c44e4fe1f47e7c9055e7b0d835c01ca5a94e419dca"
     },
     {
-      "bytes": 8405,
+      "bytes": 10253,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/infrastructure_snapshot_builder.py",
-      "sha256": "575e2e58b3dfcae14767dd1e3580d908539e5ba22de772badaa75b3a98e98b8b"
+      "sha256": "3f694607451737d9e7f7ecfa0c499dd25ecb0a9b4e3926025eecbc715b2734dc"
     },
     {
       "bytes": 5673,
@@ -3686,16 +3692,16 @@
       "sha256": "ffe3266d40d9d238e836c6918819d9b4ac9d0adabd2eae74ae8459881568c039"
     },
     {
-      "bytes": 20921,
+      "bytes": 27401,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_runtime_health_and_freshness/auditor.py",
-      "sha256": "e64bdf7ef5497d022a578b8cca17bdca360b0354af3851a28149c4974bffe16f"
+      "sha256": "87ea0b241a049b60a0b61d9cc67ebc0df753f3c5d430fc90c961655a6b261ba2"
     },
     {
-      "bytes": 3870,
+      "bytes": 4457,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_runtime_health_and_freshness/contracts.py",
-      "sha256": "784c820d0de5fa9202c9b000adbb1bb3dce0fe0445ad67fef7d41bea17115e5d"
+      "sha256": "81fe7ba36a7ee29bdcabdf87378f1b67e0f4fc0730af5fe4b5c6f852eb9867ee"
     },
     {
       "bytes": 8702,
@@ -3776,10 +3782,10 @@
       "sha256": "419e050fb7ff0bfb8c350b614b6d6c7dbd4ab77915461bd6efb3d70c49d2ec71"
     },
     {
-      "bytes": 47967,
+      "bytes": 48836,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/runtime_evidence_pack.py",
-      "sha256": "2ad955dbcc0e3af625507e17922baa6fbccd1ca0670bed1cbbf71dbc09f11a99"
+      "sha256": "1b348fb0f05c21f7ea269f54cc4ce2ac5dac5d890231e8395965889a906083d1"
     },
     {
       "bytes": 13874,
@@ -4724,10 +4730,16 @@
       "sha256": "3ad7b5db31a69b0f89b193b57b183dc4623649ca5990ead57683cbd480ec34fc"
     },
     {
-      "bytes": 11702,
+      "bytes": 9969,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_runtime_container_snapshot_evidence_v1.py",
+      "sha256": "b9249492008f52658902e62169217de38a46751e0c8708ff66a91b52621e1df9"
+    },
+    {
+      "bytes": 12170,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_runtime_health_and_freshness_evidence_v1.py",
-      "sha256": "37e12d8929919cc03a672cafd9f2f5476945bfbe199937c9966aa3188ac2b999"
+      "sha256": "66e3dce5619fa57add71d774fd0c6405c2a799cb27cea2c6c94a87fee83641b2"
     },
     {
       "bytes": 4784,

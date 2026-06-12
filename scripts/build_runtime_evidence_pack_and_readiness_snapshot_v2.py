@@ -22,10 +22,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--json", action="store_true", help="Print controlled JSON summary.")
     parser.add_argument(
-        "--include-containers",
+        "--collect-containers",
         action="store_true",
-        help="Include best-effort docker ps container snapshot. Safe and read-only.",
+        help="Include best-effort Docker Compose container evidence. Safe and read-only.",
     )
+    parser.add_argument("--include-containers", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--container-timeout-seconds", type=float, default=3.0)
     return parser.parse_args(argv)
 
@@ -36,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root=args.project_root,
         output_dir=args.output_dir,
         no_write=args.no_write,
-        include_containers=bool(args.include_containers),
+        collect_containers=bool(args.collect_containers or args.include_containers),
         container_timeout_seconds=float(args.container_timeout_seconds),
     )
     runtime = result.evidence_pack.get("runtime_observability", {})
@@ -64,6 +65,10 @@ def main(argv: list[str] | None = None) -> int:
         "paper_runtime_alive": paper_runtime.get("paper_runtime_alive"),
         "paper_runtime_fresh": paper_runtime.get("paper_runtime_fresh"),
         "paper_runtime_health_status": paper_runtime.get("status"),
+        "paper_runtime_container_snapshot_status": paper_runtime.get("container_snapshot_status"),
+        "paper_runtime_docker_services_status": paper_runtime.get("docker_services_status"),
+        "freqtrade_paper_status": paper_runtime.get("freqtrade_paper_status"),
+        "smartcrypto_bot_status": paper_runtime.get("smartcrypto_bot_status"),
         "paper_runtime_critical_stale_count": paper_runtime.get("critical_stale_count"),
         "paper_runtime_warning_stale_count": paper_runtime.get("warning_stale_count"),
         "write_performed": result.write_performed,

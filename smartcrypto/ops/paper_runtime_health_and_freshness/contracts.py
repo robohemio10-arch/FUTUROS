@@ -35,6 +35,25 @@ EXPECTED_PAPER_SERVICES = (
     "trade-event-notifications-paper",
 )
 
+CRITICAL_PAPER_SERVICES = (
+    "freqtrade-paper",
+    "phase14-feedback-sync-paper",
+    "qlib-refresh-supervisor-paper",
+    "smartcrypto-bot-paper",
+    "smartcrypto-dashboard-paper",
+)
+
+OPTIONAL_PAPER_SERVICES = ("trade-event-notifications-paper",)
+
+SERVICE_COMPONENTS = {
+    "freqtrade-paper": "freqtrade_paper",
+    "phase14-feedback-sync-paper": "phase14_feedback_sync",
+    "qlib-refresh-supervisor-paper": "qlib_refresh",
+    "smartcrypto-bot-paper": "smartcrypto_bot",
+    "smartcrypto-dashboard-paper": "dashboard",
+    "trade-event-notifications-paper": "notifications",
+}
+
 
 @dataclass(frozen=True)
 class RuntimeReportContract:

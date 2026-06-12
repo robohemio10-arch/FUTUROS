@@ -115,6 +115,10 @@ def build_infrastructure_snapshot(context: DashboardBuildContext) -> dict[str, A
     stale_ws = ws_age is not None and ws_age > max_ws_age
 
     paper_runtime_status = _paper_runtime_section_status(paper_runtime)
+    container_snapshot = first_value(paper_runtime, ("container_snapshot",), {})
+    container_status = str(
+        first_value(paper_runtime, ("container_snapshot_status", "docker_services_status"), "disabled")
+    ).lower()
 
     sections = {
         "status_summary": section(
@@ -129,13 +133,37 @@ def build_infrastructure_snapshot(context: DashboardBuildContext) -> dict[str, A
             critical_stale_count=int(_number(first_value(paper_runtime, ("critical_stale_count",), 0))),
             warning_stale_count=int(_number(first_value(paper_runtime, ("warning_stale_count",), 0))),
             stale_sources=first_value(paper_runtime, ("stale_sources",), []),
+            container_collection_requested=first_value(
+                paper_runtime,
+                ("container_collection_requested",),
+                False,
+            ) is True,
+            container_snapshot_status=container_status,
+            docker_services_status=first_value(paper_runtime, ("docker_services_status",), "disabled"),
+            freqtrade_paper_status=first_value(paper_runtime, ("freqtrade_paper_status",), "unknown"),
+            smartcrypto_bot_status=first_value(paper_runtime, ("smartcrypto_bot_status",), "unknown"),
+            missing_expected_services=first_value(
+                container_snapshot,
+                ("missing_expected_services",),
+                [],
+            ),
+            unhealthy_services=first_value(container_snapshot, ("unhealthy_services",), []),
             live_release_allowed=False,
             canary_release_allowed=False,
         ),
         "host": section(host_status, cpu_pct=cpu, ram_pct=ram, disk_pct=disk),
         "docker": section(
-            DashboardSectionStatus.OK if health else DashboardSectionStatus.UNKNOWN,
-            containers=first_value(health, ("containers", "container_snapshot"), []),
+            _container_section_status(container_status),
+            container_snapshot_status=container_status,
+            containers=first_value(container_snapshot, ("containers",), []),
+            service_statuses=first_value(container_snapshot, ("service_statuses",), {}),
+            expected_services=first_value(container_snapshot, ("expected_services",), []),
+            missing_expected_services=first_value(
+                container_snapshot,
+                ("missing_expected_services",),
+                [],
+            ),
+            unhealthy_services=first_value(container_snapshot, ("unhealthy_services",), []),
         ),
         "redis": section(_source_section_status(sources, "redis_health_snapshot")),
         "latency": section(DashboardSectionStatus.OK, **calculate_latency_metrics(latency_values)),
@@ -204,4 +232,14 @@ def _paper_runtime_section_status(payload: Any) -> DashboardSectionStatus:
         return DashboardSectionStatus.WARNING
     if status == "ok":
         return DashboardSectionStatus.OK
+    return DashboardSectionStatus.UNKNOWN
+
+
+def _container_section_status(status: str) -> DashboardSectionStatus:
+    if status == "ok":
+        return DashboardSectionStatus.OK
+    if status == "blocked":
+        return DashboardSectionStatus.BLOCKED
+    if status in {"degraded", "unavailable"}:
+        return DashboardSectionStatus.WARNING
     return DashboardSectionStatus.UNKNOWN

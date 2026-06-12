@@ -9,14 +9,17 @@ from pathlib import Path
 from typing import Any
 
 from .contracts import (
+    CRITICAL_PAPER_SERVICES,
     DASHBOARD_NAME,
     DEFAULT_OUTPUT_PATH,
     EXPECTED_PAPER_SERVICES,
+    OPTIONAL_PAPER_SERVICES,
     PROJECT_NAME,
     RUNTIME_REPORTS,
     SAFE_FALSE_FLAGS,
     SAFE_TRUE_FLAGS,
     SCHEMA_VERSION,
+    SERVICE_COMPONENTS,
     RuntimeReportContract,
 )
 
@@ -26,19 +29,24 @@ def audit_paper_runtime_health_and_freshness(
     project_root: str | Path = ".",
     output: str | Path = DEFAULT_OUTPUT_PATH,
     write: bool = False,
-    include_containers: bool = False,
+    collect_containers: bool = False,
+    include_containers: bool | None = None,
     container_timeout_seconds: float = 3.0,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     root = Path(project_root).resolve()
     current_time = ensure_aware_utc(now or datetime.now(timezone.utc))
     output_path = resolve_under_root(root, output)
+    collection_requested = bool(collect_containers or include_containers is True)
 
     report_sources = [inspect_runtime_report(root, contract, now=current_time) for contract in RUNTIME_REPORTS]
     compose_catalog = collect_compose_service_catalog(root)
     container_snapshot = (
-        collect_docker_container_snapshot(timeout_seconds=container_timeout_seconds)
-        if include_containers
+        collect_docker_container_snapshot(
+            project_root=root,
+            timeout_seconds=container_timeout_seconds,
+        )
+        if collection_requested
         else disabled_container_snapshot()
     )
 
@@ -52,7 +60,11 @@ def audit_paper_runtime_health_and_freshness(
         for flag in source.get("unsafe_safety_flags", [])
     )
 
-    component_rollup = build_component_rollup(report_sources, container_snapshot=container_snapshot, compose_catalog=compose_catalog)
+    component_rollup = build_component_rollup(
+        report_sources,
+        container_snapshot=container_snapshot,
+        compose_catalog=compose_catalog,
+    )
     blocking_reasons: list[str] = []
     warning_reasons: list[str] = []
 
@@ -64,6 +76,8 @@ def audit_paper_runtime_health_and_freshness(
         blocking_reasons.append("invalid_runtime_reports:" + ",".join(invalid_sources))
     if unsafe_sources:
         blocking_reasons.append("unsafe_runtime_safety_flags:" + ",".join(unsafe_sources))
+    if not collection_requested:
+        blocking_reasons.append("container_collection_not_requested")
     if container_snapshot["status"] == "blocked":
         blocking_reasons.append("container_snapshot_blocked")
     if component_rollup["critical_component_count"] > 0:
@@ -73,7 +87,7 @@ def audit_paper_runtime_health_and_freshness(
         warning_reasons.append("stale_optional_runtime_reports:" + ",".join(stale_optional))
     if compose_catalog["status"] == "degraded":
         warning_reasons.append("compose_service_catalog_degraded")
-    if container_snapshot["status"] in {"degraded", "unavailable"}:
+    if container_snapshot["status"] in {"degraded", "unknown", "unavailable"}:
         warning_reasons.append("container_snapshot_" + container_snapshot["status"])
     if component_rollup["warning_component_count"] > 0:
         warning_reasons.append("warning_runtime_components_present")
@@ -91,7 +105,12 @@ def audit_paper_runtime_health_and_freshness(
     critical_stale_count = len(stale_required)
     warning_stale_count = len(stale_optional)
     paper_runtime_fresh = not missing_required and not stale_required and not invalid_sources
-    paper_runtime_alive = status in {"ok", "degraded"}
+    service_statuses = container_snapshot.get("service_statuses", {})
+    paper_runtime_alive = collection_requested and all(
+        isinstance(service_statuses.get(service), Mapping)
+        and service_statuses[service].get("status") == "ok"
+        for service in CRITICAL_PAPER_SERVICES
+    )
 
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -104,18 +123,23 @@ def audit_paper_runtime_health_and_freshness(
         "paper_runtime_fresh": paper_runtime_fresh,
         "paper_runtime_health_status": status,
         "paper_runtime_freshness_status": "fresh" if paper_runtime_fresh else "stale_or_missing",
+        "container_collection_requested": collection_requested,
         "required_services": list(EXPECTED_PAPER_SERVICES),
+        "critical_services": list(CRITICAL_PAPER_SERVICES),
+        "optional_services": list(OPTIONAL_PAPER_SERVICES),
         "compose_service_catalog": compose_catalog,
         "docker_services_status": container_snapshot["status"],
+        "container_snapshot_status": container_snapshot["status"],
         "container_snapshot": container_snapshot,
+        "container_service_statuses": service_statuses,
         "runtime_reports": report_sources,
         "component_rollup": component_rollup,
-        "freqtrade_paper_status": component_rollup["components"].get("freqtrade_paper", {}).get("status", "unknown"),
-        "smartcrypto_bot_status": component_rollup["components"].get("smartcrypto_bot", {}).get("status", "unknown"),
-        "phase14_feedback_sync_status": component_rollup["components"].get("phase14_feedback_sync", {}).get("status", "unknown"),
-        "qlib_refresh_status": component_rollup["components"].get("qlib_refresh", {}).get("status", "unknown"),
-        "dashboard_status": component_rollup["components"].get("dashboard", {}).get("status", "unknown"),
-        "notifications_status": component_rollup["components"].get("notifications", {}).get("status", "unknown"),
+        "freqtrade_paper_status": _service_status(service_statuses, "freqtrade-paper"),
+        "smartcrypto_bot_status": _service_status(service_statuses, "smartcrypto-bot-paper"),
+        "phase14_feedback_sync_status": _service_status(service_statuses, "phase14-feedback-sync-paper"),
+        "qlib_refresh_status": _service_status(service_statuses, "qlib-refresh-supervisor-paper"),
+        "dashboard_status": _service_status(service_statuses, "smartcrypto-dashboard-paper"),
+        "notifications_status": _service_status(service_statuses, "trade-event-notifications-paper"),
         "missing_required_sources": missing_required,
         "stale_required_sources": stale_required,
         "stale_optional_sources": stale_optional,
@@ -246,10 +270,17 @@ def build_component_rollup(
             "blocked_sources": blocked,
         }
 
-    components.setdefault("freqtrade_paper", infer_service_component_status("freqtrade-paper", container_snapshot, compose_catalog))
-    components.setdefault("smartcrypto_bot", infer_service_component_status("smartcrypto-bot-paper", container_snapshot, compose_catalog))
-    components.setdefault("dashboard", components.get("dashboard", infer_service_component_status("smartcrypto-dashboard-paper", container_snapshot, compose_catalog)))
-    components.setdefault("notifications", components.get("notifications", infer_service_component_status("trade-event-notifications-paper", container_snapshot, compose_catalog)))
+    collection_requested = container_snapshot.get("collection_requested") is True
+    for service, component_name in SERVICE_COMPONENTS.items():
+        service_component = infer_service_component_status(service, container_snapshot, compose_catalog)
+        existing = components.get(component_name)
+        if existing is None:
+            components[component_name] = service_component
+        elif collection_requested:
+            components[component_name] = merge_component_status(existing, service_component)
+        else:
+            existing["container_status"] = service_component["status"]
+            existing["container_reason"] = service_component["reason"]
 
     critical_count = sum(1 for component in components.values() if component["status"] == "blocked")
     warning_count = sum(1 for component in components.values() if component["status"] == "degraded")
@@ -272,18 +303,40 @@ def build_component_rollup(
 def infer_service_component_status(service: str, container_snapshot: Mapping[str, Any], compose_catalog: Mapping[str, Any]) -> dict[str, Any]:
     if service in set(compose_catalog.get("missing_expected_services") or []):
         return {"status": "degraded", "reason": "service_missing_from_compose"}
-    containers = container_snapshot.get("containers") if isinstance(container_snapshot.get("containers"), list) else []
-    if not containers:
-        return {"status": "unknown", "reason": str(container_snapshot.get("reason") or "container_collection_disabled")}
-    matches = [item for item in containers if service in str(item.get("name") or "")]
-    if not matches:
-        return {"status": "degraded", "reason": "container_missing"}
-    statuses = " ".join(str(item.get("status") or "").lower() for item in matches)
-    if "unhealthy" in statuses or "exited" in statuses or "dead" in statuses:
-        return {"status": "blocked", "reason": "container_not_healthy", "containers": matches}
-    if "up" in statuses or "running" in statuses:
-        return {"status": "ok", "reason": "container_up", "containers": matches}
-    return {"status": "degraded", "reason": "container_status_unknown", "containers": matches}
+    statuses = container_snapshot.get("service_statuses")
+    if isinstance(statuses, Mapping) and isinstance(statuses.get(service), Mapping):
+        service_status = dict(statuses[service])
+        return {
+            **service_status,
+            "container_status": service_status.get("status", "unknown"),
+            "container_reason": service_status.get("reason", "container_status_unknown"),
+        }
+    return {
+        "status": "unknown",
+        "reason": str(container_snapshot.get("reason") or "container_collection_disabled"),
+    }
+
+
+def merge_component_status(
+    evidence_component: Mapping[str, Any],
+    service_component: Mapping[str, Any],
+) -> dict[str, Any]:
+    rank = {"unknown": 0, "ok": 1, "degraded": 2, "blocked": 3}
+    evidence_status = str(evidence_component.get("status") or "unknown")
+    service_status = str(service_component.get("status") or "unknown")
+    status = evidence_status if rank.get(evidence_status, 0) >= rank.get(service_status, 0) else service_status
+    return {
+        **dict(evidence_component),
+        "status": status,
+        "reason": (
+            str(evidence_component.get("reason") or "unknown")
+            if status == evidence_status
+            else str(service_component.get("reason") or "unknown")
+        ),
+        "container_status": service_status,
+        "container_reason": str(service_component.get("reason") or "unknown"),
+        "container": service_component.get("container"),
+    }
 
 
 def collect_compose_service_catalog(root: Path) -> dict[str, Any]:
@@ -316,72 +369,196 @@ def disabled_container_snapshot() -> dict[str, Any]:
     return {
         "status": "disabled",
         "reason": "container_collection_not_requested",
+        "collection_requested": False,
         "containers": [],
         "expected_services": list(EXPECTED_PAPER_SERVICES),
+        "critical_services": list(CRITICAL_PAPER_SERVICES),
+        "optional_services": list(OPTIONAL_PAPER_SERVICES),
         "missing_expected_services": [],
         "unhealthy_services": [],
+        "non_running_services": [],
+        "service_statuses": {
+            service: {"status": "unknown", "reason": "container_collection_not_requested"}
+            for service in EXPECTED_PAPER_SERVICES
+        },
     }
 
 
-def collect_docker_container_snapshot(*, timeout_seconds: float = 3.0) -> dict[str, Any]:
+def collect_docker_container_snapshot(
+    *,
+    project_root: str | Path = ".",
+    timeout_seconds: float = 3.0,
+) -> dict[str, Any]:
+    root = Path(project_root).resolve()
+    compose_path = root / "docker-compose.paper.yml"
+    if not compose_path.exists():
+        return unavailable_container_snapshot("docker_compose_paper_missing", status="unknown")
     try:
         result = subprocess.run(
-            ["docker", "ps", "--format", "{{json .}}"],
+            ["docker", "compose", "-f", str(compose_path), "ps", "--format", "json"],
             check=False,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
+            cwd=root,
         )
-    except Exception as exc:
-        return {
-            "status": "unavailable",
-            "reason": f"docker_ps_unavailable:{type(exc).__name__}",
-            "error": str(exc),
-            "containers": [],
-            "expected_services": list(EXPECTED_PAPER_SERVICES),
-            "missing_expected_services": [],
-            "unhealthy_services": [],
-        }
+    except (FileNotFoundError, OSError) as exc:
+        return unavailable_container_snapshot("docker_unavailable", error=exc)
+    except subprocess.TimeoutExpired as exc:
+        return unavailable_container_snapshot("docker_compose_ps_timeout", status="degraded", error=exc)
     if result.returncode != 0:
-        return {
-            "status": "unavailable",
-            "reason": "docker_ps_failed",
-            "stderr": result.stderr[-500:],
-            "containers": [],
-            "expected_services": list(EXPECTED_PAPER_SERVICES),
-            "missing_expected_services": [],
-            "unhealthy_services": [],
-        }
-    containers: list[dict[str, Any]] = []
-    for line in result.stdout.splitlines():
-        if not line.strip():
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict):
-            containers.append({"name": row.get("Names"), "image": row.get("Image"), "status": row.get("Status")})
-    names = {str(item.get("name") or "") for item in containers}
-    missing = sorted(service for service in EXPECTED_PAPER_SERVICES if not any(service in name for name in names))
-    unhealthy = sorted(str(item.get("name")) for item in containers if "unhealthy" in str(item.get("status") or "").lower())
-    if unhealthy:
+        return unavailable_container_snapshot(
+            "docker_compose_ps_failed",
+            status="degraded",
+            stderr=result.stderr,
+        )
+
+    containers = parse_compose_ps_output(result.stdout)
+    if result.stdout.strip() and not containers:
+        return unavailable_container_snapshot("docker_compose_ps_invalid_json", status="degraded")
+    service_statuses = build_service_statuses(containers)
+    missing = sorted(
+        service for service, payload in service_statuses.items() if payload["reason"] == "container_missing"
+    )
+    unhealthy = sorted(
+        service for service, payload in service_statuses.items() if payload["reason"] == "container_unhealthy"
+    )
+    non_running = sorted(
+        service for service, payload in service_statuses.items() if payload["status"] != "ok"
+    )
+    critical_failures = sorted(set(non_running) & set(CRITICAL_PAPER_SERVICES))
+    optional_failures = sorted(set(non_running) & set(OPTIONAL_PAPER_SERVICES))
+    if critical_failures:
         status = "blocked"
-        reason = "unhealthy_containers:" + ",".join(unhealthy)
-    elif missing:
+        reason = "critical_services_not_running:" + ",".join(critical_failures)
+    elif optional_failures:
         status = "degraded"
-        reason = "missing_expected_containers:" + ",".join(missing)
+        reason = "optional_services_not_running:" + ",".join(optional_failures)
     else:
         status = "ok"
-        reason = "ok"
+        reason = "docker_compose_services_running"
     return {
         "status": status,
         "reason": reason,
+        "collection_requested": True,
+        "collector": "docker_compose_ps",
+        "compose_path": str(compose_path),
         "containers": containers,
         "expected_services": list(EXPECTED_PAPER_SERVICES),
+        "critical_services": list(CRITICAL_PAPER_SERVICES),
+        "optional_services": list(OPTIONAL_PAPER_SERVICES),
         "missing_expected_services": missing,
         "unhealthy_services": unhealthy,
+        "non_running_services": non_running,
+        "service_statuses": service_statuses,
     }
+
+
+def unavailable_container_snapshot(
+    reason: str,
+    *,
+    status: str = "unknown",
+    error: BaseException | None = None,
+    stderr: str = "",
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "status": status,
+        "reason": reason,
+        "collection_requested": True,
+        "collector": "docker_compose_ps",
+        "containers": [],
+        "expected_services": list(EXPECTED_PAPER_SERVICES),
+        "critical_services": list(CRITICAL_PAPER_SERVICES),
+        "optional_services": list(OPTIONAL_PAPER_SERVICES),
+        "missing_expected_services": [],
+        "unhealthy_services": [],
+        "non_running_services": [],
+        "service_statuses": {
+            service: {"status": "unknown", "reason": reason}
+            for service in EXPECTED_PAPER_SERVICES
+        },
+    }
+    if error is not None:
+        payload["error"] = f"{type(error).__name__}: {error}"
+    if stderr:
+        payload["stderr"] = stderr[-500:]
+    return payload
+
+
+def parse_compose_ps_output(raw: str) -> list[dict[str, Any]]:
+    text = raw.strip()
+    if not text:
+        return []
+    rows: list[Any]
+    try:
+        decoded = json.loads(text)
+        rows = decoded if isinstance(decoded, list) else [decoded]
+    except json.JSONDecodeError:
+        rows = []
+        for line in text.splitlines():
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                return []
+    containers = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        containers.append(
+            {
+                "service": str(row.get("Service") or row.get("service") or ""),
+                "name": str(row.get("Name") or row.get("Names") or row.get("name") or ""),
+                "image": str(row.get("Image") or row.get("image") or ""),
+                "state": str(row.get("State") or row.get("state") or ""),
+                "status": str(row.get("Status") or row.get("status") or ""),
+                "health": str(row.get("Health") or row.get("health") or ""),
+            }
+        )
+    return containers
+
+
+def build_service_statuses(containers: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    statuses: dict[str, dict[str, Any]] = {}
+    for service in EXPECTED_PAPER_SERVICES:
+        matches = [
+            item
+            for item in containers
+            if item.get("service") == service or service in str(item.get("name") or "")
+        ]
+        if not matches:
+            statuses[service] = {
+                "status": "blocked" if service in CRITICAL_PAPER_SERVICES else "degraded",
+                "reason": "container_missing",
+            }
+            continue
+        classified = [classify_container(item) for item in matches]
+        rank = {"ok": 0, "degraded": 1, "blocked": 2}
+        selected = max(classified, key=lambda item: rank[item["status"]])
+        statuses[service] = selected
+    return statuses
+
+
+def classify_container(container: Mapping[str, Any]) -> dict[str, Any]:
+    state = str(container.get("state") or "").strip().lower()
+    status_text = str(container.get("status") or "").strip().lower()
+    health = str(container.get("health") or "").strip().lower()
+    combined = " ".join((state, status_text, health))
+    if "unhealthy" in combined:
+        status, reason = "blocked", "container_unhealthy"
+    elif any(token in combined for token in ("exited", "dead", "restarting")):
+        status, reason = "blocked", "container_not_running"
+    elif state == "running" or status_text.startswith("up"):
+        status, reason = "ok", "container_running"
+    else:
+        status, reason = "degraded", "container_state_unknown"
+    return {"status": status, "reason": reason, "container": dict(container)}
+
+
+def _service_status(service_statuses: Any, service: str) -> str:
+    if not isinstance(service_statuses, Mapping):
+        return "unknown"
+    payload = service_statuses.get(service)
+    return str(payload.get("status") or "unknown") if isinstance(payload, Mapping) else "unknown"
 
 
 def first_timestamp(payload: Mapping[str, Any], keys: tuple[str, ...]) -> datetime | None:
