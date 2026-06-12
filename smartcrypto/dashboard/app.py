@@ -65,10 +65,12 @@ def load_shell_snapshots(project_root: str | Path = ".") -> tuple[dict[str, Any]
     global_snapshot = load_dashboard_snapshot(
         root / GLOBAL_SNAPSHOT_PATH,
         schema_version=DASHBOARD_GLOBAL_STATUS_SCHEMA_VERSION,
+        project_root=root,
     )
     build_summary = load_dashboard_snapshot(
         root / BUILD_SUMMARY_PATH,
         schema_version=DASHBOARD_SNAPSHOT_BUILD_SUMMARY_SCHEMA_VERSION,
+        project_root=root,
     )
     return global_snapshot, build_summary
 

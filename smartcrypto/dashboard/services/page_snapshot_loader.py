@@ -88,7 +88,11 @@ def load_page_snapshot(
     normalized = page_id if isinstance(page_id, DashboardPageId) else DashboardPageId(page_id)
     spec = PAGE_SNAPSHOT_SPECS[normalized]
     target = Path(project_root).resolve() / spec.relative_path()
-    snapshot = load_dashboard_snapshot(target, schema_version=spec.schema_version)
+    snapshot = load_dashboard_snapshot(
+        target,
+        schema_version=spec.schema_version,
+        project_root=project_root,
+    )
     try:
         assert_dashboard_readonly(snapshot)
     except DashboardReadonlyViolation as exc:

@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2ceaad0c950420f6aed67bf915377a9b249dceda281ac6e1cc3b9c568ed83ffd",
+  "aggregate_sha256": "f31fcffdce06b8de81306f2edb50755e2b94cb9e947c858725496fb3dae518a4",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 130,
-    "manifested_files_total": 851,
-    "python_files": 630,
+    "docs_files": 131,
+    "manifested_files_total": 854,
+    "python_files": 632,
     "runtime_excluded_files_total": 0,
-    "test_files": 178,
-    "tracked_files_total": 852,
+    "test_files": 179,
+    "tracked_files_total": 855,
     "workflows": 1
   },
   "deterministic": true,
@@ -1212,6 +1212,12 @@
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
       "sha256": "81399d05abe2594b01f299482f944b1ab36d37ee9cd37e645e0d8b6caf85e51f"
+    },
+    {
+      "bytes": 3114,
+      "hash_mode": "text_lf",
+      "path": "docs/STREAMLIT_SNAPSHOT_LOADER_CACHE_RESILIENCE_V1.md",
+      "sha256": "101a4df6d93304a0867138492c8e805f0f3adaddfbba05eb22f99601616ed0b8"
     },
     {
       "bytes": 9829,
@@ -2768,10 +2774,10 @@
       "sha256": "b24d6f728977c926b90f0ff5a0f7942850e9524c394f09bb52bc158c72184239"
     },
     {
-      "bytes": 4965,
+      "bytes": 5019,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/app.py",
-      "sha256": "bb7d57a048234c52b6fd62b989b0c02d54af47cfbecb5bf7b9de729f724a3585"
+      "sha256": "b4667d5db558684f02ce49538f162499f4cd50014371de0df672a03e434e3eee"
     },
     {
       "bytes": 11545,
@@ -2978,22 +2984,28 @@
       "sha256": "b3d0e8b78c8fd28a5fede7c3d7dd72bef7004c41af1cf2be1317ea0567f1e802"
     },
     {
-      "bytes": 1041,
+      "bytes": 1479,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/services/dashboard_file_loader.py",
-      "sha256": "ca9655460ba8717a28702e35824facbddf0515a99ca78c1f871e5b2c2b449066"
+      "sha256": "6fc08841bb6ab9156f110e82c023b4e9a7853ab55578c69f51f811aed3b43eec"
     },
     {
-      "bytes": 2451,
+      "bytes": 3263,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/services/dashboard_snapshot_service.py",
-      "sha256": "4bd3db8d0f9bd15d02746ce6cee85b60460924f0b6735bcd513b4219c8ba240f"
+      "sha256": "7b934602710b2eb1a975736e40b038747e9ddf6566ea4c4114672fc74e6b0087"
     },
     {
-      "bytes": 3678,
+      "bytes": 3736,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/services/page_snapshot_loader.py",
-      "sha256": "2c17cf8867659dd8a9278e8a1409e0d83779f7d9751c713086e5a72585942e43"
+      "sha256": "6a7eaac8101a167b56b0a53ad8f493836754fd3d7367cccce9c0d8f3f1dfb677"
+    },
+    {
+      "bytes": 4389,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/services/snapshot_json_loader.py",
+      "sha256": "3d3d3d10885067b6f7c56a7d77bbde6a99fe9113536fa3ed6752d700b7158db1"
     },
     {
       "bytes": 12044,
@@ -5082,6 +5094,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_state_repository_reconciliation_hardening.py",
       "sha256": "3e7723c0c0457946c0f47009c2b0055d4844fcede11101686d79f45280c9e907"
+    },
+    {
+      "bytes": 7606,
+      "hash_mode": "text_lf",
+      "path": "tests/test_streamlit_snapshot_loader_cache_resilience_v1.py",
+      "sha256": "4134bad3f8787357c35a1d8f9e710920896283a680f15341d6d49f88ffd609c7"
     },
     {
       "bytes": 21144,

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from smartcrypto.ops.dashboard_snapshots.contracts import DashboardLoadResult, SourceKind
+from smartcrypto.ops.dashboard_snapshots.contracts import (
+    DashboardLoadResult,
+    DashboardSectionStatus,
+    SourceKind,
+)
 from smartcrypto.ops.dashboard_snapshots.file_loader import load_dashboard_file
 
 
@@ -20,6 +24,17 @@ class DashboardFileLoader:
         target = Path(path)
         if not target.is_absolute():
             target = self.project_root / target
+        target = target.resolve()
+        try:
+            target.relative_to(self.project_root)
+        except ValueError:
+            return DashboardLoadResult(
+                exists=target.exists(),
+                status=DashboardSectionStatus.ERROR,
+                path=str(target),
+                error="path_outside_project_root",
+                source_kind=source_kind,
+            )
         return load_dashboard_file(target, source_kind)
 
 
