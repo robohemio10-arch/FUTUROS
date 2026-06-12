@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "dbcd4d1fb1045ca40c1546f1e2b8d5515b837165a916269129573999318625f2",
+  "aggregate_sha256": "2ceaad0c950420f6aed67bf915377a9b249dceda281ac6e1cc3b9c568ed83ffd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 129,
-    "manifested_files_total": 848,
-    "python_files": 628,
+    "docs_files": 130,
+    "manifested_files_total": 851,
+    "python_files": 630,
     "runtime_excluded_files_total": 0,
-    "test_files": 177,
-    "tracked_files_total": 849,
+    "test_files": 178,
+    "tracked_files_total": 852,
     "workflows": 1
   },
   "deterministic": true,
@@ -878,6 +878,12 @@
       "sha256": "7d794a6486473625382fe0bf3bf340159afb10857d7e6e550ba6d94de0ebe6b9"
     },
     {
+      "bytes": 3328,
+      "hash_mode": "text_lf",
+      "path": "docs/NOTIFICATION_ROOT_BOOTSTRAP_PERMISSION_AUDIT_V1.md",
+      "sha256": "f9ce05b41c1a9b4c4ca8c9268158fc78eae31f1e1521e6714a88d192db640a8a"
+    },
+    {
       "bytes": 2491,
       "hash_mode": "text_lf",
       "path": "docs/NO_DUPLICATE_EXECUTION_POLICY.md",
@@ -1484,6 +1490,12 @@
       "sha256": "4deb60b6990d9387780aaf061a1933c0e42092c99cf0d1cdb38d3522d0901a74"
     },
     {
+      "bytes": 10738,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_notification_runtime_permissions.py",
+      "sha256": "a9f8f735b0928ec916b36a4b4389ca6642a685bff199daa02f1c7ea0a06e58d0"
+    },
+    {
       "bytes": 1862,
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_runtime_health_and_freshness.py",
@@ -1880,10 +1892,10 @@
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
     },
     {
-      "bytes": 2454,
+      "bytes": 3430,
       "hash_mode": "text_lf",
       "path": "scripts/docker_runtime_permissions_bootstrap.py",
-      "sha256": "e5ab8f32ff74ce9f04dc41b7cc4caa8ee239a67746287aac1af0c31b44334084"
+      "sha256": "17f9fbc52760cf2867933f65a778796d66799fb68d30659a0c5e2b493ffd6837"
     },
     {
       "bytes": 580,
@@ -4698,6 +4710,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_notification_channels_dashboard_test_panel.py",
       "sha256": "2018db478a2bbce9fe08d4e7715608c6eb717765165d3466cdc8b191e1c06c4f"
+    },
+    {
+      "bytes": 5622,
+      "hash_mode": "text_lf",
+      "path": "tests/test_notification_root_bootstrap_permission_audit_v1.py",
+      "sha256": "ca068221043bc8855a8ebd669edf0e3f38c05efa4a590963450a1c3042f1bb11"
     },
     {
       "bytes": 6121,
