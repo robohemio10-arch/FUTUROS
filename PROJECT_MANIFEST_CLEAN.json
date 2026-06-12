@@ -1,18 +1,24 @@
 {
-  "aggregate_sha256": "daab6ecf9203c514b0ddc3d4b00fcb058b4e87787f73b95968e6f03613d557b3",
+  "aggregate_sha256": "dbcd4d1fb1045ca40c1546f1e2b8d5515b837165a916269129573999318625f2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 128,
-    "manifested_files_total": 845,
-    "python_files": 627,
+    "docs_files": 129,
+    "manifested_files_total": 848,
+    "python_files": 628,
     "runtime_excluded_files_total": 0,
-    "test_files": 176,
-    "tracked_files_total": 846,
+    "test_files": 177,
+    "tracked_files_total": 849,
     "workflows": 1
   },
   "deterministic": true,
   "files": [
+    {
+      "bytes": 355,
+      "hash_mode": "text_lf",
+      "path": ".dockerignore",
+      "sha256": "6bcb3710d038e5867caaa7eb9b283604e0bf1c73e1ea4fd6d0da3ea2356de426"
+    },
     {
       "bytes": 957,
       "hash_mode": "text_lf",
@@ -1190,6 +1196,12 @@
       "sha256": "ef10f1c21a0818138ee6827d189a2c4263cabf800d133e7706fe36f004d60031"
     },
     {
+      "bytes": 3059,
+      "hash_mode": "text_lf",
+      "path": "docs/STANDALONE_AUDIT_AND_DOCKERIGNORE_HARDENING_V1.md",
+      "sha256": "ebb9b06e5f86accbd5392803d2c73f2ff3364fcd504b86ae7f2b86d2f4cc1a78"
+    },
+    {
       "bytes": 4981,
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
@@ -1958,10 +1970,10 @@
       "sha256": "0994387c11939ba4e8336e1184ae59298719e9f7d121633ac0a59ed289f4a52e"
     },
     {
-      "bytes": 6140,
+      "bytes": 6601,
       "hash_mode": "text_lf",
       "path": "scripts/generate_project_manifest.py",
-      "sha256": "a803688d84ccc0735d3f33321e1776e771afb494948e9f9e0605d370010db3c4"
+      "sha256": "e51972418677737d5bad5ff40febf7da9a713fd6b46d03f229b9df8c6f86bc14"
     },
     {
       "bytes": 1420,
@@ -2564,10 +2576,10 @@
       "sha256": "f190917d21c50cf73b315d78d1656b214f2a49248af326e600a5a9d7f1bb8fbb"
     },
     {
-      "bytes": 4095,
+      "bytes": 4752,
       "hash_mode": "text_lf",
       "path": "scripts/scan_versioned_secrets.py",
-      "sha256": "f65fccbc4d440b4ee487715e01d1f705132e171c66f125093cf7716e14b2acc7"
+      "sha256": "c3bc9790096ecbc1127830d5d0d95bb1f3067628c61e63da1f4836027a93bf51"
     },
     {
       "bytes": 559,
@@ -4460,6 +4472,12 @@
       "sha256": "be6e9bdd951d6bf508306229dc2c1897e4b5aee9766f30b4823df26cda5ca2cf"
     },
     {
+      "bytes": 1777,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dockerignore_build_context_safety.py",
+      "sha256": "d469a9c097024fbcc80823b3cf8de9db18fb18fea98e1c6c9b6bdf4eaf3f4c14"
+    },
+    {
       "bytes": 1559,
       "hash_mode": "text_lf",
       "path": "tests/test_drift_monitor.py",
@@ -5078,10 +5096,10 @@
       "sha256": "7ed7d24bf852446490e67f168646407e1496495dd6c5e8e843fc737e4d87a42b"
     },
     {
-      "bytes": 6435,
+      "bytes": 8808,
       "hash_mode": "text_lf",
       "path": "tests/test_zip_standalone_audit_fallback.py",
-      "sha256": "01a0ec0b183f440448593ecfc487a9b1ca86288c1b73cfcebfe1ef79277eb3d9"
+      "sha256": "1f5ed6b656f2a38354525bd5ef16c35d7585f45b97059c4f8f3f92dead392fef"
     }
   ],
   "generated_by_script": "scripts/generate_project_manifest.py",
