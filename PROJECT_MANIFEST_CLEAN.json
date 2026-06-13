@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c4df6e97199aee2aa1d930b854a331b1192d07493cd199bad07ad28d66380109",
+  "aggregate_sha256": "e05523872a1b5d66132a62c1409c82e6feb5146605c548f2cf45aa5063287936",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 132,
-    "manifested_files_total": 857,
-    "python_files": 634,
+    "docs_files": 133,
+    "manifested_files_total": 860,
+    "python_files": 636,
     "runtime_excluded_files_total": 0,
-    "test_files": 180,
-    "tracked_files_total": 858,
+    "test_files": 181,
+    "tracked_files_total": 861,
     "workflows": 1
   },
   "deterministic": true,
@@ -752,6 +752,12 @@
       "sha256": "2329feb4c2df2618936aa75ef4ee776b109c8de5bb274b9f55361cf1a9936188"
     },
     {
+      "bytes": 3485,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_IMAGE_PIN_DIGEST_POLICY_V1.md",
+      "sha256": "6528ae2ff621ccef1b4e6eb7fb60e031054f34be3a2a011632a924b3fc24c654"
+    },
+    {
       "bytes": 3842,
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_DB_AUTHORITY_AND_SOAK_RECALCULATION.md",
@@ -1470,6 +1476,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_diagnostic_common.py",
       "sha256": "4e0e77250e9ef08490a89846fe65cc9016f79b04e82ed9d59a662167141778ec"
+    },
+    {
+      "bytes": 11306,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_freqtrade_image_pin_digest_policy.py",
+      "sha256": "ca53307c58a12f1bf2c405eedf3f7372d1f52ded9ad8d1f8ff7c041faa516e6a"
     },
     {
       "bytes": 15853,
@@ -4560,6 +4572,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_financial_event_log_and_alerting.py",
       "sha256": "0a73f089a78fa4fc2114ccc0aa3c3408d6935617ca3e89bfe7bd28fe47e9444d"
+    },
+    {
+      "bytes": 7594,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_image_pin_digest_policy_v1.py",
+      "sha256": "7ae87caa7252d906705983dd8404c25de154b2a3d3663071f55b5889d088a386"
     },
     {
       "bytes": 14241,
