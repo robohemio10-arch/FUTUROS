@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e05523872a1b5d66132a62c1409c82e6feb5146605c548f2cf45aa5063287936",
+  "aggregate_sha256": "5f3b04831dc57125be2b633a2733911a811b2e9866547c611b251a6bd39be68a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 133,
-    "manifested_files_total": 860,
-    "python_files": 636,
+    "docs_files": 134,
+    "manifested_files_total": 863,
+    "python_files": 638,
     "runtime_excluded_files_total": 0,
-    "test_files": 181,
-    "tracked_files_total": 861,
+    "test_files": 182,
+    "tracked_files_total": 864,
     "workflows": 1
   },
   "deterministic": true,
@@ -818,6 +818,12 @@
       "sha256": "773c6012e42997754a6cf6c28e5f1a271d476be399e990449bcddd55ec93c5dd"
     },
     {
+      "bytes": 4789,
+      "hash_mode": "text_lf",
+      "path": "docs/LOCKFILE_HASH_INTEGRITY_HARDENING_V1.md",
+      "sha256": "f13a875340b9a56eb14518c4544ba512891a441d252b8fc022d8f8cfef6911e4"
+    },
+    {
       "bytes": 1869,
       "hash_mode": "text_lf",
       "path": "docs/MANUAL_GO_NO_GO_LIVE_CANARY_GOVERNANCE.md",
@@ -1494,6 +1500,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_live_canary_contract.py",
       "sha256": "7a32d0d9b7f8c17c389986a8c7e3ced13322f4de7e7bf7707b21cd0865e478d3"
+    },
+    {
+      "bytes": 15373,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_lockfile_hash_integrity.py",
+      "sha256": "392395cc6720ef85a9671ecaae8e9691515775b8190482efdcc643812dd40656"
     },
     {
       "bytes": 1920,
@@ -4644,6 +4656,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_live_canary_contract_with_hard_blocks.py",
       "sha256": "f6f24e9cda43cbeff8965bdda92b4121adf86d07a504336c95e753adfd10ccc8"
+    },
+    {
+      "bytes": 7861,
+      "hash_mode": "text_lf",
+      "path": "tests/test_lockfile_hash_integrity_hardening_v1.py",
+      "sha256": "e5fcc50b0621c38d46b8711a7bf6fb4f6aa8efb788071395ec1b84a6bd8b0c08"
     },
     {
       "bytes": 7142,
