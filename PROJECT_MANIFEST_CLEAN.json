@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5f3b04831dc57125be2b633a2733911a811b2e9866547c611b251a6bd39be68a",
+  "aggregate_sha256": "44809899568831e7b2779b3f6a57426b670a8ec2e748c12288a98eea1ceb093d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 134,
-    "manifested_files_total": 863,
-    "python_files": 638,
+    "docs_files": 135,
+    "manifested_files_total": 866,
+    "python_files": 640,
     "runtime_excluded_files_total": 0,
-    "test_files": 182,
-    "tracked_files_total": 864,
+    "test_files": 183,
+    "tracked_files_total": 867,
     "workflows": 1
   },
   "deterministic": true,
@@ -512,10 +512,10 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 6836,
+      "bytes": 6851,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "21fd5cd27be9c59329df7e4c4067d6cebbeefc2f69dc23625aa4aeda69b66da4"
+      "sha256": "fdd3c517900aac3c59d4dd512bd3c90243c40b3d5a46185acfee5a6371ebbaa9"
     },
     {
       "bytes": 1156,
@@ -702,6 +702,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DATA_QUALITY_REPORT_AND_DATASET_MANIFEST.md",
       "sha256": "5e8face1af33608553e994ff7bb3561e557be4b473434e2103319525eff97292"
+    },
+    {
+      "bytes": 3122,
+      "hash_mode": "text_lf",
+      "path": "docs/DOCKER_COMPOSE_READONLY_VOLUME_TIGHTENING_V1.md",
+      "sha256": "86a10bf13e375dfe07a2a0578e78dd5e854db9ae9015daef3fa372e520d850bd"
     },
     {
       "bytes": 5623,
@@ -1482,6 +1488,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_diagnostic_common.py",
       "sha256": "4e0e77250e9ef08490a89846fe65cc9016f79b04e82ed9d59a662167141778ec"
+    },
+    {
+      "bytes": 13637,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_docker_compose_readonly_volumes.py",
+      "sha256": "d8b31d81e5fe37670ab852be7d8fd9404a8d99131bfcf3d615758caea2180b9c"
     },
     {
       "bytes": 11306,
@@ -4518,6 +4530,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_data_quality_report_dataset_manifest.py",
       "sha256": "c45f2a74905f52c3a6c29044ea595b0c5924d539812528df47a8500190f05e13"
+    },
+    {
+      "bytes": 7677,
+      "hash_mode": "text_lf",
+      "path": "tests/test_docker_compose_readonly_volume_tightening_v1.py",
+      "sha256": "14bc7ce6abe2557f8634dd3bcb8f6cf265f172c89adf79d2e6c006fc0d14bfed"
     },
     {
       "bytes": 23312,

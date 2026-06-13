@@ -21,8 +21,8 @@ services:
       - ./data:/app/data
       - ./config:/app/config:ro
       - ./logs:/app/logs
-      - ./scripts:/app/scripts
-      - ./smartcrypto:/app/smartcrypto
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
     command: python -m smartcrypto.bot
 
   smartcrypto-dashboard-paper:
@@ -95,10 +95,10 @@ services:
     working_dir: /app
     volumes:
       - ./data:/app/data
-      - ./config:/app/config
+      - ./config:/app/config:ro
       - ./logs:/app/logs
-      - ./scripts:/app/scripts
-      - ./smartcrypto:/app/smartcrypto
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
     command: python -m smartcrypto.qlib_engine.worker
 
   qlib-refresh-supervisor-paper:
