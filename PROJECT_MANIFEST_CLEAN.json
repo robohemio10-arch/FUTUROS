@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f31fcffdce06b8de81306f2edb50755e2b94cb9e947c858725496fb3dae518a4",
+  "aggregate_sha256": "c4df6e97199aee2aa1d930b854a331b1192d07493cd199bad07ad28d66380109",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 131,
-    "manifested_files_total": 854,
-    "python_files": 632,
+    "docs_files": 132,
+    "manifested_files_total": 857,
+    "python_files": 634,
     "runtime_excluded_files_total": 0,
-    "test_files": 179,
-    "tracked_files_total": 855,
+    "test_files": 180,
+    "tracked_files_total": 858,
     "workflows": 1
   },
   "deterministic": true,
@@ -914,6 +914,12 @@
       "sha256": "3f4f87713ff95a7305d46057459fb495e500bc6f3260bba8c152d8d2f3ee716b"
     },
     {
+      "bytes": 3494,
+      "hash_mode": "text_lf",
+      "path": "docs/OPERATIONAL_EXCEPTION_SWALLOWING_AUDIT_V1.md",
+      "sha256": "e85eea771c8dfdd4cb729fb8a77d534d60f8d248fa35cdef3914b087258533f5"
+    },
+    {
       "bytes": 2371,
       "hash_mode": "text_lf",
       "path": "docs/OUTCOME_SIDECAR_FINANCIAL_EVALUATION.md",
@@ -1500,6 +1506,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_notification_runtime_permissions.py",
       "sha256": "a9f8f735b0928ec916b36a4b4389ca6642a685bff199daa02f1c7ea0a06e58d0"
+    },
+    {
+      "bytes": 18450,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_operational_exception_swallowing.py",
+      "sha256": "d5d3b3ba2063067539d20a1fe171a1dfce7fa5394ec5fc953eed52ec5025b0b9"
     },
     {
       "bytes": 1862,
@@ -4734,6 +4746,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_open_decision_clean_dataset.py",
       "sha256": "c7ede720bfe05c1e5b503814cb1005c00708bce544765f10998860a98ceb33b8"
+    },
+    {
+      "bytes": 6727,
+      "hash_mode": "text_lf",
+      "path": "tests/test_operational_exception_swallowing_audit_v1.py",
+      "sha256": "0228531524f04ac7acc43fad2e6efad3846baa90d6af147bd042631fc54c898d"
     },
     {
       "bytes": 7367,
