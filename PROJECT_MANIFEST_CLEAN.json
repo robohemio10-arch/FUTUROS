@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "44809899568831e7b2779b3f6a57426b670a8ec2e748c12288a98eea1ceb093d",
+  "aggregate_sha256": "14d60df62e143151b4414d67a2d71c223dea0b3516f29b93d5e263a95978386d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 135,
-    "manifested_files_total": 866,
-    "python_files": 640,
+    "docs_files": 136,
+    "manifested_files_total": 872,
+    "python_files": 645,
     "runtime_excluded_files_total": 0,
-    "test_files": 183,
-    "tracked_files_total": 867,
+    "test_files": 184,
+    "tracked_files_total": 873,
     "workflows": 1
   },
   "deterministic": true,
@@ -672,6 +672,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CURRENT_PROJECT_HANDOVER_AFTER_NTFY_TELEGRAM.md",
       "sha256": "f0524d05ad3016625c6a714fcae96b0b4c5170327cb6ddcb517a80b68d2d67c1"
+    },
+    {
+      "bytes": 3482,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_EVIDENCE_PACK_ORCHESTRATOR_V1.md",
+      "sha256": "dd164fb3ebc89f7e5520140dd9a3294932634575ff2dcef3efa01838b62abf9d"
     },
     {
       "bytes": 4153,
@@ -2438,6 +2444,12 @@
       "sha256": "8cd97f58ca5198678537b832132a074b392b556b039c0480e8fa3377657b0afc"
     },
     {
+      "bytes": 2436,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_daily_evidence_pack_orchestrator.py",
+      "sha256": "94cb4aa266abbcaee691ac8a82f1ec220de9c0e3bc8f95de94a7bb06282fa132"
+    },
+    {
       "bytes": 2561,
       "hash_mode": "text_lf",
       "path": "scripts/run_event_driven_backtest.py",
@@ -3596,6 +3608,24 @@
       "sha256": "7b22fed4e6004149a0fe15bdd640c47b1844b29f4c3c79d6614aa566e3d5e3dc"
     },
     {
+      "bytes": 124,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/daily_evidence_pack/__init__.py",
+      "sha256": "8e29b3bd1ca1c4dc0eb108c57de4b0e1ef3d8584bffab4925b57bbabb26c1658"
+    },
+    {
+      "bytes": 412,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/daily_evidence_pack/contracts.py",
+      "sha256": "44e5942b2c055ad8d603ac5b37a7f78ba29c78724da8f861cba08587e65bdd02"
+    },
+    {
+      "bytes": 16010,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/daily_evidence_pack/orchestrator.py",
+      "sha256": "94b9a6632cab316304772801e260541e9f047d074c040e7d053a25d530fcbabe"
+    },
+    {
       "bytes": 757,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_semantic_audit/__init__.py",
@@ -4260,6 +4290,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_current_project_handover_audit.py",
       "sha256": "1181f5de5121c60cd69a5b31dd0eacd5376d2152768c58099945ce9b7c345c0e"
+    },
+    {
+      "bytes": 10675,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
+      "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
     },
     {
       "bytes": 2160,
