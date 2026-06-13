@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "14d60df62e143151b4414d67a2d71c223dea0b3516f29b93d5e263a95978386d",
+  "aggregate_sha256": "9202885333938362c1bd55b4adce4a8bd622ed4719d9351af8a6667ad056f50f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 136,
-    "manifested_files_total": 872,
-    "python_files": 645,
+    "docs_files": 137,
+    "manifested_files_total": 875,
+    "python_files": 647,
     "runtime_excluded_files_total": 0,
-    "test_files": 184,
-    "tracked_files_total": 873,
+    "test_files": 185,
+    "tracked_files_total": 876,
     "workflows": 1
   },
   "deterministic": true,
@@ -1238,6 +1238,12 @@
       "sha256": "ebb9b06e5f86accbd5392803d2c73f2ff3364fcd504b86ae7f2b86d2f4cc1a78"
     },
     {
+      "bytes": 3225,
+      "hash_mode": "text_lf",
+      "path": "docs/STATE_EXECUTION_LEDGER_BOUNDARY_AUDIT_V1.md",
+      "sha256": "a84190bfa5d6386278a3ed4ed53cba8e8b80920a45725ce0f80850a823d4d191"
+    },
+    {
       "bytes": 4981,
       "hash_mode": "text_lf",
       "path": "docs/STATE_REPOSITORY_RECONCILIATION_HARDENING.md",
@@ -1602,6 +1608,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_saas_tenant_security_baseline.py",
       "sha256": "9e55183481576b080631822f72c046cd6def11cd00930d3ea60adc50c7647816"
+    },
+    {
+      "bytes": 24877,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_state_execution_ledger_boundary.py",
+      "sha256": "cae0c0a346bb159655b05572cd6b1919f8a1c590353bdc6d683bf6b9c8664590"
     },
     {
       "bytes": 541,
@@ -5190,6 +5202,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_stale_signal_guard.py",
       "sha256": "f9a9a598719984242b5fe5fafe5f583315f7957903ce54f96149721c78b810ee"
+    },
+    {
+      "bytes": 7066,
+      "hash_mode": "text_lf",
+      "path": "tests/test_state_execution_ledger_boundary_audit_v1.py",
+      "sha256": "bd1b408af5fe8ce0a11ca88b9038ad17de110552dd6a595b14b1af2d205d3517"
     },
     {
       "bytes": 5009,
