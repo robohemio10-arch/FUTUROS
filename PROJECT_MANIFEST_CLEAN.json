@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9202885333938362c1bd55b4adce4a8bd622ed4719d9351af8a6667ad056f50f",
+  "aggregate_sha256": "8dc9b7eaa90f9ee4da0bb1a531fd28e4050f31debf9edf6d5b53ca1daf233eb4",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 137,
-    "manifested_files_total": 875,
-    "python_files": 647,
+    "docs_files": 138,
+    "manifested_files_total": 878,
+    "python_files": 649,
     "runtime_excluded_files_total": 0,
-    "test_files": 185,
-    "tracked_files_total": 876,
+    "test_files": 186,
+    "tracked_files_total": 879,
     "workflows": 1
   },
   "deterministic": true,
@@ -624,6 +624,12 @@
       "hash_mode": "text_lf",
       "path": "docs/BITRADEX_15S_CLOSE_ONLY_SHADOW_PIPELINE.md",
       "sha256": "7a4fb42c6928b7f0ddb899c076b7fe1cfcb52f3569f05f306590b8de49fb8c7e"
+    },
+    {
+      "bytes": 3813,
+      "hash_mode": "text_lf",
+      "path": "docs/BITRADEX_DEPENDENCY_BOUNDARY_CLEANUP_V1.md",
+      "sha256": "b86e3804624ffd2e218f46157afe159627a257b883851bfc8eeb19af510cad3c"
     },
     {
       "bytes": 2771,
@@ -1482,6 +1488,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_bitradex_15s_complete_minutes_v4.py",
       "sha256": "77acc116f20ac658ac8a700b80a2fdedf8ba8e3b7fc594c1954c5b595c217a6e"
+    },
+    {
+      "bytes": 23187,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_bitradex_dependency_boundary.py",
+      "sha256": "c072cb358f6412deb3994613feb4d22cb0e881b7c2d29e02bbb04ce5478a0f88"
     },
     {
       "bytes": 6578,
@@ -4260,6 +4272,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_15s_shadow_pipeline_contract.py",
       "sha256": "b564f0755fa4ba7290f5d064387150851f88d5e8478b47a1de0d4129472528d2"
+    },
+    {
+      "bytes": 6790,
+      "hash_mode": "text_lf",
+      "path": "tests/test_bitradex_dependency_boundary_cleanup_v1.py",
+      "sha256": "188b283884245c120e3c486acf3fda31c3b77d29ce1fd7da602c8c8fee278145"
     },
     {
       "bytes": 10683,
