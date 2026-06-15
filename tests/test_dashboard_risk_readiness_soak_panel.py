@@ -486,7 +486,7 @@ def test_cli_inspect_risk_readiness_sources_runs_successfully(tmp_path):
             "--required-paper-days",
             "7",
             "--max-stale-signal-age-seconds",
-            "999999",
+            "9999999",
         ],
         cwd=ROOT,
         capture_output=True,

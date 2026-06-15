@@ -4,7 +4,7 @@ import json
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from smartcrypto.ops.dashboard_snapshots.active_controls_snapshot_builder import (
     build_active_controls_snapshot,
@@ -43,6 +43,9 @@ from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     GLOBAL_STATUS_SNAPSHOT_FILENAME,
     SNAPSHOT_BUILD_SUMMARY_FILENAME,
+)
+from smartcrypto.ops.dashboard_snapshots.source_closeout import (
+    build_runtime_source_closeout,
 )
 from smartcrypto.ops.dashboard_snapshots.status import normalize_section_status
 
@@ -84,6 +87,16 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
             "errors": snapshot.get("errors", []),
         }
 
+    initial_page_statuses = {
+        page_id.value: str(snapshot.get("status_summary", {}).get("status", "UNKNOWN"))
+        for page_id, snapshot in snapshots.items()
+    }
+    source_closeout = build_runtime_source_closeout(
+        context.project_root,
+        context.now_utc,
+        initial_page_statuses,
+    )
+    attach_source_closeout(snapshots, source_closeout)
     global_snapshot = build_global_status_snapshot(context, snapshots)
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
@@ -100,7 +113,8 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
     generated_files = [
         DASHBOARD_SNAPSHOT_FILENAMES[page_id] for page_id in DashboardPageId
     ] + [GLOBAL_STATUS_SNAPSHOT_FILENAME, SNAPSHOT_BUILD_SUMMARY_FILENAME]
-    status = "error" if errors else "blocked" if context.strict and missing_required else "degraded" if missing_required or missing_optional else "ok"
+    dashboard_status = str(source_closeout["dashboard_status"])
+    status = "error" if errors else dashboard_status.lower()
     summary = {
         "schema_version": DASHBOARD_SNAPSHOT_BUILD_SUMMARY_SCHEMA_VERSION,
         "project_name": "SMART FUTUROS",
@@ -119,6 +133,20 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "last_updated_utc": iso_utc(context.now_utc),
         "elapsed_seconds": max(time.perf_counter() - started, 0.0),
         "status": status,
+        "dashboard_status": dashboard_status,
+        "pages_total": source_closeout["pages_total"],
+        "pages_ok": source_closeout["pages_ok"],
+        "pages_degraded": source_closeout["pages_degraded"],
+        "pages_blocked": source_closeout["pages_blocked"],
+        "pages_unknown": source_closeout["pages_unknown"],
+        "required_sources_total": source_closeout["required_sources_total"],
+        "required_sources_ok": source_closeout["required_sources_ok"],
+        "required_sources_missing": source_closeout["required_sources_missing"],
+        "stale_sources_total": source_closeout["stale_sources_total"],
+        "future_sources_total": source_closeout["future_sources_total"],
+        "source_matrix": source_closeout["source_matrix"],
+        "page_source_matrix": source_closeout["page_source_matrix"],
+        "global_blocking_reasons": source_closeout["global_blocking_reasons"],
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -127,6 +155,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "errors": sorted(set(errors)),
         "sections": {},
         "safety": dict(SAFETY_FLAGS),
+        "safety_flags": dict(SAFETY_FLAGS),
         "audit": DashboardAuditContract(snapshot_source="dashboard_snapshot_build_summary").to_dict(),
     }
 
@@ -139,6 +168,39 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
     if context.allow_writes_to_output_dir:
         write_snapshot_files(context, outputs)
     return {"summary": summary, "snapshots": outputs, "exit_code": exit_code_for_summary(summary)}
+
+
+def attach_source_closeout(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    source_closeout: Mapping[str, Any],
+) -> None:
+    page_rows = {
+        str(row["page_id"]): row
+        for row in source_closeout.get("page_source_matrix", [])
+        if isinstance(row, Mapping) and row.get("page_id")
+    }
+    source_rows = [
+        row for row in source_closeout.get("source_matrix", []) if isinstance(row, Mapping)
+    ]
+    for page_id, snapshot in snapshots.items():
+        page_row = dict(page_rows.get(page_id.value, {}))
+        page_sources = [
+            dict(row) for row in source_rows if page_id.value in row.get("consumer_pages", [])
+        ]
+        snapshot["runtime_source_health"] = page_sources
+        snapshot["page_source_closeout"] = page_row
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict):
+            sections["runtime_source_health"] = {
+                "status": page_row.get("current_page_status", "UNKNOWN"),
+                "reason": "runtime_source_closeout",
+                "data": page_sources,
+            }
+        status_summary = snapshot.setdefault("status_summary", {})
+        if isinstance(status_summary, dict):
+            status_summary["status"] = page_row.get(
+                "current_page_status", status_summary.get("status", "UNKNOWN")
+            )
 
 
 def build_global_status_snapshot(

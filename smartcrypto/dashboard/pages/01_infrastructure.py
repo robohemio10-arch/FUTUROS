@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.components.runtime_source_health import render_runtime_source_health
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.dashboard.ui import (
     inject_smart_futuros_command_center_css,
@@ -24,7 +25,7 @@ SNAPSHOT_PATH = "data/reports/dashboard_infrastructure_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_infrastructure_snapshot_v1"
 REQUIRED_SECTIONS = (
     "status_summary", "host", "docker", "redis", "latency", "websockets",
-    "rate_limits", "market_data_health", "events", "audit",
+    "rate_limits", "market_data_health", "events", "runtime_source_health", "audit",
 )
 METRICS = (
     ("Runtime Mode", "status_summary", "component_status"),
@@ -49,6 +50,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
         render_chrome=False,
     )
+    render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
 
 
