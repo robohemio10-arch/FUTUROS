@@ -39,6 +39,10 @@ from smartcrypto.ops.dashboard_snapshots.portfolio_risk_snapshot_builder import 
 from smartcrypto.ops.dashboard_snapshots.quantitative_reports_snapshot_builder import (
     build_quantitative_reports_snapshot,
 )
+from smartcrypto.ops.dashboard_snapshots.runtime_evidence_integration import (
+    build_runtime_evidence_view,
+    runtime_evidence_section_status,
+)
 from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     GLOBAL_STATUS_SNAPSHOT_FILENAME,
@@ -96,8 +100,19 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         context.now_utc,
         initial_page_statuses,
     )
+    runtime_evidence_view = build_runtime_evidence_view(
+        project_root=context.project_root,
+        now_utc=context.now_utc,
+        source_closeout=source_closeout,
+    )
     attach_source_closeout(snapshots, source_closeout)
-    global_snapshot = build_global_status_snapshot(context, snapshots, source_closeout)
+    attach_runtime_evidence_integration(snapshots, runtime_evidence_view)
+    global_snapshot = build_global_status_snapshot(
+        context,
+        snapshots,
+        source_closeout,
+        runtime_evidence_view,
+    )
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
     )
@@ -164,6 +179,25 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "invalid_timestamp_sources": source_closeout["invalid_timestamp_sources"],
         "freshness_policy_coverage": source_closeout["freshness_policy_coverage"],
         "global_source_health_status": source_closeout["global_source_health_status"],
+        "runtime_evidence_integration_status": runtime_evidence_view[
+            "runtime_evidence_status"
+        ],
+        "runtime_evidence_view": runtime_evidence_view,
+        "runtime_evidence_blocking_reasons": runtime_evidence_view[
+            "blocking_evidence_sources"
+        ],
+        "runtime_evidence_degraded_reasons": runtime_evidence_view[
+            "degraded_evidence_sources"
+        ],
+        "runtime_evidence_missing_sources": runtime_evidence_view[
+            "missing_evidence_sources"
+        ],
+        "runtime_evidence_stale_sources": runtime_evidence_view[
+            "stale_evidence_sources"
+        ],
+        "runtime_evidence_safety_flags": runtime_evidence_view[
+            "runtime_evidence_safety_flags"
+        ],
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -220,34 +254,144 @@ def attach_source_closeout(
             )
 
 
+def attach_runtime_evidence_integration(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    runtime_evidence_view: Mapping[str, Any],
+) -> None:
+    section_status = runtime_evidence_section_status(runtime_evidence_view)
+    section_payload = {
+        "status": section_status,
+        "reason": runtime_evidence_view.get(
+            "runtime_evidence_reason",
+            "runtime_evidence_integration",
+        ),
+        "runtime_evidence_view": dict(runtime_evidence_view),
+        "blocking_evidence_sources": list(
+            runtime_evidence_view.get("blocking_evidence_sources", [])
+        ),
+        "degraded_evidence_sources": list(
+            runtime_evidence_view.get("degraded_evidence_sources", [])
+        ),
+        "missing_evidence_sources": list(
+            runtime_evidence_view.get("missing_evidence_sources", [])
+        ),
+        "stale_evidence_sources": list(
+            runtime_evidence_view.get("stale_evidence_sources", [])
+        ),
+        "canary_release_allowed": False,
+        "live_release_allowed": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
+    }
+    for page_id, snapshot in snapshots.items():
+        snapshot["runtime_evidence_integration_status"] = section_status
+        snapshot["runtime_evidence_view"] = dict(runtime_evidence_view)
+        snapshot["runtime_evidence_blocking_reasons"] = list(
+            runtime_evidence_view.get("blocking_evidence_sources", [])
+        )
+        snapshot["runtime_evidence_degraded_reasons"] = list(
+            runtime_evidence_view.get("degraded_evidence_sources", [])
+        )
+        snapshot["runtime_evidence_missing_sources"] = list(
+            runtime_evidence_view.get("missing_evidence_sources", [])
+        )
+        snapshot["runtime_evidence_stale_sources"] = list(
+            runtime_evidence_view.get("stale_evidence_sources", [])
+        )
+        snapshot["runtime_evidence_safety_flags"] = dict(SAFETY_FLAGS)
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict) and page_id in {
+            DashboardPageId.infrastructure,
+            DashboardPageId.active_controls,
+        }:
+            sections["runtime_evidence_integration"] = dict(section_payload)
+
+
 def build_global_status_snapshot(
     context: DashboardBuildContext,
     snapshots: dict[DashboardPageId, dict[str, Any]],
     source_closeout: Mapping[str, Any] | None = None,
+    runtime_evidence_view: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
         page_id.value: snapshot.get("status_summary", {}).get("status", "UNKNOWN")
         for page_id, snapshot in snapshots.items()
     }
     statuses = [normalize_section_status(value) for value in page_statuses.values()]
-    if any(status in {DashboardSectionStatus.ERROR, DashboardSectionStatus.BLOCKED, DashboardSectionStatus.MISSING_REQUIRED} for status in statuses):
+
+    if any(
+        status
+        in {
+            DashboardSectionStatus.ERROR,
+            DashboardSectionStatus.BLOCKED,
+            DashboardSectionStatus.MISSING_REQUIRED,
+        }
+        for status in statuses
+    ):
         overall = DashboardSectionStatus.BLOCKED
-    elif any(status in {DashboardSectionStatus.WARNING, DashboardSectionStatus.STALE, DashboardSectionStatus.DEGRADED, DashboardSectionStatus.MISSING_OPTIONAL} for status in statuses):
+    elif any(
+        status
+        in {
+            DashboardSectionStatus.WARNING,
+            DashboardSectionStatus.STALE,
+            DashboardSectionStatus.DEGRADED,
+            DashboardSectionStatus.MISSING_OPTIONAL,
+        }
+        for status in statuses
+    ):
         overall = DashboardSectionStatus.DEGRADED
     elif statuses and all(status is DashboardSectionStatus.OK for status in statuses):
         overall = DashboardSectionStatus.OK
     else:
         overall = DashboardSectionStatus.UNKNOWN
-    missing_required = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])})
-    missing_optional = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_optional_sources", [])})
+
+    missing_required = sorted(
+        {
+            path
+            for snapshot in snapshots.values()
+            for path in snapshot.get("missing_required_sources", [])
+        }
+    )
+    missing_optional = sorted(
+        {
+            path
+            for snapshot in snapshots.values()
+            for path in snapshot.get("missing_optional_sources", [])
+        }
+    )
+
     closeout = source_closeout or {}
+    evidence_view = dict(runtime_evidence_view or {})
+
     if closeout.get("dashboard_status"):
         overall_value = str(closeout["dashboard_status"])
     else:
         overall_value = overall.value
-    blocking_reasons = list(closeout.get("global_blocking_reasons", [])) or [
+
+    runtime_evidence_status = str(
+        evidence_view.get("runtime_evidence_status", "UNKNOWN")
+    ).upper()
+    if runtime_evidence_status == DashboardSectionStatus.BLOCKED.value:
+        overall_value = DashboardSectionStatus.BLOCKED.value
+
+    source_blocking_reasons = list(closeout.get("global_blocking_reasons", [])) or [
         f"missing_required_source:{path}" for path in missing_required
     ]
+    source_blocking_reasons = sorted(
+        {str(reason) for reason in source_blocking_reasons}
+    )
+
+    runtime_evidence_blocking_reasons = sorted(
+        {
+            str(reason)
+            for reason in evidence_view.get("blocking_evidence_sources", [])
+        }
+    )
+
+    combined_blocking_reasons = sorted(
+        set(source_blocking_reasons) | set(runtime_evidence_blocking_reasons)
+    )
+
     return {
         "schema_version": DASHBOARD_GLOBAL_STATUS_SCHEMA_VERSION,
         "runtime_mode": context.runtime_mode.value,
@@ -266,18 +410,49 @@ def build_global_status_snapshot(
         "global_source_health_status": closeout.get(
             "global_source_health_status", "UNKNOWN"
         ),
-        "blocking_reasons": blocking_reasons,
-        "global_blocking_reasons": blocking_reasons,
+        "runtime_evidence_integration_status": evidence_view.get(
+            "runtime_evidence_status", "UNKNOWN"
+        ),
+        "runtime_evidence_view": evidence_view,
+        "runtime_evidence_blocking_reasons": runtime_evidence_blocking_reasons,
+        "runtime_evidence_degraded_reasons": list(
+            evidence_view.get("degraded_evidence_sources", [])
+        ),
+        "runtime_evidence_missing_sources": list(
+            evidence_view.get("missing_evidence_sources", [])
+        ),
+        "runtime_evidence_stale_sources": list(
+            evidence_view.get("stale_evidence_sources", [])
+        ),
+        "runtime_evidence_safety_flags": dict(SAFETY_FLAGS),
+        "blocking_reasons": source_blocking_reasons,
+        "global_blocking_reasons": source_blocking_reasons,
+        "combined_blocking_reasons": combined_blocking_reasons,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
         "missing_optional_sources_count": len(missing_optional),
         "generated_snapshot_count": len(snapshots),
-        "sections": {"pages": {"status": overall_value, "reason": "consolidated_page_status", "data": page_statuses}},
+        "sections": {
+            "pages": {
+                "status": overall_value,
+                "reason": "consolidated_page_status",
+                "data": page_statuses,
+            },
+            "runtime_evidence_integration": {
+                "status": evidence_view.get("runtime_evidence_status", "UNKNOWN"),
+                "reason": evidence_view.get(
+                    "runtime_evidence_reason",
+                    "runtime_evidence_integration",
+                ),
+                "runtime_evidence_view": evidence_view,
+            },
+        },
         "safety": dict(SAFETY_FLAGS),
-        "audit": DashboardAuditContract(snapshot_source="dashboard_global_status").to_dict(),
+        "audit": DashboardAuditContract(
+            snapshot_source="dashboard_global_status"
+        ).to_dict(),
     }
-
 
 def write_snapshot_files(
     context: DashboardBuildContext,
@@ -336,3 +511,4 @@ def _error_snapshot(
         "safety": dict(SAFETY_FLAGS),
         "audit": DashboardAuditContract(snapshot_source=page_id.value).to_dict(),
     }
+

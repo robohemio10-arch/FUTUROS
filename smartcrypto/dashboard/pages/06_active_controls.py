@@ -3,20 +3,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from smartcrypto.dashboard.components.read_only import (
-    get_streamlit,
-    render_disabled_control_stub,
-    render_snapshot_page,
-)
 from smartcrypto.dashboard.components.control_stubs import (
     render_command_policy_table,
     render_command_result_stub,
     render_n4_hard_block_panel,
     render_stub_only_banner,
 )
+from smartcrypto.dashboard.components.read_only import (
+    get_streamlit,
+    render_disabled_control_stub,
+    render_snapshot_page,
+)
 from smartcrypto.dashboard.components.readiness_gates import (
     render_readiness_gates_snapshot_view,
 )
+from smartcrypto.dashboard.components.runtime_evidence_panel import render_runtime_evidence_panel
 from smartcrypto.dashboard.components.runtime_source_health import render_runtime_source_health
 from smartcrypto.dashboard.controls.command_classifier import list_dashboard_command_policies
 from smartcrypto.dashboard.controls.command_stub_adapter import evaluate_dashboard_command_intent
@@ -40,14 +41,32 @@ ACTIVE_PAGE = "06_active_controls"
 SNAPSHOT_PATH = "data/reports/dashboard_active_controls_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_active_controls_snapshot_v1"
 REQUIRED_SECTIONS = (
-    "active_layer_status", "level1_commands", "level2_commands", "level3_commands",
-    "level4_hard_blocks", "kill_switch", "grid_parameter_change", "security_state",
-    "readiness_gap_accounting", "command_events", "runtime_source_health", "audit",
+    "active_layer_status",
+    "level1_commands",
+    "level2_commands",
+    "level3_commands",
+    "level4_hard_blocks",
+    "kill_switch",
+    "grid_parameter_change",
+    "security_state",
+    "readiness_gap_accounting",
+    "paper_runtime_health",
+    "runtime_evidence_integration",
+    "command_events",
+    "runtime_source_health",
+    "audit",
 )
 LEVEL4_ALWAYS_BLOCKED = (
-    "LIVE_ORDER", "MARKET_SELL_ALL_REAL", "SNIPER_REAL", "CANCEL_ALL_LIVE_ORDERS",
-    "LIQUIDATE_REAL_INVENTORY", "CHANGE_LIVE_RISK", "ENABLE_LIVE_TRADING",
-    "ENABLE_PRIVATE_READ_REAL", "PROMOTE_MODEL_TO_PRODUCTION", "AUTO_INCREASE_CAPITAL",
+    "LIVE_ORDER",
+    "MARKET_SELL_ALL_REAL",
+    "SNIPER_REAL",
+    "CANCEL_ALL_LIVE_ORDERS",
+    "LIQUIDATE_REAL_INVENTORY",
+    "CHANGE_LIVE_RISK",
+    "ENABLE_LIVE_TRADING",
+    "ENABLE_PRIVATE_READ_REAL",
+    "PROMOTE_MODEL_TO_PRODUCTION",
+    "AUTO_INCREASE_CAPITAL",
     "RELEASE_REAL_SAFETY_ORDER",
 )
 METRICS = (
@@ -67,8 +86,12 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     render_sidebar(ACTIVE_PAGE, {"environment": "paper", "snapshot": SNAPSHOT_PATH}, ui=target_ui)
     render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
     render_snapshot_page(
-        title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+        title=PAGE_TITLE,
+        snapshot_path=SNAPSHOT_PATH,
+        snapshot=snapshot,
+        section_order=REQUIRED_SECTIONS,
+        metric_specs=METRICS,
+        ui=target_ui,
         render_chrome=False,
     )
     target_ui.subheader("Controles governados")
@@ -84,6 +107,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     for command in LEVEL4_ALWAYS_BLOCKED:
         render_disabled_control_stub(command, "HARD_BLOCKED", ui=target_ui)
     render_readiness_gates_snapshot_view(snapshot, ui=target_ui)
+    render_runtime_evidence_panel(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ["N4 HARD-BLOCKED"], ui=target_ui)
 
