@@ -55,6 +55,9 @@ from smartcrypto.ops.dashboard_snapshots.runtime_blockers_closeout_evidence impo
 from smartcrypto.ops.dashboard_snapshots.runtime_evidence_freshness_remediation_producers import (
     audit_runtime_evidence_freshness_remediation_producers,
 )
+from smartcrypto.ops.dashboard_snapshots.runtime_freshness_producer_contracts import (
+    audit_runtime_freshness_producer_contracts,
+)
 from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     GLOBAL_STATUS_SNAPSHOT_FILENAME,
@@ -179,6 +182,15 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
             ),
         )
     )
+    runtime_freshness_producer_contracts = audit_runtime_freshness_producer_contracts(
+        now_utc=context.now_utc,
+        producer_audit=runtime_evidence_freshness_remediation_producers,
+        safety_payloads=(
+            closeout_summary_view,
+            runtime_blockers_closeout_evidence,
+            runtime_blockers_operator_pack,
+        ),
+    )
     attach_source_closeout(snapshots, source_closeout)
     attach_runtime_evidence_integration(snapshots, runtime_evidence_view)
     attach_runtime_blockers_remediation(snapshots, runtime_blockers_remediation)
@@ -189,6 +201,9 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
     attach_runtime_evidence_freshness_remediation_producers(
         snapshots, runtime_evidence_freshness_remediation_producers
     )
+    attach_runtime_freshness_producer_contracts(
+        snapshots, runtime_freshness_producer_contracts
+    )
     global_snapshot = build_global_status_snapshot(
         context,
         snapshots,
@@ -198,6 +213,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         runtime_blockers_operator_pack,
         runtime_blockers_closeout_evidence,
         runtime_evidence_freshness_remediation_producers,
+        runtime_freshness_producer_contracts,
     )
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
@@ -293,6 +309,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "runtime_evidence_freshness_remediation_producers": (
             runtime_evidence_freshness_remediation_producers
         ),
+        "runtime_freshness_producer_contracts": runtime_freshness_producer_contracts,
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -482,6 +499,26 @@ def attach_runtime_evidence_freshness_remediation_producers(
             )
 
 
+def attach_runtime_freshness_producer_contracts(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    producer_contracts: Mapping[str, Any],
+) -> None:
+    section = {
+        "status": str(producer_contracts.get("status", "blocked")).upper(),
+        "reason": producer_contracts.get(
+            "reason", "runtime_freshness_producer_contracts"
+        ),
+        "data": dict(producer_contracts),
+    }
+    for page_id, snapshot in snapshots.items():
+        if page_id not in {DashboardPageId.infrastructure, DashboardPageId.active_controls}:
+            continue
+        snapshot["runtime_freshness_producer_contracts"] = dict(producer_contracts)
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict):
+            sections["runtime_freshness_producer_contracts"] = dict(section)
+
+
 def build_global_status_snapshot(
     context: DashboardBuildContext,
     snapshots: dict[DashboardPageId, dict[str, Any]],
@@ -491,6 +528,7 @@ def build_global_status_snapshot(
     runtime_blockers_operator_pack: Mapping[str, Any] | None = None,
     runtime_blockers_closeout_evidence: Mapping[str, Any] | None = None,
     runtime_evidence_freshness_remediation_producers: Mapping[str, Any] | None = None,
+    runtime_freshness_producer_contracts: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
         page_id.value: snapshot.get("status_summary", {}).get("status", "UNKNOWN")
@@ -545,6 +583,7 @@ def build_global_status_snapshot(
     operator_pack = dict(runtime_blockers_operator_pack or {})
     closeout_evidence = dict(runtime_blockers_closeout_evidence or {})
     producer_audit = dict(runtime_evidence_freshness_remediation_producers or {})
+    producer_contracts = dict(runtime_freshness_producer_contracts or {})
 
     if closeout.get("dashboard_status"):
         overall_value = str(closeout["dashboard_status"])
@@ -615,6 +654,7 @@ def build_global_status_snapshot(
         "runtime_blockers_operator_pack": operator_pack,
         "runtime_blockers_closeout_evidence": closeout_evidence,
         "runtime_evidence_freshness_remediation_producers": producer_audit,
+        "runtime_freshness_producer_contracts": producer_contracts,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
@@ -661,6 +701,13 @@ def build_global_status_snapshot(
                     "reason", "runtime_evidence_freshness_remediation_producers"
                 ),
                 "data": producer_audit,
+            },
+            "runtime_freshness_producer_contracts": {
+                "status": str(producer_contracts.get("status", "blocked")).upper(),
+                "reason": producer_contracts.get(
+                    "reason", "runtime_freshness_producer_contracts"
+                ),
+                "data": producer_contracts,
             },
         },
         "safety": dict(SAFETY_FLAGS),
