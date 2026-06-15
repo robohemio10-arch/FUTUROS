@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.components.runtime_evidence_panel import render_runtime_evidence_panel
 from smartcrypto.dashboard.components.runtime_source_health import render_runtime_source_health
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.dashboard.ui import (
@@ -24,8 +25,18 @@ ACTIVE_PAGE = "01_infrastructure"
 SNAPSHOT_PATH = "data/reports/dashboard_infrastructure_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_infrastructure_snapshot_v1"
 REQUIRED_SECTIONS = (
-    "status_summary", "host", "docker", "redis", "latency", "websockets",
-    "rate_limits", "market_data_health", "events", "runtime_source_health", "audit",
+    "status_summary",
+    "host",
+    "docker",
+    "redis",
+    "latency",
+    "websockets",
+    "rate_limits",
+    "market_data_health",
+    "runtime_evidence_integration",
+    "events",
+    "runtime_source_health",
+    "audit",
 )
 METRICS = (
     ("Runtime Mode", "status_summary", "component_status"),
@@ -46,10 +57,15 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     render_sidebar(ACTIVE_PAGE, _environment(snapshot), ui=target_ui)
     render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
     render_snapshot_page(
-        title=PAGE_TITLE, snapshot_path=SNAPSHOT_PATH, snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
+        title=PAGE_TITLE,
+        snapshot_path=SNAPSHOT_PATH,
+        snapshot=snapshot,
+        section_order=REQUIRED_SECTIONS,
+        metric_specs=METRICS,
+        ui=target_ui,
         render_chrome=False,
     )
+    render_runtime_evidence_panel(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
 
@@ -58,7 +74,6 @@ def _environment(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
         "account": "PAPER / SHADOW",
         "environment": snapshot.get("runtime_mode", "paper"),
-        "exchange_paper": "USDT-M Futures (public data)",
         "dashboard_version": "theme-v1",
         "snapshot": SNAPSHOT_PATH,
         "data_source": "read-only snapshot",

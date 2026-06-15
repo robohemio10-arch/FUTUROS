@@ -318,31 +318,80 @@ def build_global_status_snapshot(
         for page_id, snapshot in snapshots.items()
     }
     statuses = [normalize_section_status(value) for value in page_statuses.values()]
-    if any(status in {DashboardSectionStatus.ERROR, DashboardSectionStatus.BLOCKED, DashboardSectionStatus.MISSING_REQUIRED} for status in statuses):
+
+    if any(
+        status
+        in {
+            DashboardSectionStatus.ERROR,
+            DashboardSectionStatus.BLOCKED,
+            DashboardSectionStatus.MISSING_REQUIRED,
+        }
+        for status in statuses
+    ):
         overall = DashboardSectionStatus.BLOCKED
-    elif any(status in {DashboardSectionStatus.WARNING, DashboardSectionStatus.STALE, DashboardSectionStatus.DEGRADED, DashboardSectionStatus.MISSING_OPTIONAL} for status in statuses):
+    elif any(
+        status
+        in {
+            DashboardSectionStatus.WARNING,
+            DashboardSectionStatus.STALE,
+            DashboardSectionStatus.DEGRADED,
+            DashboardSectionStatus.MISSING_OPTIONAL,
+        }
+        for status in statuses
+    ):
         overall = DashboardSectionStatus.DEGRADED
     elif statuses and all(status is DashboardSectionStatus.OK for status in statuses):
         overall = DashboardSectionStatus.OK
     else:
         overall = DashboardSectionStatus.UNKNOWN
-    missing_required = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])})
-    missing_optional = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_optional_sources", [])})
+
+    missing_required = sorted(
+        {
+            path
+            for snapshot in snapshots.values()
+            for path in snapshot.get("missing_required_sources", [])
+        }
+    )
+    missing_optional = sorted(
+        {
+            path
+            for snapshot in snapshots.values()
+            for path in snapshot.get("missing_optional_sources", [])
+        }
+    )
+
     closeout = source_closeout or {}
     evidence_view = dict(runtime_evidence_view or {})
+
     if closeout.get("dashboard_status"):
         overall_value = str(closeout["dashboard_status"])
     else:
         overall_value = overall.value
-    if evidence_view.get("runtime_evidence_status") == "BLOCKED":
+
+    runtime_evidence_status = str(
+        evidence_view.get("runtime_evidence_status", "UNKNOWN")
+    ).upper()
+    if runtime_evidence_status == DashboardSectionStatus.BLOCKED.value:
         overall_value = DashboardSectionStatus.BLOCKED.value
-    blocking_reasons = list(closeout.get("global_blocking_reasons", [])) or [
+
+    source_blocking_reasons = list(closeout.get("global_blocking_reasons", [])) or [
         f"missing_required_source:{path}" for path in missing_required
     ]
-    blocking_reasons.extend(
-        str(reason) for reason in evidence_view.get("blocking_evidence_sources", [])
+    source_blocking_reasons = sorted(
+        {str(reason) for reason in source_blocking_reasons}
     )
-    blocking_reasons = sorted(set(blocking_reasons))
+
+    runtime_evidence_blocking_reasons = sorted(
+        {
+            str(reason)
+            for reason in evidence_view.get("blocking_evidence_sources", [])
+        }
+    )
+
+    combined_blocking_reasons = sorted(
+        set(source_blocking_reasons) | set(runtime_evidence_blocking_reasons)
+    )
+
     return {
         "schema_version": DASHBOARD_GLOBAL_STATUS_SCHEMA_VERSION,
         "runtime_mode": context.runtime_mode.value,
@@ -365,9 +414,7 @@ def build_global_status_snapshot(
             "runtime_evidence_status", "UNKNOWN"
         ),
         "runtime_evidence_view": evidence_view,
-        "runtime_evidence_blocking_reasons": list(
-            evidence_view.get("blocking_evidence_sources", [])
-        ),
+        "runtime_evidence_blocking_reasons": runtime_evidence_blocking_reasons,
         "runtime_evidence_degraded_reasons": list(
             evidence_view.get("degraded_evidence_sources", [])
         ),
@@ -378,8 +425,9 @@ def build_global_status_snapshot(
             evidence_view.get("stale_evidence_sources", [])
         ),
         "runtime_evidence_safety_flags": dict(SAFETY_FLAGS),
-        "blocking_reasons": blocking_reasons,
-        "global_blocking_reasons": blocking_reasons,
+        "blocking_reasons": source_blocking_reasons,
+        "global_blocking_reasons": source_blocking_reasons,
+        "combined_blocking_reasons": combined_blocking_reasons,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
@@ -401,9 +449,10 @@ def build_global_status_snapshot(
             },
         },
         "safety": dict(SAFETY_FLAGS),
-        "audit": DashboardAuditContract(snapshot_source="dashboard_global_status").to_dict(),
+        "audit": DashboardAuditContract(
+            snapshot_source="dashboard_global_status"
+        ).to_dict(),
     }
-
 
 def write_snapshot_files(
     context: DashboardBuildContext,
@@ -462,3 +511,4 @@ def _error_snapshot(
         "safety": dict(SAFETY_FLAGS),
         "audit": DashboardAuditContract(snapshot_source=page_id.value).to_dict(),
     }
+
