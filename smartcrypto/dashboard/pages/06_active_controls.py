@@ -17,6 +17,7 @@ from smartcrypto.dashboard.components.control_stubs import (
 from smartcrypto.dashboard.components.readiness_gates import (
     render_readiness_gates_snapshot_view,
 )
+from smartcrypto.dashboard.components.runtime_source_health import render_runtime_source_health
 from smartcrypto.dashboard.controls.command_classifier import list_dashboard_command_policies
 from smartcrypto.dashboard.controls.command_stub_adapter import evaluate_dashboard_command_intent
 from smartcrypto.dashboard.controls.contracts import DashboardCommandIntent
@@ -41,7 +42,7 @@ EXPECTED_SCHEMA_VERSION = "dashboard_active_controls_snapshot_v1"
 REQUIRED_SECTIONS = (
     "active_layer_status", "level1_commands", "level2_commands", "level3_commands",
     "level4_hard_blocks", "kill_switch", "grid_parameter_change", "security_state",
-    "readiness_gap_accounting", "command_events", "audit",
+    "readiness_gap_accounting", "command_events", "runtime_source_health", "audit",
 )
 LEVEL4_ALWAYS_BLOCKED = (
     "LIVE_ORDER", "MARKET_SELL_ALL_REAL", "SNIPER_REAL", "CANCEL_ALL_LIVE_ORDERS",
@@ -83,6 +84,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     for command in LEVEL4_ALWAYS_BLOCKED:
         render_disabled_control_stub(command, "HARD_BLOCKED", ui=target_ui)
     render_readiness_gates_snapshot_view(snapshot, ui=target_ui)
+    render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ["N4 HARD-BLOCKED"], ui=target_ui)
 
 
