@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "cd073affe7f1136ef83c21271bd17b203f99f48ab6ebeca75011fa63e9a90a37",
+  "aggregate_sha256": "baeac07d85f44b6867276ed2b45375f01c0c61eab76d3a3d2c21c15bbf92b613",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 141,
-    "manifested_files_total": 889,
-    "python_files": 657,
+    "docs_files": 142,
+    "manifested_files_total": 894,
+    "python_files": 661,
     "runtime_excluded_files_total": 0,
-    "test_files": 189,
-    "tracked_files_total": 890,
+    "test_files": 190,
+    "tracked_files_total": 895,
     "workflows": 1
   },
   "deterministic": true,
@@ -708,6 +708,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_RISK_READINESS_AND_SOAK_PANEL.md",
       "sha256": "597db6551355a3ab6d97025bb459aa03e455005d75b397f993346c4087608bac"
+    },
+    {
+      "bytes": 2998,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_RUNTIME_BLOCKERS_REMEDIATION_RUNBOOK_V1.md",
+      "sha256": "81b5c87215e2468ce26048a75095eadc7aa7dc26d24da56188dbdb9f6954dde3"
     },
     {
       "bytes": 5468,
@@ -1518,6 +1524,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_current_project_handover.py",
       "sha256": "71a71d2b6df11e0429de9cd0685a44459b0b7b5e9d4abe9c53d13922c4f3b2ba"
+    },
+    {
+      "bytes": 4171,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_dashboard_runtime_blockers_remediation_runbook_v1.py",
+      "sha256": "b06ece78e72b33588c6c6457e0dafaa5e2e821b8523ec08ff0bfaeee66e2508e"
     },
     {
       "bytes": 1796,
@@ -2936,6 +2948,12 @@
       "sha256": "4bbfa6ca4ff45a3a7afd28ff5b01969c1065ee760f11cbe839483c5f7b2906c4"
     },
     {
+      "bytes": 2944,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/runtime_blockers_remediation.py",
+      "sha256": "53faeaa663c6ba58d3e0400bbecccd8ddccee76cac2a3d3f8792dddccc9f70a8"
+    },
+    {
       "bytes": 4268,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/runtime_evidence_panel.py",
@@ -3020,10 +3038,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 3306,
+      "bytes": 3526,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "bf9d8c39098c267c92fab7314043b3865b6e0dde679db9bb2a89943f23ab9cc6"
+      "sha256": "bbeb4ab94eae79ed8703ea8af004d4ffb9bcd1e25282eb6feb0ebea618ef0d2a"
     },
     {
       "bytes": 2802,
@@ -3050,10 +3068,10 @@
       "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
     },
     {
-      "bytes": 5495,
+      "bytes": 5715,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "6609bad8d55c1f8367fee39439917d43f0e1a21d3a9b51fa6f23654b049d4e8f"
+      "sha256": "77f0fe85519a88bd7f8b69859ad791fa00425269899c54d5022ec7c18c71e1b3"
     },
     {
       "bytes": 3639,
@@ -3740,10 +3758,10 @@
       "sha256": "26fa5c1f75d50844573faa0f93f9227a62214716f0dac94fea2046e59c914024"
     },
     {
-      "bytes": 21205,
+      "bytes": 23575,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/builder_registry.py",
-      "sha256": "c477083007a394a98686517966297c78ae11db222845b864d8878ee1e91b010c"
+      "sha256": "857cba5293212abeb69bc0896a6f4c5b5e0ebb56227933cbfd56acabd81fbdb3"
     },
     {
       "bytes": 6966,
@@ -3786,6 +3804,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/quantitative_reports_snapshot_builder.py",
       "sha256": "7f6f547a6dabe800f9e8cec5ea52581c30ff4b5b6670b06716b11593783cbb62"
+    },
+    {
+      "bytes": 13035,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/runtime_blockers_remediation.py",
+      "sha256": "a829da5d498a07ee359e05951cc0a17e6fb4e7638e47d4b09cb190d215951f99"
     },
     {
       "bytes": 21674,
@@ -4530,6 +4554,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_risk_readiness_soak_panel.py",
       "sha256": "30266e7d46a00752329e839c0d33e9b0ca3a6c07307a6569595d03ab91d06451"
+    },
+    {
+      "bytes": 10597,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_runtime_blockers_remediation_runbook_v1.py",
+      "sha256": "b587e90ea79869f7d3fefed1deb777aa548d729ee6e0570eaa4ad8afbe684551"
     },
     {
       "bytes": 8809,
