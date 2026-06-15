@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7e5b19c075d895928c2f94e1da4841c6286f75c92388872ad988c246bcb7b4ab",
+  "aggregate_sha256": "37677d2252f9d7720131d4b43119523bc152cb02e190ccd4b5fad49d103bd50a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 143,
-    "manifested_files_total": 899,
-    "python_files": 665,
+    "docs_files": 144,
+    "manifested_files_total": 904,
+    "python_files": 669,
     "runtime_excluded_files_total": 0,
-    "test_files": 191,
-    "tracked_files_total": 900,
+    "test_files": 192,
+    "tracked_files_total": 905,
     "workflows": 1
   },
   "deterministic": true,
@@ -1196,6 +1196,12 @@
       "sha256": "a8f5c5e4d1e0fdbc97d6f9f5bf86822af5d9cb423e6f6c093b95ee95ff3dc4d2"
     },
     {
+      "bytes": 3506,
+      "hash_mode": "text_lf",
+      "path": "docs/RUNTIME_BLOCKERS_CLOSEOUT_EVIDENCE_AUDIT_V1.md",
+      "sha256": "2018838ce2a2663899ab9dc5043406ad19f61d1d0a11ad3ad5ad6aa273db9b26"
+    },
+    {
       "bytes": 3974,
       "hash_mode": "text_lf",
       "path": "docs/RUNTIME_EVIDENCE_GAP_ACCOUNTING_INTEGRATION_V1.md",
@@ -1650,6 +1656,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_return_pct_scale.py",
       "sha256": "a92e1200bfab2804a30fe988ab4cb5d43747faa9895e42cb039475f99066c47e"
+    },
+    {
+      "bytes": 2272,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_runtime_blockers_closeout_evidence_v1.py",
+      "sha256": "cbaee105876549d4acde63ee2bb89f50ae926572f3ea468e16414980481ab209"
     },
     {
       "bytes": 2270,
@@ -2960,6 +2972,12 @@
       "sha256": "4bbfa6ca4ff45a3a7afd28ff5b01969c1065ee760f11cbe839483c5f7b2906c4"
     },
     {
+      "bytes": 4660,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/runtime_blockers_closeout_evidence.py",
+      "sha256": "471853b4e641ed04f6c7795bcd32054b18fad43c004c9ca68eb5023ad07e36e5"
+    },
+    {
       "bytes": 4977,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/runtime_blockers_operator_pack.py",
@@ -3056,10 +3074,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 3753,
+      "bytes": 3996,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "82152bc291a66645b88ee499b371342ba57db41b7ba07e4db9cb134dd45d27b0"
+      "sha256": "0c27010137ca62fd10bc0ff8ac043f63c443ac729e54ea13e4ebc46ceec861e8"
     },
     {
       "bytes": 2802,
@@ -3086,10 +3104,10 @@
       "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
     },
     {
-      "bytes": 5942,
+      "bytes": 6185,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "701632fc7023718e163e8b5dd529ceffbad4fba02e356f89adffec7df4287ccc"
+      "sha256": "68d29a576f2395cc12956962e5d1d9e0c50d4d83ff47676082d4378a106871ae"
     },
     {
       "bytes": 3639,
@@ -3776,10 +3794,10 @@
       "sha256": "26fa5c1f75d50844573faa0f93f9227a62214716f0dac94fea2046e59c914024"
     },
     {
-      "bytes": 25319,
+      "bytes": 28462,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/builder_registry.py",
-      "sha256": "6c04481bb20548e8d715ad258881e090d5b38d87a883b3c77f6c01de687e4abe"
+      "sha256": "e5a96b0277141154b50c766462f6daa01645a810312f619fa7984c6c93e77cd0"
     },
     {
       "bytes": 6966,
@@ -3822,6 +3840,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/quantitative_reports_snapshot_builder.py",
       "sha256": "7f6f547a6dabe800f9e8cec5ea52581c30ff4b5b6670b06716b11593783cbb62"
+    },
+    {
+      "bytes": 23797,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/runtime_blockers_closeout_evidence.py",
+      "sha256": "9b819e68cacf317f5bf49c048c2c0c80b727823452bf21af27b81715ef879fe8"
     },
     {
       "bytes": 12751,
@@ -5280,6 +5304,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_authority_docs.py",
       "sha256": "562c589d76e8ec96bf3f740b9a5de3d710f6b4554d596d2bd243c2aec1a24457"
+    },
+    {
+      "bytes": 13496,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_blockers_closeout_evidence_audit_v1.py",
+      "sha256": "9caf699ab152d58b808528e49df4bd4317bc90d8111c6d56c65daf2031cb82f3"
     },
     {
       "bytes": 6642,
