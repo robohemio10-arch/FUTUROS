@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8ee5aeb42a3a24a18dd3e3ceb777a5d0bf7e034cc9714505d32cc348f0d7fb95",
+  "aggregate_sha256": "55ef916a5ef4f567af4a7c88f6ce8b3a63bf316947deb98a7b3121581fa0db7e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 139,
-    "manifested_files_total": 882,
-    "python_files": 652,
+    "docs_files": 140,
+    "manifested_files_total": 885,
+    "python_files": 654,
     "runtime_excluded_files_total": 0,
-    "test_files": 187,
-    "tracked_files_total": 883,
+    "test_files": 188,
+    "tracked_files_total": 886,
     "workflows": 1
   },
   "deterministic": true,
@@ -714,6 +714,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_RUNTIME_SOURCE_CLOSEOUT_V1.md",
       "sha256": "1eb2b10467f6b7d9f43a0acc762be98a5e52f8289874b9797ad6e2dc9796908b"
+    },
+    {
+      "bytes": 4802,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_SNAPSHOT_FRESHNESS_AND_SOURCE_HEALTH_V1.md",
+      "sha256": "d8ec46df5d63c5174ad0aa4ce4e03a6798fcfd7543b8c0b58846536a0d68d008"
     },
     {
       "bytes": 3355,
@@ -2924,10 +2930,10 @@
       "sha256": "4bbfa6ca4ff45a3a7afd28ff5b01969c1065ee760f11cbe839483c5f7b2906c4"
     },
     {
-      "bytes": 2316,
+      "bytes": 2856,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/runtime_source_health.py",
-      "sha256": "dba27105109fd533ac1969e161126c6c3a75563769db2146e8f05d16590714f8"
+      "sha256": "a32330b50c8df3ffda2f2e71581e1ef6bb6e46f6077680b823d8616f19478cc0"
     },
     {
       "bytes": 2862,
@@ -3722,10 +3728,10 @@
       "sha256": "26fa5c1f75d50844573faa0f93f9227a62214716f0dac94fea2046e59c914024"
     },
     {
-      "bytes": 13473,
+      "bytes": 15407,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/builder_registry.py",
-      "sha256": "da8df40ac70489a7ccef498d3abad4e7f5d37b871c5fc0eb39929429bb7da3b5"
+      "sha256": "2de4b609f3b4263ca6de39c0f8ce8dce752dc676da5317bb2f1e584b428797ce"
     },
     {
       "bytes": 6966,
@@ -3782,10 +3788,16 @@
       "sha256": "4b6478adaadb35444f4656d2815f9fe5e4f05174de15fab6c5997d4ffe085d94"
     },
     {
-      "bytes": 26861,
+      "bytes": 34362,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/source_closeout.py",
-      "sha256": "f87c0b66f5734219eaff71f06f9f665bbea33f9591953a692299207a2483fd05"
+      "sha256": "c0a5ccac956a61c01f17965b56d9eac1fb93bd61632e3f636f356ee65a9a08ff"
+    },
+    {
+      "bytes": 10092,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/source_freshness.py",
+      "sha256": "eea3b812674fc48582599654b9a1f559438ac1f1f1a370d06bc2aa26e2167ddd"
     },
     {
       "bytes": 1628,
@@ -4548,6 +4560,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_snapshot_contracts_v2.py",
       "sha256": "9e6c33dd6fcf705753f8c1ce9f148fe7cb43044d05896ec9b613c6d2c979f57a"
+    },
+    {
+      "bytes": 12273,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_snapshot_freshness_source_health_v1.py",
+      "sha256": "f274e51f2a6677bae5f9838bc62e1c586404d2d730306dbc7953ebce02690eb2"
     },
     {
       "bytes": 1569,
