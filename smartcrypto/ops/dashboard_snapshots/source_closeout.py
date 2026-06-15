@@ -16,6 +16,16 @@ from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     SOURCE_CATALOG,
 )
+from smartcrypto.ops.dashboard_snapshots.source_freshness import (
+    FreshnessBasis,
+    FreshnessEvaluation,
+    FreshnessPolicy,
+    FreshnessStatus,
+    SourceHealthStatus,
+    TimestampSource,
+    evaluate_freshness,
+    policy_from_mapping,
+)
 
 
 class RequiredLevel(str, Enum):
@@ -46,6 +56,7 @@ class RuntimeSourceStatus(str, Enum):
     INVALID_JSON = "INVALID_JSON"
     EMPTY = "EMPTY"
     READ_ERROR = "READ_ERROR"
+    INVALID_TIMESTAMP = "INVALID_TIMESTAMP"
     UNKNOWN = "UNKNOWN"
 
 
@@ -82,22 +93,13 @@ FRESHNESS_OVERRIDES_SECONDS = {
     "data/runtime/runtime_safety_audit_config.json": 900.0,
 }
 
-SOURCE_TIMESTAMP_FIELDS = (
-    "last_updated_utc",
-    "generated_at_utc",
-    "created_at_utc",
-    "finished_utc",
-    "updated_at_utc",
-    "generated_at",
-    "created_at",
-)
-
 SOURCE_BLOCKING_STATUSES = {
     RuntimeSourceStatus.MISSING_REQUIRED,
     RuntimeSourceStatus.INVALID_SCHEMA,
     RuntimeSourceStatus.INVALID_JSON,
     RuntimeSourceStatus.EMPTY,
     RuntimeSourceStatus.READ_ERROR,
+    RuntimeSourceStatus.INVALID_TIMESTAMP,
 }
 
 SOURCE_DEGRADED_STATUSES = {
@@ -107,6 +109,7 @@ SOURCE_DEGRADED_STATUSES = {
     RuntimeSourceStatus.INVALID_JSON,
     RuntimeSourceStatus.EMPTY,
     RuntimeSourceStatus.READ_ERROR,
+    RuntimeSourceStatus.INVALID_TIMESTAMP,
     RuntimeSourceStatus.UNKNOWN,
 }
 
@@ -136,6 +139,9 @@ class RuntimeSourceDefinition:
         payload["required_level"] = self.required_level.value
         payload["consumer_snapshots"] = list(self.consumer_snapshots)
         payload["consumer_pages"] = list(self.consumer_pages)
+        policy = policy_from_mapping(self.freshness_policy)
+        payload["freshness_policy"] = policy.to_dict()
+        payload.update(policy.to_dict())
         return payload
 
 
@@ -169,7 +175,7 @@ def definition_from_contract(
         source_type=source_type_for_path(canonical_path),
         required_level=level,
         expected_schema_version=SCHEMA_OVERRIDES.get(canonical_path),
-        freshness_policy=freshness_policy_for_path(canonical_path),
+        freshness_policy=freshness_policy_for_path(canonical_path, level),
         consumer_snapshots=tuple(
             f"data/reports/{DASHBOARD_SNAPSHOT_FILENAMES[page]}" for page in pages
         ),
@@ -252,17 +258,51 @@ def evaluate_source(
                     current,
                     payload,
                 )
-        age = source_age_seconds(target, payload, current)
-        max_age = max_age_seconds(definition)
-        if max_age is not None and age is not None and age > max_age:
+        freshness = evaluate_freshness(
+            target,
+            payload,
+            policy_from_mapping(definition.freshness_policy),
+            current,
+        )
+        if freshness.invalid_timestamp:
             return source_status_payload(
                 definition,
-                RuntimeSourceStatus.STALE,
-                f"source_age_exceeds_policy:{age:.3f}>{max_age:.3f}",
+                RuntimeSourceStatus.INVALID_TIMESTAMP,
+                freshness.reason,
                 target,
                 True,
                 current,
                 payload,
+                freshness,
+            )
+        if freshness.freshness_status in {
+            FreshnessStatus.WARNING_STALE,
+            FreshnessStatus.CRITICAL_STALE,
+            FreshnessStatus.STALE,
+        }:
+            return source_status_payload(
+                definition,
+                RuntimeSourceStatus.STALE,
+                freshness_reason(freshness),
+                target,
+                True,
+                current,
+                payload,
+                freshness,
+            )
+        if (
+            policy_from_mapping(definition.freshness_policy).freshness_required
+            and freshness.freshness_status is FreshnessStatus.UNKNOWN
+        ):
+            return source_status_payload(
+                definition,
+                RuntimeSourceStatus.UNKNOWN,
+                freshness.reason,
+                target,
+                True,
+                current,
+                payload,
+                freshness,
             )
         return source_status_payload(
             definition,
@@ -272,6 +312,7 @@ def evaluate_source(
             True,
             current,
             payload,
+            freshness,
         )
     except json.JSONDecodeError as exc:
         return source_status_payload(
@@ -317,6 +358,29 @@ def build_runtime_source_closeout(
         "future_sources_total": sum(
             item["required_level"] == RequiredLevel.FUTURE_SOURCE_PENDING.value for item in statuses
         ),
+        "source_health_total": len(statuses),
+        "source_health_healthy": count_value(statuses, "health_status", SourceHealthStatus.HEALTHY.value),
+        "source_health_degraded": count_value(statuses, "health_status", SourceHealthStatus.DEGRADED.value),
+        "source_health_blocked": count_value(statuses, "health_status", SourceHealthStatus.BLOCKED.value),
+        "source_health_planned": count_value(statuses, "health_status", SourceHealthStatus.PLANNED.value),
+        "freshness_fresh_total": count_value(statuses, "freshness_status", FreshnessStatus.FRESH.value),
+        "freshness_warning_total": count_value(statuses, "freshness_status", FreshnessStatus.WARNING_STALE.value),
+        "freshness_critical_total": count_value(statuses, "freshness_status", FreshnessStatus.CRITICAL_STALE.value),
+        "freshness_not_applicable_total": count_value(statuses, "freshness_status", FreshnessStatus.NOT_APPLICABLE.value),
+        "stale_required_sources": source_ids_for(
+            statuses,
+            required_level=RequiredLevel.REQUIRED.value,
+            stale=True,
+        ),
+        "stale_optional_sources": source_ids_for(
+            statuses,
+            required_level=RequiredLevel.OPTIONAL.value,
+            stale=True,
+        ),
+        "invalid_timestamp_sources": sorted(
+            item["source_id"] for item in statuses if item["invalid_timestamp"]
+        ),
+        "freshness_policy_coverage": freshness_policy_coverage(statuses),
     }
     page_counts = {
         "pages_total": len(page_matrix),
@@ -336,8 +400,10 @@ def build_runtime_source_closeout(
     return {
         "dashboard_status": dashboard_status,
         "source_matrix": statuses,
+        "source_health_matrix": statuses,
         "page_source_matrix": page_matrix,
         "global_blocking_reasons": global_blocking,
+        "global_source_health_status": global_source_health_status(statuses),
         **counts,
         **page_counts,
     }
@@ -396,32 +462,48 @@ def source_status_payload(
     exists: bool,
     now_utc: datetime,
     payload: Any,
+    freshness: FreshnessEvaluation | None = None,
 ) -> dict[str, Any]:
-    modified = modified_utc(target) if exists else None
-    age = source_age_seconds(target, payload, now_utc) if exists else None
-    max_age = max_age_seconds(definition)
-    blocks_page = definition.required_level is RequiredLevel.REQUIRED and (
-        status in SOURCE_BLOCKING_STATUSES
-        or (status is RuntimeSourceStatus.STALE and definition.stale_behavior == "BLOCK")
-    )
-    blocks_readiness = blocks_page or (
+    policy = policy_from_mapping(definition.freshness_policy)
+    evaluated = freshness or freshness_for_source(target, payload, policy, now_utc, exists)
+    health = health_status_for(definition.required_level, status, evaluated)
+    blocks_page = (
         definition.required_level is RequiredLevel.REQUIRED
-        and status is RuntimeSourceStatus.STALE
-        and definition.stale_behavior == "BLOCK"
+        and health is SourceHealthStatus.BLOCKED
     )
+    blocks_readiness = blocks_page
     return {
         **definition.to_dict(),
         "status": status.value,
-        "severity": severity_for_status(status, definition.required_level),
+        "health_status": health.value,
+        "freshness_status": evaluated.freshness_status.value,
+        "severity": severity_for_health(health, evaluated.freshness_status),
         "reason": reason,
         "path": path_for_report(target),
         "exists": exists,
-        "last_modified_utc": modified,
-        "age_seconds": age,
-        "max_age_seconds": max_age,
-        "stale": status is RuntimeSourceStatus.STALE,
+        "last_modified_utc": evaluated.file_mtime_utc,
+        "file_mtime_utc": evaluated.file_mtime_utc,
+        "effective_timestamp_utc": evaluated.effective_timestamp_utc,
+        "timestamp_source": evaluated.timestamp_source.value,
+        "age_seconds": evaluated.age_seconds,
+        "max_age_seconds": policy.max_age_seconds,
+        "warning_age_seconds": policy.warning_age_seconds,
+        "critical_age_seconds": policy.critical_age_seconds,
+        "freshness_basis": policy.freshness_basis.value,
+        "stale": evaluated.stale,
+        "missing": status in {
+            RuntimeSourceStatus.MISSING_REQUIRED,
+            RuntimeSourceStatus.MISSING_OPTIONAL,
+        },
+        "empty": status is RuntimeSourceStatus.EMPTY,
+        "invalid_json": status is RuntimeSourceStatus.INVALID_JSON,
+        "invalid_schema": status is RuntimeSourceStatus.INVALID_SCHEMA,
+        "invalid_timestamp": evaluated.invalid_timestamp
+        or status is RuntimeSourceStatus.INVALID_TIMESTAMP,
         "blocks_dashboard_readiness": blocks_readiness,
         "blocks_page_operational_view": blocks_page,
+        "producer_hint": policy.producer_hint,
+        "remediation_action": remediation_action(definition, status, evaluated),
     }
 
 
@@ -523,19 +605,35 @@ def _slug(value: str) -> str:
     return "".join(character.lower() if character.isalnum() else "_" for character in value)
 
 
-def freshness_policy_for_path(path: str) -> dict[str, Any] | None:
+def freshness_policy_for_path(path: str, level: RequiredLevel) -> dict[str, Any]:
     max_age = FRESHNESS_OVERRIDES_SECONDS.get(path)
     if max_age is None:
-        return None
-    return {"basis": "payload_timestamp_or_file_mtime", "max_age_seconds": max_age}
+        return FreshnessPolicy(
+            freshness_required=False,
+            freshness_basis=FreshnessBasis.NOT_APPLICABLE,
+            stale_behavior=stale_behavior(level),
+            missing_behavior=missing_behavior(level),
+            invalid_timestamp_behavior=stale_behavior(level),
+            operator_hint=operator_hint(level, path),
+            producer_hint=producer_hint(level, path),
+        ).to_dict()
+    return FreshnessPolicy(
+        freshness_required=True,
+        freshness_basis=FreshnessBasis.PAYLOAD_TIMESTAMP_OR_FILE_MTIME,
+        max_age_seconds=max_age,
+        warning_age_seconds=max_age * 0.8,
+        critical_age_seconds=max_age,
+        fallback_to_mtime=True,
+        stale_behavior=stale_behavior(level),
+        missing_behavior=missing_behavior(level),
+        invalid_timestamp_behavior=stale_behavior(level),
+        operator_hint=operator_hint(level, path),
+        producer_hint=producer_hint(level, path),
+    ).to_dict()
 
 
 def max_age_seconds(definition: RuntimeSourceDefinition) -> float | None:
-    policy = definition.freshness_policy
-    if not policy:
-        return None
-    value = policy.get("max_age_seconds")
-    return float(value) if value is not None else None
+    return policy_from_mapping(definition.freshness_policy).max_age_seconds
 
 
 def missing_source_status(level: RequiredLevel) -> RuntimeSourceStatus:
@@ -578,6 +676,14 @@ def operator_hint(level: RequiredLevel, path: str) -> str:
     return f"Run the documented producer for {path}, then rebuild dashboard snapshots."
 
 
+def producer_hint(level: RequiredLevel, path: str) -> str:
+    if level is RequiredLevel.FUTURE_SOURCE_PENDING:
+        return "Producer is planned and has no runtime authority in this branch."
+    if level is RequiredLevel.GENERATED:
+        return "scripts/build_dashboard_snapshots.py"
+    return f"Documented producer for {path}"
+
+
 def runbook_hint(owner_domain: str) -> str:
     return f"Consult the {owner_domain} runbook; do not generate data from Streamlit."
 
@@ -592,54 +698,89 @@ def safety_impact(level: RequiredLevel) -> str:
     return "Generated read-only dashboard artifact with no operational authority."
 
 
-def severity_for_status(status: RuntimeSourceStatus, level: RequiredLevel) -> str:
-    if status is RuntimeSourceStatus.OK:
-        return "INFO"
-    if status is RuntimeSourceStatus.FUTURE_SOURCE_PENDING:
-        return "INFO"
-    if level is RequiredLevel.REQUIRED and status in SOURCE_BLOCKING_STATUSES:
+def freshness_for_source(
+    target: Path,
+    payload: Any,
+    policy: FreshnessPolicy,
+    now_utc: datetime,
+    exists: bool,
+) -> FreshnessEvaluation:
+    if exists or policy.freshness_basis is FreshnessBasis.NOT_APPLICABLE:
+        return evaluate_freshness(target, payload, policy, now_utc)
+    return FreshnessEvaluation(
+        freshness_status=FreshnessStatus.UNKNOWN,
+        timestamp_source=TimestampSource.UNAVAILABLE,
+        effective_timestamp_utc=None,
+        file_mtime_utc=None,
+        age_seconds=None,
+        stale=False,
+        invalid_timestamp=False,
+        reason="source_missing_no_timestamp",
+    )
+
+
+def freshness_reason(evaluation: FreshnessEvaluation) -> str:
+    age = evaluation.age_seconds
+    return (
+        f"source_freshness:{evaluation.freshness_status.value}:"
+        f"age_seconds:{age:.3f}"
+        if age is not None
+        else f"source_freshness:{evaluation.freshness_status.value}"
+    )
+
+
+def health_status_for(
+    level: RequiredLevel,
+    status: RuntimeSourceStatus,
+    freshness: FreshnessEvaluation,
+) -> SourceHealthStatus:
+    if level is RequiredLevel.FUTURE_SOURCE_PENDING:
+        return SourceHealthStatus.PLANNED
+    if level is RequiredLevel.GENERATED and status is RuntimeSourceStatus.OK:
+        return SourceHealthStatus.HEALTHY
+    if freshness.freshness_status is FreshnessStatus.WARNING_STALE:
+        return SourceHealthStatus.DEGRADED
+    unhealthy = status is not RuntimeSourceStatus.OK or freshness.freshness_status in {
+        FreshnessStatus.CRITICAL_STALE,
+        FreshnessStatus.STALE,
+        FreshnessStatus.UNKNOWN,
+    }
+    if unhealthy:
+        return (
+            SourceHealthStatus.BLOCKED
+            if level is RequiredLevel.REQUIRED
+            else SourceHealthStatus.DEGRADED
+        )
+    return SourceHealthStatus.HEALTHY
+
+
+def severity_for_health(
+    health: SourceHealthStatus,
+    freshness: FreshnessStatus,
+) -> str:
+    if health is SourceHealthStatus.BLOCKED:
         return "CRITICAL"
-    if status in {RuntimeSourceStatus.STALE, RuntimeSourceStatus.INVALID_JSON, RuntimeSourceStatus.INVALID_SCHEMA, RuntimeSourceStatus.READ_ERROR, RuntimeSourceStatus.EMPTY}:
-        return "HIGH" if level is RequiredLevel.REQUIRED else "WARNING"
-    return "WARNING"
+    if health is SourceHealthStatus.DEGRADED:
+        return "HIGH" if freshness is FreshnessStatus.CRITICAL_STALE else "WARNING"
+    return "INFO"
 
 
-def source_age_seconds(path: Path, payload: Any, now_utc: datetime) -> float | None:
-    timestamp = timestamp_from_payload(payload)
-    if timestamp is None:
-        try:
-            timestamp = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
-        except OSError:
-            return None
-    return max((ensure_utc(now_utc) - timestamp).total_seconds(), 0.0)
-
-
-def timestamp_from_payload(payload: Any) -> datetime | None:
-    if not isinstance(payload, Mapping):
-        return None
-    for key in SOURCE_TIMESTAMP_FIELDS:
-        parsed = parse_timestamp(payload.get(key))
-        if parsed is not None:
-            return parsed
-    return None
-
-
-def parse_timestamp(value: Any) -> datetime | None:
-    text = str(value or "").strip()
-    if not text:
-        return None
-    try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return ensure_utc(parsed)
-
-
-def modified_utc(path: Path) -> str | None:
-    try:
-        return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat().replace("+00:00", "Z")
-    except OSError:
-        return None
+def remediation_action(
+    definition: RuntimeSourceDefinition,
+    status: RuntimeSourceStatus,
+    freshness: FreshnessEvaluation,
+) -> str:
+    if definition.required_level is RequiredLevel.FUTURE_SOURCE_PENDING:
+        return "Track the planned producer; no runtime action is authorized."
+    if definition.required_level is RequiredLevel.GENERATED:
+        return "Rebuild dashboard snapshots with the documented read-only builder."
+    if freshness.invalid_timestamp:
+        return "Repair the producer timestamp contract, then rebuild dashboard snapshots."
+    if status is RuntimeSourceStatus.STALE:
+        return "Run the documented producer, verify its UTC timestamp, then rebuild snapshots."
+    if status is RuntimeSourceStatus.OK:
+        return "No remediation required."
+    return definition.operator_hint
 
 
 def path_for_report(path: Path) -> str:
@@ -680,6 +821,44 @@ def dashboard_status_from_pages(page_matrix: list[dict[str, Any]]) -> str:
     if statuses == {"OK"}:
         return "OK"
     return "UNKNOWN"
+
+
+def global_source_health_status(statuses: list[dict[str, Any]]) -> str:
+    health = {str(item.get("health_status", "UNKNOWN")) for item in statuses}
+    if SourceHealthStatus.BLOCKED.value in health:
+        return SourceHealthStatus.BLOCKED.value
+    if SourceHealthStatus.DEGRADED.value in health:
+        return SourceHealthStatus.DEGRADED.value
+    if health <= {SourceHealthStatus.HEALTHY.value, SourceHealthStatus.PLANNED.value}:
+        return SourceHealthStatus.HEALTHY.value
+    return SourceHealthStatus.UNKNOWN.value
+
+
+def count_value(statuses: list[dict[str, Any]], field: str, value: str) -> int:
+    return sum(str(item.get(field)) == value for item in statuses)
+
+
+def source_ids_for(
+    statuses: list[dict[str, Any]],
+    *,
+    required_level: str,
+    stale: bool,
+) -> list[str]:
+    return sorted(
+        str(item["source_id"])
+        for item in statuses
+        if item.get("required_level") == required_level and bool(item.get("stale")) is stale
+    )
+
+
+def freshness_policy_coverage(statuses: list[dict[str, Any]]) -> float:
+    if not statuses:
+        return 0.0
+    covered = sum(
+        bool(item.get("freshness_basis")) and bool(item.get("timestamp_fields"))
+        for item in statuses
+    )
+    return round(covered / len(statuses), 6)
 
 
 def operator_summary(status: str, blocking: list[str], degraded: list[str]) -> str:

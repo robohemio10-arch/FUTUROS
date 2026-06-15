@@ -97,7 +97,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         initial_page_statuses,
     )
     attach_source_closeout(snapshots, source_closeout)
-    global_snapshot = build_global_status_snapshot(context, snapshots)
+    global_snapshot = build_global_status_snapshot(context, snapshots, source_closeout)
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
     )
@@ -145,8 +145,25 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "stale_sources_total": source_closeout["stale_sources_total"],
         "future_sources_total": source_closeout["future_sources_total"],
         "source_matrix": source_closeout["source_matrix"],
+        "source_health_matrix": source_closeout["source_health_matrix"],
         "page_source_matrix": source_closeout["page_source_matrix"],
         "global_blocking_reasons": source_closeout["global_blocking_reasons"],
+        "source_health_total": source_closeout["source_health_total"],
+        "source_health_healthy": source_closeout["source_health_healthy"],
+        "source_health_degraded": source_closeout["source_health_degraded"],
+        "source_health_blocked": source_closeout["source_health_blocked"],
+        "source_health_planned": source_closeout["source_health_planned"],
+        "freshness_fresh_total": source_closeout["freshness_fresh_total"],
+        "freshness_warning_total": source_closeout["freshness_warning_total"],
+        "freshness_critical_total": source_closeout["freshness_critical_total"],
+        "freshness_not_applicable_total": source_closeout[
+            "freshness_not_applicable_total"
+        ],
+        "stale_required_sources": source_closeout["stale_required_sources"],
+        "stale_optional_sources": source_closeout["stale_optional_sources"],
+        "invalid_timestamp_sources": source_closeout["invalid_timestamp_sources"],
+        "freshness_policy_coverage": source_closeout["freshness_policy_coverage"],
+        "global_source_health_status": source_closeout["global_source_health_status"],
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -206,6 +223,7 @@ def attach_source_closeout(
 def build_global_status_snapshot(
     context: DashboardBuildContext,
     snapshots: dict[DashboardPageId, dict[str, Any]],
+    source_closeout: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
         page_id.value: snapshot.get("status_summary", {}).get("status", "UNKNOWN")
@@ -222,6 +240,14 @@ def build_global_status_snapshot(
         overall = DashboardSectionStatus.UNKNOWN
     missing_required = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])})
     missing_optional = sorted({path for snapshot in snapshots.values() for path in snapshot.get("missing_optional_sources", [])})
+    closeout = source_closeout or {}
+    if closeout.get("dashboard_status"):
+        overall_value = str(closeout["dashboard_status"])
+    else:
+        overall_value = overall.value
+    blocking_reasons = list(closeout.get("global_blocking_reasons", [])) or [
+        f"missing_required_source:{path}" for path in missing_required
+    ]
     return {
         "schema_version": DASHBOARD_GLOBAL_STATUS_SCHEMA_VERSION,
         "runtime_mode": context.runtime_mode.value,
@@ -235,12 +261,19 @@ def build_global_status_snapshot(
         "project_name": "SMART FUTUROS",
         "dashboard_name": "SMART FUTUROS Command Center",
         "page_statuses": page_statuses,
-        "overall_status": overall.value,
-        "blocking_reasons": [f"missing_required_source:{path}" for path in missing_required],
+        "overall_status": overall_value,
+        "dashboard_status": overall_value,
+        "global_source_health_status": closeout.get(
+            "global_source_health_status", "UNKNOWN"
+        ),
+        "blocking_reasons": blocking_reasons,
+        "global_blocking_reasons": blocking_reasons,
+        "page_source_matrix": list(closeout.get("page_source_matrix", [])),
+        "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
         "missing_optional_sources_count": len(missing_optional),
         "generated_snapshot_count": len(snapshots),
-        "sections": {"pages": {"status": overall.value, "reason": "consolidated_page_status", "data": page_statuses}},
+        "sections": {"pages": {"status": overall_value, "reason": "consolidated_page_status", "data": page_statuses}},
         "safety": dict(SAFETY_FLAGS),
         "audit": DashboardAuditContract(snapshot_source="dashboard_global_status").to_dict(),
     }
