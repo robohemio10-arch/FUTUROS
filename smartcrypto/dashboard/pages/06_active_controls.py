@@ -17,6 +17,9 @@ from smartcrypto.dashboard.components.read_only import (
 from smartcrypto.dashboard.components.runtime_blockers_remediation import (
     render_runtime_blockers_remediation,
 )
+from smartcrypto.dashboard.components.runtime_blockers_operator_pack import (
+    render_runtime_blockers_operator_pack,
+)
 from smartcrypto.dashboard.components.readiness_gates import (
     render_readiness_gates_snapshot_view,
 )
@@ -56,6 +59,7 @@ REQUIRED_SECTIONS = (
     "paper_runtime_health",
     "runtime_evidence_integration",
     "runtime_blockers_remediation",
+    "runtime_blockers_operator_pack",
     "command_events",
     "runtime_source_health",
     "audit",
@@ -113,6 +117,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     render_readiness_gates_snapshot_view(snapshot, ui=target_ui)
     render_runtime_evidence_panel(snapshot, ui=target_ui)
     render_runtime_blockers_remediation(snapshot, ui=target_ui)
+    render_runtime_blockers_operator_pack(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ["N4 HARD-BLOCKED"], ui=target_ui)
 

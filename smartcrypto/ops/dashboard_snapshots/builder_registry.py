@@ -46,6 +46,9 @@ from smartcrypto.ops.dashboard_snapshots.runtime_evidence_integration import (
 from smartcrypto.ops.dashboard_snapshots.runtime_blockers_remediation import (
     build_runtime_blockers_remediation,
 )
+from smartcrypto.ops.dashboard_snapshots.runtime_blockers_operator_pack import (
+    build_runtime_blockers_operator_pack,
+)
 from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     GLOBAL_STATUS_SNAPSHOT_FILENAME,
@@ -122,15 +125,21 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         source_health_matrix=source_closeout["source_health_matrix"],
         runtime_evidence_sources=runtime_evidence_view["evidence_sources"],
     )
+    runtime_blockers_operator_pack = build_runtime_blockers_operator_pack(
+        remediation=runtime_blockers_remediation,
+        now_utc=context.now_utc,
+    )
     attach_source_closeout(snapshots, source_closeout)
     attach_runtime_evidence_integration(snapshots, runtime_evidence_view)
     attach_runtime_blockers_remediation(snapshots, runtime_blockers_remediation)
+    attach_runtime_blockers_operator_pack(snapshots, runtime_blockers_operator_pack)
     global_snapshot = build_global_status_snapshot(
         context,
         snapshots,
         source_closeout,
         runtime_evidence_view,
         runtime_blockers_remediation,
+        runtime_blockers_operator_pack,
     )
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
@@ -221,6 +230,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
             "combined_blocking_reasons"
         ],
         "runtime_blockers_remediation": runtime_blockers_remediation,
+        "runtime_blockers_operator_pack": runtime_blockers_operator_pack,
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -348,12 +358,31 @@ def attach_runtime_blockers_remediation(
             sections["runtime_blockers_remediation"] = dict(section)
 
 
+def attach_runtime_blockers_operator_pack(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    operator_pack: Mapping[str, Any],
+) -> None:
+    section = {
+        "status": str(operator_pack.get("status", "blocked")).upper(),
+        "reason": operator_pack.get("reason", "runtime_blockers_operator_pack"),
+        "data": dict(operator_pack),
+    }
+    for page_id, snapshot in snapshots.items():
+        if page_id not in {DashboardPageId.infrastructure, DashboardPageId.active_controls}:
+            continue
+        snapshot["runtime_blockers_operator_pack"] = dict(operator_pack)
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict):
+            sections["runtime_blockers_operator_pack"] = dict(section)
+
+
 def build_global_status_snapshot(
     context: DashboardBuildContext,
     snapshots: dict[DashboardPageId, dict[str, Any]],
     source_closeout: Mapping[str, Any] | None = None,
     runtime_evidence_view: Mapping[str, Any] | None = None,
     runtime_blockers_remediation: Mapping[str, Any] | None = None,
+    runtime_blockers_operator_pack: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
         page_id.value: snapshot.get("status_summary", {}).get("status", "UNKNOWN")
@@ -405,6 +434,7 @@ def build_global_status_snapshot(
     closeout = source_closeout or {}
     evidence_view = dict(runtime_evidence_view or {})
     remediation = dict(runtime_blockers_remediation or {})
+    operator_pack = dict(runtime_blockers_operator_pack or {})
 
     if closeout.get("dashboard_status"):
         overall_value = str(closeout["dashboard_status"])
@@ -472,6 +502,7 @@ def build_global_status_snapshot(
         "global_blocking_reasons": source_blocking_reasons,
         "combined_blocking_reasons": combined_blocking_reasons,
         "runtime_blockers_remediation": remediation,
+        "runtime_blockers_operator_pack": operator_pack,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
@@ -497,6 +528,13 @@ def build_global_status_snapshot(
                     "reason", "runtime_blockers_remediation"
                 ),
                 "data": remediation,
+            },
+            "runtime_blockers_operator_pack": {
+                "status": str(operator_pack.get("status", "blocked")).upper(),
+                "reason": operator_pack.get(
+                    "reason", "runtime_blockers_operator_pack"
+                ),
+                "data": operator_pack,
             },
         },
         "safety": dict(SAFETY_FLAGS),
