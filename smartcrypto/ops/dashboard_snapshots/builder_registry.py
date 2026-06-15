@@ -43,6 +43,9 @@ from smartcrypto.ops.dashboard_snapshots.runtime_evidence_integration import (
     build_runtime_evidence_view,
     runtime_evidence_section_status,
 )
+from smartcrypto.ops.dashboard_snapshots.runtime_blockers_remediation import (
+    build_runtime_blockers_remediation,
+)
 from smartcrypto.ops.dashboard_snapshots.source_catalog import (
     DASHBOARD_SNAPSHOT_FILENAMES,
     GLOBAL_STATUS_SNAPSHOT_FILENAME,
@@ -105,13 +108,29 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         now_utc=context.now_utc,
         source_closeout=source_closeout,
     )
+    runtime_blockers_remediation = build_runtime_blockers_remediation(
+        now_utc=context.now_utc,
+        dashboard_status=str(source_closeout["dashboard_status"]),
+        global_source_health_status=str(source_closeout["global_source_health_status"]),
+        runtime_evidence_integration_status=str(
+            runtime_evidence_view["runtime_evidence_status"]
+        ),
+        global_blocking_reasons=source_closeout["global_blocking_reasons"],
+        runtime_evidence_blocking_reasons=runtime_evidence_view[
+            "blocking_evidence_sources"
+        ],
+        source_health_matrix=source_closeout["source_health_matrix"],
+        runtime_evidence_sources=runtime_evidence_view["evidence_sources"],
+    )
     attach_source_closeout(snapshots, source_closeout)
     attach_runtime_evidence_integration(snapshots, runtime_evidence_view)
+    attach_runtime_blockers_remediation(snapshots, runtime_blockers_remediation)
     global_snapshot = build_global_status_snapshot(
         context,
         snapshots,
         source_closeout,
         runtime_evidence_view,
+        runtime_blockers_remediation,
     )
     missing_required = sorted(
         {path for snapshot in snapshots.values() for path in snapshot.get("missing_required_sources", [])}
@@ -198,6 +217,10 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         "runtime_evidence_safety_flags": runtime_evidence_view[
             "runtime_evidence_safety_flags"
         ],
+        "combined_blocking_reasons": runtime_blockers_remediation[
+            "combined_blocking_reasons"
+        ],
+        "runtime_blockers_remediation": runtime_blockers_remediation,
         "generated_files": generated_files,
         "builders": builder_reports,
         "missing_required_sources": missing_required,
@@ -307,11 +330,30 @@ def attach_runtime_evidence_integration(
             sections["runtime_evidence_integration"] = dict(section_payload)
 
 
+def attach_runtime_blockers_remediation(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    remediation: Mapping[str, Any],
+) -> None:
+    section = {
+        "status": str(remediation.get("status", "blocked")).upper(),
+        "reason": remediation.get("reason", "runtime_blockers_remediation"),
+        "data": dict(remediation),
+    }
+    for page_id, snapshot in snapshots.items():
+        if page_id not in {DashboardPageId.infrastructure, DashboardPageId.active_controls}:
+            continue
+        snapshot["runtime_blockers_remediation"] = dict(remediation)
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict):
+            sections["runtime_blockers_remediation"] = dict(section)
+
+
 def build_global_status_snapshot(
     context: DashboardBuildContext,
     snapshots: dict[DashboardPageId, dict[str, Any]],
     source_closeout: Mapping[str, Any] | None = None,
     runtime_evidence_view: Mapping[str, Any] | None = None,
+    runtime_blockers_remediation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
         page_id.value: snapshot.get("status_summary", {}).get("status", "UNKNOWN")
@@ -362,6 +404,7 @@ def build_global_status_snapshot(
 
     closeout = source_closeout or {}
     evidence_view = dict(runtime_evidence_view or {})
+    remediation = dict(runtime_blockers_remediation or {})
 
     if closeout.get("dashboard_status"):
         overall_value = str(closeout["dashboard_status"])
@@ -428,6 +471,7 @@ def build_global_status_snapshot(
         "blocking_reasons": source_blocking_reasons,
         "global_blocking_reasons": source_blocking_reasons,
         "combined_blocking_reasons": combined_blocking_reasons,
+        "runtime_blockers_remediation": remediation,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
         "missing_required_sources_count": len(missing_required),
@@ -446,6 +490,13 @@ def build_global_status_snapshot(
                     "runtime_evidence_integration",
                 ),
                 "runtime_evidence_view": evidence_view,
+            },
+            "runtime_blockers_remediation": {
+                "status": str(remediation.get("status", "blocked")).upper(),
+                "reason": remediation.get(
+                    "reason", "runtime_blockers_remediation"
+                ),
+                "data": remediation,
             },
         },
         "safety": dict(SAFETY_FLAGS),
@@ -511,4 +562,3 @@ def _error_snapshot(
         "safety": dict(SAFETY_FLAGS),
         "audit": DashboardAuditContract(snapshot_source=page_id.value).to_dict(),
     }
-

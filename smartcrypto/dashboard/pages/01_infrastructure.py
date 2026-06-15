@@ -4,6 +4,9 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
+from smartcrypto.dashboard.components.runtime_blockers_remediation import (
+    render_runtime_blockers_remediation,
+)
 from smartcrypto.dashboard.components.runtime_evidence_panel import render_runtime_evidence_panel
 from smartcrypto.dashboard.components.runtime_source_health import render_runtime_source_health
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
@@ -34,6 +37,7 @@ REQUIRED_SECTIONS = (
     "rate_limits",
     "market_data_health",
     "runtime_evidence_integration",
+    "runtime_blockers_remediation",
     "events",
     "runtime_source_health",
     "audit",
@@ -66,6 +70,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         render_chrome=False,
     )
     render_runtime_evidence_panel(snapshot, ui=target_ui)
+    render_runtime_blockers_remediation(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
 
