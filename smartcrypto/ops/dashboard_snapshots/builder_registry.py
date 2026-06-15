@@ -58,6 +58,9 @@ from smartcrypto.ops.dashboard_snapshots.runtime_evidence_freshness_remediation_
 from smartcrypto.ops.dashboard_snapshots.runtime_freshness_producer_contracts import (
     audit_runtime_freshness_producer_contracts,
 )
+from smartcrypto.ops.dashboard_snapshots.runtime_freshness_producer_entrypoint_static_safety import (
+    audit_runtime_freshness_producer_entrypoint_static_safety,
+)
 from smartcrypto.ops.dashboard_snapshots.runtime_freshness_post_refresh_evidence_gate import (
     audit_runtime_freshness_post_refresh_evidence_gate,
 )
@@ -194,6 +197,13 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
             runtime_blockers_operator_pack,
         ),
     )
+    runtime_freshness_producer_entrypoint_static_safety = (
+        audit_runtime_freshness_producer_entrypoint_static_safety(
+            project_root=context.project_root,
+            now_utc=context.now_utc,
+            producer_contracts=runtime_freshness_producer_contracts,
+        )
+    )
     runtime_freshness_post_refresh_evidence_gate = (
         audit_runtime_freshness_post_refresh_evidence_gate(
             project_root=context.project_root,
@@ -218,6 +228,9 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
     attach_runtime_freshness_producer_contracts(
         snapshots, runtime_freshness_producer_contracts
     )
+    attach_runtime_freshness_producer_entrypoint_static_safety(
+        snapshots, runtime_freshness_producer_entrypoint_static_safety
+    )
     attach_runtime_freshness_post_refresh_evidence_gate(
         snapshots, runtime_freshness_post_refresh_evidence_gate
     )
@@ -231,6 +244,7 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
         runtime_blockers_closeout_evidence,
         runtime_evidence_freshness_remediation_producers,
         runtime_freshness_producer_contracts,
+        runtime_freshness_producer_entrypoint_static_safety,
         runtime_freshness_post_refresh_evidence_gate,
     )
     missing_required = sorted(
@@ -328,6 +342,9 @@ def build_all_dashboard_snapshots(context: DashboardBuildContext) -> dict[str, A
             runtime_evidence_freshness_remediation_producers
         ),
         "runtime_freshness_producer_contracts": runtime_freshness_producer_contracts,
+        "runtime_freshness_producer_entrypoint_static_safety": (
+            runtime_freshness_producer_entrypoint_static_safety
+        ),
         "runtime_freshness_post_refresh_evidence_gate": (
             runtime_freshness_post_refresh_evidence_gate
         ),
@@ -540,6 +557,30 @@ def attach_runtime_freshness_producer_contracts(
             sections["runtime_freshness_producer_contracts"] = dict(section)
 
 
+def attach_runtime_freshness_producer_entrypoint_static_safety(
+    snapshots: dict[DashboardPageId, dict[str, Any]],
+    static_safety: Mapping[str, Any],
+) -> None:
+    section = {
+        "status": str(static_safety.get("status", "blocked")).upper(),
+        "reason": static_safety.get(
+            "reason", "runtime_freshness_producer_entrypoint_static_safety"
+        ),
+        "data": dict(static_safety),
+    }
+    for page_id, snapshot in snapshots.items():
+        if page_id not in {DashboardPageId.infrastructure, DashboardPageId.active_controls}:
+            continue
+        snapshot["runtime_freshness_producer_entrypoint_static_safety"] = dict(
+            static_safety
+        )
+        sections = snapshot.setdefault("sections", {})
+        if isinstance(sections, dict):
+            sections["runtime_freshness_producer_entrypoint_static_safety"] = dict(
+                section
+            )
+
+
 def attach_runtime_freshness_post_refresh_evidence_gate(
     snapshots: dict[DashboardPageId, dict[str, Any]],
     evidence_gate: Mapping[str, Any],
@@ -570,6 +611,7 @@ def build_global_status_snapshot(
     runtime_blockers_closeout_evidence: Mapping[str, Any] | None = None,
     runtime_evidence_freshness_remediation_producers: Mapping[str, Any] | None = None,
     runtime_freshness_producer_contracts: Mapping[str, Any] | None = None,
+    runtime_freshness_producer_entrypoint_static_safety: Mapping[str, Any] | None = None,
     runtime_freshness_post_refresh_evidence_gate: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     page_statuses = {
@@ -626,6 +668,9 @@ def build_global_status_snapshot(
     closeout_evidence = dict(runtime_blockers_closeout_evidence or {})
     producer_audit = dict(runtime_evidence_freshness_remediation_producers or {})
     producer_contracts = dict(runtime_freshness_producer_contracts or {})
+    entrypoint_static_safety = dict(
+        runtime_freshness_producer_entrypoint_static_safety or {}
+    )
     post_refresh_gate = dict(runtime_freshness_post_refresh_evidence_gate or {})
 
     if closeout.get("dashboard_status"):
@@ -698,6 +743,7 @@ def build_global_status_snapshot(
         "runtime_blockers_closeout_evidence": closeout_evidence,
         "runtime_evidence_freshness_remediation_producers": producer_audit,
         "runtime_freshness_producer_contracts": producer_contracts,
+        "runtime_freshness_producer_entrypoint_static_safety": entrypoint_static_safety,
         "runtime_freshness_post_refresh_evidence_gate": post_refresh_gate,
         "page_source_matrix": list(closeout.get("page_source_matrix", [])),
         "source_health_matrix": list(closeout.get("source_health_matrix", [])),
@@ -752,6 +798,16 @@ def build_global_status_snapshot(
                     "reason", "runtime_freshness_producer_contracts"
                 ),
                 "data": producer_contracts,
+            },
+            "runtime_freshness_producer_entrypoint_static_safety": {
+                "status": str(
+                    entrypoint_static_safety.get("status", "blocked")
+                ).upper(),
+                "reason": entrypoint_static_safety.get(
+                    "reason",
+                    "runtime_freshness_producer_entrypoint_static_safety",
+                ),
+                "data": entrypoint_static_safety,
             },
             "runtime_freshness_post_refresh_evidence_gate": {
                 "status": str(post_refresh_gate.get("status", "blocked")).upper(),

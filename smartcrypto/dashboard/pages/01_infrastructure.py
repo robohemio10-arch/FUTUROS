@@ -19,6 +19,9 @@ from smartcrypto.dashboard.components.runtime_evidence_freshness_remediation_pro
 from smartcrypto.dashboard.components.runtime_freshness_producer_contracts import (
     render_runtime_freshness_producer_contracts,
 )
+from smartcrypto.dashboard.components.runtime_freshness_producer_entrypoint_static_safety import (
+    render_runtime_freshness_producer_entrypoint_static_safety,
+)
 from smartcrypto.dashboard.components.runtime_freshness_post_refresh_evidence_gate import (
     render_runtime_freshness_post_refresh_evidence_gate,
 )
@@ -57,6 +60,7 @@ REQUIRED_SECTIONS = (
     "runtime_blockers_closeout_evidence",
     "runtime_evidence_freshness_remediation_producers",
     "runtime_freshness_producer_contracts",
+    "runtime_freshness_producer_entrypoint_static_safety",
     "runtime_freshness_post_refresh_evidence_gate",
     "events",
     "runtime_source_health",
@@ -95,6 +99,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     render_runtime_blockers_closeout_evidence(snapshot, ui=target_ui)
     render_runtime_evidence_freshness_remediation_producers(snapshot, ui=target_ui)
     render_runtime_freshness_producer_contracts(snapshot, ui=target_ui)
+    render_runtime_freshness_producer_entrypoint_static_safety(snapshot, ui=target_ui)
     render_runtime_freshness_post_refresh_evidence_gate(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
