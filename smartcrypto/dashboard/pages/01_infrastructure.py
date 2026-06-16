@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import json
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -60,6 +61,7 @@ PAGE_NAME = "Infraestrutura"
 PAGE_SUBTITLE = "Telemetria de infraestrutura, conectividade, fontes e evidências do runtime paper."
 ACTIVE_PAGE = "01_infrastructure"
 SNAPSHOT_PATH = "data/reports/dashboard_infrastructure_snapshot.json"
+REAL_PAPER_SNAPSHOT_PATH = "data/reports/dashboard_real_paper_sources_snapshot.json"
 EXPECTED_SCHEMA_VERSION = "dashboard_infrastructure_snapshot_v1"
 REQUIRED_SECTIONS = (
     "status_summary",
@@ -178,7 +180,9 @@ def _render_visual_command_center(snapshot: Mapping[str, Any], *, ui: Any) -> No
         unsafe_allow_html=True,
     )
 
+    real_paper_snapshot = _load_real_paper_snapshot()
     ui.markdown(_telemetry_strip_html(snapshot), unsafe_allow_html=True)
+    ui.markdown(_real_paper_wallboard_html(real_paper_snapshot), unsafe_allow_html=True)
     ui.markdown(_main_grid_html(snapshot), unsafe_allow_html=True)
 
 
@@ -540,6 +544,160 @@ def _render_runtime_evidence_stack(snapshot: Mapping[str, Any], *, ui: Any) -> N
     render_runtime_freshness_governance_closeout_index(dict(snapshot), ui=ui)
     render_runtime_source_health(dict(snapshot), ui=ui)
 
+
+def _load_real_paper_snapshot(path: str = REAL_PAPER_SNAPSHOT_PATH) -> Mapping[str, Any]:
+    candidate = Path(path)
+    if not candidate.exists():
+        return {
+            "status": "MISSING",
+            "reason": "real_paper_snapshot_not_found",
+            "schema_version": "dashboard_real_paper_sources_snapshot_v1",
+            "safety": {
+                "dashboard_readonly": True,
+                "paper_only": True,
+                "shadow_only": True,
+                "live_trading_enabled": False,
+                "order_submission_enabled": False,
+                "real_order_submission_enabled": False,
+                "exchange_private_access": False,
+                "sends_orders": False,
+                "sends_notifications": False,
+            },
+        }
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "status": "ERROR",
+            "reason": f"real_paper_snapshot_load_failed:{type(exc).__name__}",
+            "schema_version": "dashboard_real_paper_sources_snapshot_v1",
+            "safety": {
+                "dashboard_readonly": True,
+                "paper_only": True,
+                "shadow_only": True,
+                "live_trading_enabled": False,
+                "order_submission_enabled": False,
+                "real_order_submission_enabled": False,
+                "exchange_private_access": False,
+                "sends_orders": False,
+                "sends_notifications": False,
+            },
+        }
+    return payload if isinstance(payload, Mapping) else {"status": "ERROR", "reason": "invalid_real_paper_snapshot_payload"}
+
+
+def _real_paper_wallboard_html(real_paper: Mapping[str, Any]) -> str:
+    status = _first_text(real_paper.get("status"), "UNKNOWN")
+    reason = _first_text(real_paper.get("reason"), "UNKNOWN")
+    freqtrade = _mapping(real_paper.get("freqtrade"))
+    alerts = _mapping(real_paper.get("alerts"))
+    qlib = _mapping(real_paper.get("qlib"))
+    safety = _mapping(real_paper.get("safety"))
+
+    safety_status = "ok" if _real_paper_safety_ok(safety) else "error"
+    panel_status = worst_status(status, safety_status)
+
+    hero = (
+        '<article class="sfc-aba01-panel sfc-card-status-' + escape(panel_status) + ' sfc-aba01-panel-wide">'
+        '<div class="sfc-aba01-panel-head">'
+        '<div>'
+        '<div class="sfc-aba01-panel-title">Paper real · execução observada</div>'
+        '<div class="sfc-aba01-panel-subtitle">'
+        'Snapshot local read-only consolidado de Freqtrade paper, Phase14, Qlib e mensageria. '
+        'Não usa exchange privada, não envia ordens e não altera risco.'
+        '</div>'
+        '</div>'
+        '<span class="sfc-status-pill sfc-status-' + escape(panel_status) + '">' + escape(status_to_label(panel_status)) + '</span>'
+        '</div>'
+        '<div class="sfc-card-helper">Fonte: ' + escape(REAL_PAPER_SNAPSHOT_PATH) + ' · reason=' + escape(reason) + '</div>'
+        '</article>'
+    )
+
+    trading_cards = render_card_grid(
+        (
+            render_compact_kpi("Trades", _first_text(freqtrade.get("trades_total"), "UNKNOWN"), helper="total paper", status=status),
+            render_compact_kpi("Fechados", _first_text(freqtrade.get("closed_trades"), "UNKNOWN"), helper="closed trades", status=status),
+            render_compact_kpi("Abertos", _first_text(freqtrade.get("open_trades"), "UNKNOWN"), helper="open trades", status=status),
+            render_compact_kpi("Ordens", _first_text(freqtrade.get("orders_total"), "UNKNOWN"), helper="dry-run/paper", status=status),
+            render_compact_kpi("PnL Realizado", _format_money(freqtrade.get("realized_pnl_abs")), helper="USDT aprox.", status=_pnl_status(freqtrade.get("realized_pnl_abs"))),
+            render_compact_kpi("Win rate", _format_pct(freqtrade.get("win_rate")), helper="closed trades", status=status),
+            render_compact_kpi("Exposição", _format_money(freqtrade.get("open_exposure_usdt")), helper="open exposure", status=status),
+            render_compact_kpi("Fees", _format_money(freqtrade.get("fees_total")), helper="custos", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+
+    qlib_cards = render_card_grid(
+        (
+            render_compact_kpi("Modelo", _first_text(qlib.get("model_version"), "UNKNOWN"), helper="Qlib", status=_first_text(qlib.get("status"), status)),
+            render_compact_kpi("Predições", _first_text(qlib.get("prediction_rows"), "UNKNOWN"), helper="rows", status=_first_text(qlib.get("status"), status)),
+            render_compact_kpi("Sinais", _first_text(qlib.get("signals_count"), "UNKNOWN"), helper="ativos", status=_first_text(qlib.get("status"), status)),
+            render_compact_kpi("Input", _first_text(qlib.get("input_data_status"), "UNKNOWN"), helper="freshness", status=_first_text(qlib.get("status"), status)),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+
+    alerts_cards = render_card_grid(
+        (
+            render_compact_kpi("Eventos", _first_text(alerts.get("events_total"), "UNKNOWN"), helper="detectados", status=status),
+            render_compact_kpi("Canais", _first_text(alerts.get("channels_total"), "UNKNOWN"), helper="telegram/ntfy audit", status=status),
+            render_compact_kpi("Pendentes", _first_text(alerts.get("pending_total"), "UNKNOWN"), helper="fila", status="ok" if _numeric_or_zero(alerts.get("pending_total")) == 0 else "warning"),
+            render_compact_kpi("Envio real", "disabled", helper="dashboard read-only", status=safety_status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+
+    safety_rows = _status_rows_html(
+        ("dashboard_readonly", safety.get("dashboard_readonly")),
+        ("paper_only", safety.get("paper_only")),
+        ("shadow_only", safety.get("shadow_only")),
+        ("live_trading_enabled", safety.get("live_trading_enabled")),
+        ("order_submission_enabled", safety.get("order_submission_enabled")),
+        ("exchange_private_access", safety.get("exchange_private_access")),
+        ("sends_orders", safety.get("sends_orders")),
+        ("sends_notifications", safety.get("sends_notifications")),
+    )
+
+    return (
+        '<section class="sfc-aba01-real-paper-wallboard">'
+        + hero
+        + _panel_html("Freqtrade paper real", "Trades, ordens, PnL e exposição a partir do SQLite snapshot.", status, trading_cards, wide=True)
+        + _panel_html("Qlib e sinais ativos", "Predições e sinais paper materializados pelo pipeline.", _first_text(qlib.get("status"), status), qlib_cards)
+        + _panel_html("Mensageria observada", "Eventos detectados e canais auditados sem envio pelo dashboard.", status, alerts_cards)
+        + _panel_html("Safety do snapshot real paper", "Flags hard-blocked preservadas pela fonte intermediária.", safety_status, safety_rows)
+        + "</section>"
+    )
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _real_paper_safety_ok(safety: Mapping[str, Any]) -> bool:
+    required_true = ("dashboard_readonly", "paper_only", "shadow_only")
+    required_false = (
+        "live_trading_enabled",
+        "order_submission_enabled",
+        "real_order_submission_enabled",
+        "exchange_private_access",
+        "sends_orders",
+        "sends_notifications",
+    )
+    return all(_truthy(safety.get(key)) for key in required_true) and not any(
+        _truthy(safety.get(key)) for key in required_false
+    )
+
+
+def _pnl_status(value: Any) -> str:
+    numeric = _numeric_or_none(value)
+    if numeric is None:
+        return "unknown"
+    return "ok" if numeric >= 0 else "warning"
+
+
+def _format_money(value: Any) -> str:
+    numeric = _numeric_or_none(value)
+    return "UNKNOWN" if numeric is None else f"{numeric:,.2f}"
 
 def _environment(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     return {
