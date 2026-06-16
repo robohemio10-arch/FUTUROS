@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "74ab6d4e20537cdc6b7ab70fbd87787259c80eb677556e977c131e2808502c44",
+  "aggregate_sha256": "fe21c3a46c3cc8854176221ea2e41fca107522f5a76881fc01939e71ca681241",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 150,
-    "manifested_files_total": 932,
-    "python_files": 691,
+    "docs_files": 151,
+    "manifested_files_total": 934,
+    "python_files": 692,
     "runtime_excluded_files_total": 0,
-    "test_files": 198,
-    "tracked_files_total": 933,
+    "test_files": 199,
+    "tracked_files_total": 935,
     "workflows": 1
   },
   "deterministic": true,
@@ -684,6 +684,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_EVIDENCE_PACK_ORCHESTRATOR_V1.md",
       "sha256": "dd164fb3ebc89f7e5520140dd9a3294932634575ff2dcef3efa01838b62abf9d"
+    },
+    {
+      "bytes": 5058,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_ABA01_INFRASTRUCTURE_VISUAL_COMMAND_CENTER_V1.md",
+      "sha256": "03cfe29de05927c0c8df069a403c41c9383531fa8efd25c3d484e97f9e18ba45"
     },
     {
       "bytes": 4153,
@@ -2990,10 +2996,10 @@
       "sha256": "b4667d5db558684f02ce49538f162499f4cd50014371de0df672a03e434e3eee"
     },
     {
-      "bytes": 11545,
+      "bytes": 18489,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/assets/futuros_command_center.css",
-      "sha256": "ec729718b8d89832ab66e682a6306959187f1e886dc518912793e95567826c7e"
+      "sha256": "53acb0e4098e65de54ff6c6eea62d62fe6538e05b632a42ce8dab3d2df121ffe"
     },
     {
       "bytes": 7882,
@@ -3176,10 +3182,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 5419,
+      "bytes": 27764,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "92891809e94d52f134c1b70ab01f02311fe0ccdeb6b154239c89b54e9eb7a23f"
+      "sha256": "29ef047f0d31b61ba1f4326aa639b0fa86e0ad1928132d242c58f6911c6c98c1"
     },
     {
       "bytes": 2802,
@@ -3284,10 +3290,10 @@
       "sha256": "3afd6cef58728b257c2778907903813e421c6fdf00afdca541011298974ce5c5"
     },
     {
-      "bytes": 1560,
+      "bytes": 2387,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/ui/__init__.py",
-      "sha256": "c7a6b1abe4d936d0235bd663b710df447a983fc815cc1a26219a5ca64eb622e3"
+      "sha256": "2bce1c55d8b5852f7819a1d42054310915914498af66fe0d38f1c576335c9839"
     },
     {
       "bytes": 884,
@@ -3296,16 +3302,16 @@
       "sha256": "d9858509ab472d33bf67ecb624545649fe97eb34fe9fcc5b997118bcdb1a339c"
     },
     {
-      "bytes": 2045,
+      "bytes": 6439,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/ui/cards.py",
-      "sha256": "a5e3bf95e0d8a01905b09a551c41d7966ff214deacb751ff25ce2d844e9e983d"
+      "sha256": "fc11793081868d179768feda9fa59f3aae44b5249602e596ec37a5d0d1159c7d"
     },
     {
-      "bytes": 886,
+      "bytes": 7621,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/ui/charts.py",
-      "sha256": "7f60c2b765e8d216807a9c4c53e4a6ffd86e63be5270b19780af30a10e250d38"
+      "sha256": "2e0fd2d4daa5d46a40cec5d80171ec4a99fb2ee28ef6e3a2e25e40298149ad3e"
     },
     {
       "bytes": 1341,
@@ -3338,10 +3344,10 @@
       "sha256": "7050fc8daa15ec8a3d730814bd4a2e539d78a1836e48257c98c939766d57486c"
     },
     {
-      "bytes": 1906,
+      "bytes": 3724,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/ui/status.py",
-      "sha256": "990e62b8dfa19bfafeb10e24338c2272179f143e66010f03fd770830fb4861e1"
+      "sha256": "fec0649eb3458c08f89dc4fceaa721a10e68799bea317de597e8cec80209ade3"
     },
     {
       "bytes": 1457,
@@ -4578,6 +4584,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
       "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
+    },
+    {
+      "bytes": 5877,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_aba01_visual_contract_v1.py",
+      "sha256": "c6ded13ab99041bc709bed1b24fd728bbe2eaadc4b926dc5918606800f32f9e7"
     },
     {
       "bytes": 2160,
