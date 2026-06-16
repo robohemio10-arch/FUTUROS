@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import json
+from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -125,12 +126,10 @@ _INSTITUTIONAL_AREAS = (
 
 def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     target_ui = ui or get_streamlit()
+    target_ui.title(PAGE_TITLE)
     inject_smart_futuros_command_center_css(ui=target_ui)
-    render_global_topbar(last_updated=snapshot.get("last_updated_utc"), ui=target_ui)
-    render_sidebar(ACTIVE_PAGE, _environment(snapshot), ui=target_ui)
-    render_page_title(PAGE_NUMBER, PAGE_NAME, PAGE_SUBTITLE, ui=target_ui)
+    _render_aba01_single_screen_command_center(snapshot, ui=target_ui)
 
-    _render_visual_command_center(snapshot, ui=target_ui)
     target_ui.markdown(
         '<div class="sfc-readonly-banner">'
         "TABELA CANÔNICA READ-ONLY · detalhamento preservado em expander inferior."
@@ -152,6 +151,753 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         _render_runtime_evidence_stack(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
 
+
+def _render_aba01_single_screen_command_center(snapshot: Mapping[str, Any], *, ui: Any) -> None:
+    auxiliaries = _load_auxiliary_snapshots()
+    ui.markdown(_aba01_single_screen_css(), unsafe_allow_html=True)
+    ui.markdown(_aba01_single_screen_html(snapshot, auxiliaries), unsafe_allow_html=True)
+
+
+
+def _aba01_single_screen_css() -> str:
+    return """
+<style>
+[data-testid="stSidebar"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 0 !important;
+}
+[data-testid="stToolbar"], #MainMenu, footer {
+    display: none !important;
+}
+h1 {
+    display: none !important;
+}
+.block-container {
+    max-width: 100vw !important;
+    padding: 0 !important;
+}
+[data-testid="stAppViewContainer"] > .main {
+    margin-left: 0 !important;
+}
+.fcc-v3-root {
+    --fcc-bg: #020811;
+    --fcc-surface: #061321;
+    --fcc-surface-2: #081b2b;
+    --fcc-line: rgba(59, 135, 183, .42);
+    --fcc-line-soft: rgba(59, 135, 183, .20);
+    --fcc-cyan: #00c8ff;
+    --fcc-blue: #3aa6ff;
+    --fcc-green: #00e69a;
+    --fcc-yellow: #ffd84a;
+    --fcc-red: #ff4b45;
+    --fcc-muted: #8ba6bb;
+    --fcc-text: #e9f6ff;
+    display: grid;
+    grid-template-columns: 172px minmax(0, 1fr);
+    gap: 8px;
+    min-height: calc(100vh - 4px);
+    height: calc(100vh - 4px);
+    max-width: 100vw;
+    overflow: hidden;
+    padding: 6px 8px 4px 6px;
+    color: var(--fcc-text);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(0, 200, 255, .10), transparent 26%),
+        radial-gradient(circle at 82% 14%, rgba(0, 230, 154, .06), transparent 24%),
+        linear-gradient(180deg, #020811 0%, #03101d 100%);
+    border: 1px solid rgba(0, 200, 255, .18);
+    box-sizing: border-box;
+    font-family: "Inter", "Segoe UI", "Roboto Condensed", system-ui, sans-serif;
+}
+.fcc-v3-sidebar {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 0;
+    border: 1px solid var(--fcc-line-soft);
+    background: linear-gradient(180deg, rgba(5, 20, 33, .98), rgba(2, 10, 18, .98));
+    box-shadow: inset -1px 0 0 rgba(0, 200, 255, .10);
+}
+.fcc-v3-side-brand {
+    padding: 13px 10px 10px;
+    border-bottom: 1px solid var(--fcc-line-soft);
+}
+.fcc-v3-side-brand strong {
+    display: block;
+    color: var(--fcc-cyan);
+    font-size: 11px;
+    line-height: 1.15;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.fcc-v3-side-brand span {
+    color: var(--fcc-muted);
+    font-size: 9px;
+}
+.fcc-v3-nav {
+    padding: 8px 6px;
+    overflow: hidden;
+}
+.fcc-v3-nav a {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+    gap: 5px;
+    min-height: 38px;
+    padding: 5px 6px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    color: #bfd4e5;
+    text-decoration: none;
+    font-size: 10px;
+    line-height: 1.1;
+    border: 1px solid transparent;
+}
+.fcc-v3-nav a span {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 200, 255, .35);
+    color: var(--fcc-blue);
+    font-weight: 800;
+    font-size: 11px;
+}
+.fcc-v3-nav a.is-active {
+    color: #ffffff;
+    background: rgba(0, 155, 255, .16);
+    border-color: rgba(0, 200, 255, .38);
+    box-shadow: 0 0 18px rgba(0, 200, 255, .10);
+}
+.fcc-v3-env {
+    padding: 7px 8px 10px;
+    border-top: 1px solid var(--fcc-line-soft);
+}
+.fcc-v3-env-title {
+    color: var(--fcc-muted);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 5px;
+}
+.fcc-v3-env-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(59, 135, 183, .14);
+    font-size: 8px;
+    color: var(--fcc-muted);
+}
+.fcc-v3-env-row strong {
+    color: #d6eaff;
+    max-width: 82px;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+.fcc-v3-main {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 86px minmax(0, 1fr);
+    gap: 7px;
+}
+.fcc-v3-topbar {
+    display: grid;
+    grid-template-columns: minmax(310px, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    min-height: 72px;
+    padding: 7px 10px;
+    border: 1px solid var(--fcc-line);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(5, 19, 32, .98), rgba(3, 13, 22, .94));
+    box-shadow: 0 0 24px rgba(0, 200, 255, .08);
+}
+.fcc-v3-title strong {
+    display: block;
+    color: #f5fbff;
+    font-size: 22px;
+    letter-spacing: .02em;
+    line-height: 1.1;
+}
+.fcc-v3-title strong span { color: var(--fcc-cyan); }
+.fcc-v3-title small {
+    display: block;
+    color: var(--fcc-muted);
+    font-size: 9px;
+    margin-top: 3px;
+}
+.fcc-v3-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    margin-top: 7px;
+}
+.fcc-v3-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 5px;
+    padding: 4px 7px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    background: rgba(2, 10, 18, .55);
+    white-space: nowrap;
+}
+.fcc-v3-badge.paper { color: var(--fcc-cyan); }
+.fcc-v3-badge.live, .fcc-v3-badge.orders { color: var(--fcc-red); }
+.fcc-v3-badge.ready { color: var(--fcc-yellow); }
+.fcc-v3-badge.risk { color: var(--fcc-green); }
+.fcc-v3-meta {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 5px 10px;
+    justify-content: end;
+    color: var(--fcc-muted);
+    font-size: 9px;
+    text-align: right;
+}
+.fcc-v3-meta strong { color: #d9efff; font-weight: 700; }
+.fcc-v3-board-wrap {
+    min-height: 0;
+    overflow: hidden;
+}
+.fcc-v3-root .sfc-aba01-grid {
+    display: grid;
+    grid-template-columns: 1.08fr 1.08fr 1fr 1.18fr 1.18fr;
+    grid-template-rows: minmax(0, 1.08fr) minmax(0, 1fr) minmax(0, .82fr);
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 7px;
+    margin: 0;
+    min-height: 0;
+    height: calc(100vh - 102px);
+}
+.fcc-v3-root .sfc-aba01-panel {
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    padding: 8px;
+    border-radius: 7px;
+    border-color: var(--fcc-line-soft);
+    background:
+        radial-gradient(circle at top right, rgba(0, 200, 255, .08), transparent 38%),
+        linear-gradient(135deg, rgba(6, 19, 31, .96), rgba(4, 13, 22, .98));
+    box-shadow: 0 0 16px rgba(0, 200, 255, .055);
+}
+.fcc-v3-root .sfc-aba01-panel-primary { grid-column: span 2; }
+.fcc-v3-root .sfc-aba01-panel-wide { grid-column: span 2; }
+.fcc-v3-root .sfc-aba01-panel-mega { grid-column: span 3; }
+.fcc-v3-root .sfc-aba01-panel-head {
+    padding-bottom: 5px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(59, 135, 183, .28);
+}
+.fcc-v3-root .sfc-aba01-panel-title {
+    font-size: 9px;
+    letter-spacing: .05em;
+    color: #f3fbff;
+}
+.fcc-v3-root .sfc-aba01-panel-subtitle {
+    font-size: 8px;
+    color: var(--fcc-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.fcc-v3-root .sfc-status-pill {
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 7px;
+}
+.fcc-v3-root .sfc-mini-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+}
+.fcc-v3-root .sfc-mini-kpi {
+    min-height: 48px;
+    padding: 6px;
+    border-radius: 5px;
+    background: rgba(8, 24, 39, .72);
+}
+.fcc-v3-root .sfc-mini-kpi-label {
+    font-size: 7px;
+    line-height: 1.15;
+    margin-bottom: 2px;
+    color: #9bb4c9;
+}
+.fcc-v3-root .sfc-mini-kpi-value {
+    font-size: 12px;
+    line-height: 1.1;
+    color: #f1f9ff;
+}
+.fcc-v3-root .sfc-mini-kpi-helper {
+    font-size: 7px;
+    line-height: 1.1;
+    margin-top: 2px;
+}
+.fcc-v3-root .sfc-latency-svg,
+.fcc-v3-root .sfc-grid-preview,
+.fcc-v3-root .sfc-depth-preview {
+    max-height: 86px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+.fcc-v3-root svg {
+    max-height: 92px;
+}
+.fcc-v3-root .sfc-status-row {
+    padding: 3px 0;
+    font-size: 8px;
+}
+.fcc-v3-root .sfc-status-row strong {
+    font-size: 8px;
+}
+.fcc-v3-root .sfc-card-status-blocked,
+.fcc-v3-root .sfc-card-status-hard_blocked {
+    box-shadow: inset 0 0 0 1px rgba(255, 75, 69, .22), 0 0 12px rgba(255, 75, 69, .08);
+}
+.fcc-v3-root .sfc-card-status-ok {
+    box-shadow: inset 0 0 0 1px rgba(0, 230, 154, .18), 0 0 12px rgba(0, 230, 154, .08);
+}
+.fcc-v3-root .sfc-card-status-unknown,
+.fcc-v3-root .sfc-card-status-disabled {
+    border-left-color: #7c8ea0;
+}
+
+.fcc-v4-selector-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 5px 0;
+    padding: 4px;
+    border: 1px solid rgba(59, 135, 183, .18);
+    border-radius: 5px;
+    background: rgba(3, 13, 22, .42);
+}
+.fcc-v4-selector-row div {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.fcc-v4-selector-row span {
+    color: var(--fcc-muted);
+    font-size: 7px;
+    margin-right: 2px;
+    text-transform: uppercase;
+}
+.fcc-v4-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 16px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 200, 255, .34);
+    color: #dff6ff;
+    background: rgba(0, 200, 255, .08);
+    text-decoration: none;
+    font-size: 7px;
+    font-weight: 800;
+}
+.fcc-v4-chip-soft {
+    border-color: rgba(139, 166, 187, .28);
+    color: #a9bed0;
+    background: rgba(139, 166, 187, .06);
+}
+
+
+/* v5 visual contract polish: denser 2K shell, stronger terminal hierarchy. */
+.fcc-v3-root {
+    grid-template-columns: 158px minmax(0, 1fr);
+    gap: 6px;
+    padding: 4px 6px;
+}
+.fcc-v3-main {
+    grid-template-rows: 74px minmax(0, 1fr);
+    gap: 5px;
+}
+.fcc-v3-topbar {
+    min-height: 58px;
+    padding: 6px 9px;
+    border-radius: 6px;
+}
+.fcc-v3-title strong {
+    font-size: 20px;
+    letter-spacing: .03em;
+}
+.fcc-v3-title small {
+    font-size: 8px;
+    max-width: 1380px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fcc-v3-badges { margin-top: 6px; gap: 4px; }
+.fcc-v3-badge { padding: 3px 6px; font-size: 7px; }
+.fcc-v3-meta {
+    grid-template-columns: repeat(2, auto);
+    gap: 3px 8px;
+    font-size: 8px;
+}
+.fcc-v3-side-brand { padding: 10px 8px 8px; }
+.fcc-v3-side-brand strong { font-size: 10px; }
+.fcc-v3-nav { padding: 6px 5px; }
+.fcc-v3-nav a {
+    min-height: 35px;
+    grid-template-columns: 24px 1fr;
+    padding: 4px 5px;
+    font-size: 9px;
+}
+.fcc-v3-nav a span { width: 18px; height: 18px; font-size: 10px; }
+.fcc-v3-env { padding: 6px 7px 8px; }
+.fcc-v3-env-row { font-size: 7px; padding: 2px 0; }
+.fcc-v3-root .sfc-aba01-grid {
+    grid-template-columns: 1.12fr 1.12fr .92fr 1.18fr 1.18fr;
+    grid-template-rows: minmax(0, 1.06fr) minmax(0, .96fr) minmax(0, .76fr);
+    gap: 5px;
+    height: calc(100vh - 86px);
+}
+.fcc-v3-root .sfc-aba01-panel {
+    padding: 6px;
+    border-radius: 6px;
+}
+.fcc-v3-root .sfc-aba01-panel-head {
+    padding-bottom: 4px;
+    margin-bottom: 5px;
+}
+.fcc-v3-root .sfc-aba01-panel-title { font-size: 8px; }
+.fcc-v3-root .sfc-aba01-panel-subtitle { font-size: 7px; }
+.fcc-v3-root .sfc-mini-kpi-grid { gap: 4px; }
+.fcc-v3-root .sfc-mini-kpi {
+    min-height: 42px;
+    padding: 5px;
+}
+.fcc-v3-root .sfc-mini-kpi-label { font-size: 6.5px; }
+.fcc-v3-root .sfc-mini-kpi-value { font-size: 11px; }
+.fcc-v3-root .sfc-mini-kpi-helper { font-size: 6.5px; }
+.fcc-v5-split-3 {
+    display: grid;
+    grid-template-columns: .76fr 1.35fr .92fr;
+    gap: 5px;
+    min-height: 0;
+}
+.fcc-v5-split-2 {
+    display: grid;
+    grid-template-columns: 1fr .72fr;
+    gap: 5px;
+    min-height: 0;
+}
+.fcc-v5-chart-card,
+.fcc-v5-table-card,
+.fcc-v5-strip-card {
+    border: 1px solid rgba(59, 135, 183, .24);
+    border-radius: 5px;
+    background: rgba(3, 13, 22, .42);
+    padding: 5px;
+    min-height: 0;
+    overflow: hidden;
+}
+.fcc-v5-card-title {
+    color: #dff6ff;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.fcc-v5-terminal-chart {
+    width: 100%;
+    height: 92px;
+    border-radius: 4px;
+    background:
+        linear-gradient(rgba(59,135,183,.10) 1px, transparent 1px) 0 0 / 100% 18px,
+        linear-gradient(90deg, rgba(59,135,183,.10) 1px, transparent 1px) 0 0 / 44px 100%,
+        radial-gradient(circle at 55% 44%, rgba(0,200,255,.12), transparent 34%),
+        rgba(2,10,18,.55);
+    position: relative;
+    overflow: hidden;
+}
+.fcc-v5-terminal-chart::before {
+    content: "";
+    position: absolute;
+    left: 8%; right: 6%; top: 47%;
+    height: 1px;
+    background: rgba(255,216,74,.55);
+    box-shadow: 0 -22px 0 rgba(255,75,69,.42), 0 22px 0 rgba(0,200,255,.40);
+}
+.fcc-v5-terminal-chart::after {
+    content: "DADOS VIA SNAPSHOT";
+    position: absolute;
+    right: 7px;
+    bottom: 5px;
+    color: rgba(139,166,187,.70);
+    font-size: 7px;
+    letter-spacing: .06em;
+}
+.fcc-v5-depth-chart {
+    height: 92px;
+    border-radius: 4px;
+    background:
+        linear-gradient(135deg, transparent 0 44%, rgba(255,75,69,.42) 45% 48%, transparent 49%),
+        linear-gradient(45deg, transparent 0 46%, rgba(0,230,154,.38) 47% 50%, transparent 51%),
+        rgba(2,10,18,.55);
+    border: 1px solid rgba(59,135,183,.14);
+    position: relative;
+}
+.fcc-v5-depth-chart::after {
+    content: "BOOK PÚBLICO / SNAPSHOT";
+    position: absolute;
+    right: 7px;
+    bottom: 5px;
+    color: rgba(139,166,187,.70);
+    font-size: 7px;
+}
+.fcc-v5-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(59,135,183,.13);
+    color: #a9bed0;
+    font-size: 7px;
+}
+.fcc-v5-row strong { color: #f2fbff; font-size: 7px; text-align: right; }
+.fcc-v5-command-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+    margin-bottom: 6px;
+}
+.fcc-v5-command-card {
+    min-height: 38px;
+    border: 1px solid rgba(78,145,201,.28);
+    border-radius: 5px;
+    padding: 6px;
+    background: linear-gradient(135deg, rgba(22,48,76,.72), rgba(7,21,35,.72));
+    color: #dff6ff;
+    font-size: 8px;
+    font-weight: 800;
+}
+.fcc-v5-command-card small { display:block; color:#8ba6bb; font-size:6.5px; margin-top:2px; }
+.fcc-v5-hard-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 5px;
+    margin: 5px 0;
+    border: 1px solid rgba(255,75,69,.48);
+    border-radius: 6px;
+    background: rgba(80, 12, 20, .36);
+}
+.fcc-v5-hard-card {
+    border: 1px solid rgba(255,75,69,.35);
+    border-radius: 5px;
+    padding: 6px;
+    background: rgba(255,75,69,.10);
+    color: #ffd7d4;
+    font-size: 8px;
+    font-weight: 900;
+}
+.fcc-v5-hard-card strong { display:block; color:#ff6b64; margin-top:2px; }
+.fcc-v5-provider-grid {
+    display: grid;
+    grid-template-columns: .75fr .95fr 1.6fr .8fr;
+    gap: 5px;
+    min-height: 0;
+}
+.fcc-v5-mini-donut {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    margin: 4px auto;
+    background: conic-gradient(var(--fcc-green) 0 48%, var(--fcc-yellow) 48% 72%, var(--fcc-red) 72% 100%);
+    position: relative;
+}
+.fcc-v5-mini-donut::after {
+    content: "";
+    position:absolute;
+    inset: 13px;
+    border-radius:50%;
+    background: #061321;
+    border: 1px solid rgba(59,135,183,.20);
+}
+.fcc-v5-muted-note {
+    color: rgba(139,166,187,.78);
+    font-size: 7px;
+    text-align: center;
+    margin-top: 4px;
+}
+
+@media (max-width: 1380px) {
+    .fcc-v3-root { grid-template-columns: 142px minmax(0, 1fr); }
+    .fcc-v3-root .sfc-aba01-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; }
+    .fcc-v3-root .sfc-aba01-panel-primary,
+    .fcc-v3-root .sfc-aba01-panel-wide { grid-column: span 1; }
+    .fcc-v3-root .sfc-mini-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .fcc-v3-root { grid-template-columns: 1fr; overflow: visible; }
+    .fcc-v3-sidebar { display: none; }
+    .fcc-v3-main { display: block; }
+    .fcc-v3-topbar { grid-template-columns: 1fr; }
+    .fcc-v3-meta { justify-content: start; text-align: left; }
+}
+</style>
+"""
+
+
+def _aba01_single_screen_html(
+    snapshot: Mapping[str, Any],
+    auxiliaries: Mapping[str, Mapping[str, Any]],
+) -> str:
+    environment = _environment(snapshot)
+    status_summary = _section(snapshot, "status_summary")
+    runtime_view = _section(snapshot, "runtime_evidence_view")
+    runtime_integration = _section(snapshot, "runtime_evidence_integration")
+    dashboard_status = _first_text(
+        snapshot.get("dashboard_status"),
+        status_summary.get("status"),
+        status_summary.get("component_status"),
+        snapshot.get("status"),
+        "UNKNOWN",
+    )
+    source_health = _first_text(
+        snapshot.get("global_source_health_status"),
+        snapshot.get("source_health_global_status"),
+        runtime_view.get("source_health_global_status"),
+        "UNKNOWN",
+    )
+    runtime_status = _first_text(
+        snapshot.get("runtime_evidence_integration_status"),
+        runtime_integration.get("runtime_evidence_integration_status"),
+        runtime_view.get("runtime_evidence_status"),
+        "UNKNOWN",
+    )
+    board = _main_grid_html(snapshot, auxiliaries)
+    return (
+        '<script>window.setTimeout(function(){ window.location.reload(); }, 10000);</script>'
+        '<div class="fcc-v3-root">'
+        f'{_aba01_sidebar_html(environment)}'
+        '<main class="fcc-v3-main">'
+        f'{_aba01_topbar_html(snapshot, dashboard_status, source_health, runtime_status)}'
+        '<section class="fcc-v3-board-wrap">'
+        f'{board}'
+        '</section>'
+        '</main>'
+        '</div>'
+    )
+
+
+def _aba01_sidebar_html(environment: Mapping[str, Any]) -> str:
+    nav = (
+        ("01", "Infraestrutura geral", "/infrastructure", True),
+        ("02", "Portfólio & Risco", "/portfolio_risk", False),
+        ("03", "KPI’s Monitor", "/grid_monitor", False),
+        ("04", "Arbitragem & Lançamentos", "/opportunity_scanner", False),
+        ("05", "IA / Qlib Governance", "/ai_governance", False),
+        ("06", "Painel de Controle Ativo", "/active_controls", False),
+        ("07", "Relatórios Quantitativos & TCA", "/quantitative_reports", False),
+        ("08", "NTFY e Telegram", "/alerts_messaging", False),
+    )
+    nav_html = "".join(
+        '<a class="{}" href="{}"><span>{}</span><b>{}</b></a>'.format(
+            "is-active" if active else "",
+            escape(path),
+            escape(number),
+            escape(label),
+        )
+        for number, label, path, active in nav
+    )
+    env_rows = "".join(
+        '<div class="fcc-v3-env-row"><span>{}</span><strong>{}</strong></div>'.format(
+            escape(label),
+            escape(str(environment.get(key, "UNKNOWN"))),
+        )
+        for label, key in (
+            ("Conta", "account"),
+            ("Ambiente", "environment"),
+            ("Região", "region"),
+            ("Versão", "dashboard_version"),
+            ("Snapshot", "snapshot"),
+            ("Fonte", "data_source"),
+        )
+    )
+    return (
+        '<aside class="fcc-v3-sidebar">'
+        '<div class="fcc-v3-side-brand"><strong>SMART FUTUROS</strong><span>Command Center Institucional</span></div>'
+        f'<nav class="fcc-v3-nav">{nav_html}</nav>'
+        f'<div class="fcc-v3-env"><div class="fcc-v3-env-title">Ambiente</div>{env_rows}</div>'
+        '</aside>'
+    )
+
+
+def _aba01_topbar_html(
+    snapshot: Mapping[str, Any],
+    dashboard_status: str,
+    source_health: str,
+    runtime_status: str,
+) -> str:
+    updated = _first_text(snapshot.get("last_updated_utc"), snapshot.get("generated_at_utc"), "UNKNOWN")
+    utc_now = _first_text(snapshot.get("utc_now"), snapshot.get("generated_at_utc"), updated)
+    env = _first_text(snapshot.get("runtime_mode"), snapshot.get("environment"), "PAPER").upper()
+    account = _first_text(snapshot.get("account"), snapshot.get("account_name"), "PAPER-INSTITUCIONAL")
+    mode = _first_text(snapshot.get("mode"), snapshot.get("execution_mode"), "SHADOW ONLY")
+    dashboard_version = _first_text(snapshot.get("dashboard_version"), snapshot.get("version"), "aba01-visual-v4")
+    now_utc = _format_datetime_utc(datetime.now(timezone.utc))
+    updated_display = _format_datetime_utc(updated)
+    status_line = " · ".join(
+        (
+            f"Dashboard {status_to_label(dashboard_status)}",
+            f"Source health {status_to_label(source_health)}",
+            f"Runtime evidence {status_to_label(runtime_status)}",
+            "Rate limits / Market data health / Source health matrix",
+            "Resumo institucional das demais abas",
+        )
+    )
+    badges = "".join(
+        (
+            '<span class="fcc-v3-badge paper">SOMENTE PAPER / SHADOW</span>',
+            '<span class="fcc-v3-badge live">LIVE BLOQUEADO</span>',
+            '<span class="fcc-v3-badge orders">ENVIO DE ORDENS DESATIVADO</span>',
+            '<span class="fcc-v3-badge ready">READINESS BLOQUEADO</span>',
+            '<span class="fcc-v3-badge risk">RISKMANAGER AUTHORITY</span>',
+        )
+    )
+    return (
+        '<header class="fcc-v3-topbar">'
+        '<div class="fcc-v3-title">'
+        '<strong><span>SMART</span> FUTUROS</strong>'
+        '<small>Command Center Institucional · Telemetria Institucional · Guardrails permanentes · Latência e conectividade · '
+        f'{escape(status_line)}</small>'
+        f'<div class="fcc-v3-badges">{badges}</div>'
+        '</div>'
+        '<div class="fcc-v3-meta">'
+        f'<span>Conta <strong>{escape(account)}</strong></span>'
+        f'<span>Modo <strong>{escape(mode)}</strong></span>'
+        f'<span>Data <strong>{escape(now_utc)}</strong></span>'
+        f'<span>Versão <strong>{escape(dashboard_version)}</strong></span>'
+        f'<span>UTC <strong>{escape(now_utc)}</strong></span>'
+        f'<span>Env <strong>{escape(env)}</strong></span>'
+        '<span>Região <strong>SAO-1</strong></span>'
+        '<span>Status <strong>READ-ONLY</strong></span>'
+        f'<span>Snapshot <strong>{escape(updated_display)}</strong></span>'
+        '</div>'
+        '</header>'
+    )
 
 def _render_visual_command_center(snapshot: Mapping[str, Any], *, ui: Any) -> None:
     status_summary = _section(snapshot, "status_summary")
@@ -427,7 +1173,7 @@ def _telemetry_command_panel(snapshot: Mapping[str, Any]) -> str:
         ),
         render_compact_kpi(
             "User Data Stream",
-            _first_text(websockets.get("user_data_stream_status"), websockets.get("paper_user_stream_status"), "N/A"),
+            _first_text(websockets.get("user_data_stream_status"), websockets.get("paper_user_stream_status"), "DESCONHECIDO"),
             helper="paper/shadow",
             status=_status_from(websockets),
         ),
@@ -435,8 +1181,8 @@ def _telemetry_command_panel(snapshot: Mapping[str, Any]) -> str:
     body = render_card_grid(cards, css_class="sfc-mini-kpi-grid")
     body += render_latency_scatter_svg(_latency_series(latency), label="Latência API pública · últimos eventos", status=status)
     return _panel_html(
-        "1 · Telemetria de Infraestrutura e Conexão",
-        "Latência e conectividade, Redis, Docker, WebSocket, recursos e Market data health.",
+        "1 · Infraestrutura Geral",
+        "Telemetria real, atualizada por snapshots; dados ausentes aparecem como DESCONHECIDO.",
         status,
         body,
         primary=True,
@@ -445,7 +1191,7 @@ def _telemetry_command_panel(snapshot: Mapping[str, Any]) -> str:
 
 def _portfolio_risk_command_panel(portfolio: Mapping[str, Any]) -> str:
     status = _snapshot_status(portfolio)
-    body = render_card_grid(
+    kpis = render_card_grid(
         (
             render_compact_kpi("Saldo disponível", _money_from_snapshot(portfolio, "available_balance", "free_balance", "available_usdt"), helper="USDT", status=status),
             render_compact_kpi("Saldo bloqueado", _money_from_snapshot(portfolio, "blocked_balance", "reserved_balance", "locked_usdt"), helper="ordens/fundos", status=status),
@@ -458,13 +1204,46 @@ def _portfolio_risk_command_panel(portfolio: Mapping[str, Any]) -> str:
         ),
         css_class="sfc-mini-kpi-grid",
     )
+    side = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">Alocação / Reconciliação</div>'
+        '<div class="fcc-v5-mini-donut"></div>'
+        + _compact_rows_html(
+            ("Fonte", _text_from_snapshot(portfolio, "snapshot_path", default=PORTFOLIO_RISK_SNAPSHOT_PATH)),
+            ("Status", status_to_label(status)),
+            ("Fallback", "sem números fictícios"),
+        )
+        + '</div>'
+    )
+    body = '<div class="fcc-v5-split-2"><div>' + kpis + '</div>' + side + '</div>'
     body += _snapshot_source_hint(portfolio, PORTFOLIO_RISK_SNAPSHOT_PATH, "Aba 02")
     return _panel_html("2 · Portfólio e Risco", "Resumo financeiro visual; fonte autoritativa permanece no snapshot da Aba 02.", status, body)
 
 
+def _symbol_timeframe_selector_html() -> str:
+    symbols = (
+        ("BTC/USDT", "?aba01_symbol=BTCUSDT"),
+        ("ETH/USDT", "?aba01_symbol=ETHUSDT"),
+    )
+    timeframes = ("1m", "5m", "15m", "1h", "1d", "7d")
+    symbol_links = "".join(
+        f'<a class="fcc-v4-chip" href="{escape(path)}">{escape(label)}</a>'
+        for label, path in symbols
+    )
+    timeframe_links = "".join(
+        f'<a class="fcc-v4-chip fcc-v4-chip-soft" href="?aba01_tf={escape(tf)}">{escape(tf)}</a>'
+        for tf in timeframes
+    )
+    return (
+        '<div class="fcc-v4-selector-row">'
+        f'<div><span>Moeda</span>{symbol_links}</div>'
+        f'<div><span>Tempo</span>{timeframe_links}</div>'
+        '</div>'
+    )
+
+
 def _grid_spot_command_panel(grid: Mapping[str, Any]) -> str:
     status = _snapshot_status(grid)
-    body = render_card_grid(
+    kpi_body = render_card_grid(
         (
             render_compact_kpi("Par", _text_from_snapshot(grid, "pair", "symbol", default="BTC/USDT"), helper="paper", status=status),
             render_compact_kpi("Preço atual", _money_from_snapshot(grid, "current_price", "price", "last_price"), helper="USDT", status=status),
@@ -472,14 +1251,26 @@ def _grid_spot_command_panel(grid: Mapping[str, Any]) -> str:
             render_compact_kpi("Limite inferior", _money_from_snapshot(grid, "lower_price", "grid_lower", "lower_limit"), helper="canal", status=status),
             render_compact_kpi("Step", _pct_from_snapshot(grid, "grid_step_pct", "step_pct", "step"), helper="grid", status=status),
             render_compact_kpi("Linhas ativas", _text_from_snapshot(grid, "active_lines", "active_grid_lines", "lines_active"), helper="níveis", status=status),
-            render_compact_kpi("Status de poeira", _text_from_snapshot(grid, "dust_status", "dust", default="UNKNOWN"), helper="dust", status=status),
-            render_compact_kpi("Últimas execuções", _text_from_snapshot(grid, "recent_executions_count", "executions_count", "trades_count"), helper="paper", status=status),
         ),
         css_class="sfc-mini-kpi-grid",
     )
-    body += render_grid_channel_preview(status=status)
-    body += render_depth_preview(status=status)
-    return _panel_html("3 · Grid Spot Monitor", "BTC/USDT paper, canal do grid, book público e execuções observadas.", status, body, primary=True)
+    chart = (
+        '<div class="fcc-v5-chart-card"><div class="fcc-v5-card-title">Canal monitorado por snapshot</div>'
+        '<div class="fcc-v5-terminal-chart"></div>'
+        '<div class="fcc-v5-muted-note">BTC/USDT e ETH/USDT · 1m / 5m / 15m / 1h / 1d / 7d</div></div>'
+    )
+    side = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">Profundidade / Execuções</div>'
+        '<div class="fcc-v5-depth-chart"></div>'
+        + _compact_rows_html(
+            ("Status de poeira", _text_from_snapshot(grid, "dust_status", "dust", default="DESCONHECIDO")),
+            ("Últimas execuções", _text_from_snapshot(grid, "recent_executions_count", "executions_count", "trades_count")),
+            ("Fonte", _text_from_snapshot(grid, "snapshot_path", default=GRID_MONITOR_SNAPSHOT_PATH)),
+        )
+        + '</div>'
+    )
+    body = '<div class="fcc-v5-split-3"><div>' + kpi_body + _symbol_timeframe_selector_html() + '</div>' + chart + side + '</div>'
+    return _panel_html("3 · KPI’s Monitor", "BTC/USDT e ETH/USDT paper; canal e book sempre derivados de snapshot público autorizado.", status, body, primary=True)
 
 
 def _opportunities_command_panel(opportunities: Mapping[str, Any]) -> str:
@@ -500,7 +1291,7 @@ def _opportunities_command_panel(opportunities: Mapping[str, Any]) -> str:
         ("Multi-exchange live", "HARD_BLOCKED"),
         ("Uso operacional", "simulação/paper/shadow"),
     )
-    return _panel_html("4 · Arbitragem e Lançamentos", "Scanner read-only; oportunidades reais permanecem bloqueadas.", status, body)
+    return _panel_html("4 · Arbitragem e Lançamentos", "Scanner read-only; oportunidades reais permanecem bloqueadas.", status, body, primary=True)
 
 
 def _ai_governance_command_panel(ai_snapshot: Mapping[str, Any]) -> str:
@@ -529,26 +1320,30 @@ def _ai_governance_command_panel(ai_snapshot: Mapping[str, Any]) -> str:
 
 def _active_controls_command_panel(controls: Mapping[str, Any]) -> str:
     status = worst_status(_snapshot_status(controls), "HARD_BLOCKED")
-    body = render_card_grid(
-        (
-            _disabled_command_tile_html("Kill Switch Paper", "stub governado"),
-            _disabled_command_tile_html("Pausar Novas Entradas", "dry-run"),
-            _disabled_command_tile_html("Reiniciar Grid", "paper stub"),
-            _disabled_command_tile_html("Alterar Parâmetros do Grid", "somente visual"),
-            _hard_blocked_tile_html("Market Sell All Real", "HARD_BLOCKED"),
-            _hard_blocked_tile_html("Sniper Real", "HARD_BLOCKED"),
-            _hard_blocked_tile_html("Live Orders", "HARD_BLOCKED"),
-            render_compact_kpi("Readiness", _text_from_snapshot(controls, "readiness_status", "thirty_day_readiness_status", default="BLOCKED"), helper="gate", status="BLOCKED"),
-        ),
-        css_class="sfc-mini-kpi-grid",
+    command_row = (
+        '<div class="fcc-v5-command-row">'
+        + _command_card_html("Kill Switch Paper", "stub governado")
+        + _command_card_html("Pausar Novas Entradas", "dry-run")
+        + _command_card_html("Reiniciar Grid", "paper stub")
+        + _command_card_html("Alterar Parâmetros", "visual")
+        + '</div>'
     )
-    body += _status_rows_html(
+    hard_row = (
+        '<div class="fcc-v5-hard-row">'
+        + _hard_action_card_html("Market Sell All Real")
+        + _hard_action_card_html("Sniper Real")
+        + _hard_action_card_html("Live Orders")
+        + '</div>'
+    )
+    governance = _compact_rows_html(
         ("CommandBus", _text_from_snapshot(controls, "command_bus_status", "commandbus_status", default="read-only")),
         ("RiskManager Approval", _text_from_snapshot(controls, "riskmanager_approval", "risk_manager_status", default="AUTHORITY")),
         ("RBAC", _text_from_snapshot(controls, "rbac_status", default="read-only")),
         ("Idempotency Key", _text_from_snapshot(controls, "idempotency_status", default="visual-only")),
         ("Audit Log", _text_from_snapshot(controls, "audit_log_status", default="required")),
+        ("Rodapé", "Todos os comandos estão desabilitados no modo atual (PAPER / SHADOW)"),
     )
+    body = command_row + hard_row + '<div class="fcc-v5-table-card">' + governance + '</div>'
     return _panel_html("6 · Painel de Controle Ativo", "Comandos institucionais desabilitados; ações sensíveis hard-blocked.", status, body, wide=True)
 
 
@@ -578,22 +1373,72 @@ def _quantitative_reports_command_panel(reports: Mapping[str, Any]) -> str:
 
 def _alerts_messaging_command_panel(alerts: Mapping[str, Any]) -> str:
     status = _snapshot_status(alerts)
-    body = render_card_grid(
-        (
-            render_compact_kpi("Fila total", _text_from_snapshot(alerts, "queue_total", "notifications_total", "events_total"), helper="dispatcher", status=status),
-            render_compact_kpi("Enviadas", _text_from_snapshot(alerts, "sent_total", "sent_count"), helper="backend", status=status),
-            render_compact_kpi("Pendentes", _text_from_snapshot(alerts, "pending_total", "pending_count"), helper="fila", status=status),
-            render_compact_kpi("Falhas", _text_from_snapshot(alerts, "failed_total", "failure_count"), helper="retry", status=status),
-            render_compact_kpi("Telegram status", _text_from_snapshot(alerts, "telegram_status", "telegram_provider_status"), helper="backend status", status=status),
-            render_compact_kpi("NTFY status", _text_from_snapshot(alerts, "ntfy_status", "ntfy_provider_status"), helper="backend status", status=status),
-            render_compact_kpi("Retry/backoff", _text_from_snapshot(alerts, "retry_backoff", "backoff_status", "backoff_seconds"), helper="rate", status=status),
-            render_compact_kpi("Última entrega", _text_from_snapshot(alerts, "last_delivery_utc", "last_sent_utc", "last_event_utc"), helper="UTC", status=status),
-        ),
-        css_class="sfc-mini-kpi-grid",
+    queue = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">NotificationDispatcher — Fila</div>'
+        '<div class="fcc-v5-mini-donut"></div>'
+        + _compact_rows_html(
+            ("Total", _text_from_snapshot(alerts, "queue_total", "notifications_total", "events_total")),
+            ("Enviadas", _text_from_snapshot(alerts, "sent_total", "sent_count")),
+            ("Pendentes", _text_from_snapshot(alerts, "pending_total", "pending_count")),
+            ("Falhas", _text_from_snapshot(alerts, "failed_total", "failure_count")),
+        )
+        + '</div>'
     )
+    providers = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">Status dos provedores</div>'
+        + _compact_rows_html(
+            ("Telegram", _text_from_snapshot(alerts, "telegram_status", "telegram_provider_status")),
+            ("NTFY", _text_from_snapshot(alerts, "ntfy_status", "ntfy_provider_status")),
+            ("Retry/backoff", _text_from_snapshot(alerts, "retry_backoff", "backoff_status", "backoff_seconds")),
+            ("Última entrega", _text_from_snapshot(alerts, "last_delivery_utc", "last_sent_utc", "last_event_utc")),
+        )
+        + '</div>'
+    )
+    events = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">Eventos recentes</div>'
+        + _compact_rows_html(
+            ("Eventos recentes", _text_from_snapshot(alerts, "recent_events_count", "events_recent_count")),
+            ("Fonte", ALERTS_MESSAGING_SNAPSHOT_PATH),
+            ("Envio pela UI", "DISABLED"),
+            ("Fallback", "DESCONHECIDO quando ausente"),
+        )
+        + '</div>'
+    )
+    metrics = (
+        '<div class="fcc-v5-table-card"><div class="fcc-v5-card-title">Retry / Backoff Metrics</div>'
+        + _compact_rows_html(
+            ("Status", status_to_label(status)),
+            ("Falhas 1h", _text_from_snapshot(alerts, "failures_1h", "failure_rate_1h")),
+            ("Backoff atual", _text_from_snapshot(alerts, "current_backoff", "backoff_current")),
+        )
+        + '</div>'
+    )
+    body = '<div class="fcc-v5-provider-grid">' + queue + providers + events + metrics + '</div>'
     body += _snapshot_source_hint(alerts, ALERTS_MESSAGING_SNAPSHOT_PATH, "Aba 08")
-    body += _status_rows_html(("Eventos recentes", _text_from_snapshot(alerts, "recent_events_count", "events_recent_count")))
-    return _panel_html("8 · Central de Alertas & Mensageria", "Status do backend de mensagens; a página apenas observa o dispatcher.", status, body)
+    return _panel_html("8 · NTFY e Telegram", "Status real do backend NTFY/Telegram; sem envio direto pela interface.", status, body, mega=True)
+
+
+
+def _compact_rows_html(*rows: tuple[str, Any]) -> str:
+    return "".join(
+        '<div class="fcc-v5-row"><span>{}</span><strong>{}</strong></div>'.format(
+            escape(str(label)),
+            escape(_first_text(value, "DESCONHECIDO")),
+        )
+        for label, value in rows
+    )
+
+
+def _command_card_html(title: str, helper: str) -> str:
+    return (
+        '<div class="fcc-v5-command-card">'
+        f'{escape(title)}<small>{escape(helper)} · sem execução direta</small>'
+        '</div>'
+    )
+
+
+def _hard_action_card_html(title: str) -> str:
+    return '<div class="fcc-v5-hard-card">{}<strong>HARD BLOCKED</strong></div>'.format(escape(title))
 
 
 def _hard_blocked_tile_html(title: str, value: str) -> str:
@@ -615,7 +1460,7 @@ def _snapshot_status(snapshot: Mapping[str, Any]) -> str:
     )
 
 
-def _text_from_snapshot(snapshot: Mapping[str, Any], *keys: str, default: str = "UNKNOWN") -> str:
+def _text_from_snapshot(snapshot: Mapping[str, Any], *keys: str, default: str = "DESCONHECIDO") -> str:
     value = _snapshot_lookup(snapshot, keys)
     return _first_text(value, default)
 
@@ -623,13 +1468,13 @@ def _text_from_snapshot(snapshot: Mapping[str, Any], *keys: str, default: str = 
 def _money_from_snapshot(snapshot: Mapping[str, Any], *keys: str) -> str:
     value = _snapshot_lookup(snapshot, keys)
     formatted = _format_money(value)
-    return formatted if formatted != "UNKNOWN" else _first_text(value, "UNKNOWN")
+    return formatted if formatted != "DESCONHECIDO" else _first_text(value, "DESCONHECIDO")
 
 
 def _pct_from_snapshot(snapshot: Mapping[str, Any], *keys: str) -> str:
     value = _snapshot_lookup(snapshot, keys)
     formatted = _format_pct(value)
-    return formatted if formatted != "UNKNOWN" else _first_text(value, "UNKNOWN")
+    return formatted if formatted != "DESCONHECIDO" else _first_text(value, "DESCONHECIDO")
 
 
 def _var_cvar_value(snapshot: Mapping[str, Any]) -> str:
@@ -637,8 +1482,8 @@ def _var_cvar_value(snapshot: Mapping[str, Any]) -> str:
     cvar_value = _snapshot_lookup(snapshot, ("cvar_99", "cvar_95", "expected_shortfall"))
     var_text = _format_money(var_value)
     cvar_text = _format_money(cvar_value)
-    if var_text == "UNKNOWN" and cvar_text == "UNKNOWN":
-        return "UNKNOWN"
+    if var_text == "DESCONHECIDO" and cvar_text == "DESCONHECIDO":
+        return "DESCONHECIDO"
     return f"VaR {var_text} / CVaR {cvar_text}"
 
 
@@ -928,12 +1773,15 @@ def _panel_html(
     *,
     primary: bool = False,
     wide: bool = False,
+    mega: bool = False,
 ) -> str:
     classes = ["sfc-aba01-panel", f"sfc-card-status-{escape(status)}"]
     if primary:
         classes.append("sfc-aba01-panel-primary")
     if wide:
         classes.append("sfc-aba01-panel-wide")
+    if mega:
+        classes.append("sfc-aba01-panel-mega")
     return (
         f'<article class="{" ".join(classes)}">'
         '<div class="sfc-aba01-panel-head">'
@@ -1040,10 +1888,10 @@ def _real_paper_wallboard_html(real_paper: Mapping[str, Any]) -> str:
             render_compact_kpi("Fechados", _first_text(freqtrade.get("closed_trades"), "UNKNOWN"), helper="closed trades", status=status),
             render_compact_kpi("Abertos", _first_text(freqtrade.get("open_trades"), "UNKNOWN"), helper="open trades", status=status),
             render_compact_kpi("Ordens", _first_text(freqtrade.get("orders_total"), "UNKNOWN"), helper="dry-run/paper", status=status),
-            render_compact_kpi("PnL Realizado", _format_money(freqtrade.get("realized_pnl_abs")), helper="USDT aprox.", status=_pnl_status(freqtrade.get("realized_pnl_abs"))),
+            render_compact_kpi("PnL Realizado", _format_money_legacy(freqtrade.get("realized_pnl_abs")), helper="USDT aprox.", status=_pnl_status(freqtrade.get("realized_pnl_abs"))),
             render_compact_kpi("Win rate", _format_pct(freqtrade.get("win_rate")), helper="closed trades", status=status),
-            render_compact_kpi("Exposição", _format_money(freqtrade.get("open_exposure_usdt")), helper="open exposure", status=status),
-            render_compact_kpi("Fees", _format_money(freqtrade.get("fees_total")), helper="custos", status=status),
+            render_compact_kpi("Exposição", _format_money_legacy(freqtrade.get("open_exposure_usdt")), helper="open exposure", status=status),
+            render_compact_kpi("Fees", _format_money_legacy(freqtrade.get("fees_total")), helper="custos", status=status),
         ),
         css_class="sfc-mini-kpi-grid",
     )
@@ -1118,15 +1966,40 @@ def _pnl_status(value: Any) -> str:
 
 def _format_money(value: Any) -> str:
     numeric = _numeric_or_none(value)
-    return "UNKNOWN" if numeric is None else f"{numeric:,.2f}"
+    if numeric is None:
+        return "DESCONHECIDO"
+    formatted = f"{numeric:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    return f"USDT {formatted}"
+
+def _format_money_legacy(value: Any) -> str:
+    numeric = _numeric_or_none(value)
+    return "UNKNOWN" if numeric is None else f"{numeric:.2f}"
+
+
+def _format_datetime_utc(value: Any) -> str:
+    if isinstance(value, datetime):
+        parsed = value.astimezone(timezone.utc)
+        return parsed.strftime("%d/%m/%Y %H:%M:%S UTC")
+    if value is None:
+        return "DESCONHECIDO"
+    raw = str(value).strip()
+    if not raw or raw.upper() == "UNKNOWN":
+        return "DESCONHECIDO"
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return raw
+    return parsed.astimezone(timezone.utc).strftime("%d/%m/%Y %H:%M:%S UTC")
+
 
 def _environment(snapshot: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        "account": "PAPER / SHADOW",
-        "environment": snapshot.get("runtime_mode", "paper"),
-        "dashboard_version": "aba01-visual-v1",
+        "account": _first_text(snapshot.get("account"), snapshot.get("account_name"), "PAPER-INSTITUCIONAL"),
+        "environment": _first_text(snapshot.get("runtime_mode"), snapshot.get("environment"), "paper"),
+        "region": _first_text(snapshot.get("region"), "SAO-1"),
+        "dashboard_version": _first_text(snapshot.get("dashboard_version"), snapshot.get("version"), "aba01-visual-v4"),
         "snapshot": SNAPSHOT_PATH,
-        "data_source": "read-only snapshot",
+        "data_source": "snapshot read-only",
     }
 
 
@@ -1230,22 +2103,30 @@ def _numeric_or_none(value: Any) -> float | None:
 
 def _format_ms(value: Any) -> str:
     numeric = _numeric_or_none(value)
-    return "UNKNOWN" if numeric is None else f"{numeric:.1f} ms"
+    if numeric is None:
+        return "DESCONHECIDO"
+    precision = 2 if abs(numeric) < 10 else 1
+    return f"{numeric:.{precision}f}".replace(".", ",") + " ms"
 
 
 def _format_pct(value: Any) -> str:
     numeric = _numeric_or_none(value)
-    return "UNKNOWN" if numeric is None else f"{numeric:.1f}%"
+    if numeric is None:
+        return "DESCONHECIDO"
+    formatted = f"{numeric:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+    return f"{formatted}%"
 
 
 def _format_seconds(value: Any) -> str:
     numeric = _numeric_or_none(value)
-    return "UNKNOWN" if numeric is None else f"{numeric:.0f}s"
+    return "DESCONHECIDO" if numeric is None else f"{numeric:.0f}s"
 
 
 def _format_float(value: Any) -> str:
     numeric = _numeric_or_none(value)
-    return "UNKNOWN" if numeric is None else f"{numeric:.3f}"
+    if numeric is None:
+        return "DESCONHECIDO"
+    return f"{numeric:.3f}".replace(".", ",")
 
 
 def _latency_series(latency: Mapping[str, Any]) -> list[float]:
