@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fe21c3a46c3cc8854176221ea2e41fca107522f5a76881fc01939e71ca681241",
+  "aggregate_sha256": "a086419b67de53f9b1067f1cdcf9f38b636983e35e1761894a659c5abf0e8ba1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 151,
-    "manifested_files_total": 934,
-    "python_files": 692,
+    "docs_files": 152,
+    "manifested_files_total": 939,
+    "python_files": 696,
     "runtime_excluded_files_total": 0,
-    "test_files": 199,
-    "tracked_files_total": 935,
+    "test_files": 200,
+    "tracked_files_total": 940,
     "workflows": 1
   },
   "deterministic": true,
@@ -708,6 +708,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_HEALTHCHECK_REPORT_RECLASSIFICATION.md",
       "sha256": "189a802f5b3c181af05c5ce36cdbc1379b4f0f10334e516b14fd75e617c476b3"
+    },
+    {
+      "bytes": 1774,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_REAL_PAPER_DATA_SOURCES_V1.md",
+      "sha256": "7050ce7970ddeb6f033426ded1d7083e87be464003a061dc679c11af384fb706"
     },
     {
       "bytes": 3181,
@@ -1782,6 +1788,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 3356,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_dashboard_real_paper_sources_v1.py",
+      "sha256": "a33f2de2ed034c728de7ef9ffa51c221abc7a53d2d7b21f723c04fa452c58f59"
     },
     {
       "bytes": 3105,
@@ -3842,6 +3854,18 @@
       "sha256": "94b9a6632cab316304772801e260541e9f047d074c040e7d053a25d530fcbabe"
     },
     {
+      "bytes": 342,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_real_paper_sources/__init__.py",
+      "sha256": "ee4a3dc490064bb21d5410b88a4c4d80fd6829b3f03b0c8928c5f7a7c58eb00e"
+    },
+    {
+      "bytes": 24945,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_real_paper_sources/builder.py",
+      "sha256": "e4a787431b71a52f4d443b5067da086eb88fd3edd7df0cb4446fff858663b3ac"
+    },
+    {
       "bytes": 757,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_semantic_audit/__init__.py",
@@ -4740,6 +4764,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_readiness_gates_snapshot_view_v2.py",
       "sha256": "18560e259cfd10020acc6c92c141dca57565ce0dd7b2606d553176f18375d387"
+    },
+    {
+      "bytes": 12563,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_real_paper_sources_v1.py",
+      "sha256": "678932a14250047efeb8e80ace26b6ec1dd9b095d5965a1c0b3286b1300100c1"
     },
     {
       "bytes": 19054,
