@@ -35,6 +35,9 @@ from smartcrypto.dashboard.components.runtime_freshness_producer_entrypoint_stat
 from smartcrypto.dashboard.components.runtime_freshness_post_refresh_evidence_gate import (
     render_runtime_freshness_post_refresh_evidence_gate,
 )
+from smartcrypto.dashboard.components.runtime_freshness_governance_closeout_index import (
+    render_runtime_freshness_governance_closeout_index,
+)
 from smartcrypto.dashboard.components.readiness_gates import (
     render_readiness_gates_snapshot_view,
 )
@@ -80,6 +83,7 @@ REQUIRED_SECTIONS = (
     "runtime_freshness_producer_contracts",
     "runtime_freshness_producer_entrypoint_static_safety",
     "runtime_freshness_post_refresh_evidence_gate",
+    "runtime_freshness_governance_closeout_index",
     "command_events",
     "runtime_source_health",
     "audit",
@@ -143,6 +147,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     render_runtime_freshness_producer_contracts(snapshot, ui=target_ui)
     render_runtime_freshness_producer_entrypoint_static_safety(snapshot, ui=target_ui)
     render_runtime_freshness_post_refresh_evidence_gate(snapshot, ui=target_ui)
+    render_runtime_freshness_governance_closeout_index(snapshot, ui=target_ui)
     render_runtime_source_health(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ["N4 HARD-BLOCKED"], ui=target_ui)
 

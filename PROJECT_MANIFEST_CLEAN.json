@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "3316d75ededc881b672ce4ac92cd0c5d84a535f220ea2036f5d1d12755a1c73c",
+  "aggregate_sha256": "f0a980872cd2a9f4a5dd54af8bc502fffe06234c300ffd2d0f8c3c773ecd5218",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 148,
-    "manifested_files_total": 924,
-    "python_files": 685,
+    "docs_files": 149,
+    "manifested_files_total": 929,
+    "python_files": 689,
     "runtime_excluded_files_total": 0,
-    "test_files": 196,
-    "tracked_files_total": 925,
+    "test_files": 197,
+    "tracked_files_total": 930,
     "workflows": 1
   },
   "deterministic": true,
@@ -726,6 +726,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_RUNTIME_EVIDENCE_INTEGRATION_V1.md",
       "sha256": "873cb5944744ae3a51f5f4df9f52c7bd3e76d310f73fb86a95fbc31279eb5b0e"
+    },
+    {
+      "bytes": 1897,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_RUNTIME_FRESHNESS_GOVERNANCE_CLOSEOUT_INDEX_V1.md",
+      "sha256": "132c1f8a168e275e62c37ce4b94fdb874a79823ce4d5f72419a443f2c27d720b"
     },
     {
       "bytes": 3417,
@@ -1692,6 +1698,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_runtime_evidence_freshness_remediation_producers_v1.py",
       "sha256": "894f4fd13f5e7bb88313eff0827f8b1a070193816ea8e6fe39b9687bf4874ea5"
+    },
+    {
+      "bytes": 2173,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_runtime_freshness_governance_closeout_index_v1.py",
+      "sha256": "bec5523d2b84f559e145d2da5ad1a2b95fcf5608265b17b0d4ba29c7e48e9f5b"
     },
     {
       "bytes": 2321,
@@ -3050,6 +3062,12 @@
       "sha256": "603491d5a0fe5fda9dae896fd364a50059144c12f33cfdf217cd7de2daec5741"
     },
     {
+      "bytes": 3829,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/runtime_freshness_governance_closeout_index.py",
+      "sha256": "67a62691e4cb46a5d19dd2da983083be1b6abfade5f2e49db739afea35122746"
+    },
+    {
       "bytes": 4314,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/runtime_freshness_post_refresh_evidence_gate.py",
@@ -3146,10 +3164,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 5140,
+      "bytes": 5419,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "f67796c18901203ba04aa3870292cd822054b00cb688649ddca3367802c078aa"
+      "sha256": "92891809e94d52f134c1b70ab01f02311fe0ccdeb6b154239c89b54e9eb7a23f"
     },
     {
       "bytes": 2802,
@@ -3176,10 +3194,10 @@
       "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
     },
     {
-      "bytes": 7329,
+      "bytes": 7608,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "7643b168cdec4e26edfbd9400cf280cc53d136f0409e46207f3105814c61ea3a"
+      "sha256": "36ca72777f0f5e0af8c5c6f9083fb12912295542b57db11187dd0d7ebf0da7fd"
     },
     {
       "bytes": 3639,
@@ -3866,10 +3884,10 @@
       "sha256": "26fa5c1f75d50844573faa0f93f9227a62214716f0dac94fea2046e59c914024"
     },
     {
-      "bytes": 38058,
+      "bytes": 40945,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/builder_registry.py",
-      "sha256": "dcc8a2fe02dde09ff8f2d35e84fa1c1f5facb3fa160650cafb81c0c7458dadfa"
+      "sha256": "543974d2ee53a88e42887e7529197e80a095171abf6c34a3023fef03394e0d20"
     },
     {
       "bytes": 6966,
@@ -3942,6 +3960,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/runtime_evidence_integration.py",
       "sha256": "819542e16812abf87248c7227746660b96eaaa755a05c47272ae3109490726df"
+    },
+    {
+      "bytes": 19459,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/runtime_freshness_governance_closeout_index.py",
+      "sha256": "9a80772b1dd7dc2552bb1ad327ebdedb8bbc4e4e2226889dbce7c17157a31f3d"
     },
     {
       "bytes": 21335,
@@ -5442,6 +5466,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_evidence_sidecar_bundle.py",
       "sha256": "df15d5df5b52b6b18d1e81d1dd2e446ed5be105773c1ccbdcc4a5e863a47429b"
+    },
+    {
+      "bytes": 5060,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_freshness_governance_closeout_index_v1.py",
+      "sha256": "74570afb0531d3a10096f0ca6a5d400c3078db7562d89bb4cf3098e4d664842c"
     },
     {
       "bytes": 14045,
