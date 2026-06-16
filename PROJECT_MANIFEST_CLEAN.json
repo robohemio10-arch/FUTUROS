@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a086419b67de53f9b1067f1cdcf9f38b636983e35e1761894a659c5abf0e8ba1",
+  "aggregate_sha256": "10341f538c25d69064acd33f8bc382ad2ef4f24546a7ee4b339e1e24f5ac33c9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 152,
-    "manifested_files_total": 939,
-    "python_files": 696,
+    "manifested_files_total": 940,
+    "python_files": 697,
     "runtime_excluded_files_total": 0,
-    "test_files": 200,
-    "tracked_files_total": 940,
+    "test_files": 201,
+    "tracked_files_total": 941,
     "workflows": 1
   },
   "deterministic": true,
@@ -3194,10 +3194,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 27764,
+      "bytes": 35851,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "29ef047f0d31b61ba1f4326aa639b0fa86e0ad1928132d242c58f6911c6c98c1"
+      "sha256": "1aef315ccc5218fc5002ce6c7c6f5c6f6c459cea6305a86033ae6cdd32211111"
     },
     {
       "bytes": 2802,
@@ -4608,6 +4608,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
       "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
+    },
+    {
+      "bytes": 6408,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_aba01_real_paper_wallboard_v1.py",
+      "sha256": "193b268e50995b982ac4ac8cb933c61cd59e50e87e47e990c253e4e184819660"
     },
     {
       "bytes": 5877,
