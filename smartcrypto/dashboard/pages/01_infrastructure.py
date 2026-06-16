@@ -742,6 +742,325 @@ h1 {
     margin-top: 4px;
 }
 
+
+/* v6 readability scale: operational legibility for 2K/ultrawide workstations. */
+.fcc-v3-root {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 7px;
+    padding: 6px 8px;
+    font-size: 12px;
+}
+.fcc-v3-main {
+    grid-template-rows: 88px minmax(0, 1fr);
+    gap: 7px;
+}
+.fcc-v3-topbar {
+    min-height: 70px;
+    padding: 8px 11px;
+    border-radius: 7px;
+}
+.fcc-v3-title strong {
+    font-size: 24px;
+    line-height: 1.08;
+}
+.fcc-v3-title small {
+    font-size: 10px;
+    line-height: 1.25;
+    max-width: 1560px;
+}
+.fcc-v3-badges {
+    margin-top: 7px;
+    gap: 6px;
+}
+.fcc-v3-badge {
+    padding: 4px 8px;
+    font-size: 9px;
+    line-height: 1.1;
+}
+.fcc-v3-meta {
+    gap: 4px 10px;
+    font-size: 10px;
+    line-height: 1.2;
+}
+.fcc-v3-side-brand {
+    padding: 12px 10px 10px;
+}
+.fcc-v3-side-brand strong {
+    font-size: 12px;
+    line-height: 1.15;
+}
+.fcc-v3-side-brand span {
+    font-size: 10px;
+    line-height: 1.2;
+}
+.fcc-v3-nav {
+    padding: 8px 6px;
+}
+.fcc-v3-nav a {
+    min-height: 39px;
+    grid-template-columns: 27px 1fr;
+    padding: 5px 6px;
+    font-size: 11px;
+    line-height: 1.12;
+}
+.fcc-v3-nav a span {
+    width: 21px;
+    height: 21px;
+    font-size: 11px;
+}
+.fcc-v3-env {
+    padding: 7px 8px 10px;
+}
+.fcc-v3-env-title {
+    font-size: 9px;
+}
+.fcc-v3-env-row {
+    font-size: 9px;
+    line-height: 1.18;
+    padding: 3px 0;
+}
+.fcc-v3-env-row strong {
+    max-width: 104px;
+}
+.fcc-v3-root .sfc-aba01-grid {
+    grid-template-columns: 1.12fr 1.12fr .94fr 1.18fr 1.18fr;
+    grid-template-rows: minmax(0, 1.06fr) minmax(0, .96fr) minmax(0, .78fr);
+    gap: 7px;
+    height: calc(100vh - 108px);
+}
+.fcc-v3-root .sfc-aba01-panel {
+    padding: 8px;
+    border-radius: 7px;
+}
+.fcc-v3-root .sfc-aba01-panel-head {
+    padding-bottom: 5px;
+    margin-bottom: 6px;
+}
+.fcc-v3-root .sfc-aba01-panel-title {
+    font-size: 10.5px;
+    line-height: 1.18;
+    letter-spacing: .045em;
+}
+.fcc-v3-root .sfc-aba01-panel-subtitle {
+    font-size: 9px;
+    line-height: 1.18;
+}
+.fcc-v3-root .sfc-status-pill {
+    padding: 3px 7px;
+    font-size: 8.5px;
+    line-height: 1.05;
+}
+.fcc-v3-root .sfc-mini-kpi-grid {
+    gap: 6px;
+}
+.fcc-v3-root .sfc-mini-kpi {
+    min-height: 54px;
+    padding: 7px;
+    border-radius: 6px;
+}
+.fcc-v3-root .sfc-mini-kpi-label {
+    font-size: 9px;
+    line-height: 1.15;
+    margin-bottom: 3px;
+}
+.fcc-v3-root .sfc-mini-kpi-value {
+    font-size: 14px;
+    line-height: 1.08;
+    letter-spacing: .015em;
+}
+.fcc-v3-root .sfc-mini-kpi-helper {
+    font-size: 8.5px;
+    line-height: 1.12;
+    margin-top: 3px;
+}
+.fcc-v3-root .sfc-latency-svg,
+.fcc-v3-root .sfc-grid-preview,
+.fcc-v3-root .sfc-depth-preview {
+    max-height: 108px;
+    margin-top: 6px;
+}
+.fcc-v3-root svg {
+    max-height: 112px;
+}
+.fcc-v3-root .sfc-status-row {
+    padding: 4px 0;
+    font-size: 9.5px;
+    line-height: 1.18;
+}
+.fcc-v3-root .sfc-status-row strong {
+    font-size: 9.5px;
+}
+.fcc-v4-selector-row {
+    gap: 7px;
+    margin: 6px 0;
+    padding: 5px;
+}
+.fcc-v4-selector-row span {
+    font-size: 8.5px;
+}
+.fcc-v4-chip {
+    min-height: 18px;
+    padding: 3px 6px;
+    font-size: 8.5px;
+}
+.fcc-v5-split-3,
+.fcc-v5-split-2,
+.fcc-v5-provider-grid {
+    gap: 7px;
+}
+.fcc-v5-chart-card,
+.fcc-v5-table-card,
+.fcc-v5-strip-card {
+    padding: 7px;
+    border-radius: 6px;
+}
+.fcc-v5-card-title {
+    font-size: 9.5px;
+    line-height: 1.12;
+    margin-bottom: 6px;
+}
+.fcc-v5-terminal-chart,
+.fcc-v5-depth-chart {
+    height: 112px;
+}
+.fcc-v5-terminal-chart::after,
+.fcc-v5-depth-chart::after {
+    font-size: 8.5px;
+}
+.fcc-v5-row {
+    gap: 7px;
+    padding: 4px 0;
+    font-size: 9px;
+    line-height: 1.18;
+}
+.fcc-v5-row strong {
+    font-size: 9px;
+}
+.fcc-v5-command-row {
+    gap: 7px;
+    margin-bottom: 7px;
+}
+.fcc-v5-command-card {
+    min-height: 46px;
+    padding: 8px;
+    font-size: 10px;
+    line-height: 1.12;
+}
+.fcc-v5-command-card small {
+    font-size: 8.5px;
+    margin-top: 3px;
+}
+.fcc-v5-hard-row {
+    gap: 7px;
+    padding: 7px;
+    margin: 7px 0;
+}
+.fcc-v5-hard-card {
+    padding: 8px;
+    font-size: 10px;
+    line-height: 1.12;
+}
+.fcc-v5-mini-donut {
+    width: 74px;
+    height: 74px;
+}
+.fcc-v5-mini-donut::after {
+    inset: 15px;
+}
+.fcc-v5-muted-note {
+    font-size: 8.8px;
+    line-height: 1.2;
+}
+
+
+/* v7 readability layout balance: prevent vertical word breaks and widen dense internal cards. */
+.fcc-v3-root .sfc-mini-kpi-value,
+.fcc-v3-root .fcc-v5-row strong,
+.fcc-v3-root .fcc-v5-command-card,
+.fcc-v3-root .fcc-v5-hard-card {
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fcc-v3-root .sfc-mini-kpi-helper,
+.fcc-v3-root .sfc-mini-kpi-label {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+.fcc-v7-portfolio-layout,
+.fcc-v7-ai-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    min-height: 0;
+}
+.fcc-v7-two-col .sfc-mini-kpi-grid,
+.fcc-v7-ai-layout .sfc-mini-kpi-grid {
+    grid-template-columns: repeat(2, minmax(132px, 1fr));
+}
+.fcc-v7-portfolio-layout .fcc-v5-table-card {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 6px 8px;
+}
+.fcc-v7-portfolio-layout .fcc-v5-mini-donut {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto;
+}
+.fcc-v7-portfolio-layout .fcc-v5-mini-donut::after {
+    inset: 13px;
+}
+.fcc-v7-grid-layout {
+    grid-template-columns: minmax(245px, .92fr) minmax(360px, 1.42fr) minmax(245px, .92fr);
+    align-items: stretch;
+}
+.fcc-v7-grid-kpis .sfc-mini-kpi-grid {
+    grid-template-columns: repeat(2, minmax(118px, 1fr));
+}
+.fcc-v7-grid-kpis .sfc-mini-kpi,
+.fcc-v7-ai-layout .sfc-mini-kpi,
+.fcc-v7-portfolio-layout .sfc-mini-kpi {
+    min-height: 58px;
+}
+.fcc-v7-grid-kpis .sfc-mini-kpi-value,
+.fcc-v7-ai-layout .sfc-mini-kpi-value,
+.fcc-v7-portfolio-layout .sfc-mini-kpi-value {
+    font-size: 13px;
+}
+.fcc-v7-grid-kpis .fcc-v4-selector-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+}
+.fcc-v7-grid-kpis .fcc-v4-selector-row div {
+    min-width: 0;
+}
+.fcc-v7-grid-kpis .fcc-v4-chip {
+    min-width: 28px;
+}
+.fcc-v7-ai-layout .sfc-status-row,
+.fcc-v7-portfolio-layout .fcc-v5-row,
+.fcc-v7-grid-layout .fcc-v5-row {
+    font-size: 9px;
+}
+.fcc-v7-ai-footer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+}
+.fcc-v7-ai-footer .fcc-v5-row {
+    border: 1px solid rgba(59,135,183,.20);
+    border-radius: 5px;
+    padding: 5px 6px;
+    background: rgba(3,13,22,.38);
+}
+
 @media (max-width: 1380px) {
     .fcc-v3-root { grid-template-columns: 142px minmax(0, 1fr); }
     .fcc-v3-root .sfc-aba01-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; }
@@ -1214,7 +1533,7 @@ def _portfolio_risk_command_panel(portfolio: Mapping[str, Any]) -> str:
         )
         + '</div>'
     )
-    body = '<div class="fcc-v5-split-2"><div>' + kpis + '</div>' + side + '</div>'
+    body = '<div class="fcc-v7-portfolio-layout"><div class="fcc-v7-two-col">' + kpis + '</div>' + side + '</div>'
     body += _snapshot_source_hint(portfolio, PORTFOLIO_RISK_SNAPSHOT_PATH, "Aba 02")
     return _panel_html("2 · Portfólio e Risco", "Resumo financeiro visual; fonte autoritativa permanece no snapshot da Aba 02.", status, body)
 
@@ -1269,7 +1588,7 @@ def _grid_spot_command_panel(grid: Mapping[str, Any]) -> str:
         )
         + '</div>'
     )
-    body = '<div class="fcc-v5-split-3"><div>' + kpi_body + _symbol_timeframe_selector_html() + '</div>' + chart + side + '</div>'
+    body = '<div class="fcc-v5-split-3 fcc-v7-grid-layout"><div class="fcc-v7-grid-kpis">' + kpi_body + _symbol_timeframe_selector_html() + '</div>' + chart + side + '</div>'
     return _panel_html("3 · KPI’s Monitor", "BTC/USDT e ETH/USDT paper; canal e book sempre derivados de snapshot público autorizado.", status, body, primary=True)
 
 
@@ -1297,7 +1616,7 @@ def _opportunities_command_panel(opportunities: Mapping[str, Any]) -> str:
 def _ai_governance_command_panel(ai_snapshot: Mapping[str, Any]) -> str:
     status = _snapshot_status(ai_snapshot)
     drift_status = _text_from_snapshot(ai_snapshot, "drift_status", "psi_status", "model_drift_status", default="UNKNOWN")
-    body = render_card_grid(
+    body = '<div class="fcc-v7-ai-layout">' + render_card_grid(
         (
             render_compact_kpi("Estado do modelo", _text_from_snapshot(ai_snapshot, "model_state", "model_status", "qlib_status"), helper="shadow/research", status=status),
             render_compact_kpi("Champion", _text_from_snapshot(ai_snapshot, "champion", "champion_model", "model_version"), helper="registry", status=status),
@@ -1310,11 +1629,11 @@ def _ai_governance_command_panel(ai_snapshot: Mapping[str, Any]) -> str:
         ),
         css_class="sfc-mini-kpi-grid",
     )
-    body += _status_rows_html(
+    body += '<div class="fcc-v7-ai-footer">' + _compact_rows_html(
         ("Matriz de confusão", _text_from_snapshot(ai_snapshot, "confusion_matrix_status", "classification_status")),
         ("Autoridade final", "RiskManager"),
         ("Promoção automática", "BLOCKED"),
-    )
+    ) + '</div></div>'
     return _panel_html("5 · IA / Qlib Governance", "Qlib rankeia, IA Shadow veta qualidade, RiskManager decide.", status, body)
 
 

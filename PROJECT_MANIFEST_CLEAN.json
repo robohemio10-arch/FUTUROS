@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "440bfbad2cfeb2b84395984e8249f013e0b2b5abd41297f75c154116cea072f6",
+  "aggregate_sha256": "2b975b6fcc51cdd9948195f04f979ef67b314001c9c6b99ca4ca5610648e780c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3194,10 +3194,10 @@
       "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
     },
     {
-      "bytes": 85346,
+      "bytes": 92094,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/01_infrastructure.py",
-      "sha256": "5568780011a2d8f9c0c147a7e61d9ea2cfe012378b9d28bfc786b4fb33f1f926"
+      "sha256": "6b6e22f394caf5943c4fae4e8f3e4522ad3f65fbfe99f6706e00eaab30de3001"
     },
     {
       "bytes": 2802,
