@@ -62,6 +62,22 @@ PAGE_SUBTITLE = "Telemetria de infraestrutura, conectividade, fontes e evidênci
 ACTIVE_PAGE = "01_infrastructure"
 SNAPSHOT_PATH = "data/reports/dashboard_infrastructure_snapshot.json"
 REAL_PAPER_SNAPSHOT_PATH = "data/reports/dashboard_real_paper_sources_snapshot.json"
+PORTFOLIO_RISK_SNAPSHOT_PATH = "data/reports/dashboard_portfolio_risk_snapshot.json"
+GRID_MONITOR_SNAPSHOT_PATH = "data/reports/dashboard_grid_monitor_snapshot.json"
+OPPORTUNITY_SCANNER_SNAPSHOT_PATH = "data/reports/dashboard_opportunity_scanner_snapshot.json"
+AI_GOVERNANCE_SNAPSHOT_PATH = "data/reports/dashboard_ai_governance_snapshot.json"
+ACTIVE_CONTROLS_SNAPSHOT_PATH = "data/reports/dashboard_active_controls_snapshot.json"
+QUANTITATIVE_REPORTS_SNAPSHOT_PATH = "data/reports/dashboard_quantitative_reports_snapshot.json"
+ALERTS_MESSAGING_SNAPSHOT_PATH = "data/reports/dashboard_alerts_messaging_snapshot.json"
+AUXILIARY_SNAPSHOT_PATHS = {
+    "portfolio": PORTFOLIO_RISK_SNAPSHOT_PATH,
+    "grid": GRID_MONITOR_SNAPSHOT_PATH,
+    "opportunities": OPPORTUNITY_SCANNER_SNAPSHOT_PATH,
+    "ai": AI_GOVERNANCE_SNAPSHOT_PATH,
+    "controls": ACTIVE_CONTROLS_SNAPSHOT_PATH,
+    "reports": QUANTITATIVE_REPORTS_SNAPSHOT_PATH,
+    "alerts": ALERTS_MESSAGING_SNAPSHOT_PATH,
+}
 EXPECTED_SCHEMA_VERSION = "dashboard_infrastructure_snapshot_v1"
 REQUIRED_SECTIONS = (
     "status_summary",
@@ -117,20 +133,23 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
     _render_visual_command_center(snapshot, ui=target_ui)
     target_ui.markdown(
         '<div class="sfc-readonly-banner">'
-        "TABELA CANÔNICA READ-ONLY · contrato institucional preservado."
+        "TABELA CANÔNICA READ-ONLY · detalhamento preservado em expander inferior."
         "</div>",
         unsafe_allow_html=True,
     )
-    render_snapshot_page(
-        title=PAGE_TITLE,
-        snapshot_path=SNAPSHOT_PATH,
-        snapshot=snapshot,
-        section_order=REQUIRED_SECTIONS,
-        metric_specs=METRICS,
-        ui=target_ui,
-        render_chrome=False,
-    )
-    _render_runtime_evidence_stack(snapshot, ui=target_ui)
+    with target_ui.expander("Detalhamento canônico da Aba 01 · snapshot-first/read-only", expanded=False):
+        real_paper_snapshot = _load_real_paper_snapshot()
+        target_ui.markdown(_real_paper_wallboard_html(real_paper_snapshot), unsafe_allow_html=True)
+        render_snapshot_page(
+            title=PAGE_TITLE,
+            snapshot_path=SNAPSHOT_PATH,
+            snapshot=snapshot,
+            section_order=REQUIRED_SECTIONS,
+            metric_specs=METRICS,
+            ui=target_ui,
+            render_chrome=False,
+        )
+        _render_runtime_evidence_stack(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
 
 
@@ -180,10 +199,8 @@ def _render_visual_command_center(snapshot: Mapping[str, Any], *, ui: Any) -> No
         unsafe_allow_html=True,
     )
 
-    real_paper_snapshot = _load_real_paper_snapshot()
-    ui.markdown(_telemetry_strip_html(snapshot), unsafe_allow_html=True)
-    ui.markdown(_real_paper_wallboard_html(real_paper_snapshot), unsafe_allow_html=True)
-    ui.markdown(_main_grid_html(snapshot), unsafe_allow_html=True)
+    auxiliaries = _load_auxiliary_snapshots()
+    ui.markdown(_main_grid_html(snapshot, auxiliaries), unsafe_allow_html=True)
 
 
 def _hero_html(
@@ -301,18 +318,422 @@ def _telemetry_strip_html(snapshot: Mapping[str, Any]) -> str:
     return f'<section class="sfc-telemetry-strip">{render_card_grid(cards, css_class="sfc-telemetry-strip")}</section>'
 
 
-def _main_grid_html(snapshot: Mapping[str, Any]) -> str:
+def _main_grid_html(
+    snapshot: Mapping[str, Any],
+    auxiliaries: Mapping[str, Mapping[str, Any]],
+) -> str:
     return (
         '<section class="sfc-aba01-grid">'
-        f"{_connectivity_panel(snapshot)}"
-        f"{_runtime_panel(snapshot)}"
-        f"{_rate_limit_panel(snapshot)}"
-        f"{_market_data_panel(snapshot)}"
-        f"{_host_panel(snapshot)}"
-        f"{_institutional_area_panel(snapshot)}"
-        f"{_events_panel(snapshot)}"
-        f"{_source_health_panel(snapshot)}"
+        f"{_telemetry_command_panel(snapshot)}"
+        f"{_portfolio_risk_command_panel(auxiliaries.get('portfolio', {}))}"
+        f"{_grid_spot_command_panel(auxiliaries.get('grid', {}))}"
+        f"{_opportunities_command_panel(auxiliaries.get('opportunities', {}))}"
+        f"{_ai_governance_command_panel(auxiliaries.get('ai', {}))}"
+        f"{_active_controls_command_panel(auxiliaries.get('controls', {}))}"
+        f"{_quantitative_reports_command_panel(auxiliaries.get('reports', {}))}"
+        f"{_alerts_messaging_command_panel(auxiliaries.get('alerts', {}))}"
         "</section>"
+    )
+
+
+
+def _load_auxiliary_snapshots() -> dict[str, Mapping[str, Any]]:
+    return {
+        key: _load_optional_dashboard_snapshot(snapshot_path)
+        for key, snapshot_path in AUXILIARY_SNAPSHOT_PATHS.items()
+    }
+
+
+def _load_optional_dashboard_snapshot(snapshot_path: str) -> Mapping[str, Any]:
+    candidate = Path(snapshot_path)
+    if not candidate.exists():
+        return _optional_dashboard_snapshot_fallback(snapshot_path, "source_missing", "UNKNOWN")
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8"))
+    except OSError as exc:
+        return _optional_dashboard_snapshot_fallback(snapshot_path, f"source_read_failed:{type(exc).__name__}", "ERROR")
+    except json.JSONDecodeError as exc:
+        return _optional_dashboard_snapshot_fallback(snapshot_path, f"source_json_invalid:{exc.__class__.__name__}", "ERROR")
+    if not isinstance(payload, Mapping):
+        return _optional_dashboard_snapshot_fallback(snapshot_path, "source_schema_invalid", "ERROR")
+    return payload
+
+
+def _optional_dashboard_snapshot_fallback(snapshot_path: str, reason: str, status: str) -> Mapping[str, Any]:
+    return {
+        "status": status,
+        "dashboard_status": status,
+        "reason": reason,
+        "snapshot_path": snapshot_path,
+        "runtime_mode": "paper",
+        "safety": {
+            "dashboard_readonly": True,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+            "sends_orders": False,
+            "sends_notifications": False,
+            "changes_risk": False,
+            "changes_model": False,
+        },
+    }
+
+
+def _telemetry_command_panel(snapshot: Mapping[str, Any]) -> str:
+    latency = _section(snapshot, "latency")
+    websockets = _section(snapshot, "websockets")
+    rate_limits = _section(snapshot, "rate_limits")
+    host = _section(snapshot, "host")
+    redis = _section(snapshot, "redis")
+    docker = _section(snapshot, "docker")
+    status = worst_status(
+        _status_from(latency),
+        _status_from(websockets),
+        _status_from(rate_limits),
+        _status_from(host),
+        _status_from(redis),
+        _status_from(docker),
+    )
+    cards = (
+        render_compact_kpi(
+            "Ping VPS→Redis",
+            _format_ms(_first_value(redis, "ping_ms", "latency_ms", "redis_ping_ms")),
+            helper="bridge/cache",
+            status=_status_from(redis),
+        ),
+        render_compact_kpi(
+            "Ping VPS→Exchange pública",
+            _format_ms(_first_value(latency, "exchange_ping_ms", "rest_latency_ms", "latency_p50_ms")),
+            helper="REST público",
+            status=_status_from(latency),
+        ),
+        render_compact_kpi(
+            "API Weight",
+            _format_pct(_first_value(rate_limits, "api_weight_pct", "used_weight_pct")),
+            helper="rate limit",
+            status=_rate_limit_status(_first_value(rate_limits, "api_weight_pct", "used_weight_pct")),
+        ),
+        render_compact_kpi("CPU", _format_pct(host.get("cpu_pct")), helper="host", status=_resource_status(host.get("cpu_pct"))),
+        render_compact_kpi("RAM", _format_pct(_first_value(host, "memory_pct", "ram_pct")), helper=_memory_absolute(host), status=_resource_status(_first_value(host, "memory_pct", "ram_pct"))),
+        render_compact_kpi("Disk I/O", _disk_io_value(host), helper="read/write", status=_status_from(host)),
+        render_compact_kpi(
+            "WebSocket Market Data",
+            _first_text(websockets.get("market_data_status"), websockets.get("status"), "UNKNOWN"),
+            helper="stream público",
+            status=_status_from(websockets),
+        ),
+        render_compact_kpi(
+            "User Data Stream",
+            _first_text(websockets.get("user_data_stream_status"), websockets.get("paper_user_stream_status"), "N/A"),
+            helper="paper/shadow",
+            status=_status_from(websockets),
+        ),
+    )
+    body = render_card_grid(cards, css_class="sfc-mini-kpi-grid")
+    body += render_latency_scatter_svg(_latency_series(latency), label="Latência API pública · últimos eventos", status=status)
+    return _panel_html(
+        "1 · Telemetria de Infraestrutura e Conexão",
+        "Latência e conectividade, Redis, Docker, WebSocket, recursos e Market data health.",
+        status,
+        body,
+        primary=True,
+    )
+
+
+def _portfolio_risk_command_panel(portfolio: Mapping[str, Any]) -> str:
+    status = _snapshot_status(portfolio)
+    body = render_card_grid(
+        (
+            render_compact_kpi("Saldo disponível", _money_from_snapshot(portfolio, "available_balance", "free_balance", "available_usdt"), helper="USDT", status=status),
+            render_compact_kpi("Saldo bloqueado", _money_from_snapshot(portfolio, "blocked_balance", "reserved_balance", "locked_usdt"), helper="ordens/fundos", status=status),
+            render_compact_kpi("Exposição em cripto", _money_from_snapshot(portfolio, "crypto_exposure", "total_exposure", "exposure_usdt"), helper="notional", status=status),
+            render_compact_kpi("PnL realizado", _money_from_snapshot(portfolio, "realized_pnl", "realized_pnl_abs", "pnl_realized"), helper="líquido", status=status),
+            render_compact_kpi("PnL flutuante", _money_from_snapshot(portfolio, "unrealized_pnl", "floating_pnl", "pnl_unrealized"), helper="atual", status=status),
+            render_compact_kpi("Drawdown máximo", _pct_from_snapshot(portfolio, "max_drawdown_pct", "drawdown_max_pct", "max_drawdown"), helper="risco", status=status),
+            render_compact_kpi("VaR / CVaR", _var_cvar_value(portfolio), helper="cauda", status=status),
+            render_compact_kpi("Reconciliação", _text_from_snapshot(portfolio, "reconciliation_status", "reconciliation", "ledger_status"), helper="fonte financeira", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _snapshot_source_hint(portfolio, PORTFOLIO_RISK_SNAPSHOT_PATH, "Aba 02")
+    return _panel_html("2 · Portfólio e Risco", "Resumo financeiro visual; fonte autoritativa permanece no snapshot da Aba 02.", status, body)
+
+
+def _grid_spot_command_panel(grid: Mapping[str, Any]) -> str:
+    status = _snapshot_status(grid)
+    body = render_card_grid(
+        (
+            render_compact_kpi("Par", _text_from_snapshot(grid, "pair", "symbol", default="BTC/USDT"), helper="paper", status=status),
+            render_compact_kpi("Preço atual", _money_from_snapshot(grid, "current_price", "price", "last_price"), helper="USDT", status=status),
+            render_compact_kpi("Limite superior", _money_from_snapshot(grid, "upper_price", "grid_upper", "upper_limit"), helper="canal", status=status),
+            render_compact_kpi("Limite inferior", _money_from_snapshot(grid, "lower_price", "grid_lower", "lower_limit"), helper="canal", status=status),
+            render_compact_kpi("Step", _pct_from_snapshot(grid, "grid_step_pct", "step_pct", "step"), helper="grid", status=status),
+            render_compact_kpi("Linhas ativas", _text_from_snapshot(grid, "active_lines", "active_grid_lines", "lines_active"), helper="níveis", status=status),
+            render_compact_kpi("Status de poeira", _text_from_snapshot(grid, "dust_status", "dust", default="UNKNOWN"), helper="dust", status=status),
+            render_compact_kpi("Últimas execuções", _text_from_snapshot(grid, "recent_executions_count", "executions_count", "trades_count"), helper="paper", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += render_grid_channel_preview(status=status)
+    body += render_depth_preview(status=status)
+    return _panel_html("3 · Grid Spot Monitor", "BTC/USDT paper, canal do grid, book público e execuções observadas.", status, body, primary=True)
+
+
+def _opportunities_command_panel(opportunities: Mapping[str, Any]) -> str:
+    status = worst_status(_snapshot_status(opportunities), "HARD_BLOCKED")
+    body = render_card_grid(
+        (
+            render_compact_kpi("Scanner spread", _text_from_snapshot(opportunities, "top_spread", "spread_top", "scanner_status"), helper="top 5", status=_snapshot_status(opportunities)),
+            render_compact_kpi("OFI", _text_from_snapshot(opportunities, "ofi", "order_flow_imbalance", "ofi_score"), helper="imbalance", status=_snapshot_status(opportunities)),
+            render_compact_kpi("Lucro projetado", _money_from_snapshot(opportunities, "projected_net_profit", "net_profit_projected", "expected_value"), helper="simulado", status=_snapshot_status(opportunities)),
+            render_compact_kpi("Radar lançamentos", _text_from_snapshot(opportunities, "launch_radar_status", "launches_status", "radar_status"), helper="read-only", status=_snapshot_status(opportunities)),
+            render_compact_kpi("Countdowns", _text_from_snapshot(opportunities, "countdowns", "countdown_count", "launch_count"), helper="eventos", status=_snapshot_status(opportunities)),
+            _hard_blocked_tile_html("Sniper Real", "HARD_BLOCKED"),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _status_rows_html(
+        ("Arbitragem real", "HARD_BLOCKED"),
+        ("Multi-exchange live", "HARD_BLOCKED"),
+        ("Uso operacional", "simulação/paper/shadow"),
+    )
+    return _panel_html("4 · Arbitragem e Lançamentos", "Scanner read-only; oportunidades reais permanecem bloqueadas.", status, body)
+
+
+def _ai_governance_command_panel(ai_snapshot: Mapping[str, Any]) -> str:
+    status = _snapshot_status(ai_snapshot)
+    drift_status = _text_from_snapshot(ai_snapshot, "drift_status", "psi_status", "model_drift_status", default="UNKNOWN")
+    body = render_card_grid(
+        (
+            render_compact_kpi("Estado do modelo", _text_from_snapshot(ai_snapshot, "model_state", "model_status", "qlib_status"), helper="shadow/research", status=status),
+            render_compact_kpi("Champion", _text_from_snapshot(ai_snapshot, "champion", "champion_model", "model_version"), helper="registry", status=status),
+            render_compact_kpi("Challenger", _text_from_snapshot(ai_snapshot, "challenger", "challenger_model", default="UNKNOWN"), helper="comparativo", status=status),
+            render_compact_kpi("Drift", drift_status, helper="PSI/KS", status=drift_status),
+            render_compact_kpi("PSI", _text_from_snapshot(ai_snapshot, "psi", "psi_global", "drift_psi"), helper="global", status=drift_status),
+            render_compact_kpi("Reward", _text_from_snapshot(ai_snapshot, "reward_mean", "average_reward", "reward"), helper="research", status=status),
+            render_compact_kpi("Ação sugerida", _text_from_snapshot(ai_snapshot, "suggested_action", "ai_suggested_action", default="NO_TRADE"), helper="IA sugere", status=status),
+            render_compact_kpi("Ação permitida", _text_from_snapshot(ai_snapshot, "permitted_action", "riskmanager_action", default="somente simulação"), helper="RiskManager autoriza", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _status_rows_html(
+        ("Matriz de confusão", _text_from_snapshot(ai_snapshot, "confusion_matrix_status", "classification_status")),
+        ("Autoridade final", "RiskManager"),
+        ("Promoção automática", "BLOCKED"),
+    )
+    return _panel_html("5 · IA / Qlib Governance", "Qlib rankeia, IA Shadow veta qualidade, RiskManager decide.", status, body)
+
+
+def _active_controls_command_panel(controls: Mapping[str, Any]) -> str:
+    status = worst_status(_snapshot_status(controls), "HARD_BLOCKED")
+    body = render_card_grid(
+        (
+            _disabled_command_tile_html("Kill Switch Paper", "stub governado"),
+            _disabled_command_tile_html("Pausar Novas Entradas", "dry-run"),
+            _disabled_command_tile_html("Reiniciar Grid", "paper stub"),
+            _disabled_command_tile_html("Alterar Parâmetros do Grid", "somente visual"),
+            _hard_blocked_tile_html("Market Sell All Real", "HARD_BLOCKED"),
+            _hard_blocked_tile_html("Sniper Real", "HARD_BLOCKED"),
+            _hard_blocked_tile_html("Live Orders", "HARD_BLOCKED"),
+            render_compact_kpi("Readiness", _text_from_snapshot(controls, "readiness_status", "thirty_day_readiness_status", default="BLOCKED"), helper="gate", status="BLOCKED"),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _status_rows_html(
+        ("CommandBus", _text_from_snapshot(controls, "command_bus_status", "commandbus_status", default="read-only")),
+        ("RiskManager Approval", _text_from_snapshot(controls, "riskmanager_approval", "risk_manager_status", default="AUTHORITY")),
+        ("RBAC", _text_from_snapshot(controls, "rbac_status", default="read-only")),
+        ("Idempotency Key", _text_from_snapshot(controls, "idempotency_status", default="visual-only")),
+        ("Audit Log", _text_from_snapshot(controls, "audit_log_status", default="required")),
+    )
+    return _panel_html("6 · Painel de Controle Ativo", "Comandos institucionais desabilitados; ações sensíveis hard-blocked.", status, body, wide=True)
+
+
+def _quantitative_reports_command_panel(reports: Mapping[str, Any]) -> str:
+    status = _snapshot_status(reports)
+    body = render_card_grid(
+        (
+            render_compact_kpi("Performance acumulada", _money_from_snapshot(reports, "cumulative_performance", "net_pnl", "pnl_net"), helper="USDT", status=status),
+            render_compact_kpi("Sharpe", _text_from_snapshot(reports, "sharpe", "sharpe_ratio"), helper="risco", status=status),
+            render_compact_kpi("Sortino", _text_from_snapshot(reports, "sortino", "sortino_ratio"), helper="risco", status=status),
+            render_compact_kpi("Calmar", _text_from_snapshot(reports, "calmar", "calmar_ratio"), helper="risco", status=status),
+            render_compact_kpi("Profit Factor", _text_from_snapshot(reports, "profit_factor", "pf"), helper="líquido", status=status),
+            render_compact_kpi("Win Rate", _pct_from_snapshot(reports, "win_rate", "win_rate_pct"), helper="trades", status=status),
+            render_compact_kpi("Drawdown máximo", _pct_from_snapshot(reports, "max_drawdown_pct", "drawdown_max_pct"), helper="MDD", status=status),
+            render_compact_kpi("TCA Summary", _text_from_snapshot(reports, "tca_status", "tca_summary", default="UNKNOWN"), helper="custos", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _status_rows_html(
+        ("Slippage", _text_from_snapshot(reports, "slippage_bps", "avg_slippage_bps")),
+        ("Fees", _money_from_snapshot(reports, "fees_total", "total_fees")),
+        ("Spread Cost", _money_from_snapshot(reports, "spread_cost", "spread_cost_total")),
+        ("Dataset rebuild na UI", "DISABLED"),
+    )
+    return _panel_html("7 · Relatórios Quantitativos & TCA", "Métricas líquidas, custos e evidências sem recomputar dataset.", status, body, primary=True)
+
+
+def _alerts_messaging_command_panel(alerts: Mapping[str, Any]) -> str:
+    status = _snapshot_status(alerts)
+    body = render_card_grid(
+        (
+            render_compact_kpi("Fila total", _text_from_snapshot(alerts, "queue_total", "notifications_total", "events_total"), helper="dispatcher", status=status),
+            render_compact_kpi("Enviadas", _text_from_snapshot(alerts, "sent_total", "sent_count"), helper="backend", status=status),
+            render_compact_kpi("Pendentes", _text_from_snapshot(alerts, "pending_total", "pending_count"), helper="fila", status=status),
+            render_compact_kpi("Falhas", _text_from_snapshot(alerts, "failed_total", "failure_count"), helper="retry", status=status),
+            render_compact_kpi("Telegram status", _text_from_snapshot(alerts, "telegram_status", "telegram_provider_status"), helper="backend status", status=status),
+            render_compact_kpi("NTFY status", _text_from_snapshot(alerts, "ntfy_status", "ntfy_provider_status"), helper="backend status", status=status),
+            render_compact_kpi("Retry/backoff", _text_from_snapshot(alerts, "retry_backoff", "backoff_status", "backoff_seconds"), helper="rate", status=status),
+            render_compact_kpi("Última entrega", _text_from_snapshot(alerts, "last_delivery_utc", "last_sent_utc", "last_event_utc"), helper="UTC", status=status),
+        ),
+        css_class="sfc-mini-kpi-grid",
+    )
+    body += _snapshot_source_hint(alerts, ALERTS_MESSAGING_SNAPSHOT_PATH, "Aba 08")
+    body += _status_rows_html(("Eventos recentes", _text_from_snapshot(alerts, "recent_events_count", "events_recent_count")))
+    return _panel_html("8 · Central de Alertas & Mensageria", "Status do backend de mensagens; a página apenas observa o dispatcher.", status, body)
+
+
+def _hard_blocked_tile_html(title: str, value: str) -> str:
+    return render_compact_kpi(title, value, helper="bloqueio institucional", status="HARD_BLOCKED")
+
+
+def _disabled_command_tile_html(title: str, value: str) -> str:
+    return render_compact_kpi(title, value, helper="read-only", status="DISABLED")
+
+
+def _snapshot_status(snapshot: Mapping[str, Any]) -> str:
+    return _first_text(
+        snapshot.get("dashboard_status"),
+        snapshot.get("status"),
+        snapshot.get("global_status"),
+        _section(snapshot, "status_summary").get("status"),
+        _section(snapshot, "audit").get("status"),
+        "UNKNOWN",
+    )
+
+
+def _text_from_snapshot(snapshot: Mapping[str, Any], *keys: str, default: str = "UNKNOWN") -> str:
+    value = _snapshot_lookup(snapshot, keys)
+    return _first_text(value, default)
+
+
+def _money_from_snapshot(snapshot: Mapping[str, Any], *keys: str) -> str:
+    value = _snapshot_lookup(snapshot, keys)
+    formatted = _format_money(value)
+    return formatted if formatted != "UNKNOWN" else _first_text(value, "UNKNOWN")
+
+
+def _pct_from_snapshot(snapshot: Mapping[str, Any], *keys: str) -> str:
+    value = _snapshot_lookup(snapshot, keys)
+    formatted = _format_pct(value)
+    return formatted if formatted != "UNKNOWN" else _first_text(value, "UNKNOWN")
+
+
+def _var_cvar_value(snapshot: Mapping[str, Any]) -> str:
+    var_value = _snapshot_lookup(snapshot, ("var_99", "var_95", "value_at_risk"))
+    cvar_value = _snapshot_lookup(snapshot, ("cvar_99", "cvar_95", "expected_shortfall"))
+    var_text = _format_money(var_value)
+    cvar_text = _format_money(cvar_value)
+    if var_text == "UNKNOWN" and cvar_text == "UNKNOWN":
+        return "UNKNOWN"
+    return f"VaR {var_text} / CVaR {cvar_text}"
+
+
+def _snapshot_lookup(snapshot: Mapping[str, Any], keys: Sequence[str]) -> Any:
+    sections = (
+        "status_summary",
+        "summary",
+        "metrics",
+        "portfolio",
+        "risk",
+        "grid",
+        "market",
+        "model",
+        "qlib",
+        "ai_shadow",
+        "controls",
+        "performance",
+        "tca",
+        "alerts",
+        "messaging",
+        "dispatcher",
+        "audit",
+    )
+    for key in keys:
+        value = _nested_value(snapshot, key)
+        if _has_value(value):
+            return value
+    for section in sections:
+        container = _section(snapshot, section)
+        for key in keys:
+            value = _nested_value(container, key)
+            if _has_value(value):
+                return value
+    return None
+
+
+def _nested_value(payload: Mapping[str, Any], dotted_key: str) -> Any:
+    current: Any = payload
+    for part in dotted_key.split("."):
+        if not isinstance(current, Mapping):
+            return None
+        current = current.get(part)
+    return current
+
+
+def _has_value(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return True
+
+
+def _first_value(section: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = section.get(key)
+        if _has_value(value):
+            return value
+    return None
+
+
+def _resource_status(value: Any) -> str:
+    pct = _numeric_or_zero(value)
+    if pct >= 95:
+        return "error"
+    if pct >= 80:
+        return "warning"
+    if pct > 0:
+        return "ok"
+    return "unknown"
+
+
+def _memory_absolute(host: Mapping[str, Any]) -> str:
+    used = _first_value(host, "memory_used_gb", "ram_used_gb")
+    total = _first_value(host, "memory_total_gb", "ram_total_gb")
+    if _has_value(used) and _has_value(total):
+        return f"{_first_text(used)} / {_first_text(total)} GB"
+    return "uso atual"
+
+
+def _disk_io_value(host: Mapping[str, Any]) -> str:
+    read_value = _first_value(host, "disk_read_mb_s", "disk_read_mbps", "disk_read")
+    write_value = _first_value(host, "disk_write_mb_s", "disk_write_mbps", "disk_write")
+    if not _has_value(read_value) and not _has_value(write_value):
+        return "UNKNOWN"
+    return f"R {_first_text(read_value, '0')} / W {_first_text(write_value, '0')}"
+
+
+def _snapshot_source_hint(snapshot: Mapping[str, Any], snapshot_path: str, page_label: str) -> str:
+    status = _snapshot_status(snapshot)
+    reason = _first_text(snapshot.get("reason"), snapshot.get("missing_optional_source_reason"), "fonte carregada ou fallback seguro")
+    return (
+        '<div class="sfc-table-empty">'
+        f"Snapshot: {escape(snapshot_path)} · {escape(page_label)} · status={escape(status_to_label(status))} · {escape(reason)}"
+        "</div>"
     )
 
 
