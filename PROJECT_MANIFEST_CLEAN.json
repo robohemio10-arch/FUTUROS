@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "3c5b7249658ab544cfb0773f144fee3f7ff7b42d7e301babace25eee0ea172e0",
+  "aggregate_sha256": "3316d75ededc881b672ce4ac92cd0c5d84a535f220ea2036f5d1d12755a1c73c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -5456,10 +5456,10 @@
       "sha256": "2e1df45d4c806aaee7afc75ee0d37ee2a877c331cd2b5eb07a36c784a6bf5231"
     },
     {
-      "bytes": 16192,
+      "bytes": 17432,
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_freshness_producer_entrypoint_static_safety_audit_v1.py",
-      "sha256": "e45bed6c4baef5d614e841bee2a03218c1f04b3348f076a68eab8dedab7ceaac"
+      "sha256": "5c1de8a9f5cfd9bd4d8ee9403ecc98967b9d211dcfa4218973d565fe08c6e2bb"
     },
     {
       "bytes": 6338,

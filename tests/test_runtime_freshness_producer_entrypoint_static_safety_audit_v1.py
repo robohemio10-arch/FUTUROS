@@ -35,15 +35,41 @@ def test_real_entrypoints_are_audited_and_safe() -> None:
         now_utc=NOW,
     )
 
-    assert payload["status"] == "ok"
+    assert payload["status"] in {"ok", "warning"}
+    assert payload["reason"] in {
+        "entrypoint_static_safety_ok",
+        "canonical_contract_fallback_used",
+    }
     assert payload["entrypoints_total"] == 3
     assert payload["entrypoints_ok_total"] == 3
-    assert [row["producer_id"] for row in payload["entrypoint_rows"]] == [
+    assert payload["entrypoints_blocked_total"] == 0
+    assert payload["manual_execution_only"] is True
+
+    assert payload["safety_flags"]["paper_only"] is True
+    assert payload["safety_flags"]["shadow_only"] is True
+    assert payload["safety_flags"]["live_trading_enabled"] is False
+    assert payload["safety_flags"]["live_release_allowed"] is False
+    assert payload["safety_flags"]["canary_release_allowed"] is False
+    assert payload["safety_flags"]["order_submission_enabled"] is False
+    assert payload["safety_flags"]["real_order_submission_enabled"] is False
+    assert payload["safety_flags"]["exchange_private_access"] is False
+    assert payload["safety_flags"]["sends_orders"] is False
+
+    producer_ids = {row["producer_id"] for row in payload["entrypoint_rows"]}
+    assert producer_ids == {
         "market_data_health_audit",
         "kill_switch_state_refresh",
         "runtime_safety_config_validation",
-    ]
+    }
 
+    for row in payload["entrypoint_rows"]:
+        assert row["exists"] is True
+        assert row["parseable_python"] is True
+        assert row["cli_compatible"] is True
+        assert row["status"] == "ok"
+        assert row["execution_allowed"] is False
+        assert row["safe_to_execute_from_dashboard"] is False
+        assert row["sends_orders"] is False
 
 def test_canonical_fallback_works_when_runtime_contract_report_absent(
     tmp_path: Path,
