@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "2f004dbb098881bb0187d58c6b1c3e9255de58157fb529989f034985db323b48",
+  "aggregate_sha256": "80975ca744c1702338b0d28e7ca3956871f173da033ef60d7eee9e49c8dc1f56",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8,7 +8,7 @@
     "python_files": 703,
     "runtime_excluded_files_total": 0,
     "test_files": 203,
-    "tracked_files_total": 950,
+    "tracked_files_total": 948,
     "workflows": 1
   },
   "deterministic": true,
