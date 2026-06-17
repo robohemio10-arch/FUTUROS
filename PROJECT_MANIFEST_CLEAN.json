@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a1cd1ec49fb63418464da093c7c1cba903cd6af3b31040d007416a00f0082711",
+  "aggregate_sha256": "2f004dbb098881bb0187d58c6b1c3e9255de58157fb529989f034985db323b48",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 153,
-    "manifested_files_total": 945,
-    "python_files": 701,
+    "manifested_files_total": 947,
+    "python_files": 703,
     "runtime_excluded_files_total": 0,
-    "test_files": 202,
-    "tracked_files_total": 946,
+    "test_files": 203,
+    "tracked_files_total": 950,
     "workflows": 1
   },
   "deterministic": true,
@@ -1608,6 +1608,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_dashboard_semantic_coverage_v2.py",
       "sha256": "62ed100b95fee69ac730cac95a8058adbc2bbaf79120961014dbeb8f9dc1e0d3"
+    },
+    {
+      "bytes": 18374,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_dashboard_visual_ocr_template_v1.py",
+      "sha256": "abed79a2c9a10f77489c9d4a8d09c9987b557447f9dddcd5facbfe4324b7e93f"
     },
     {
       "bytes": 7231,
@@ -4950,6 +4956,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_visual_contract_v1.py",
       "sha256": "508c834776771e733791e1c7d22c2449d33826ed0f6f9ca5b90fb08de3ff7b04"
+    },
+    {
+      "bytes": 7508,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_visual_ocr_template_v1.py",
+      "sha256": "f2ad0eb0b90b34a0758b575fa3c305d6e87aee00ddffdadb0c61909c016844e9"
     },
     {
       "bytes": 349,
