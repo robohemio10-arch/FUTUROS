@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c3fe915fa3b98f39c8f77f551c3477444fb8fe2aa0dc9f4b33adceda74a07520",
+  "aggregate_sha256": "f3c87311a74565d375f3c6b7e06ce80bfd6691b2d546f62f75df5bb935235ca1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 153,
-    "manifested_files_total": 947,
-    "python_files": 703,
+    "docs_files": 155,
+    "manifested_files_total": 960,
+    "python_files": 714,
     "runtime_excluded_files_total": 0,
-    "test_files": 203,
-    "tracked_files_total": 948,
+    "test_files": 205,
+    "tracked_files_total": 961,
     "workflows": 1
   },
   "deterministic": true,
@@ -626,6 +626,12 @@
       "sha256": "64709bd697793f6cbed70b52deaefc30d8bc4c31fdcfbf6ae714051299523227"
     },
     {
+      "bytes": 2533,
+      "hash_mode": "text_lf",
+      "path": "docs/BINANCE_AGGTRADES_TO_15S_CANDLE_REDOWNLOAD_V4.md",
+      "sha256": "90dbbf3f8ed60b64e941611c9fa4d15facad7e3e55d3afcd8fdf38238688bdb1"
+    },
+    {
       "bytes": 3248,
       "hash_mode": "text_lf",
       "path": "docs/BITRADEX_15S_CLOSE_ONLY_SHADOW_PIPELINE.md",
@@ -846,6 +852,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_DB_PERSISTENCE.md",
       "sha256": "ba6fc88cc1aaa9b69e087a4d19df4c23a296772317814af23531c215aee63d92"
+    },
+    {
+      "bytes": 2423,
+      "hash_mode": "text_lf",
+      "path": "docs/FULL_HISTORICAL_VALIDATION_15S_CORE_WALKFORWARD_MONTECARLO_V1.md",
+      "sha256": "f082a0b9e6ceb0e944cdb6d4b3b54976a848621466f62ed63fb7b31f8da99b45"
     },
     {
       "bytes": 3234,
@@ -1538,6 +1550,12 @@
       "sha256": "42318a33e0de4afa9263b8c55819206d7b5517e315cf64827e760ab39c8bc06a"
     },
     {
+      "bytes": 1401,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_15s_candle_coverage.py",
+      "sha256": "290e8c2f26cdc6ebdd9b3094c3687f2da54015796c277f89042f9e9fa398105d"
+    },
+    {
       "bytes": 16302,
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_daily_update_scheduler.py",
@@ -2150,6 +2168,12 @@
       "sha256": "47569f373116976a029fa1b8cc40de31d55185a27f8620284be240a287c4dc61"
     },
     {
+      "bytes": 3998,
+      "hash_mode": "text_lf",
+      "path": "scripts/download_binance_futures_1s_resample_15s.py",
+      "sha256": "39ec78b65b899a4e8505952974fd38760629c42e82ced74960f176566e969231"
+    },
+    {
       "bytes": 997,
       "hash_mode": "text_lf",
       "path": "scripts/download_market_data.py",
@@ -2646,6 +2670,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_financial_event_log_audit.py",
       "sha256": "e57bc8501d6eaca7c16c3b0eb5a20133c264951e0317fd154860b39fe8561729"
+    },
+    {
+      "bytes": 1429,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_full_historical_validation_15s.py",
+      "sha256": "67605a284878677cea9c77a1122d6402a2d303126ff8c68c15c2e2e64adfaedd"
     },
     {
       "bytes": 3142,
@@ -4334,6 +4364,42 @@
       "sha256": "2bc574b5fdf1b2dd28700e89a3dc9692b75bf3eb666c0fd38ecdb599131220dd"
     },
     {
+      "bytes": 198,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/__init__.py",
+      "sha256": "380df4e2eeb6efeeea9fbe66bff8f51d4df50dcddaff5d7be17e79e41bdf69cd"
+    },
+    {
+      "bytes": 22548,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/binance_futures_15s_redownload.py",
+      "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
+    },
+    {
+      "bytes": 6366,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/execution_costs.py",
+      "sha256": "4d4f671aff239db3530e35c95b96678ac4f549a5e849f277b8888c87d6bec69b"
+    },
+    {
+      "bytes": 27232,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/historical_validation_15s.py",
+      "sha256": "15bd3c05e8a69e7140ba7c422c99337e809941140436056ae4a2796892e76931"
+    },
+    {
+      "bytes": 7766,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/monte_carlo_risk.py",
+      "sha256": "0df8b3908ede2d3068826310292d06bf3743d93a26c862c3766cda0088505621"
+    },
+    {
+      "bytes": 5531,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/walkforward_validation.py",
+      "sha256": "d7f8abbc96d8a4290bcf202df8f1b89b2add047200b4521edf403efdd82e6379"
+    },
+    {
       "bytes": 830,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/__init__.py",
@@ -4584,6 +4650,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_baseline_evaluation.py",
       "sha256": "ba006939a17dbaecc23e1d40a936f02a4610fdffbff8a0864b6dda8ef29606cc"
+    },
+    {
+      "bytes": 4416,
+      "hash_mode": "text_lf",
+      "path": "tests/test_binance_1s_to_15s_redownload_v1.py",
+      "sha256": "6168894aa9ad0ed8747e54bc4405bb41c8c7213d181a0ecf0b3e529211a6db00"
     },
     {
       "bytes": 8279,
@@ -5064,6 +5136,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_linux_volume_persistence.py",
       "sha256": "dea050c5ab9837a78884d620f7fd5386eca5e431cf590dba2286ac4fe83a1679"
+    },
+    {
+      "bytes": 6410,
+      "hash_mode": "text_lf",
+      "path": "tests/test_full_historical_validation_15s_core_v1.py",
+      "sha256": "a41292c7ddc35a65ce0e41004ac660a131666b30326f52556fa10994abb60aa1"
     },
     {
       "bytes": 16957,
