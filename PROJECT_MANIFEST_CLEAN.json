@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "80975ca744c1702338b0d28e7ca3956871f173da033ef60d7eee9e49c8dc1f56",
+  "aggregate_sha256": "c3fe915fa3b98f39c8f77f551c3477444fb8fe2aa0dc9f4b33adceda74a07520",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3218,10 +3218,10 @@
       "sha256": "6b6e22f394caf5943c4fae4e8f3e4522ad3f65fbfe99f6706e00eaab30de3001"
     },
     {
-      "bytes": 2802,
+      "bytes": 49476,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/02_portfolio_risk.py",
-      "sha256": "0c1acc8eaf40844a96d9645a8b92a59a90656b64e7a3b1ca4e3b0fa58188aa18"
+      "sha256": "b0fa51cfffe1f7db6305bea01d5ed659097752df9b6d7ac2c3c85150da355f5a"
     },
     {
       "bytes": 2940,
