@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "af5823723fd1f1025ab271d48dec7107400287301f1d24e4d29a3922c2555721",
+  "aggregate_sha256": "c3fe915fa3b98f39c8f77f551c3477444fb8fe2aa0dc9f4b33adceda74a07520",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 152,
-    "manifested_files_total": 942,
-    "python_files": 699,
+    "docs_files": 153,
+    "manifested_files_total": 947,
+    "python_files": 703,
     "runtime_excluded_files_total": 0,
-    "test_files": 202,
-    "tracked_files_total": 943,
+    "test_files": 203,
+    "tracked_files_total": 948,
     "workflows": 1
   },
   "deterministic": true,
@@ -612,6 +612,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_SHADOW_THRESHOLD_LIVE_READINESS_EVIDENCE.md",
       "sha256": "1d4848230005b047b9de81a1d31db530c32f7131cf0b8dc7c6415ae356a7ebfa"
+    },
+    {
+      "bytes": 4206,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_UNIFIED_FEATURE_CONTRACT_AND_DATASET_MANIFEST.md",
+      "sha256": "170cc3882f4c16dc875700342c61d9d93de5b1bb635feca56c5cbef63add4214"
     },
     {
       "bytes": 8114,
@@ -1554,6 +1560,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_threshold_readiness.py",
       "sha256": "0c4de623d3c4e6b54f86ce9e3d09acbb400aa708f6b5066bd3bc5555fe6d568c"
+    },
+    {
+      "bytes": 12769,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_ai_unified_feature_contract.py",
+      "sha256": "770ba4f86b8810f1c956246f2c9e56efd12babc8dfeaa024e7fa93acb9e98c72"
     },
     {
       "bytes": 531,
@@ -3632,6 +3644,12 @@
       "sha256": "307a9d3705e44e9281abd5b3a77c23567a6a2f8e596c287c6b5568d082e35796"
     },
     {
+      "bytes": 9486,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ml/dataset_manifest.py",
+      "sha256": "149aace575b1667da1410f41828e6dbd84e11d2bcfa76d943180896ee4da5c34"
+    },
+    {
       "bytes": 22014,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/drift_monitor.py",
@@ -3798,6 +3816,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/training_dataset.py",
       "sha256": "623ed35ebf085636f144759b1cc2cd11448ec1ff3ef3fa6cf50057704b771341"
+    },
+    {
+      "bytes": 26920,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ml/unified_feature_contract.py",
+      "sha256": "5ff592051ead7a4747a0ade39da8d8166abd864ca7dbecadbf0fa3882aac21f0"
     },
     {
       "bytes": 5867,
@@ -4530,6 +4554,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_threshold_readiness_evidence.py",
       "sha256": "233c7aaee817649dac36c76c8d1407bb8fd762369c56577ee089501a3c05252a"
+    },
+    {
+      "bytes": 9924,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_unified_feature_contract_and_dataset_manifest.py",
+      "sha256": "1f23940d247d31778798af786203ed4f83ff1f06d7815f735a0bde221307aff1"
     },
     {
       "bytes": 2753,
