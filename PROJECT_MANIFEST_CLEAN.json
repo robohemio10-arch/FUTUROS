@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "f3c87311a74565d375f3c6b7e06ce80bfd6691b2d546f62f75df5bb935235ca1",
+  "aggregate_sha256": "1d5e19f5d546ab19fd89acf9eaabc8ed488b03369842ed915755242ee230f07c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4376,10 +4376,10 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
-      "bytes": 6366,
+      "bytes": 16298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_costs.py",
-      "sha256": "4d4f671aff239db3530e35c95b96678ac4f549a5e849f277b8888c87d6bec69b"
+      "sha256": "f8f56cdb05631ead69acd01707cb997533f3713288f9e00c0481c38630fcc89a"
     },
     {
       "bytes": 27232,
@@ -5138,10 +5138,10 @@
       "sha256": "dea050c5ab9837a78884d620f7fd5386eca5e431cf590dba2286ac4fe83a1679"
     },
     {
-      "bytes": 6410,
+      "bytes": 9201,
       "hash_mode": "text_lf",
       "path": "tests/test_full_historical_validation_15s_core_v1.py",
-      "sha256": "a41292c7ddc35a65ce0e41004ac660a131666b30326f52556fa10994abb60aa1"
+      "sha256": "70284fb286ad4b19a36c6509c60eab3cb5dfd51ac57b7d1a7997a0f948a3edbc"
     },
     {
       "bytes": 16957,
