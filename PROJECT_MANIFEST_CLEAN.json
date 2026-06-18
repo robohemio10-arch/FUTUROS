@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1d5e19f5d546ab19fd89acf9eaabc8ed488b03369842ed915755242ee230f07c",
+  "aggregate_sha256": "ef248fe5a87e91f81630eafad50a0cea899e26cf2b3dfd78e99141126a27ed72",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 155,
-    "manifested_files_total": 960,
+    "docs_files": 156,
+    "manifested_files_total": 961,
     "python_files": 714,
     "runtime_excluded_files_total": 0,
     "test_files": 205,
-    "tracked_files_total": 961,
+    "tracked_files_total": 962,
     "workflows": 1
   },
   "deterministic": true,
@@ -804,6 +804,12 @@
       "hash_mode": "text_lf",
       "path": "docs/EVENT_DRIVEN_BACKTEST_EXECUTION_SIMULATOR.md",
       "sha256": "eff41510239ea9e5fda54062a2e6873adb35ad049786868b49b6f5330a5b356b"
+    },
+    {
+      "bytes": 2708,
+      "hash_mode": "text_lf",
+      "path": "docs/EXECUTION_COST_NOTIONAL_CALIBRATION_V1.md",
+      "sha256": "038443056bed8bdf3a1116860a49091423955fa2edfb440ae3cb7caaf133feee"
     },
     {
       "bytes": 958,
