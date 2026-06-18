@@ -99,7 +99,81 @@ def test_execution_costs_adds_after_costs_column_and_infers_ocr_notional() -> No
     assert "validation_after_costs_pnl_usdt" in output.columns
     assert report["status"] == "ok"
     assert report["notional_sum_usdt"] > 0.0
+    assert report["notional_source"] == "price_times_size"
+    assert report["notional_price_column"] == "entry_price"
+    assert report["notional_size_column"] == "volume_posicao"
     assert report["sends_orders"] is False
+
+
+def test_execution_costs_preserves_dot_decimal_price_strings() -> None:
+    frame = pd.DataFrame(
+        {
+            "reported_pnl_usdt": [0.42, -0.21],
+            "entry_price": ["60391.6488785", "1858.5528285"],
+            "volume_posicao": ["0.1642935", "1,2500000"],
+        }
+    )
+    notional = infer_notional(frame)
+    assert 9900.0 < float(notional.iloc[0]) < 10000.0
+    assert 2300.0 < float(notional.iloc[1]) < 2400.0
+
+    _, report = apply_execution_costs(frame, pnl_column="reported_pnl_usdt")
+    assert report["status"] == "ok"
+    assert report["notional_sum_usdt"] < 13000.0
+    assert report["total_cost_usdt"] < 30.0
+    assert report["sends_orders"] is False
+    assert report["changes_risk"] is False
+
+
+
+def test_execution_costs_normalizes_symbol_scaled_ocr_prices() -> None:
+    frame = pd.DataFrame(
+        {
+            "symbol": ["BTCUSDT", "ETHUSDT", "ETHUSDT"],
+            "reported_pnl_usdt": [1.0, 1.0, 1.0],
+            "entry_price": ["677701.0", "217777.06", "20770.140053"],
+            "volume_posicao": ["0,147412", "4,584163", "4,820929"],
+        }
+    )
+
+    notional = infer_notional(frame)
+    assert 9_900.0 < float(notional.iloc[0]) < 10_100.0
+    assert 9_900.0 < float(notional.iloc[1]) < 10_100.0
+    assert 9_900.0 < float(notional.iloc[2]) < 10_100.0
+
+    _, report = apply_execution_costs(frame, pnl_column="reported_pnl_usdt")
+    assert report["status"] == "ok"
+    assert report["notional_source"] == "price_times_size"
+    assert report["notional_price_adjusted_rows"] == 3
+    assert report["notional_invalid_rows"] == 0
+    assert report["notional_max_usdt"] < 11_000.0
+    assert report["sends_orders"] is False
+    assert report["changes_risk"] is False
+
+
+def test_execution_costs_falls_back_from_corrupt_position_volume() -> None:
+    frame = pd.DataFrame(
+        {
+            "symbol": ["BTC_USDT"],
+            "reported_pnl_usdt": [1.421194],
+            "entry_price": ["69089.454156"],
+            "volume_posicao": ["34.0"],
+            "volume_fechado": ["0.14445"],
+            "volume_transacao": ["0.14445"],
+        }
+    )
+
+    notional = infer_notional(frame)
+    assert 9_900.0 < float(notional.iloc[0]) < 10_100.0
+
+    _, report = apply_execution_costs(frame, pnl_column="reported_pnl_usdt")
+    assert report["status"] == "ok"
+    assert report["notional_source"] == "price_times_size"
+    assert report["notional_size_fallback_rows"] == 1
+    assert report["notional_invalid_rows"] == 0
+    assert report["notional_max_usdt"] < 11_000.0
+    assert report["sends_orders"] is False
+    assert report["changes_risk"] is False
 
 
 def test_monte_carlo_is_deterministic() -> None:
