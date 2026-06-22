@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ef248fe5a87e91f81630eafad50a0cea899e26cf2b3dfd78e99141126a27ed72",
+  "aggregate_sha256": "6deb89b09b7bc9ac57820713a652cded82da67eed6ecf19ed5dc7ef22b7cdcb0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 156,
-    "manifested_files_total": 961,
-    "python_files": 714,
+    "docs_files": 157,
+    "manifested_files_total": 964,
+    "python_files": 716,
     "runtime_excluded_files_total": 0,
-    "test_files": 205,
-    "tracked_files_total": 962,
+    "test_files": 206,
+    "tracked_files_total": 965,
     "workflows": 1
   },
   "deterministic": true,
@@ -1016,6 +1016,12 @@
       "sha256": "f2b37791defffb399e0d8669ce87920a346ee682b3ebdd362267c2870e84162b"
     },
     {
+      "bytes": 3599,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
+      "sha256": "f988bb1cdf00249cdeaecf26e0376c32a67e270435b60bcd3b6a0de31b3a467c"
+    },
+    {
       "bytes": 2229,
       "hash_mode": "text_lf",
       "path": "docs/OPEN_DECISION_CLEAN_DATASET.md",
@@ -1964,10 +1970,10 @@
       "sha256": "657ba307c070e4b8ef76d161b151e08c7611bee6705d3007fbc57e6c6fda4ddb"
     },
     {
-      "bytes": 11851,
+      "bytes": 14284,
       "hash_mode": "text_lf",
       "path": "scripts/build_trade_enriched.py",
-      "sha256": "42b8ea0ad4e5d44c21f33c298eaf380d83b3c300d55fafb47a6602bbd13bfe15"
+      "sha256": "0fd61b907759e67c57beb61e06f00f62e849cdd5ef9d860196b2e8ee7e2871c9"
     },
     {
       "bytes": 517,
@@ -2564,10 +2570,10 @@
       "sha256": "77103264da4176b311429d490e9f1d2e80f70ce5dcf3a122ba8592c7d5e4d712"
     },
     {
-      "bytes": 2817,
+      "bytes": 6750,
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
-      "sha256": "d2f1fb60f2ca7c75b4aaecda5dc8a771b4a5631000af4533d806851e5e683943"
+      "sha256": "ad545d94b49e9e70d5dedc14c21d9b9bd05b69ded63da6e0d8b6006e4bae9e60"
     },
     {
       "bytes": 22376,
@@ -2886,6 +2892,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/set_kill_switch.py",
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
+    },
+    {
+      "bytes": 14971,
+      "hash_mode": "text_lf",
+      "path": "scripts/sync_ocr_master_v11_phase5_sidecars.py",
+      "sha256": "2b546a047d9592729b1c1973f0b2bb6f0e20cf587fba170ec88ade9b954d984e"
     },
     {
       "bytes": 1661,
@@ -5322,6 +5334,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_notification_root_bootstrap_permission_audit_v1.py",
       "sha256": "ca068221043bc8855a8ebd669edf0e3f38c05efa4a590963450a1c3042f1bb11"
+    },
+    {
+      "bytes": 11831,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
+      "sha256": "c22bcb0478275979d9d8a55c751b564d3935278837e52e357a3c7d8dbbc758c2"
     },
     {
       "bytes": 6121,
