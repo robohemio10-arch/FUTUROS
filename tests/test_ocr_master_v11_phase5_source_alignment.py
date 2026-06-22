@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from scripts.build_quality_gated_shadow_compatible_dataset_v1 import detect_ocr_rows
 from scripts.build_trade_enriched import (
     add_feature_snapshots,
     build_institutional_trade_ids,
@@ -86,6 +87,7 @@ def test_conversion_maps_ocr_master_to_exact_phase5_schema() -> None:
     assert converted["horario_transacao"].equals(converted["horario_fechamento"])
     assert set(converted["exchange_source"]) == {"bitradex"}
     assert set(converted["market_data_source"]) == {"binance"}
+    assert set(converted["ocr_source"]) == {"bitradex_ocr_candidate_v1_1"}
 
 
 def test_no_write_validates_without_sidecar_or_backup_changes(tmp_path: Path) -> None:
@@ -114,6 +116,27 @@ def test_no_write_validates_without_sidecar_or_backup_changes(tmp_path: Path) ->
     assert not (tmp_path / "data/backups").exists()
 
 
+@pytest.mark.parametrize("hash_transform", [str.lower, str.upper])
+def test_hash_comparison_accepts_lowercase_and_uppercase(
+    tmp_path: Path,
+    hash_transform,
+) -> None:
+    _, expected_hash, _ = prepare_project(tmp_path)
+
+    report = sync_ocr_master_v11_phase5_sidecars(
+        tmp_path,
+        hash_transform(expected_hash),
+        3,
+        no_write=True,
+        now_utc=NOW,
+    )
+
+    assert report["status"] == "ok"
+    assert report["master_sha256_expected"] == hash_transform(expected_hash)
+    assert report["master_sha256_actual"] == expected_hash
+    assert "master_sha256_mismatch" not in report["validation_errors"]
+
+
 def test_write_creates_backup_and_aligned_sidecars_without_changing_master(
     tmp_path: Path,
 ) -> None:
@@ -138,6 +161,48 @@ def test_write_creates_backup_and_aligned_sidecars_without_changing_master(
     assert len(compatibility) == len(parquet) == 3
     assert list(compatibility.columns) == list(parquet.columns) == list(PHASE5_COLUMNS)
     assert compatibility["_dedup_key"].nunique() == 3
+
+
+def test_write_is_noop_when_sidecars_are_already_aligned(tmp_path: Path) -> None:
+    master_path, expected_hash, master_bytes = prepare_project(tmp_path)
+    first = sync_ocr_master_v11_phase5_sidecars(
+        tmp_path,
+        expected_hash,
+        3,
+        no_write=False,
+        now_utc=NOW,
+    )
+    assert first["write_performed"] is True
+
+    report = sync_ocr_master_v11_phase5_sidecars(
+        tmp_path,
+        expected_hash.upper(),
+        3,
+        no_write=False,
+        now_utc=NOW,
+    )
+
+    assert report["status"] == "ok"
+    assert report["reason"] == "phase5_sidecars_already_aligned"
+    assert report["write_performed"] is False
+    assert report["backup_created"] is False
+    assert master_path.read_bytes() == master_bytes
+
+
+def test_quality_gate_recognizes_ocr_v11_provenance() -> None:
+    frame = pd.DataFrame(
+        {
+            "source_file": ["full_ocr_3141", "legacy", "historical"],
+            "ocr_source": [
+                "bitradex_ocr_candidate_v1_1",
+                pd.NA,
+                pd.NA,
+            ],
+        }
+    )
+    frame.loc[1, "source_file"] = "bitradex_ocr_locked_candidates_20260528_090243"
+
+    assert detect_ocr_rows(frame).tolist() == [True, True, False]
 
 
 def test_hash_or_row_mismatch_blocks_without_backup(tmp_path: Path) -> None:

@@ -21,6 +21,7 @@ OUTPUT_FULL_AUDIT = ROOT / "data/features/training_dataset_quality_gated_binance
 SUMMARY_JSON = ROOT / "data/reports/build_quality_gated_shadow_compatible_dataset_v1_summary.json"
 
 OCR_SOURCE = "bitradex_ocr_locked_candidates_20260528_090243"
+OCR_SOURCE_V11 = "bitradex_ocr_candidate_v1_1"
 
 BASE_COLUMNS = [
     "trade_id",
@@ -35,6 +36,7 @@ BASE_COLUMNS = [
 
 AUX_COLUMNS = [
     "source_file",
+    "ocr_source",
     "order_id",
     "symbol_norm",
     "trade_index",
@@ -45,6 +47,18 @@ AUX_COLUMNS = [
     "is_exact_compatible",
     "quality_reason",
 ]
+
+
+def detect_ocr_rows(frame: pd.DataFrame) -> pd.Series:
+    """Classify OCR rows only from explicit, versioned provenance markers."""
+    mask = pd.Series(False, index=frame.index, dtype=bool)
+    if "source_file" in frame.columns:
+        source_file = frame["source_file"].astype("string").str.strip().str.casefold()
+        mask |= source_file.eq(OCR_SOURCE.casefold()).fillna(False)
+    if "ocr_source" in frame.columns:
+        ocr_source = frame["ocr_source"].astype("string").str.strip().str.casefold()
+        mask |= ocr_source.eq(OCR_SOURCE_V11.casefold()).fillna(False)
+    return mask
 
 
 def json_safe(obj: Any) -> Any:
@@ -379,7 +393,7 @@ def build_dataset(model_features: list[str]) -> tuple[pd.DataFrame, pd.DataFrame
     out["trade_id"] = trade["trade_id"].astype(str) if "trade_id" in trade.columns else trade.index.astype(str)
     out["symbol"] = trade["symbol"].map(normalize_symbol) if "symbol" in trade.columns else trade["moeda"].map(normalize_symbol)
     out["side"] = trade["fechar_side"].map(normalize_side) if "fechar_side" in trade.columns else "unknown"
-    out["segment"] = np.where(trade.get("source_file", "").astype(str).eq(OCR_SOURCE), "BITRADEX_OCR", "HISTORICAL")
+    out["segment"] = np.where(detect_ocr_rows(trade), "BITRADEX_OCR", "HISTORICAL")
     out["open_time_utc"] = pd.to_datetime(trade["open_ts"], errors="coerce", utc=True) if "open_ts" in trade.columns else pd.to_datetime(trade["horario_abertura"], errors="coerce", utc=True)
 
     out["target_win"] = pd.to_numeric(trade["target_win"], errors="coerce") if "target_win" in trade.columns else (pd.to_numeric(trade["pnl"], errors="coerce") > 0).astype(int)
@@ -391,6 +405,7 @@ def build_dataset(model_features: list[str]) -> tuple[pd.DataFrame, pd.DataFrame
     out = add_v13_features(out, trade, market)
 
     out["source_file"] = trade["source_file"].astype(str) if "source_file" in trade.columns else ""
+    out["ocr_source"] = trade["ocr_source"].astype(str) if "ocr_source" in trade.columns else ""
     out["order_id"] = trade["order_id"].astype(str) if "order_id" in trade.columns else ""
     out["symbol_norm"] = out["symbol"].map(normalize_symbol)
     out["trade_index"] = np.arange(len(out), dtype=int)
@@ -448,8 +463,8 @@ def build_dataset(model_features: list[str]) -> tuple[pd.DataFrame, pd.DataFrame
         "full_rows": int(len(full)),
         "candidate_rows": int(len(candidate)),
         "blocked_rows": int(len(full) - len(candidate)),
-        "ocr_rows_full": int(full["source_file"].astype(str).eq(OCR_SOURCE).sum()),
-        "ocr_rows_candidate": int(candidate["source_file"].astype(str).eq(OCR_SOURCE).sum()),
+        "ocr_rows_full": int(full["segment"].eq("BITRADEX_OCR").sum()),
+        "ocr_rows_candidate": int(candidate["segment"].eq("BITRADEX_OCR").sum()),
         "candidate_symbol_counts": candidate["symbol"].value_counts(dropna=False).to_dict(),
         "candidate_side_counts": candidate["side"].value_counts(dropna=False).to_dict(),
         "blocked_reason_counts": full.loc[~full["is_exact_compatible"], "quality_reason"].value_counts(dropna=False).head(20).to_dict(),

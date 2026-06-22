@@ -22,6 +22,7 @@ Para a promoção OCR V1.1 atual, os valores institucionais são:
 - SHA-256: `83e2d17db317cc84b2bd39e00a961bd8d568c4375c5a4a113f6a26df58972e90`.
 
 Qualquer divergência retorna `status=blocked`, não cria backup e não escreve sidecars.
+O SHA-256 hexadecimal é comparado sem distinção entre maiúsculas e minúsculas; o relatório preserva exatamente o valor recebido em `master_sha256_expected`.
 
 ## Conversão Phase5
 
@@ -32,6 +33,8 @@ Metadados fixos:
 - `exchange_source=bitradex`;
 - `market_data_source=binance`;
 - `ocr_source=bitradex_ocr_candidate_v1_1`.
+
+O quality gate reconhece OCR por proveniência explícita: o marcador legado em `source_file` ou `ocr_source=bitradex_ocr_candidate_v1_1`. Valores reais de `source_file`, como o lote ou fila de origem, permanecem preservados e não são substituídos por um marcador artificial.
 
 `order_id` é preservado como recebido, inclusive quando ausente.
 
@@ -66,6 +69,8 @@ Sem `--no-write`, o sincronizador:
 4. revalida linhas, colunas e `_dedup_key`;
 5. substitui os sidecars;
 6. confirma que o hash da master XLSX não mudou.
+
+Quando os dois sidecars já correspondem à projeção canônica, a execução retorna `status=ok`, `reason=phase5_sidecars_already_aligned` e não cria backup nem regrava arquivos.
 
 ```powershell
 python .\scripts\sync_ocr_master_v11_phase5_sidecars.py `

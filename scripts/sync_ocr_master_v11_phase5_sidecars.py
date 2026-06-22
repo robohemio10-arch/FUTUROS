@@ -297,6 +297,8 @@ def sync_ocr_master_v11_phase5_sidecars(
     now = (now_utc or datetime.now(timezone.utc)).astimezone(timezone.utc)
     generated_at = now.isoformat().replace("+00:00", "Z")
     actual_sha = sha256_file(paths.master_xlsx) if paths.master_xlsx.exists() else None
+    expected_sha_normalized = expected_master_sha256.strip().casefold()
+    actual_sha_normalized = actual_sha.casefold() if actual_sha is not None else None
     master: pd.DataFrame | None = None
     master_rows: int | None = None
     validation_errors: list[str] = []
@@ -321,7 +323,7 @@ def sync_ocr_master_v11_phase5_sidecars(
         no_write,
         generated_at,
     )
-    if actual_sha != expected_master_sha256:
+    if actual_sha_normalized != expected_sha_normalized:
         validation_errors.append("master_sha256_mismatch")
     if master_rows != expected_rows:
         validation_errors.append(f"master_rows_mismatch:{master_rows}!={expected_rows}")
@@ -356,6 +358,11 @@ def sync_ocr_master_v11_phase5_sidecars(
         write_report(paths.report, report)
         return report
 
+    if not report["would_write"]:
+        report.update(status="ok", reason="phase5_sidecars_already_aligned")
+        write_report(paths.report, report)
+        return report
+
     run_stamp = now.strftime("%Y%m%d_%H%M%S")
     try:
         backup_dir, backup_files = create_backup(paths, run_stamp)
@@ -367,7 +374,7 @@ def sync_ocr_master_v11_phase5_sidecars(
         write_sidecars_atomically(paths, compatibility, expected_rows)
         post_errors = validate_written_sidecar(paths.compatibility_xlsx, expected_rows)
         post_errors.extend(validate_written_sidecar(paths.master_parquet, expected_rows))
-        if sha256_file(paths.master_xlsx) != expected_master_sha256:
+        if sha256_file(paths.master_xlsx).casefold() != expected_sha_normalized:
             post_errors.append("master_xlsx_changed_during_alignment")
         if post_errors:
             report["validation_errors"] = sorted(set(post_errors))

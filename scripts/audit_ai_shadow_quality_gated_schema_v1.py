@@ -19,6 +19,21 @@ NEW_TRAINING = ROOT / "data" / "features" / "training_dataset.parquet"
 TRADE_ENRICHED = ROOT / "data" / "features" / "trade_enriched.parquet"
 
 OCR_SOURCE = "bitradex_ocr_locked_candidates_20260528_090243"
+OCR_SOURCE_V11 = "bitradex_ocr_candidate_v1_1"
+
+
+def detect_ocr_rows(frame: pd.DataFrame) -> pd.Series:
+    mask = pd.Series(False, index=frame.index, dtype=bool)
+    if "segment" in frame.columns:
+        segment = frame["segment"].astype("string").str.strip().str.casefold()
+        mask |= segment.eq("bitradex_ocr").fillna(False)
+    if "source_file" in frame.columns:
+        source_file = frame["source_file"].astype("string").str.strip().str.casefold()
+        mask |= source_file.eq(OCR_SOURCE.casefold()).fillna(False)
+    if "ocr_source" in frame.columns:
+        ocr_source = frame["ocr_source"].astype("string").str.strip().str.casefold()
+        mask |= ocr_source.eq(OCR_SOURCE_V11.casefold()).fillna(False)
+    return mask
 
 
 def json_safe(obj: Any) -> Any:
@@ -78,9 +93,7 @@ def summarize_parquet(path: Path, model_features: list[str]) -> dict[str, Any]:
     present = [c for c in model_features if c in df.columns]
     missing = [c for c in model_features if c not in df.columns]
 
-    ocr_rows = None
-    if "source_file" in df.columns:
-        ocr_rows = int(df["source_file"].astype(str).eq(OCR_SOURCE).sum())
+    ocr_rows = int(detect_ocr_rows(df).sum())
 
     time_summary = {}
     for col in ["close_ts", "open_ts", "horario_fechamento", "open_time_utc", "close_time_utc"]:

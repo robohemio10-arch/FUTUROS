@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "6deb89b09b7bc9ac57820713a652cded82da67eed6ecf19ed5dc7ef22b7cdcb0",
+  "aggregate_sha256": "42e61915cf150cadcd7b8590a8cf5ba1810c1e2f19f1959130f3fa001d295447",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1016,10 +1016,10 @@
       "sha256": "f2b37791defffb399e0d8669ce87920a346ee682b3ebdd362267c2870e84162b"
     },
     {
-      "bytes": 3599,
+      "bytes": 4225,
       "hash_mode": "text_lf",
       "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
-      "sha256": "f988bb1cdf00249cdeaecf26e0376c32a67e270435b60bcd3b6a0de31b3a467c"
+      "sha256": "4740f3f4b38353aaa5c50de6f86263e972e4c5690a5d9dd534a02062e06b84c4"
     },
     {
       "bytes": 2229,
@@ -1580,10 +1580,10 @@
       "sha256": "c3175dd5b837b60df06869ec5bf6c41c6f07fd8125777dcf7c229c3f4fd0ba18"
     },
     {
-      "bytes": 5745,
+      "bytes": 6398,
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_quality_gated_schema_v1.py",
-      "sha256": "7bcfd63034c2656dfc4d868ae2f303d3111e041cda849edffb589d1211afde40"
+      "sha256": "bedd08829b13758c1983e92f409d42fd3e40d00f684e755a9b033cc2af5a3e59"
     },
     {
       "bytes": 2376,
@@ -1946,10 +1946,10 @@
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
     },
     {
-      "bytes": 19912,
+      "bytes": 20615,
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_shadow_compatible_dataset_v1.py",
-      "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
+      "sha256": "ceff05631b664b483d4e887fdffb69d107db39b5e0e23971cb3bf3829aff5ae0"
     },
     {
       "bytes": 5632,
@@ -2894,10 +2894,10 @@
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
     },
     {
-      "bytes": 14971,
+      "bytes": 15330,
       "hash_mode": "text_lf",
       "path": "scripts/sync_ocr_master_v11_phase5_sidecars.py",
-      "sha256": "2b546a047d9592729b1c1973f0b2bb6f0e20cf587fba170ec88ade9b954d984e"
+      "sha256": "9d007a68530eb4615b851fbb7fdff6565972f1a8ccbc40aad7f01c7d3c617b69"
     },
     {
       "bytes": 1661,
@@ -5336,10 +5336,10 @@
       "sha256": "ca068221043bc8855a8ebd669edf0e3f38c05efa4a590963450a1c3042f1bb11"
     },
     {
-      "bytes": 11831,
+      "bytes": 13867,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
-      "sha256": "c22bcb0478275979d9d8a55c751b564d3935278837e52e357a3c7d8dbbc758c2"
+      "sha256": "4671e6d4356dd95c621011db69375e71f78dc69502daa138383f2ce79a47ed11"
     },
     {
       "bytes": 6121,
