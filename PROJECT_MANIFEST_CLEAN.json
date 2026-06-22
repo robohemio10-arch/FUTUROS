@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ef248fe5a87e91f81630eafad50a0cea899e26cf2b3dfd78e99141126a27ed72",
+  "aggregate_sha256": "b4654ab64e81728003f9738150eb68f30d4cc5a50fabb001fa3bfa72629981aa",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 156,
-    "manifested_files_total": 961,
-    "python_files": 714,
+    "docs_files": 157,
+    "manifested_files_total": 964,
+    "python_files": 716,
     "runtime_excluded_files_total": 0,
-    "test_files": 205,
-    "tracked_files_total": 962,
+    "test_files": 206,
+    "tracked_files_total": 965,
     "workflows": 1
   },
   "deterministic": true,
@@ -1016,6 +1016,12 @@
       "sha256": "f2b37791defffb399e0d8669ce87920a346ee682b3ebdd362267c2870e84162b"
     },
     {
+      "bytes": 4225,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
+      "sha256": "4740f3f4b38353aaa5c50de6f86263e972e4c5690a5d9dd534a02062e06b84c4"
+    },
+    {
       "bytes": 2229,
       "hash_mode": "text_lf",
       "path": "docs/OPEN_DECISION_CLEAN_DATASET.md",
@@ -1529,7 +1535,7 @@
       "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "0ea437f4287ac5dfa9378477e04fbb355f0c6c5130aeb3ce9b860d01bd0ae757"
+      "sha256": "9c697afedb08440dbfb64852865941ecce1c613200e6e87ae95bb345f778267c"
     },
     {
       "bytes": 1209,
@@ -1574,10 +1580,10 @@
       "sha256": "c3175dd5b837b60df06869ec5bf6c41c6f07fd8125777dcf7c229c3f4fd0ba18"
     },
     {
-      "bytes": 5745,
+      "bytes": 6398,
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_shadow_quality_gated_schema_v1.py",
-      "sha256": "7bcfd63034c2656dfc4d868ae2f303d3111e041cda849edffb589d1211afde40"
+      "sha256": "bedd08829b13758c1983e92f409d42fd3e40d00f684e755a9b033cc2af5a3e59"
     },
     {
       "bytes": 2376,
@@ -1940,10 +1946,10 @@
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
     },
     {
-      "bytes": 19912,
+      "bytes": 20615,
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_shadow_compatible_dataset_v1.py",
-      "sha256": "c98a7aded237cddff0f9ed63dd99d679af130fbf93f38b1b4e75c1a9681ee58a"
+      "sha256": "ceff05631b664b483d4e887fdffb69d107db39b5e0e23971cb3bf3829aff5ae0"
     },
     {
       "bytes": 5632,
@@ -1964,10 +1970,10 @@
       "sha256": "657ba307c070e4b8ef76d161b151e08c7611bee6705d3007fbc57e6c6fda4ddb"
     },
     {
-      "bytes": 11851,
+      "bytes": 14284,
       "hash_mode": "text_lf",
       "path": "scripts/build_trade_enriched.py",
-      "sha256": "42b8ea0ad4e5d44c21f33c298eaf380d83b3c300d55fafb47a6602bbd13bfe15"
+      "sha256": "0fd61b907759e67c57beb61e06f00f62e849cdd5ef9d860196b2e8ee7e2871c9"
     },
     {
       "bytes": 517,
@@ -2564,10 +2570,10 @@
       "sha256": "77103264da4176b311429d490e9f1d2e80f70ce5dcf3a122ba8592c7d5e4d712"
     },
     {
-      "bytes": 2817,
+      "bytes": 6750,
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
-      "sha256": "d2f1fb60f2ca7c75b4aaecda5dc8a771b4a5631000af4533d806851e5e683943"
+      "sha256": "ad545d94b49e9e70d5dedc14c21d9b9bd05b69ded63da6e0d8b6006e4bae9e60"
     },
     {
       "bytes": 22376,
@@ -2886,6 +2892,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/set_kill_switch.py",
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
+    },
+    {
+      "bytes": 15330,
+      "hash_mode": "text_lf",
+      "path": "scripts/sync_ocr_master_v11_phase5_sidecars.py",
+      "sha256": "9d007a68530eb4615b851fbb7fdff6565972f1a8ccbc40aad7f01c7d3c617b69"
     },
     {
       "bytes": 1661,
@@ -5322,6 +5334,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_notification_root_bootstrap_permission_audit_v1.py",
       "sha256": "ca068221043bc8855a8ebd669edf0e3f38c05efa4a590963450a1c3042f1bb11"
+    },
+    {
+      "bytes": 13867,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
+      "sha256": "4671e6d4356dd95c621011db69375e71f78dc69502daa138383f2ce79a47ed11"
     },
     {
       "bytes": 6121,

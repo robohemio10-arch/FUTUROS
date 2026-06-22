@@ -103,7 +103,24 @@ def coerce_float(value: Any) -> float:
     except Exception:
         pass
     if isinstance(value, str):
-        value = value.strip().replace("%", "").replace(",", ".")
+        text = (
+            value.strip()
+            .upper()
+            .replace("USDT", "")
+            .replace("R$", "")
+            .replace("$", "")
+            .replace("%", "")
+            .replace("\u00a0", "")
+            .replace(" ", "")
+        )
+        if "," in text and "." in text:
+            if text.rfind(",") > text.rfind("."):
+                text = text.replace(".", "").replace(",", ".")
+            else:
+                text = text.replace(",", "")
+        elif "," in text:
+            text = text.replace(",", ".")
+        value = text
     try:
         result = float(value)
     except Exception:
@@ -166,7 +183,13 @@ def normalize_symbol(value: Any) -> str:
     text = str(value or "").strip().upper()
     if not text or text == "NAN":
         return ""
-    text = text.replace("/USDT:USDT", "USDT").replace("/", "").replace(":", "").replace("-", "")
+    text = (
+        text.replace("/USDT:USDT", "USDT")
+        .replace("/", "")
+        .replace(":", "")
+        .replace("-", "")
+        .replace("_", "")
+    )
     text = text.replace("PERP", "").replace("USDTUSDT", "USDT")
     if text.endswith("USDT"):
         return text
@@ -187,6 +210,28 @@ def make_trade_fingerprint(row: pd.Series) -> str:
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:24]
 
 
+def normalize_identity_series(series: pd.Series) -> pd.Series:
+    values = series.astype("string").str.strip()
+    invalid = values.isna() | values.eq("") | values.str.lower().isin({"nan", "none", "<na>"})
+    return values.mask(invalid)
+
+
+def build_institutional_trade_ids(trades: pd.DataFrame) -> pd.Series:
+    if "_dedup_key" in trades.columns:
+        dedup_keys = normalize_identity_series(trades["_dedup_key"])
+        if dedup_keys.notna().all() and not dedup_keys.duplicated(keep=False).any():
+            return dedup_keys.astype(str)
+
+    order_ids = normalize_identity_series(trades["order_id"])
+    if order_ids.notna().all() and not order_ids.duplicated(keep=False).any():
+        return order_ids.astype(str)
+
+    fingerprints = trades.apply(make_trade_fingerprint, axis=1).astype("string")
+    if fingerprints.isna().any() or fingerprints.duplicated(keep=False).any():
+        raise ValueError("duplicate_trade_id_after_deterministic_fingerprint")
+    return fingerprints.astype(str)
+
+
 def normalize_trades(frame: pd.DataFrame) -> pd.DataFrame:
     trades = frame.copy()
 
@@ -204,19 +249,12 @@ def normalize_trades(frame: pd.DataFrame) -> pd.DataFrame:
     trades["duration_seconds"] = (trades["close_ts"] - trades["open_ts"]).dt.total_seconds()
     trades["target_win"] = (trades["pnl"].fillna(0.0) > 0).astype(int)
 
-    raw_id = trades["order_id"].astype(str).str.strip()
-    missing_id = raw_id.eq("") | raw_id.str.lower().eq("nan") | raw_id.isna()
-    generated_id = trades.apply(make_trade_fingerprint, axis=1)
-    trades["trade_id"] = raw_id.where(~missing_id, generated_id).astype(str)
+    trades["trade_id"] = build_institutional_trade_ids(trades)
 
-    valid = (
-        trades["symbol"].astype(str).str.len().gt(0)
-        & trades["open_ts"].notna()
-        & trades["close_ts"].notna()
-        & trades["entry_price"].notna()
-        & trades["exit_price"].notna()
-    )
-    return trades.loc[valid].reset_index(drop=True)
+    normalized = trades.reset_index(drop=True)
+    if normalized["trade_id"].duplicated(keep=False).any():
+        raise ValueError("duplicate_trade_id_in_trade_enriched_input")
+    return normalized
 
 
 def normalize_features(frame: pd.DataFrame) -> pd.DataFrame:
@@ -259,13 +297,27 @@ def add_feature_snapshots(trades: pd.DataFrame, features: pd.DataFrame) -> pd.Da
 
     for tf in ("1m", "5m"):
         for moment, ts_column in (("open", "open_ts"), ("close", "close_ts")):
-            rows = []
-            for _, trade in enriched.iterrows():
-                snap = snapshot_before(features, str(trade["symbol"]), tf, trade[ts_column])
-                rows.append({f"{moment}_{tf}_{key}": value for key, value in snap.items()})
-            enriched = pd.concat([enriched.reset_index(drop=True), pd.DataFrame(rows).reset_index(drop=True)], axis=1)
+            snapshots = pd.DataFrame(index=enriched.index)
+            market = features[features["tf"].astype(str).eq(tf)].copy()
+            selected = [column for column in SNAPSHOT_COLUMNS if column in market.columns]
+            for symbol, trade_group in enriched.groupby("symbol", sort=False):
+                valid_trades = trade_group.loc[trade_group[ts_column].notna(), [ts_column]].copy()
+                symbol_market = market.loc[market["symbol"].eq(symbol), selected].copy()
+                if valid_trades.empty or symbol_market.empty:
+                    continue
+                valid_trades["_trade_index"] = valid_trades.index
+                merged = pd.merge_asof(
+                    valid_trades.sort_values(ts_column),
+                    symbol_market.sort_values("ts"),
+                    left_on=ts_column,
+                    right_on="ts",
+                    direction="backward",
+                ).set_index("_trade_index")
+                for column in selected:
+                    snapshots.loc[merged.index, f"{moment}_{tf}_{column}"] = merged[column]
+            enriched = pd.concat([enriched, snapshots], axis=1)
 
-    return enriched
+    return enriched.reset_index(drop=True)
 
 
 def compute_path_metrics(trades: pd.DataFrame, features: pd.DataFrame) -> pd.DataFrame:
@@ -275,6 +327,10 @@ def compute_path_metrics(trades: pd.DataFrame, features: pd.DataFrame) -> pd.Dat
         return pd.DataFrame(columns=columns)
 
     one_minute = features[features["tf"].astype(str) == "1m"].copy()
+    symbol_paths = {
+        str(symbol): group.sort_values("ts").reset_index(drop=True)
+        for symbol, group in one_minute.groupby("symbol", sort=False)
+    }
     results: list[dict[str, Any]] = []
 
     for _, trade in trades.iterrows():
@@ -294,11 +350,14 @@ def compute_path_metrics(trades: pd.DataFrame, features: pd.DataFrame) -> pd.Dat
             results.append(result)
             continue
 
-        path = one_minute[
-            (one_minute["symbol"] == symbol)
-            & (one_minute["ts"] >= open_ts)
-            & (one_minute["ts"] <= close_ts)
-        ]
+        symbol_path = symbol_paths.get(symbol)
+        if symbol_path is None:
+            results.append(result)
+            continue
+        timestamps = symbol_path["ts"]
+        left = int(timestamps.searchsorted(open_ts, side="left"))
+        right = int(timestamps.searchsorted(close_ts, side="right"))
+        path = symbol_path.iloc[left:right]
 
         if path.empty or "close" not in path.columns:
             results.append(result)
