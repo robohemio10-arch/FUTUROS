@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "42e61915cf150cadcd7b8590a8cf5ba1810c1e2f19f1959130f3fa001d295447",
+  "aggregate_sha256": "b4654ab64e81728003f9738150eb68f30d4cc5a50fabb001fa3bfa72629981aa",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1535,7 +1535,7 @@
       "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "0ea437f4287ac5dfa9378477e04fbb355f0c6c5130aeb3ce9b860d01bd0ae757"
+      "sha256": "9c697afedb08440dbfb64852865941ecce1c613200e6e87ae95bb345f778267c"
     },
     {
       "bytes": 1209,
