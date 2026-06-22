@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b4654ab64e81728003f9738150eb68f30d4cc5a50fabb001fa3bfa72629981aa",
+  "aggregate_sha256": "bc0d3786c66ce3b981f3abfbfca82712aa6a72f507318e482f16dc2453fd319a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 157,
-    "manifested_files_total": 964,
-    "python_files": 716,
+    "docs_files": 158,
+    "manifested_files_total": 968,
+    "python_files": 718,
     "runtime_excluded_files_total": 0,
-    "test_files": 206,
-    "tracked_files_total": 965,
+    "test_files": 207,
+    "tracked_files_total": 969,
     "workflows": 1
   },
   "deterministic": true,
@@ -648,6 +648,12 @@
       "hash_mode": "text_lf",
       "path": "docs/BITRADEX_OCR_REVIEW_PIPELINE.md",
       "sha256": "6a5f0a7e88a8d80e68a1519cc54b10a3f0382a1fe3576309465483c89134544f"
+    },
+    {
+      "bytes": 5985,
+      "hash_mode": "text_lf",
+      "path": "docs/BITRADEX_OCR_V11_SINGLE_COMMAND_INGESTION_ORCHESTRATOR.md",
+      "sha256": "8866a772ad7a96b14edd9628126eef9989e784722f46e23c83ecb27a8c109a4c"
     },
     {
       "bytes": 3243,
@@ -1542,6 +1548,12 @@
       "hash_mode": "text_lf",
       "path": "requirements-runtime.lock",
       "sha256": "ea8d005105e2bed01616771c742df7747c2bdcfcaac9549f20402cfcc8ee5355"
+    },
+    {
+      "bytes": 851,
+      "hash_mode": "text_lf",
+      "path": "scripts/RUN_BITRADEX_OCR_V11_SINGLE_COMMAND_INGESTION.ps1",
+      "sha256": "9877d0b74d01fd2cc9927b26f1624172bd5c43358bfde4c0bd31b09c54d0ce04"
     },
     {
       "bytes": 528,
@@ -2658,6 +2670,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_backup_snapshot.py",
       "sha256": "c559f3d062e3e0e2d76ab3a8248182fbf0ffa9fb8a2aa46c314b3a361c5b8380"
+    },
+    {
+      "bytes": 31617,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_bitradex_ocr_v11_single_command_ingestion.py",
+      "sha256": "0f037e9287f5825dd145e9b9f2678e783e67a5725f79b1282644cb811f7c5374"
     },
     {
       "bytes": 1758,
@@ -4698,6 +4716,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_review_pipeline_contract.py",
       "sha256": "9caa28f78492d370f1a7b4a65676c2628de954a3494f5d4c9a6eaa219d5b9941"
+    },
+    {
+      "bytes": 18810,
+      "hash_mode": "text_lf",
+      "path": "tests/test_bitradex_ocr_v11_single_command_ingestion_orchestrator.py",
+      "sha256": "2608c023e56080b167f06e4f3ed22a860b843c3be015d8aaaa9e0dfdf1dede8a"
     },
     {
       "bytes": 9242,
