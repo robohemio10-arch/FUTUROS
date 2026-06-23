@@ -98,6 +98,7 @@ class OrchestratorPaths:
     input_dir: Path
     package_dir: Path
     report_path: Path
+    input_images_manifest_path: Path
     master_xlsx: Path
     ocr_script: Path
     apply_script: Path
@@ -112,6 +113,9 @@ class OrchestratorOptions:
     run_phase5: bool = False
     timeout_seconds: int = 900
     lang: str = "eng"
+    expected_image_count: int = 50
+    allow_image_count_mismatch: bool = False
+    max_input_images_in_json: int = 20
 
     @property
     def dry_run(self) -> bool:
@@ -156,6 +160,7 @@ def resolve_paths(
     input_dir: str | Path,
     package_dir: str | Path | None,
     report_path: str | Path | None,
+    input_images_manifest_path: str | Path | None = None,
 ) -> OrchestratorPaths:
     root = Path(project_root).expanduser().resolve()
     package = (
@@ -168,11 +173,17 @@ def resolve_paths(
         if report_path
         else root / "data" / "reports" / "bitradex_ocr_v11_single_command_ingestion_report.json"
     )
+    images_manifest = (
+        Path(input_images_manifest_path).expanduser().resolve()
+        if input_images_manifest_path
+        else report.parent / "bitradex_ocr_v11_input_images_manifest.json"
+    )
     return OrchestratorPaths(
         project_root=root,
         input_dir=Path(input_dir).expanduser().resolve(),
         package_dir=package,
         report_path=report,
+        input_images_manifest_path=images_manifest,
         master_xlsx=root / "data" / "trades" / "trades_master.xlsx",
         ocr_script=root / "scripts" / "ocr_bitradex_images_to_review.py",
         apply_script=root / "scripts" / "apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master.py",
@@ -211,6 +222,24 @@ def image_inventory(images: Sequence[Path], input_dir: Path) -> list[dict[str, A
         }
         for image in images
     ]
+
+
+def write_input_images_manifest(
+    path: Path,
+    input_dir: Path,
+    inventory: list[dict[str, Any]],
+) -> None:
+    write_json(
+        path,
+        {
+            "status": "ok",
+            "reason": "input_images_manifest_created",
+            "input_dir": str(input_dir),
+            "input_image_count": len(inventory),
+            "input_images": inventory,
+            **SAFETY_FLAGS,
+        },
+    )
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -442,7 +471,11 @@ def base_report(options: OrchestratorOptions) -> dict[str, Any]:
         "run_phase5": options.run_phase5,
         "input_dir": str(options.paths.input_dir),
         "input_image_count": 0,
-        "input_images": [],
+        "expected_image_count": options.expected_image_count,
+        "image_count_mismatch_allowed": False,
+        "input_images_sample": [],
+        "input_images_sample_size": 0,
+        "input_images_manifest_path": str(options.paths.input_images_manifest_path),
         "package_dir": str(options.paths.package_dir),
         "candidate_path": None,
         "staging_status": "not_run",
@@ -459,13 +492,16 @@ def base_report(options: OrchestratorOptions) -> dict[str, Any]:
         "trade_enriched_rows": None,
         "training_dataset_rows": None,
         "master_sha256_before": None,
+        "master_sha256_after_staging": None,
         "master_sha256_after": None,
+        "master_unchanged_by_staging": None,
         "backup_path": None,
         "backup_files": [],
         "official_import_backup_path": None,
         "rollback_command": None,
         "validations_executed": [],
         "blockers": [],
+        "warnings": [],
         **SAFETY_FLAGS,
     }
 
@@ -521,6 +557,17 @@ def run_ingestion(
     if options.run_phase5 and not options.apply_import:
         report["blockers"].append("run_phase5_requires_apply_import")
         return finish(report, paths.report_path, "blocked", "run_phase5_requires_apply_import")
+    if options.expected_image_count <= 0:
+        report["blockers"].append("expected_image_count_must_be_positive")
+        return finish(report, paths.report_path, "blocked", "invalid_expected_image_count")
+    if options.allow_image_count_mismatch and options.apply_import:
+        report["blockers"].append("allow_image_count_mismatch_is_dry_run_only")
+        return finish(
+            report,
+            paths.report_path,
+            "blocked",
+            "allow_image_count_mismatch_is_dry_run_only",
+        )
 
     if not paths.project_root.exists():
         report["blockers"].append("project_root_not_found")
@@ -531,6 +578,7 @@ def run_ingestion(
     if not paths.master_xlsx.exists():
         report["blockers"].append("trades_master_not_found")
         return finish(report, paths.report_path, "blocked", "trades_master_not_found")
+    report["master_sha256_before"] = sha256_file(paths.master_xlsx)
     if not paths.ocr_script.exists():
         report["blockers"].append("missing_official_ocr_stage_script")
         return finish(report, paths.report_path, "blocked", "missing_official_ocr_stage_script")
@@ -549,8 +597,26 @@ def run_ingestion(
     if not images:
         report["blockers"].append("input_dir_has_no_supported_images")
         return finish(report, paths.report_path, "blocked", "empty_input_dir")
-    report["input_images"] = image_inventory(images, paths.input_dir)
+    inventory = image_inventory(images, paths.input_dir)
+    write_input_images_manifest(paths.input_images_manifest_path, paths.input_dir, inventory)
+    sample_limit = max(0, options.max_input_images_in_json)
+    report["input_images_sample"] = inventory[:sample_limit]
+    report["input_images_sample_size"] = len(report["input_images_sample"])
     report["validations_executed"].append("deterministic_image_discovery_and_hashing")
+    report["validations_executed"].append("full_input_images_manifest_written")
+
+    if len(images) != options.expected_image_count:
+        mismatch = {
+            "reason": "input_image_count_mismatch",
+            "input_image_count": len(images),
+            "expected_image_count": options.expected_image_count,
+        }
+        if not options.allow_image_count_mismatch:
+            report["blockers"].append(mismatch)
+            return finish(report, paths.report_path, "blocked", "input_image_count_mismatch")
+        report["image_count_mismatch_allowed"] = True
+        report["warnings"].append(mismatch)
+    report["validations_executed"].append("expected_image_count_gate")
 
     if options.apply_import:
         clean, git_result = git_worktree_clean(
@@ -587,6 +653,14 @@ def run_ingestion(
     ocr_payload = parse_command_json(ocr_result)
     report["staging_status"] = str(ocr_payload.get("status") or "ok")
     report["validations_executed"].append("official_ocr_review_stage")
+    report["master_sha256_after_staging"] = sha256_file(paths.master_xlsx)
+    report["master_unchanged_by_staging"] = (
+        report["master_sha256_after_staging"] == report["master_sha256_before"]
+    )
+    if not report["master_unchanged_by_staging"]:
+        report["blockers"].append("ocr_staging_changed_trades_master")
+        return finish(report, paths.report_path, "failed", "ocr_staging_changed_trades_master")
+    report["validations_executed"].append("ocr_stage_master_immutability")
 
     candidate_path = find_candidate(paths.package_dir)
     if candidate_path is None:
@@ -630,7 +704,6 @@ def run_ingestion(
     report["incoming_rows"] = preview["incoming_rows"]
     report["rows_after"] = preview["rows_after"]
     report["expected_rows_after"] = preview["expected_rows_after"]
-    report["master_sha256_before"] = sha256_file(paths.master_xlsx)
     report["validations_executed"].extend(
         ["candidate_schema_and_critical_fields", "preview_against_trades_master"]
     )
@@ -771,10 +844,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--input-dir", default=r"E:\bitradex\Bitradex prints")
     parser.add_argument("--package-dir")
     parser.add_argument("--report")
+    parser.add_argument("--input-images-manifest")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="Preview only (default).")
     mode.add_argument("--apply-import", action="store_true", help="Apply through the official importer.")
     parser.add_argument("--run-phase5", action="store_true", help="Opt in to Phase5 after import.")
+    parser.add_argument("--expected-image-count", type=int, default=50)
+    parser.add_argument("--allow-image-count-mismatch", action="store_true")
+    parser.add_argument("--max-input-images-in-json", type=int, default=20)
     parser.add_argument("--timeout-seconds", type=int, default=900)
     parser.add_argument("--lang", default="eng")
     parser.add_argument("--json", action="store_true")
@@ -783,13 +860,22 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
-    paths = resolve_paths(args.project_root, args.input_dir, args.package_dir, args.report)
+    paths = resolve_paths(
+        args.project_root,
+        args.input_dir,
+        args.package_dir,
+        args.report,
+        args.input_images_manifest,
+    )
     options = OrchestratorOptions(
         paths=paths,
         apply_import=bool(args.apply_import),
         run_phase5=bool(args.run_phase5),
         timeout_seconds=max(1, int(args.timeout_seconds)),
         lang=str(args.lang),
+        expected_image_count=int(args.expected_image_count),
+        allow_image_count_mismatch=bool(args.allow_image_count_mismatch),
+        max_input_images_in_json=max(0, int(args.max_input_images_in_json)),
     )
     report = run_ingestion(options)
     output = json.dumps(report, ensure_ascii=False, sort_keys=True)

@@ -3,8 +3,12 @@ param(
     [string]$InputDir = "E:\bitradex\Bitradex prints",
     [string]$PackageDir = "",
     [string]$Report = "",
+    [string]$InputImagesManifest = "",
     [switch]$ApplyImport,
     [switch]$RunPhase5,
+    [int]$ExpectedImageCount = 50,
+    [int]$MaxInputImagesInJson = 20,
+    [switch]$AllowImageCountMismatch,
     [int]$TimeoutSeconds = 900
 )
 
@@ -14,6 +18,8 @@ $CliArgs = @(
     $Cli,
     "--project-root", $ProjectRoot,
     "--input-dir", $InputDir,
+    "--expected-image-count", $ExpectedImageCount,
+    "--max-input-images-in-json", $MaxInputImagesInJson,
     "--timeout-seconds", $TimeoutSeconds,
     "--json"
 )
@@ -24,6 +30,9 @@ if ($PackageDir) {
 if ($Report) {
     $CliArgs += @("--report", $Report)
 }
+if ($InputImagesManifest) {
+    $CliArgs += @("--input-images-manifest", $InputImagesManifest)
+}
 if ($ApplyImport) {
     $CliArgs += "--apply-import"
 } else {
@@ -31,6 +40,9 @@ if ($ApplyImport) {
 }
 if ($RunPhase5) {
     $CliArgs += "--run-phase5"
+}
+if ($AllowImageCountMismatch) {
+    $CliArgs += "--allow-image-count-mismatch"
 }
 
 & python @CliArgs

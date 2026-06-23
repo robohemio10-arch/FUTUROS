@@ -105,11 +105,13 @@ class FakeExecutor:
         fail_stage: str | None = None,
         timeout_stage: str | None = None,
         backup_created: bool = True,
+        mutate_master_on_ocr: bool = False,
     ) -> None:
         self.git_dirty = git_dirty
         self.fail_stage = fail_stage
         self.timeout_stage = timeout_stage
         self.backup_created = backup_created
+        self.mutate_master_on_ocr = mutate_master_on_ocr
         self.commands: list[tuple[str, ...]] = []
 
     @staticmethod
@@ -139,6 +141,9 @@ class FakeExecutor:
         if stage == "git":
             return CommandResult(command, 0, " M tracked.py" if self.git_dirty else "", "")
         if stage == "ocr":
+            if self.mutate_master_on_ocr:
+                master = cwd / "data" / "trades" / "trades_master.xlsx"
+                master.write_bytes(master.read_bytes() + b"unexpected mutation")
             return CommandResult(command, 0, json.dumps({"status": "ok"}), "")
         if stage == "apply":
             return self.apply(command, cwd)
@@ -202,18 +207,29 @@ def options(
     *,
     apply_import: bool = False,
     run_phase5: bool = False,
+    expected_image_count: int | None = None,
+    allow_image_count_mismatch: bool = False,
+    max_input_images_in_json: int = 20,
+    input_images_manifest: Path | None = None,
 ) -> OrchestratorOptions:
     paths = resolve_paths(
         project,
         input_dir,
         package,
         project / "data" / "reports" / "orchestrator.json",
+        input_images_manifest,
     )
+    discovered_count = len(discover_images(input_dir))
     return OrchestratorOptions(
         paths=paths,
         apply_import=apply_import,
         run_phase5=run_phase5,
         timeout_seconds=10,
+        expected_image_count=(
+            expected_image_count if expected_image_count is not None else max(1, discovered_count)
+        ),
+        allow_image_count_mismatch=allow_image_count_mismatch,
+        max_input_images_in_json=max_input_images_in_json,
     )
 
 
@@ -232,8 +248,75 @@ def test_default_is_dry_run_and_does_not_write_master(tmp_path: Path) -> None:
     assert report["status"] == "ok"
     assert report["dry_run"] is True
     assert report["import_status"] == "not_run_dry_run"
+    assert report["master_unchanged_by_staging"] is True
     assert master.read_bytes() == before
     assert "apply" not in command_stages(executor)
+
+
+def test_default_expected_count_50_blocks_different_batch_size(tmp_path: Path) -> None:
+    project, input_dir, package = prepare_project(tmp_path)
+    paths = resolve_paths(
+        project,
+        input_dir,
+        package,
+        project / "data" / "reports" / "orchestrator.json",
+    )
+    executor = FakeExecutor()
+
+    report = run_ingestion(OrchestratorOptions(paths=paths), executor=executor)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "input_image_count_mismatch"
+    assert report["input_image_count"] == 2
+    assert report["expected_image_count"] == 50
+    assert report["image_count_mismatch_allowed"] is False
+    assert executor.commands == []
+
+
+def test_allow_image_count_mismatch_continues_with_auditable_warning(tmp_path: Path) -> None:
+    project, input_dir, package = prepare_project(tmp_path)
+    executor = FakeExecutor()
+
+    report = run_ingestion(
+        options(
+            project,
+            input_dir,
+            package,
+            expected_image_count=50,
+            allow_image_count_mismatch=True,
+        ),
+        executor=executor,
+    )
+
+    assert report["status"] == "ok"
+    assert report["image_count_mismatch_allowed"] is True
+    assert report["warnings"] == [
+        {
+            "reason": "input_image_count_mismatch",
+            "input_image_count": 2,
+            "expected_image_count": 50,
+        }
+    ]
+    assert command_stages(executor) == ["ocr"]
+
+
+def test_allow_image_count_mismatch_is_rejected_for_apply(tmp_path: Path) -> None:
+    project, input_dir, package = prepare_project(tmp_path)
+    executor = FakeExecutor()
+    report = run_ingestion(
+        options(
+            project,
+            input_dir,
+            package,
+            apply_import=True,
+            expected_image_count=50,
+            allow_image_count_mismatch=True,
+        ),
+        executor=executor,
+    )
+    assert report["status"] == "blocked"
+    assert report["reason"] == "allow_image_count_mismatch_is_dry_run_only"
+    assert executor.commands == []
 
 
 def test_input_dir_missing_blocks(tmp_path: Path) -> None:
@@ -305,6 +388,46 @@ def test_preview_only_never_calls_official_import(tmp_path: Path) -> None:
     assert report["incoming_rows"] == 1
     assert report["expected_rows_after"] == 2
     assert command_stages(executor) == ["ocr"]
+
+
+def test_exactly_50_images_follow_expected_dry_run_flow(tmp_path: Path) -> None:
+    names = ("a.png",) + tuple(f"image_{index:02d}.jpg" for index in range(1, 50))
+    project, input_dir, package = prepare_project(tmp_path, images=names)
+    executor = FakeExecutor()
+
+    report = run_ingestion(options(project, input_dir, package), executor=executor)
+
+    assert report["status"] == "ok"
+    assert report["input_image_count"] == 50
+    assert report["expected_image_count"] == 50
+    assert report["preview_status"] == "ok"
+    assert command_stages(executor) == ["ocr"]
+
+
+def test_mismatch_never_calls_import_or_phase5_and_preserves_safety(tmp_path: Path) -> None:
+    project, input_dir, package = prepare_project(tmp_path)
+    executor = FakeExecutor()
+
+    report = run_ingestion(
+        options(
+            project,
+            input_dir,
+            package,
+            apply_import=True,
+            run_phase5=True,
+            expected_image_count=50,
+        ),
+        executor=executor,
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "input_image_count_mismatch"
+    assert "apply" not in command_stages(executor)
+    assert "phase5" not in command_stages(executor)
+    assert report["paper_only"] is True
+    assert report["shadow_only"] is True
+    assert report["sends_orders"] is False
+    assert report["exchange_private_access"] is False
 
 
 def test_official_import_blocks_if_mandatory_backup_is_missing(tmp_path: Path) -> None:
@@ -398,6 +521,11 @@ def test_safety_flags_and_json_contract_are_always_present(tmp_path: Path) -> No
         "run_phase5",
         "input_dir",
         "input_image_count",
+        "expected_image_count",
+        "image_count_mismatch_allowed",
+        "input_images_sample",
+        "input_images_sample_size",
+        "input_images_manifest_path",
         "staging_status",
         "candidate_status",
         "preview_status",
@@ -446,6 +574,18 @@ def test_subprocess_error_is_reported_explicitly(tmp_path: Path) -> None:
     )
     assert report["status"] == "failed"
     assert report["reason"] == "ocr_staging_failed"
+
+
+def test_ocr_stage_is_blocked_if_it_changes_master(tmp_path: Path) -> None:
+    project, input_dir, package = prepare_project(tmp_path)
+    report = run_ingestion(
+        options(project, input_dir, package),
+        executor=FakeExecutor(mutate_master_on_ocr=True),
+    )
+    assert report["status"] == "failed"
+    assert report["reason"] == "ocr_staging_changed_trades_master"
+    assert report["master_unchanged_by_staging"] is False
+    assert "apply" not in report["validations_executed"]
 
 
 def test_missing_candidate_after_official_ocr_stage_blocks(tmp_path: Path) -> None:
@@ -509,10 +649,57 @@ def test_cli_returns_controlled_json_for_missing_input(tmp_path: Path) -> None:
     assert report_path.exists()
 
 
+def test_cli_stdout_uses_sample_and_writes_full_image_manifest(tmp_path: Path) -> None:
+    names = ("a.png",) + tuple(f"batch_{index:03d}.jpg" for index in range(1, 60))
+    project, input_dir, package = prepare_project(tmp_path, images=names)
+    report_path = project / "data" / "reports" / "orchestrator.json"
+    manifest_path = project / "data" / "reports" / "images.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--project-root",
+            str(project),
+            "--input-dir",
+            str(input_dir),
+            "--package-dir",
+            str(package),
+            "--report",
+            str(report_path),
+            "--input-images-manifest",
+            str(manifest_path),
+            "--expected-image-count",
+            "50",
+            "--max-input-images-in-json",
+            "7",
+            "--json",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    payload = json.loads(completed.stdout)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    assert completed.returncode == 1
+    assert payload["reason"] == "input_image_count_mismatch"
+    assert "input_images" not in payload
+    assert payload["input_image_count"] == 60
+    assert payload["input_images_sample_size"] == 7
+    assert len(payload["input_images_sample"]) == 7
+    assert payload["input_images_manifest_path"] == str(manifest_path)
+    assert manifest["input_image_count"] == 60
+    assert len(manifest["input_images"]) == 60
+
+
 def test_cli_defaults_to_dry_run_and_phase5_false() -> None:
     args = parse_args([])
     assert args.apply_import is False
     assert args.run_phase5 is False
+    assert args.expected_image_count == 50
+    assert args.allow_image_count_mismatch is False
+    assert args.max_input_images_in_json == 20
 
 
 def test_wrapper_only_forwards_safe_cli_arguments() -> None:
@@ -521,6 +708,9 @@ def test_wrapper_only_forwards_safe_cli_arguments() -> None:
     assert "--dry-run" in content
     assert "--apply-import" in content
     assert "--run-phase5" in content
+    assert "--expected-image-count" in content
+    assert "--allow-image-count-mismatch" in content
+    assert "--max-input-images-in-json" in content
     assert "Invoke-Expression" not in content
     assert "trades_master.xlsx" not in content
     assert "ORDER_SUBMISSION_ENABLED" not in content

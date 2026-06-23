@@ -19,7 +19,9 @@ Não existe hoje um script oficial separado que transforme o review OCR em candi
 
 ## Dry-Run
 
-Dry-run é o padrão. Ele pode escrever somente artefatos ignorados pelo Git no package dir e o relatório final; nunca chama o importador oficial, nunca altera a master e nunca executa a Fase 5.
+Dry-run é o padrão. Ele pode escrever somente artefatos ignorados pelo Git no package dir e os relatórios runtime; nunca chama o importador oficial, nunca altera a master e nunca executa a Fase 5.
+
+O lote esperado é de `50` imagens por padrão. Uma pasta com qualquer outra quantidade, inclusive o histórico completo, bloqueia antes do estágio OCR com `reason=input_image_count_mismatch`.
 
 ```powershell
 python .\scripts\run_bitradex_ocr_v11_single_command_ingestion.py --dry-run --json
@@ -31,9 +33,41 @@ Com diretórios explícitos:
 python .\scripts\run_bitradex_ocr_v11_single_command_ingestion.py `
   --input-dir "E:\bitradex\Bitradex prints" `
   --package-dir ".\data\staging\bitradex_ocr_v11_next_lot" `
+  --expected-image-count 50 `
   --dry-run `
   --json
 ```
+
+Para uma auditoria deliberada de pasta com contagem diferente, use somente em dry-run:
+
+```powershell
+python .\scripts\run_bitradex_ocr_v11_single_command_ingestion.py `
+  --input-dir "E:\bitradex\Bitradex prints" `
+  --expected-image-count 50 `
+  --allow-image-count-mismatch `
+  --dry-run `
+  --json
+```
+
+O relatório registra `image_count_mismatch_allowed=true` e um warning estruturado. O override é rejeitado em conjunto com `--apply-import`.
+
+## Manifesto E Amostra Das Imagens
+
+O stdout e o relatório principal nunca carregam o inventário completo. Eles contêm apenas:
+
+- `input_image_count`;
+- `expected_image_count`;
+- `input_images_sample`;
+- `input_images_sample_size`;
+- `input_images_manifest_path`.
+
+`--max-input-images-in-json` controla a amostra e usa `20` por padrão. O inventário completo, incluindo caminho relativo, tamanho e SHA-256, é gravado em:
+
+```text
+data/reports/bitradex_ocr_v11_input_images_manifest.json
+```
+
+O path pode ser substituído por `--input-images-manifest`. Esse JSON é runtime, permanece ignorado pelo Git e pode conter milhares de entradas sem poluir stdout.
 
 O primeiro dry-run normalmente produz o review e bloqueia até que o candidate seja revisado. Depois da materialização do import-ready, execute o dry-run novamente para gerar:
 
@@ -49,6 +83,7 @@ O import exige flag explícita e worktree limpa:
 python .\scripts\run_bitradex_ocr_v11_single_command_ingestion.py `
   --input-dir "E:\bitradex\Bitradex prints" `
   --package-dir ".\data\staging\bitradex_ocr_v11_next_lot" `
+  --expected-image-count 50 `
   --apply-import `
   --json
 ```
@@ -56,13 +91,14 @@ python .\scripts\run_bitradex_ocr_v11_single_command_ingestion.py `
 Antes de chamar o importador oficial, o orquestrador:
 
 1. valida os hashes das imagens e o vínculo `source_file`/`imagem` com o lote atual;
-2. valida schema, símbolos, lado, order ID, PnL, timestamps, preços e volumes;
-3. bloqueia duplicidades internas ou contra a master;
-4. gera preview com `rows_before`, `incoming_rows` e `expected_rows_after`;
-5. cria backup próprio e verifica SHA-256 da cópia da master;
-6. delega a escrita somente ao importador oficial, que cria seu próprio backup;
-7. valida o post-import audit e as contagens;
-8. chama o sync OCR V1.1 com hash e linhas observados após o import.
+2. compara o SHA-256 da master antes e depois do estágio OCR/review e bloqueia qualquer alteração;
+3. valida schema, símbolos, lado, order ID, PnL, timestamps, preços e volumes;
+4. bloqueia duplicidades internas ou contra a master;
+5. gera preview com `rows_before`, `incoming_rows` e `expected_rows_after`;
+6. cria backup próprio e verifica SHA-256 da cópia da master;
+7. delega a escrita somente ao importador oficial, que cria seu próprio backup;
+8. valida o post-import audit e as contagens;
+9. chama o sync OCR V1.1 com hash e linhas observados após o import.
 
 O relatório contém `backup_path`, `official_import_backup_path` e `rollback_command`. O rollback restaura a master a partir do backup anterior ao import.
 
@@ -105,6 +141,7 @@ Para escrita, use `-ApplyImport`; para o rebuild posterior, adicione `-RunPhase5
 ## Critérios De Sucesso
 
 - input contém imagens permitidas e ordenadas deterministicamente;
+- `input_image_count` coincide com `expected_image_count` antes de OCR/import;
 - scripts oficiais existem;
 - candidate possui schema e proveniência válidos;
 - nenhuma duplicidade interna ou contra a master;
@@ -118,6 +155,7 @@ Para escrita, use `-ApplyImport`; para o rebuild posterior, adicione `-RunPhase5
 ## Critérios De Bloqueio
 
 - diretório ausente ou vazio;
+- quantidade de imagens diferente da esperada sem override de auditoria;
 - script oficial ausente;
 - import-ready ausente;
 - candidate sem campos críticos ou fonte V1.1;
