@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "54d720d6c23b1614f3b68126c32259bf94842bc66a6ed8a4ccade2afad9678c5",
+  "aggregate_sha256": "fc2a790f9c19257e6e092ca783b9f167483dea7d37e487c2abd63ddc3253a4c6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 162,
-    "manifested_files_total": 985,
-    "python_files": 731,
+    "docs_files": 163,
+    "manifested_files_total": 989,
+    "python_files": 734,
     "runtime_excluded_files_total": 0,
-    "test_files": 211,
-    "tracked_files_total": 986,
+    "test_files": 212,
+    "tracked_files_total": 990,
     "workflows": 1
   },
   "deterministic": true,
@@ -1418,6 +1418,12 @@
       "sha256": "fbd6b671cd8629eba2a37e9dd41416319aafdc59c7f26b13b37409ec5156ff77"
     },
     {
+      "bytes": 4995,
+      "hash_mode": "text_lf",
+      "path": "docs/TRAINING_EXECUTIVE_REPORT_PACK_V1.md",
+      "sha256": "971b70f39f13b57526091fc38605718bdeab79da2f0043b6a9afb530105e6f76"
+    },
+    {
       "bytes": 3511,
       "hash_mode": "text_lf",
       "path": "docs/TRANSITIVE_LOCK_DOCKER_RUNTIME_REPRODUCIBILITY.md",
@@ -2034,6 +2040,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_training_dataset_quality_gated_binance_1m.py",
       "sha256": "63f6939d8407db1b157fd1e530ca974ba9bf46125bf9763e0237c2d78eabf090"
+    },
+    {
+      "bytes": 2058,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_training_executive_report_pack.py",
+      "sha256": "d9c8daeba7eebb8b389448ed8f2cdcb22086937b038124c180a47762aeed4883"
     },
     {
       "bytes": 96,
@@ -4502,6 +4514,12 @@
       "sha256": "e8982f1b37a132558b4714eaf21f7b0662961b2bd29d4be9694b578152e9208c"
     },
     {
+      "bytes": 29700,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/training_executive_report_pack.py",
+      "sha256": "39358feb64638e5dad72dbf0cdd2d7e6ddcfdbff42f3a470cf9114fc3144d4a8"
+    },
+    {
       "bytes": 25627,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/walkforward_montecarlo.py",
@@ -5904,6 +5922,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trade_financial_input_repair.py",
       "sha256": "d5f822b15c8df4f269cabf4189ee3a822cceed673283218047232fa4e6cbe8d1"
+    },
+    {
+      "bytes": 8852,
+      "hash_mode": "text_lf",
+      "path": "tests/test_training_executive_report_pack_v1.py",
+      "sha256": "8fc62c8747b9f17383f7d7d7a2ba6bc956a0b8a370ac4262f1cf98d983c5ad39"
     },
     {
       "bytes": 5485,
