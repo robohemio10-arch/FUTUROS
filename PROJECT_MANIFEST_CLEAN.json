@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fc2a790f9c19257e6e092ca783b9f167483dea7d37e487c2abd63ddc3253a4c6",
+  "aggregate_sha256": "3887d729bc7243458ec0d6b01a2327e04f140b20e1e64ebb3510d0c659c1dc98",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 163,
-    "manifested_files_total": 989,
-    "python_files": 734,
+    "docs_files": 164,
+    "manifested_files_total": 993,
+    "python_files": 737,
     "runtime_excluded_files_total": 0,
-    "test_files": 212,
-    "tracked_files_total": 990,
+    "test_files": 213,
+    "tracked_files_total": 994,
     "workflows": 1
   },
   "deterministic": true,
@@ -1212,6 +1212,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_MARKET_FEATURES_REFRESH_RUNNER.md",
       "sha256": "63582e800c9189509b298c81ba1e52e3bb6494988a10245ad8eb98da13ce9012"
+    },
+    {
+      "bytes": 5320,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_OCR_V11_SHADOW_MODEL_CANDIDATE_REGISTRY_V1.md",
+      "sha256": "ea3f106008aa98b64d121ab283646787389b17d0906023559638acbdc395e41e"
     },
     {
       "bytes": 3859,
@@ -2646,6 +2652,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/register_ai_shadow_daily_update_task.ps1",
       "sha256": "6a308353d15ed6e1e44c793a4bde9181f4a6eac7019c849a7661b7141a6ac2ec"
+    },
+    {
+      "bytes": 2283,
+      "hash_mode": "text_lf",
+      "path": "scripts/register_qlib_ocr_v11_shadow_candidate.py",
+      "sha256": "5420ffbcfc5284a7842b3af5df0a8cf2b08d5f19837fba12e0d8e499e9b94543"
     },
     {
       "bytes": 4367,
@@ -4496,6 +4508,12 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
+      "bytes": 19697,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/qlib_ocr_v11_shadow_candidate_registry.py",
+      "sha256": "ad87ef8b5b2a07829db907bd458f630b62ce30bc74c996f4dce072560b3d18d1"
+    },
+    {
       "bytes": 33800,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/qlib_ocr_v11_supervised_training.py",
@@ -5712,6 +5730,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_market_features_refresh_runner.py",
       "sha256": "d6dea7a90af5f5cba39838e2e5c303585856552c4d928dcf630b7a34a9edd76e"
+    },
+    {
+      "bytes": 11027,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_ocr_v11_shadow_model_candidate_registry_v1.py",
+      "sha256": "dc3f4f7c616e45b1ddea903723e04cb2cc74defb654129cd56921dba70cf5ca1"
     },
     {
       "bytes": 10274,
