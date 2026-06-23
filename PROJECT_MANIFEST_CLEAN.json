@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c575d4a1c1e7f68d70611bc6b267a935a6e53f93302fae08f7a6da5205141c86",
+  "aggregate_sha256": "a8e460e1ba2bec9e1a94c4843f844c4c6ea9883d6cf733e0c87f66ea3a5017d0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 160,
-    "manifested_files_total": 977,
-    "python_files": 725,
+    "docs_files": 161,
+    "manifested_files_total": 981,
+    "python_files": 728,
     "runtime_excluded_files_total": 0,
-    "test_files": 209,
-    "tracked_files_total": 978,
+    "test_files": 210,
+    "tracked_files_total": 982,
     "workflows": 1
   },
   "deterministic": true,
@@ -1038,6 +1038,12 @@
       "hash_mode": "text_lf",
       "path": "docs/OCR_V11_TP_SL_GRID_AND_TRADE_OUTCOME_SIMULATOR.md",
       "sha256": "91d9206351b5e0e00473f055d18178310b2068078058e8b62a66f309492c5908"
+    },
+    {
+      "bytes": 3453,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_V11_WALKFORWARD_MONTECARLO_RESEARCH_PACK.md",
+      "sha256": "25072969a5e781175d8293f285c541b5d437ce073f4626bcfe6310dbb3d980d0"
     },
     {
       "bytes": 2229,
@@ -2756,6 +2762,12 @@
       "sha256": "733176fdc4514ff65776ae1362e29f75f250c9f9143af1f23f1538c9a4f9446b"
     },
     {
+      "bytes": 3444,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_ocr_v11_walkforward_montecarlo_research.py",
+      "sha256": "8588bf2a23a6cd0c8b485f6c1090e9e43756d0c34367f51c52fe1f3096841c3f"
+    },
+    {
       "bytes": 20625,
       "hash_mode": "text_lf",
       "path": "scripts/run_order_intent_capital_ledger_audit.py",
@@ -4472,6 +4484,12 @@
       "sha256": "e8982f1b37a132558b4714eaf21f7b0662961b2bd29d4be9694b578152e9208c"
     },
     {
+      "bytes": 25627,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/walkforward_montecarlo.py",
+      "sha256": "c5c256907bf16751c222d06efe6006d16124466ccfa6fc6213c24b1bb2dda0b8"
+    },
+    {
       "bytes": 5531,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/walkforward_validation.py",
@@ -5418,6 +5436,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_v11_tp_sl_grid_simulator.py",
       "sha256": "4dceed50b6af6ef895fbcb3d63d0de476553819516eb82788d4e43ed6723d42d"
+    },
+    {
+      "bytes": 8994,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_v11_walkforward_montecarlo_research.py",
+      "sha256": "539d44f61b160af1c8ebfe4d1fc3bcd96eb19633d0f52e3d93bf3aee9c51b316"
     },
     {
       "bytes": 6121,
