@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a8e460e1ba2bec9e1a94c4843f844c4c6ea9883d6cf733e0c87f66ea3a5017d0",
+  "aggregate_sha256": "54d720d6c23b1614f3b68126c32259bf94842bc66a6ed8a4ccade2afad9678c5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 161,
-    "manifested_files_total": 981,
-    "python_files": 728,
+    "docs_files": 162,
+    "manifested_files_total": 985,
+    "python_files": 731,
     "runtime_excluded_files_total": 0,
-    "test_files": 210,
-    "tracked_files_total": 982,
+    "test_files": 211,
+    "tracked_files_total": 986,
     "workflows": 1
   },
   "deterministic": true,
@@ -1212,6 +1212,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_MARKET_FEATURES_REFRESH_RUNNER.md",
       "sha256": "63582e800c9189509b298c81ba1e52e3bb6494988a10245ad8eb98da13ce9012"
+    },
+    {
+      "bytes": 3859,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_OCR_V11_SUPERVISED_TRAINING_LAB.md",
+      "sha256": "89c318a322701a770a8211af3386496776c764f930f7797d00a0fe4239b4ea3a"
     },
     {
       "bytes": 3590,
@@ -2832,6 +2838,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_qlib_market_features_refresh.py",
       "sha256": "e055c1131932d5bdbe3879de8f977de1f9fb1a5494d1807a4024402ef17ded69"
+    },
+    {
+      "bytes": 3453,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_qlib_ocr_v11_supervised_training_lab.py",
+      "sha256": "bf9eb4d7d77bf65a2118060f6fb192ee167e97576d76743d80d298b947bb48cf"
     },
     {
       "bytes": 4265,
@@ -4472,6 +4484,12 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
+      "bytes": 33800,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/qlib_ocr_v11_supervised_training.py",
+      "sha256": "125732cad140fe592d9d2fcca908a9b5750967385fe9e42dc416dd1ad5336a18"
+    },
+    {
       "bytes": 11416,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/reporting.py",
@@ -5676,6 +5694,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_market_features_refresh_runner.py",
       "sha256": "d6dea7a90af5f5cba39838e2e5c303585856552c4d928dcf630b7a34a9edd76e"
+    },
+    {
+      "bytes": 10274,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_ocr_v11_supervised_training_lab.py",
+      "sha256": "8a82cf0f1d8fe1c48520d2ac9297ec0d1149c70a3635f59f7b8a1fd5394826fd"
     },
     {
       "bytes": 10217,
