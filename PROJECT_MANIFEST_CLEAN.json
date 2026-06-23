@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "bb065e0e376818f040edadd877286a003216ca13ab06d94636410b2bde00dc62",
+  "aggregate_sha256": "c575d4a1c1e7f68d70611bc6b267a935a6e53f93302fae08f7a6da5205141c86",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 159,
-    "manifested_files_total": 973,
-    "python_files": 722,
+    "docs_files": 160,
+    "manifested_files_total": 977,
+    "python_files": 725,
     "runtime_excluded_files_total": 0,
-    "test_files": 208,
-    "tracked_files_total": 974,
+    "test_files": 209,
+    "tracked_files_total": 978,
     "workflows": 1
   },
   "deterministic": true,
@@ -1032,6 +1032,12 @@
       "hash_mode": "text_lf",
       "path": "docs/OCR_V11_RESEARCH_DATASET_AND_CANDLE_ALIGNMENT.md",
       "sha256": "88962c4ba2dc1a5da1d0a2274b982fa70d09951558c95aaab2f0bf13dad56c1e"
+    },
+    {
+      "bytes": 5946,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_V11_TP_SL_GRID_AND_TRADE_OUTCOME_SIMULATOR.md",
+      "sha256": "91d9206351b5e0e00473f055d18178310b2068078058e8b62a66f309492c5908"
     },
     {
       "bytes": 2229,
@@ -2744,6 +2750,12 @@
       "sha256": "f53718d01bde8cd77a6b0751e57da54407ecdda177470113d8b65a89540bdbda"
     },
     {
+      "bytes": 3445,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_ocr_v11_tp_sl_grid_simulator.py",
+      "sha256": "733176fdc4514ff65776ae1362e29f75f250c9f9143af1f23f1538c9a4f9446b"
+    },
+    {
       "bytes": 20625,
       "hash_mode": "text_lf",
       "path": "scripts/run_order_intent_capital_ledger_audit.py",
@@ -4448,10 +4460,16 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
-      "bytes": 4936,
+      "bytes": 11416,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/reporting.py",
-      "sha256": "6be5e8600105c43eec97ae7db3a5698f285b9c89c1d356eb9f4313ff76bdc1b4"
+      "sha256": "424caf4ac63e264e756922134dd5e7bb2f11485763c2467448eff476eedb961d"
+    },
+    {
+      "bytes": 39787,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/tp_sl_simulator.py",
+      "sha256": "e8982f1b37a132558b4714eaf21f7b0662961b2bd29d4be9694b578152e9208c"
     },
     {
       "bytes": 5531,
@@ -5394,6 +5412,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_v11_research_dataset.py",
       "sha256": "2cca4b38f335f1388f97efa8494d156fe5f182916e9a44a97e280cce0c632b75"
+    },
+    {
+      "bytes": 14346,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_v11_tp_sl_grid_simulator.py",
+      "sha256": "4dceed50b6af6ef895fbcb3d63d0de476553819516eb82788d4e43ed6723d42d"
     },
     {
       "bytes": 6121,
