@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7782d19178ecda890fa2ff5a35eaea9bc4566bce843bfff6249a631cb8401e50",
+  "aggregate_sha256": "259a0ea3a571f966926b7ac58f7a3deb536469ee294751e12d66cf820e273fbb",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 165,
-    "manifested_files_total": 997,
-    "python_files": 740,
+    "docs_files": 166,
+    "manifested_files_total": 1001,
+    "python_files": 743,
     "runtime_excluded_files_total": 0,
-    "test_files": 214,
-    "tracked_files_total": 998,
+    "test_files": 215,
+    "tracked_files_total": 1002,
     "workflows": 1
   },
   "deterministic": true,
@@ -858,6 +858,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_IMAGE_PIN_DIGEST_POLICY_V1.md",
       "sha256": "6528ae2ff621ccef1b4e6eb7fb60e031054f34be3a2a011632a924b3fc24c654"
+    },
+    {
+      "bytes": 4582,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_AI_SELECTOR_INTEGRATION_V1.md",
+      "sha256": "73643fc836c2558a687d9c5dbbe77fee6deb9398a5e9a04259546b4b94d392e7"
     },
     {
       "bytes": 3842,
@@ -1944,6 +1950,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_finance_grade_sidecar_input.py",
       "sha256": "1b11e54579615410489993d9b7499bdc8c9bf57d4f00b0c72c50eaddeadb672b"
+    },
+    {
+      "bytes": 3422,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_freqtrade_paper_ai_selector_integration.py",
+      "sha256": "b3f4ef5d14b4b4e50175ddd41e551236a04d012176429c96ade49b582bac5c2f"
     },
     {
       "bytes": 17376,
@@ -4508,6 +4520,12 @@
       "sha256": "f8f56cdb05631ead69acd01707cb997533f3713288f9e00c0481c38630fcc89a"
     },
     {
+      "bytes": 25756,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/freqtrade_paper_ai_selector_integration.py",
+      "sha256": "23275ad9e5bf64e99ab5cbb2d926f2fa672c10678c526522e206eca575cdd829"
+    },
+    {
       "bytes": 27232,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/historical_validation_15s.py",
@@ -5304,6 +5322,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_image_pin_digest_policy_v1.py",
       "sha256": "7ae87caa7252d906705983dd8404c25de154b2a3d3663071f55b5889d088a386"
+    },
+    {
+      "bytes": 14464,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_ai_selector_integration_v1.py",
+      "sha256": "2c7f7d90133e1a10244eee3a2aa1ca6d5849a1475ff99852c8826afe281a9249"
     },
     {
       "bytes": 14241,
