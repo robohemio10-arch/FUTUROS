@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b17361c4c9aa54547734529d20dd1e1cd2f7252e9cb55af9e14ba39dc0d7f8e2",
+  "aggregate_sha256": "85f58a4569f2c1a9886b392b5cea6031a9ab24702c8ddf6734739c1932351da7",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 167,
-    "manifested_files_total": 1005,
-    "python_files": 746,
+    "docs_files": 168,
+    "manifested_files_total": 1009,
+    "python_files": 749,
     "runtime_excluded_files_total": 0,
-    "test_files": 216,
-    "tracked_files_total": 1006,
+    "test_files": 217,
+    "tracked_files_total": 1010,
     "workflows": 1
   },
   "deterministic": true,
@@ -546,6 +546,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_MODEL_GOVERNANCE.md",
       "sha256": "580f8a09c24cd89c0f98f6814c739042c7d6b7188eb142465077dcc01e2a471b"
+    },
+    {
+      "bytes": 4036,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_RESEARCH_TRAINING_TRACK_CLOSEOUT_HANDOVER_V1.md",
+      "sha256": "b344aa8363ea7f4146315fbc59bac2ac4c4c0803330b5e730a9effed0006cb44"
     },
     {
       "bytes": 4455,
@@ -1884,6 +1890,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_15s_microstructure_shadow_features.py",
       "sha256": "2479152ba367e12e67a5d3ca8b10afa96d7c4e151967e6005313b07a9977e458"
+    },
+    {
+      "bytes": 2758,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_research_training_track_closeout_handover.py",
+      "sha256": "012dc503707927b8cdf21c0d1255c1c53ad2af85094724818df5c9b0b067d65c"
     },
     {
       "bytes": 1570,
@@ -4520,6 +4532,12 @@
       "sha256": "380df4e2eeb6efeeea9fbe66bff8f51d4df50dcddaff5d7be17e79e41bdf69cd"
     },
     {
+      "bytes": 29088,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ai_research_training_track_closeout_handover.py",
+      "sha256": "1aa464813e2376280d1f01a6e6a500a47214d4c8bb1921eb6ab2492dda05075f"
+    },
+    {
       "bytes": 22036,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ai_shadow_online_feedback_learning_loop.py",
@@ -4758,6 +4776,12 @@
       "hash_mode": "text_lf",
       "path": "tests/fixtures/dashboard_sources/sample.json",
       "sha256": "f9f4b24bcb2d2701350fa4a315b833a43044a1ad4eb8b355f00074c62f6222f4"
+    },
+    {
+      "bytes": 9712,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_research_training_track_closeout_handover_v1.py",
+      "sha256": "f347d1fe2fbf002c66212d217ba9fb0d3deec20d39fa9642a1152b0f424245a1"
     },
     {
       "bytes": 10870,
