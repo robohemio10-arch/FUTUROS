@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.dashboard.components.ai_training_research_command_center import (
+    render_ai_training_research_command_center,
+)
 from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.dashboard.ui import (
@@ -25,7 +28,7 @@ EXPECTED_SCHEMA_VERSION = "dashboard_ai_governance_snapshot_v1"
 REQUIRED_SECTIONS = (
     "model_state", "qlib_ranking", "shadow_veto", "decision_governance",
     "drift_regime", "shadow_classification_metrics", "reward_research",
-    "model_governance", "audit",
+    "model_governance", "ai_training_research_command_center", "audit",
 )
 METRICS = (
     ("Qlib Status", "model_state", "qlib_status"),
@@ -51,6 +54,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         section_order=REQUIRED_SECTIONS, metric_specs=METRICS, ui=target_ui,
         render_chrome=False,
     )
+    render_ai_training_research_command_center(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ["Auto-promotion disabled"], ui=target_ui)
 
 

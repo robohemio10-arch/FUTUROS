@@ -4,6 +4,10 @@ import math
 from typing import Any
 
 from smartcrypto.ops.dashboard_snapshots.build_context import DashboardBuildContext
+from smartcrypto.ops.dashboard_snapshots.ai_training_research_command_center import (
+    RESEARCH_SOURCE_PATHS,
+    normalize_ai_training_research_command_center,
+)
 from smartcrypto.ops.dashboard_snapshots.builder_common import (
     all_source_payloads,
     build_snapshot_envelope,
@@ -32,6 +36,7 @@ REQUIRED_SECTIONS = (
     "shadow_classification_metrics",
     "reward_research",
     "model_governance",
+    "ai_training_research_command_center",
     "audit",
 )
 
@@ -123,10 +128,13 @@ def promotion_gate(
 
 def build_ai_governance_snapshot(context: DashboardBuildContext) -> dict[str, Any]:
     sources = load_page_sources(context, DashboardPageId.ai_governance)
-    data = all_source_payloads(sources)
-    decisions = records(first_payload(sources, "model_decisions"))
+    operational_sources = _without_advisory_research_sources(sources)
+    data = all_source_payloads(operational_sources)
+    decisions = records(first_payload(operational_sources, "model_decisions"))
     if not decisions:
-        decisions = records(first_payload(sources, "ai_shadow_outcome_attribution_report"))
+        decisions = records(
+            first_payload(operational_sources, "ai_shadow_outcome_attribution_report")
+        )
     accepts = sum(str(row.get("decision", row.get("ai_decision", ""))).upper() == "AI_ACCEPT" for row in decisions)
     rejects = sum(str(row.get("decision", row.get("ai_decision", ""))).upper() == "AI_REJECT" for row in decisions)
     total = accepts + rejects
@@ -144,9 +152,9 @@ def build_ai_governance_snapshot(context: DashboardBuildContext) -> dict[str, An
     probabilities = _number_list(first_value(data, ("predicted_probabilities", "probabilities"), []))
     outcomes = _number_list(first_value(data, ("actual_outcomes", "outcomes"), []))
     metrics["brier_score"] = calculate_brier_score(probabilities, outcomes)
-    model_registry = first_payload(sources, "model_registry")
-    active_model = first_payload(sources, "active_model")
-    ranking = records(first_payload(sources, "latest_qlib_predictions"))
+    model_registry = first_payload(operational_sources, "model_registry")
+    active_model = first_payload(operational_sources, "active_model")
+    ranking = records(first_payload(operational_sources, "latest_qlib_predictions"))
     ranking = sorted(ranking, key=lambda row: float(row.get("expected_trade_value", row.get("score", 0.0)) or 0.0), reverse=True)
 
     sections = {
@@ -160,13 +168,57 @@ def build_ai_governance_snapshot(context: DashboardBuildContext) -> dict[str, An
         "model_governance": section(DashboardSectionStatus.OK, auto_promotion_allowed=False, live_model_promotion_allowed=False, model_promotion_allowed_from_dashboard=False, accuracy_is_primary_metric=False, promotion_status=HardBlockStatus.HARD_BLOCKED.value),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True, trains_model=False, promotes_model=False),
     }
-    return build_snapshot_envelope(
+    snapshot = build_snapshot_envelope(
         context=context,
         page_id=DashboardPageId.ai_governance,
         schema_version=DASHBOARD_AI_GOVERNANCE_SCHEMA_VERSION,
         sections=sections,
-        source_state=sources,
+        source_state=operational_sources,
     )
+    research_payloads = sources.get("payloads", {})
+    normalized_research = normalize_ai_training_research_command_center(
+        research_payloads if isinstance(research_payloads, dict) else {}
+    )
+    snapshot["sections"]["ai_training_research_command_center"] = {
+        "status": normalized_research["section_status"],
+        "reason": "research_evidence_advisory_only",
+        **normalized_research,
+    }
+    return snapshot
+
+
+def _without_advisory_research_sources(sources: dict[str, Any]) -> dict[str, Any]:
+    paths = set(RESEARCH_SOURCE_PATHS.values())
+    keys = set(RESEARCH_SOURCE_PATHS)
+    payload_map = sources.get("payloads", {})
+    inventory = sources.get("inventory", [])
+    return {
+        **sources,
+        "payloads": {
+            key: value
+            for key, value in payload_map.items()
+            if key not in keys
+        }
+        if isinstance(payload_map, dict)
+        else {},
+        "inventory": [
+            row
+            for row in inventory
+            if not isinstance(row, dict) or row.get("path") not in paths
+        ]
+        if isinstance(inventory, list)
+        else [],
+        "missing_optional_sources": [
+            path
+            for path in sources.get("missing_optional_sources", [])
+            if path not in paths
+        ],
+        "errors": [
+            error
+            for error in sources.get("errors", [])
+            if not any(str(error).startswith(f"{path}:") for path in paths)
+        ],
+    }
 
 
 def _number_list(value: Any) -> list[float]:
