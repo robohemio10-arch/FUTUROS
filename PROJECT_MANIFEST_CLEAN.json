@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "259a0ea3a571f966926b7ac58f7a3deb536469ee294751e12d66cf820e273fbb",
+  "aggregate_sha256": "b17361c4c9aa54547734529d20dd1e1cd2f7252e9cb55af9e14ba39dc0d7f8e2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 166,
-    "manifested_files_total": 1001,
-    "python_files": 743,
+    "docs_files": 167,
+    "manifested_files_total": 1005,
+    "python_files": 746,
     "runtime_excluded_files_total": 0,
-    "test_files": 215,
-    "tracked_files_total": 1002,
+    "test_files": 216,
+    "tracked_files_total": 1006,
     "workflows": 1
   },
   "deterministic": true,
@@ -720,6 +720,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_AI_GOVERNANCE_AND_MODEL_REGISTRY_PANEL.md",
       "sha256": "d2469b26232789d526055de315a49ed8e87f6fa94417883c72e03f274702a86f"
+    },
+    {
+      "bytes": 4590,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_AI_TRAINING_RESEARCH_COMMAND_CENTER_V1.md",
+      "sha256": "a3b1f54d24ee10b0aa30be472bb62755a5e6a2c41bd7aceedfddec5c3ea71385"
     },
     {
       "bytes": 1482,
@@ -3206,6 +3212,12 @@
       "sha256": "a2529277d9ad64c3fd62dd38d8ba0e1be1cfe43c08cd074fda0c4837abd5389f"
     },
     {
+      "bytes": 3088,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/components/ai_training_research_command_center.py",
+      "sha256": "84ab54cf08c3ab3f0fd68c20f77ae93e7c79c12d0a21ec112fcf6d198547438e"
+    },
+    {
       "bytes": 1120,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/alert_stubs.py",
@@ -3398,10 +3410,10 @@
       "sha256": "6024bfbd6c43192edea6c1cdefbfacc379f34d08ead2fb89d9fb31494ab62e56"
     },
     {
-      "bytes": 2820,
+      "bytes": 3063,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/05_ai_governance.py",
-      "sha256": "9663e9c66f4d3f18be163a185885d6d9476615585094501799dcd36768d56faf"
+      "sha256": "4eabedc50282a554453158d8162d0057d2086127bea79e0b0689b83c23f4e6c3"
     },
     {
       "bytes": 7608,
@@ -4094,10 +4106,16 @@
       "sha256": "fbde1809d82cf20a3f7b0937f9550447efcadd3bb934a025fe26fc0d07151357"
     },
     {
-      "bytes": 7202,
+      "bytes": 9078,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/ai_governance_snapshot_builder.py",
-      "sha256": "97b479619a6b59380d2dac815e658e0258af792ef84297721333a388a4ae1b53"
+      "sha256": "67705d4bcb9a42852871b72adeff1d7c9ab386eaebf67eaed2b70419ac8a842a"
+    },
+    {
+      "bytes": 15537,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/ai_training_research_command_center.py",
+      "sha256": "4f67736504f9425c46ee1471b2de1b8efc6341844f1a12b5e609d28bfeaa2fec"
     },
     {
       "bytes": 7333,
@@ -4226,10 +4244,10 @@
       "sha256": "9edc93e546b9e143ad63aa4fc9f6fe4da6a5ba9fff2a1b5f0ea4ecaa7071f191"
     },
     {
-      "bytes": 16676,
+      "bytes": 17567,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/source_catalog.py",
-      "sha256": "4b6478adaadb35444f4656d2815f9fe5e4f05174de15fab6c5997d4ffe085d94"
+      "sha256": "097cbd142e28ebbe5e1c204e729660816bbe99604680971290b467a32d16da77"
     },
     {
       "bytes": 34362,
@@ -4944,6 +4962,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_ai_governance_snapshot_builder_v2.py",
       "sha256": "ac689416d34be654b449c2413ef2fba719852c59d1f039b7d1702bf754b6a7be"
+    },
+    {
+      "bytes": 13851,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_ai_training_research_command_center_v1.py",
+      "sha256": "fd11fcdacfe71d3227cb04c0d1400ee370e383790a535c0c6a1dd12579b80704"
     },
     {
       "bytes": 1232,
