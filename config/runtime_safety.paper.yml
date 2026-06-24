@@ -1,0 +1,32 @@
+schema_version: runtime_safety_config_v1
+config_version: runtime_safety_paper_v1
+runtime_mode: paper
+dry_run: true
+paper_only: true
+shadow_only: true
+kill_switch_enabled: true
+
+live_trading_enabled: false
+canary_release_allowed: false
+live_release_allowed: false
+order_submission_enabled: false
+real_order_submission_enabled: false
+exchange_private_access: false
+sends_orders: false
+
+dashboard_can_change_risk: false
+dashboard_can_enable_live: false
+dashboard_can_promote_model: false
+ai_can_increase_risk: false
+ai_can_change_leverage: false
+ai_can_change_stake: false
+
+max_drawdown_pct: 5.0
+max_daily_loss_pct: 1.0
+max_weekly_loss_pct: 3.0
+max_consecutive_losses: 3
+max_spread_bps: 25
+max_slippage_bps: 20
+max_latency_ms: 1000
+max_data_age_seconds: 300
+stale_prediction_max_age_seconds: 900

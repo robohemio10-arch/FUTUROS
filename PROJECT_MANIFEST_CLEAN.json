@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "85f58a4569f2c1a9886b392b5cea6031a9ab24702c8ddf6734739c1932351da7",
+  "aggregate_sha256": "c2bd4d229998f602c5e3982a5faeabe296fbbec1f44adbdccddf898a15141b36",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 168,
-    "manifested_files_total": 1009,
-    "python_files": 749,
+    "docs_files": 169,
+    "manifested_files_total": 1012,
+    "python_files": 750,
     "runtime_excluded_files_total": 0,
-    "test_files": 217,
-    "tracked_files_total": 1010,
+    "test_files": 218,
+    "tracked_files_total": 1013,
     "workflows": 1
   },
   "deterministic": true,
@@ -474,6 +474,12 @@
       "hash_mode": "text_lf",
       "path": "config/runtime_preflight.example.yml",
       "sha256": "8288cec0111846cec4c6b6c81d2459699f61f62f1b8740d0864c2082702f13d6"
+    },
+    {
+      "bytes": 793,
+      "hash_mode": "text_lf",
+      "path": "config/runtime_safety.paper.yml",
+      "sha256": "53382c7c76b10a0810306ebe81818060adf3792c085cc77e41d11e2e794b5994"
     },
     {
       "bytes": 727,
@@ -1362,6 +1368,12 @@
       "hash_mode": "text_lf",
       "path": "docs/RUNTIME_FRESHNESS_PRODUCER_ENTRYPOINT_STATIC_SAFETY_AUDIT_V1.md",
       "sha256": "614dedd5cceb797a3968e753f9971f8e52623eb7eda458a3a6cd0395a55d034f"
+    },
+    {
+      "bytes": 3195,
+      "hash_mode": "text_lf",
+      "path": "docs/RUNTIME_SAFETY_PAPER_CONFIG_CONTRACT_V1.md",
+      "sha256": "bf9a5fbd945efb8a7bbe9dcebff6ec5be4cf5fe3817ed4401acd76dd25c72e86"
     },
     {
       "bytes": 3168,
@@ -5970,6 +5982,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_preflight_orchestrator.py",
       "sha256": "7c405bdb90cc55273611a316d253baca87a8a2513cfa9675985c8b2d76e69b6b"
+    },
+    {
+      "bytes": 5137,
+      "hash_mode": "text_lf",
+      "path": "tests/test_runtime_safety_paper_config_contract_v1.py",
+      "sha256": "3f81cdf7367c1717ed0a5f1dd694b0c7fe801b3f70e8687f4cf5d1e8a1646a2d"
     },
     {
       "bytes": 9280,
