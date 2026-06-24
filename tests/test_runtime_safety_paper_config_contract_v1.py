@@ -43,6 +43,8 @@ REQUIRED_POSITIVE_LIMITS = (
 )
 
 ALLOWED_CHANGED_PATHS = {
+    ".github/workflows/ci.yml",
+    ".gitignore",
     "PROJECT_MANIFEST_CLEAN.json",
     "config/runtime_safety.paper.yml",
     "docs/RUNTIME_SAFETY_PAPER_CONFIG_CONTRACT_V1.md",

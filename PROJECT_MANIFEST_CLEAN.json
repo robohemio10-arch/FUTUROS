@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "ac6c4ef9de360d958e405574afd3eb3d22a08671b2d72c6c26c638289f9ae989",
+  "aggregate_sha256": "54e35eb1f207bed89f5e404e957e204fe6a2be649aca09a6ef6a41e754e82148",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -5984,10 +5984,10 @@
       "sha256": "7c405bdb90cc55273611a316d253baca87a8a2513cfa9675985c8b2d76e69b6b"
     },
     {
-      "bytes": 5137,
+      "bytes": 5187,
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_safety_paper_config_contract_v1.py",
-      "sha256": "3f81cdf7367c1717ed0a5f1dd694b0c7fe801b3f70e8687f4cf5d1e8a1646a2d"
+      "sha256": "9547c23382ae160978d8a2d9abe945b0f85d57da9361f9f6718c0becefa5cbc6"
     },
     {
       "bytes": 9280,
