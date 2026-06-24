@@ -128,3 +128,7 @@ smartcrypto/data/*
 !smartcrypto/data/paper_trade_lifecycle.py
 /report.json
 /CLAUDE_*.md
+
+# packaging metadata
+*.egg-info/
+smartcrypto.egg-info/
