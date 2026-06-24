@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "54e35eb1f207bed89f5e404e957e204fe6a2be649aca09a6ef6a41e754e82148",
+  "aggregate_sha256": "9ad487b823e589458ce89a039af19b90fdf21aed1b5aa581fc659aeb7ed15e53",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -32,16 +32,16 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 3629,
+      "bytes": 3632,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "1e9f71e4b2012c2994a525a35c4dfb8d2a8c8f010e58038478eca6f3198020de"
+      "sha256": "4f8417632f03233abad5c259c235081de5d620b22695ed670caa63980432ce52"
     },
     {
-      "bytes": 2106,
+      "bytes": 2194,
       "hash_mode": "text_lf",
       "path": ".gitignore",
-      "sha256": "d8a4e473f6d038a7fefaa1880c5b4a20ce0f892a2c52bfb5cffa9f2910c8fbac"
+      "sha256": "4d3e8ba64361eebf146f92d1e99fd5dea850f243a087a3cc44613f9063a6ce18"
     },
     {
       "bytes": 1230,

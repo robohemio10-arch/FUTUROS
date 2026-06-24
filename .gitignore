@@ -132,3 +132,11 @@ smartcrypto/data/*
 # packaging metadata
 *.egg-info/
 smartcrypto.egg-info/
+
+# build artifacts
+build/
+dist/
+
+# packaging metadata
+*.egg-info/
+smartcrypto.egg-info/
