@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0d242554655bc1c9129e17d33510850e8f4a8b47db684973634b883d5d8872e0",
+  "aggregate_sha256": "50e0ef91bfeed4eb4d288c64968c5d29bcf993fdfe0d5da5672dd3fb765adc41",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 177,
-    "manifested_files_total": 1044,
-    "python_files": 774,
+    "docs_files": 178,
+    "manifested_files_total": 1048,
+    "python_files": 777,
     "runtime_excluded_files_total": 0,
-    "test_files": 226,
-    "tracked_files_total": 1045,
+    "test_files": 227,
+    "tracked_files_total": 1049,
     "workflows": 1
   },
   "deterministic": true,
@@ -714,6 +714,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CURRENT_PROJECT_HANDOVER_AFTER_NTFY_TELEGRAM.md",
       "sha256": "f0524d05ad3016625c6a714fcae96b0b4c5170327cb6ddcb517a80b68d2d67c1"
+    },
+    {
+      "bytes": 7135,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_CANDIDATE_SHADOW_RULE_REGISTRY_V1.md",
+      "sha256": "994aecca5491d6ab83bd17ef305dea30a1d9f5ac00966310d58b61b0cc42651c"
     },
     {
       "bytes": 4884,
@@ -1980,6 +1986,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 4936,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_candidate_shadow_rule_registry_v1.py",
+      "sha256": "fe6934a6d8b5507c6350df56652cb9c39ae4592699e55828bdad680523c6603d"
     },
     {
       "bytes": 4326,
@@ -4658,6 +4670,12 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
+      "bytes": 17591,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_candidate_shadow_rule_registry.py",
+      "sha256": "c531a5abf267d67ed24dd08e69fd90188090b2e908738cfdd992e5011b6a5eed"
+    },
+    {
       "bytes": 22421,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_candle_coverage_entry_features.py",
@@ -5106,6 +5124,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_current_project_handover_audit.py",
       "sha256": "1181f5de5121c60cd69a5b31dd0eacd5376d2152768c58099945ce9b7c345c0e"
+    },
+    {
+      "bytes": 13009,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_candidate_shadow_rule_registry_v1.py",
+      "sha256": "dd3c07d7d167ea6cf4b898f17f4e646c6a4493266e4e3770bd909183fc1065d4"
     },
     {
       "bytes": 14521,
