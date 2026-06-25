@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8ee7ba578a99100105fbbb10c79d424747d644ebbcb4c26609825e45dc54addd",
+  "aggregate_sha256": "56f7539a45c5952ce7dc2cc48ea9441644752c3ccf414569c1d349a38830a799",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 173,
-    "manifested_files_total": 1028,
-    "python_files": 762,
+    "docs_files": 174,
+    "manifested_files_total": 1032,
+    "python_files": 765,
     "runtime_excluded_files_total": 0,
-    "test_files": 222,
-    "tracked_files_total": 1029,
+    "test_files": 223,
+    "tracked_files_total": 1033,
     "workflows": 1
   },
   "deterministic": true,
@@ -732,6 +732,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_LEARNING_READONLY_LOADERS_V1.md",
       "sha256": "52769c97b084dffbb2c4fcf3a5cb6208e633730ed97f413240c7eeaaa9f6e12c"
+    },
+    {
+      "bytes": 4898,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_PAPER_MASTER_DIVERGENCE_ALIGNMENT_V1.md",
+      "sha256": "51404730b8f22464a28b8600121dfe60219b02bb8c5610405d4aa904b362436e"
     },
     {
       "bytes": 4685,
@@ -1968,6 +1974,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_learning_source_map_v1.py",
       "sha256": "f346e732874e5725d67b4a3d94b25c05b7716ab7ffdeacef6792f6fb047b8d81"
+    },
+    {
+      "bytes": 4388,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_paper_master_divergence_alignment_v1.py",
+      "sha256": "7e3c1f539fbaeae4b28105af7d4ce11a54fee6d801e42561f31f0e73d3b08fb4"
     },
     {
       "bytes": 4213,
@@ -4622,6 +4634,12 @@
       "sha256": "bcab77bc37d7d8dc209c0b7cb02ac75de3b8e8a2855ee0e8fc03ba3717c3b759"
     },
     {
+      "bytes": 17999,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_paper_master_divergence_alignment.py",
+      "sha256": "af5b9710fdd8c3a4eca832cc2debe533fcc14b40307325287b353788cb317a40"
+    },
+    {
       "bytes": 11274,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_paper_master_kpi_pack.py",
@@ -5052,6 +5070,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_readonly_loaders_v1.py",
       "sha256": "78b13ca8452667fbd0a58200b9ece29042e51cc1ae6a29a1189ecdf57da782df"
+    },
+    {
+      "bytes": 15428,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_paper_master_divergence_alignment_v1.py",
+      "sha256": "0688dd19a863e7d3f9339c406c6436915fd88f787a535cc064a75140b2d4fe1b"
     },
     {
       "bytes": 11438,
