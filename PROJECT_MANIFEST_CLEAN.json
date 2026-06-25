@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ef3db585d34db3a896f0c39ddf0d3b82429934f28157a4d8074184e044515288",
+  "aggregate_sha256": "30963dfa102c8bc561142a448ad6614427a080dd3f4c4eabb4e0316bf1951e6c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 175,
-    "manifested_files_total": 1036,
-    "python_files": 768,
+    "docs_files": 176,
+    "manifested_files_total": 1040,
+    "python_files": 771,
     "runtime_excluded_files_total": 0,
-    "test_files": 224,
-    "tracked_files_total": 1037,
+    "test_files": 225,
+    "tracked_files_total": 1041,
     "workflows": 1
   },
   "deterministic": true,
@@ -738,6 +738,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_LEARNING_READONLY_LOADERS_V1.md",
       "sha256": "52769c97b084dffbb2c4fcf3a5cb6208e633730ed97f413240c7eeaaa9f6e12c"
+    },
+    {
+      "bytes": 4104,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_MISTAKE_WINNER_CATALOG_V1.md",
+      "sha256": "9419a7949c026ed973071501adc8fd07a021fa1bb899a006c002d1f5d9f37189"
     },
     {
       "bytes": 4898,
@@ -1986,6 +1992,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_learning_source_map_v1.py",
       "sha256": "f346e732874e5725d67b4a3d94b25c05b7716ab7ffdeacef6792f6fb047b8d81"
+    },
+    {
+      "bytes": 4172,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_mistake_winner_catalog_v1.py",
+      "sha256": "af5acad0d20c9331c94422a3786e88e7b45e446cf5f141cc1822cce3cc9ab69d"
     },
     {
       "bytes": 4388,
@@ -4652,6 +4664,12 @@
       "sha256": "bcab77bc37d7d8dc209c0b7cb02ac75de3b8e8a2855ee0e8fc03ba3717c3b759"
     },
     {
+      "bytes": 14290,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_mistake_winner_catalog.py",
+      "sha256": "6409b42b651fd8e7d60e9496b65b1f999e19aeb9951fb7e296e31af0ce8de0bf"
+    },
+    {
       "bytes": 17999,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_paper_master_divergence_alignment.py",
@@ -5094,6 +5112,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_readonly_loaders_v1.py",
       "sha256": "78b13ca8452667fbd0a58200b9ece29042e51cc1ae6a29a1189ecdf57da782df"
+    },
+    {
+      "bytes": 11001,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_mistake_winner_catalog_v1.py",
+      "sha256": "9aa79d84b820697b77919bb77a85336b3f3ae863ce5d451689904a6f8c3c44ac"
     },
     {
       "bytes": 15428,
