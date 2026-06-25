@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_ROOT = ROOT / "smartcrypto" / "dashboard"
+NOTIFICATION_PANEL = DASHBOARD_ROOT / "notification_channels_test_panel.py"
 
 PROHIBITED_TEXT = (
     "import ccxt",
@@ -22,13 +23,28 @@ PROHIBITED_TEXT = (
     "httpx.post(",
     "aiohttp.",
     "asyncio.create_task(",
-    "os.environ[",
+    "os.environ",
     "getenv(",
+    "st.secrets",
+    "Enviar teste real",
+    "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_TOKEN",
     "NTFY_TOKEN",
     "BINANCE_SECRET",
     "BINANCE_API_KEY",
     "dashboard_alerts_queue_snapshot.json",
+)
+NOTIFICATION_PANEL_PROHIBITED_TEXT = (
+    "dry_run=False",
+    "Enviar teste real",
+    "os.environ",
+    "requests.post(",
+    "httpx.post(",
+    "aiohttp",
+    "TELEGRAM_BOT_TOKEN",
+    "NTFY_TOKEN",
+    "st.secrets",
+    "getenv(",
 )
 BACKEND_GENERATION_NAMES = (
     "build_dashboard_snapshots",
@@ -42,7 +58,11 @@ BACKEND_GENERATION_NAMES = (
     "build_alerts_messaging_snapshot",
 )
 PROHIBITED_CALL_ATTRIBUTES = {
-    "write_text", "write_bytes", "mkdir", "unlink", "rename",
+    "write_text",
+    "write_bytes",
+    "mkdir",
+    "unlink",
+    "rename",
 }
 
 
@@ -53,6 +73,12 @@ def test_dashboard_python_has_no_operational_calls_or_secret_access() -> None:
             assert token not in text, f"{path}:{token}"
         for name in BACKEND_GENERATION_NAMES:
             assert name not in text, f"{path}:{name}"
+
+
+def test_notification_panel_has_no_real_dispatch_entrypoint() -> None:
+    text = NOTIFICATION_PANEL.read_text(encoding="utf-8")
+    for token in NOTIFICATION_PANEL_PROHIBITED_TEXT:
+        assert token not in text, f"{NOTIFICATION_PANEL}:{token}"
 
 
 def test_dashboard_python_has_no_filesystem_write_or_process_calls() -> None:
@@ -72,8 +98,12 @@ def test_dashboard_python_has_no_filesystem_write_or_process_calls() -> None:
 def test_dashboard_safety_language_is_explicit() -> None:
     text = (DASHBOARD_ROOT / "components" / "read_only.py").read_text(encoding="utf-8")
     for phrase in (
-        "PAPER / SHADOW ONLY", "LIVE LOCKED", "ORDER SUBMISSION DISABLED",
-        "REAL ORDER SUBMISSION DISABLED", "RISKMANAGER AUTHORITY", "DASHBOARD READ-ONLY",
+        "PAPER / SHADOW ONLY",
+        "LIVE LOCKED",
+        "ORDER SUBMISSION DISABLED",
+        "REAL ORDER SUBMISSION DISABLED",
+        "RISKMANAGER AUTHORITY",
+        "DASHBOARD READ-ONLY",
     ):
         assert phrase in text or phrase in (
             DASHBOARD_ROOT / "security" / "dashboard_readonly_guard.py"

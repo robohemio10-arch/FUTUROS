@@ -5,10 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from smartcrypto.dashboard.notification_channels_test_panel import (
+    dispatch_manual_notification_test,
     load_notification_channels_test_panel_state,
     render_notification_channels_test_panel,
     sanitize_payload,
-    dispatch_manual_notification_test,
 )
 
 
@@ -83,6 +83,8 @@ def test_state_reports_configured_channels_without_exposing_secrets(tmp_path: Pa
     assert state["sends_orders"] is False
     assert state["changes_risk"] is False
     assert state["exchange_private_access"] is False
+    assert state["manual_real_dispatch_supported"] is False
+    assert state["manual_real_dispatch_requires_confirmation"] is False
 
     serialized = json.dumps(state, sort_keys=True)
     assert "secret-topic-prod" not in serialized
@@ -105,6 +107,7 @@ def test_state_degraded_when_channels_disabled(tmp_path: Path) -> None:
     assert state["shadow_only"] is True
     assert state["sends_orders"] is False
     assert state["changes_risk"] is False
+    assert state["manual_real_dispatch_supported"] is False
 
 
 def test_dry_run_dispatch_writes_sanitized_report(tmp_path: Path) -> None:
@@ -119,8 +122,35 @@ def test_dry_run_dispatch_writes_sanitized_report(tmp_path: Path) -> None:
 
     assert payload["status"] == "ok"
     assert payload["dry_run"] is True
+    assert payload["dispatch_attempted"] is True
     assert payload["sends_orders"] is False
     assert payload["changes_risk"] is False
+    assert output.exists()
+
+    serialized = output.read_text(encoding="utf-8")
+    assert "SECRET_TOKEN" not in serialized
+    assert "987654321" not in serialized
+    assert "secret-topic-prod" not in serialized
+    assert "tk_super_secret" not in serialized
+
+
+def test_real_dispatch_request_is_blocked_without_sending(tmp_path: Path) -> None:
+    output = tmp_path / "manual_dispatch_blocked.json"
+
+    payload = dispatch_manual_notification_test(
+        dry_run=False,
+        env=secure_env(),
+        output_path=output,
+        now=datetime(2026, 6, 10, 12, 0, 0, tzinfo=timezone.utc),
+    )
+
+    assert payload["status"] == "blocked"
+    assert payload["reason"] == "manual_real_dispatch_disabled_dashboard_readonly"
+    assert payload["dispatch_attempted"] is False
+    assert payload["dry_run"] is False
+    assert payload["sends_orders"] is False
+    assert payload["changes_risk"] is False
+    assert payload["exchange_private_access"] is False
     assert output.exists()
 
     serialized = output.read_text(encoding="utf-8")
@@ -166,13 +196,30 @@ def test_render_panel_does_not_dispatch_without_button_click(tmp_path: Path) -> 
     assert state["changes_risk"] is False
 
 
-def test_render_panel_blocks_real_send_without_confirmation(tmp_path: Path) -> None:
+def test_render_panel_exposes_only_dry_run_button(tmp_path: Path) -> None:
     state = load_notification_channels_test_panel_state(
         env=secure_env(),
         dispatch_report_path=tmp_path / "missing.json",
     )
-    fake = FakeStreamlit(buttons=[False, True], confirmation="ERRADO")
+    fake = FakeStreamlit(buttons=[False], confirmation="ENVIAR TESTE")
 
     render_notification_channels_test_panel(fake, state=state, env=secure_env())
 
-    assert any(call[0] == "warning" for call in fake.calls)
+    button_labels = [call[1] for call in fake.calls if call[0] == "button"]
+    assert button_labels == ["Executar dry-run NTFY/Telegram"]
+    assert not any(call[0] == "text_input" for call in fake.calls)
+    assert "Enviar teste real NTFY/Telegram" not in button_labels
+
+
+def test_dashboard_notification_panel_source_has_no_real_dispatch_entrypoint() -> None:
+    source = Path("smartcrypto/dashboard/notification_channels_test_panel.py").read_text(encoding="utf-8")
+
+    assert "Enviar teste real NTFY/Telegram" not in source
+    assert "dry_run=False" not in source
+    assert "os.environ" not in source
+    assert "requests.post" not in source
+    assert "httpx.post" not in source
+    assert "aiohttp" not in source
+    assert "TELEGRAM_BOT_TOKEN" not in source
+    assert "NTFY_TOKEN" not in source
+    assert "st.secrets" not in source
