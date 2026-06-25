@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "9ad487b823e589458ce89a039af19b90fdf21aed1b5aa581fc659aeb7ed15e53",
+  "aggregate_sha256": "905ee4a0651ff3649dac937b681ddb983335614f86eed3bf2e5dfc0bcc0dcccd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3404,10 +3404,10 @@
       "sha256": "1784def5e6e123feeaf49ece159f95943397bf0455320389a79521eed2eaa5d4"
     },
     {
-      "bytes": 14532,
+      "bytes": 15083,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/notification_channels_test_panel.py",
-      "sha256": "ee60682e78083ddb91c1ebc473ebcbaeb5c7ed0b23231180d23b092ab3d0bbda"
+      "sha256": "a722870454128a41bd1752d1384a66712c54738d0c49a4fb130303894e5c094c"
     },
     {
       "bytes": 92094,
@@ -5252,10 +5252,10 @@
       "sha256": "46905df40c6031c9f167a728693c8d5f2cf0e30a9032678e10108f64dc6222d1"
     },
     {
-      "bytes": 2679,
+      "bytes": 3359,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_streamlit_pages_static_safety_v2.py",
-      "sha256": "2901bc7b2307413a97a0fcf35e409f62a2a10ee22369ad9b2166a93707b72201"
+      "sha256": "1cb4590634cb5b4645ec18a4f76775adfb6251806d4e6850883952f973cd55f7"
     },
     {
       "bytes": 1611,
@@ -5570,10 +5570,10 @@
       "sha256": "9f585457e2af24453c99ceddce53e418e338e7bcbe62d3bdf89728f7b89c6381"
     },
     {
-      "bytes": 6205,
+      "bytes": 8178,
       "hash_mode": "text_lf",
       "path": "tests/test_notification_channels_dashboard_test_panel.py",
-      "sha256": "2018db478a2bbce9fe08d4e7715608c6eb717765165d3466cdc8b191e1c06c4f"
+      "sha256": "55e85f0457ad9a4bc7d1fb969c5ba736a029a2bcee8114f643058efa164f1799"
     },
     {
       "bytes": 5622,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -114,7 +113,7 @@ def sanitize_result(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def summarize_channel_settings(env: Mapping[str, str] | None = None) -> dict[str, Any]:
-    settings = settings_from_env(env if env is not None else os.environ)
+    settings = settings_from_env(env or {})
     ntfy_error = validate_ntfy_config(settings.ntfy) if settings.ntfy.enabled else None
     telegram_error = validate_telegram_config(settings.telegram) if settings.telegram.enabled else None
 
@@ -238,8 +237,8 @@ def load_notification_channels_test_panel_state(
         "reason": ";".join(blocked_reasons or warnings or ["ok"]),
         "generated_at_utc": utc_now(),
         "dry_run_supported": True,
-        "manual_real_dispatch_supported": True,
-        "manual_real_dispatch_requires_confirmation": True,
+        "manual_real_dispatch_supported": False,
+        "manual_real_dispatch_requires_confirmation": False,
         "confirmation_text": CONFIRMATION_TEXT,
         "configured_channels": configured_channels,
         "channel_settings": channel_settings,
@@ -289,17 +288,45 @@ def dispatch_manual_notification_test(
     output_path: str | Path = DEFAULT_MANUAL_DISPATCH_REPORT_PATH,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    settings = settings_from_env(env if env is not None else os.environ)
     message = build_manual_test_message(now=now)
+
+    if not dry_run:
+        payload = {
+            "status": "blocked",
+            "reason": "manual_real_dispatch_disabled_dashboard_readonly",
+            "dispatch_attempted": False,
+            "dry_run": False,
+            "created_at": utc_now(),
+            "message": {
+                "title": message.title,
+                "event_type": message.event_type,
+                "severity": message.severity,
+            },
+            "results": [
+                {
+                    "channel": "manual_notification_test",
+                    "enabled": False,
+                    "status": "blocked",
+                    "reason": "dashboard_readonly_real_dispatch_disabled",
+                    "dry_run": False,
+                    **base_safety_flags(),
+                }
+            ],
+            **base_safety_flags(),
+        }
+        write_dispatch_report(output_path, payload)
+        return payload
+
+    settings = settings_from_env(env or {})
     dispatcher = NotificationDispatcher(settings)
-    results = [result.to_dict() for result in dispatcher.send(message, dry_run=bool(dry_run))]
+    results = [result.to_dict() for result in dispatcher.send(message, dry_run=True)]
     status, reason = aggregate_dispatch_status(results)
 
     payload = {
         "status": status,
         "reason": reason,
         "dispatch_attempted": True,
-        "dry_run": bool(dry_run),
+        "dry_run": True,
         "created_at": utc_now(),
         "message": {
             "title": message.title,
@@ -315,7 +342,7 @@ def dispatch_manual_notification_test(
 
 def render_status_banner(st_module: Any, status: str, reason: str) -> None:
     if status == "ok":
-        st_module.success("Canais NTFY/Telegram operacionais para teste controlado.")
+        st_module.success("Canais NTFY/Telegram operacionais para teste controlado em dry-run.")
     elif status == "blocked":
         st_module.error(f"Painel bloqueado por segurança: {reason}")
     else:
@@ -331,7 +358,10 @@ def render_notification_channels_test_panel(
     current_state = state or load_notification_channels_test_panel_state(env=env)
 
     st_module.subheader("NTFY / Telegram — Testes controlados")
-    st_module.caption("Painel paper/shadow para validar canais. Não envia ordens, não altera risco e não acessa exchange privada.")
+    st_module.caption(
+        "Painel paper/shadow para validar canais em modo dry-run. "
+        "Não envia mensagens reais, não envia ordens, não altera risco e não acessa exchange privada."
+    )
     render_status_banner(st_module, str(current_state["status"]), str(current_state["reason"]))
 
     cols = st_module.columns(4)
@@ -354,25 +384,21 @@ def render_notification_channels_test_panel(
     st_module.markdown("### Último dispatch manual")
     st_module.json(current_state["last_dispatch_report"])
 
+    st_module.markdown("### Governança de envio")
+    st_module.json(
+        {
+            "dry_run_supported": True,
+            "manual_real_dispatch_supported": False,
+            "manual_real_dispatch_requires_confirmation": False,
+            "reason": "dashboard_readonly_real_dispatch_disabled",
+            "allowed_action": "dry_run_only",
+        }
+    )
+
     if not hasattr(st_module, "button"):
         return
 
     if st_module.button("Executar dry-run NTFY/Telegram"):
         result = dispatch_manual_notification_test(dry_run=True, env=env)
         st_module.success("Dry-run executado.")
-        st_module.json(sanitize_payload(result))
-
-    confirmation = ""
-    if hasattr(st_module, "text_input"):
-        confirmation = str(st_module.text_input(f"Digite {CONFIRMATION_TEXT} para liberar envio real manual", value="") or "").strip()
-
-    if st_module.button("Enviar teste real NTFY/Telegram"):
-        if confirmation != CONFIRMATION_TEXT:
-            st_module.warning("Envio real bloqueado: confirmação textual inválida.")
-            return
-        result = dispatch_manual_notification_test(dry_run=False, env=env)
-        if result.get("status") == "ok":
-            st_module.success("Teste real enviado.")
-        else:
-            st_module.warning(f"Teste real concluído com status={result.get('status')}.")
         st_module.json(sanitize_payload(result))
