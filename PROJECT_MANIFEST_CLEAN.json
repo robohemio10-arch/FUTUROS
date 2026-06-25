@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4ee43e445ddfadd69d678a1fa7f79755d9360843dc84684def73d14591273f38",
+  "aggregate_sha256": "1aa2fdb5b9bf825d319c64cbeb3f8cc4a008749c03097b0b9615421814802376",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 170,
-    "manifested_files_total": 1016,
-    "python_files": 753,
+    "docs_files": 171,
+    "manifested_files_total": 1020,
+    "python_files": 756,
     "runtime_excluded_files_total": 0,
-    "test_files": 219,
-    "tracked_files_total": 1017,
+    "test_files": 220,
+    "tracked_files_total": 1021,
     "workflows": 1
   },
   "deterministic": true,
@@ -720,6 +720,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_EVIDENCE_PACK_ORCHESTRATOR_V1.md",
       "sha256": "dd164fb3ebc89f7e5520140dd9a3294932634575ff2dcef3efa01838b62abf9d"
+    },
+    {
+      "bytes": 6066,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_LEARNING_CONTRACTS_AND_SOURCE_MAP_V1.md",
+      "sha256": "ef55acf2392f03b30a29d28cd836aad2e5cf5e7af493cdcd5a2d26d022fd025e"
     },
     {
       "bytes": 5058,
@@ -1938,6 +1944,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 4204,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_learning_source_map_v1.py",
+      "sha256": "f346e732874e5725d67b4a3d94b25c05b7716ab7ffdeacef6792f6fb047b8d81"
     },
     {
       "bytes": 3356,
@@ -4574,6 +4586,12 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
+      "bytes": 16021,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_learning_contracts.py",
+      "sha256": "615a3840973a52282477d656e395d2c8452ddf05db80478f09a361222254efd1"
+    },
+    {
       "bytes": 16298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_costs.py",
@@ -4986,6 +5004,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
       "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
+    },
+    {
+      "bytes": 10901,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_learning_contracts_and_source_map_v1.py",
+      "sha256": "b2438cdca9947f6e70ea0ade029d6d749ec1f4a830a0926c146c4b4849a377f5"
     },
     {
       "bytes": 6408,
