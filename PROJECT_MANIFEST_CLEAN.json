@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "905ee4a0651ff3649dac937b681ddb983335614f86eed3bf2e5dfc0bcc0dcccd",
+  "aggregate_sha256": "4ee43e445ddfadd69d678a1fa7f79755d9360843dc84684def73d14591273f38",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 169,
-    "manifested_files_total": 1012,
-    "python_files": 750,
+    "docs_files": 170,
+    "manifested_files_total": 1016,
+    "python_files": 753,
     "runtime_excluded_files_total": 0,
-    "test_files": 218,
-    "tracked_files_total": 1013,
+    "test_files": 219,
+    "tracked_files_total": 1017,
     "workflows": 1
   },
   "deterministic": true,
@@ -1106,6 +1106,12 @@
       "sha256": "8cad8cf62b5ce04bea9d37bf71aa449637aad3afe7c7deccb7f29aefd6cc49bf"
     },
     {
+      "bytes": 4364,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_MASTER_DIVERGENCE_RESEARCH_CLOSEOUT_V1.md",
+      "sha256": "8d23535ef4b1a1e01d7dbd9acc386d9891ad4660d6c0e356e5e98c63b94015dd"
+    },
+    {
       "bytes": 3178,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_RUNTIME_CONTAINER_SNAPSHOT_EVIDENCE_V1.md",
@@ -2034,6 +2040,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 4336,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_master_divergence_research_closeout_v1.py",
+      "sha256": "c769fc302768e1b49784671ef41d6bc4ae0697182e535429e6cabf3dfcba7e93"
     },
     {
       "bytes": 4635,
@@ -4592,6 +4604,12 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
+      "bytes": 9572,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_master_divergence_research_closeout.py",
+      "sha256": "0094ed7ebcbdf3d802ace841a5282e1989274741a83a4333e6d098c8d26f4c33"
+    },
+    {
       "bytes": 19697,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/qlib_ocr_v11_shadow_candidate_registry.py",
@@ -5652,6 +5670,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_financial_performance_metrics.py",
       "sha256": "10f2cfb4ad473854c65f568ceb081d532e1b85b057337e3aab92a8a01eb12967"
+    },
+    {
+      "bytes": 10134,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_master_divergence_research_closeout_v1.py",
+      "sha256": "1aa90f3f9f0fd8307fdccb00dd389a4e64b90171b49b2b4e866b0ce929cc9a45"
     },
     {
       "bytes": 5824,
