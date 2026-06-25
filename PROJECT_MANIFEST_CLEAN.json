@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "30963dfa102c8bc561142a448ad6614427a080dd3f4c4eabb4e0316bf1951e6c",
+  "aggregate_sha256": "0d242554655bc1c9129e17d33510850e8f4a8b47db684973634b883d5d8872e0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 176,
-    "manifested_files_total": 1040,
-    "python_files": 771,
+    "docs_files": 177,
+    "manifested_files_total": 1044,
+    "python_files": 774,
     "runtime_excluded_files_total": 0,
-    "test_files": 225,
-    "tracked_files_total": 1041,
+    "test_files": 226,
+    "tracked_files_total": 1045,
     "workflows": 1
   },
   "deterministic": true,
@@ -756,6 +756,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_PAPER_MASTER_KPI_PACK_V1.md",
       "sha256": "3b82920a1526496ade3bcd2e9390f8bd670cd0d4a85010ff88b63f617a3a87d3"
+    },
+    {
+      "bytes": 6374,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_PATTERN_MINING_RESEARCH_V1.md",
+      "sha256": "87b68bf2102b58c5ff93a31b7cc9e9ab77a2220866764bb23d855a223ed705c5"
     },
     {
       "bytes": 5058,
@@ -2010,6 +2016,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_paper_master_kpi_pack_v1.py",
       "sha256": "4ac8af18c66b6c7461d670d01555de3920e627ee46ef90327e518fe6659afb2c"
+    },
+    {
+      "bytes": 4675,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_pattern_mining_research_v1.py",
+      "sha256": "18101fba81a541bd3011435316920beea23f46e2217f12ffa261c1812b5516bb"
     },
     {
       "bytes": 3356,
@@ -4682,6 +4694,12 @@
       "sha256": "3b6d71c5e089cc33013583e27dab651dae7fdcbc1e0c19f1d830c3f8d91fcd01"
     },
     {
+      "bytes": 18967,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_pattern_mining_research.py",
+      "sha256": "2546d9a91c51484b24de6e96e544a55a1eba1b97b338540711ac49fe76d30349"
+    },
+    {
       "bytes": 16298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_costs.py",
@@ -5130,6 +5148,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_paper_master_kpi_pack_v1.py",
       "sha256": "7dbbc621fcf27bd8eef53f6df240d7e0b378067d0b46cab8fb330ae5af823bab"
+    },
+    {
+      "bytes": 16167,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_pattern_mining_research_v1.py",
+      "sha256": "09eabf9c8087743a89d377a9737633d9ed405d7a4325cb16e3d139d9de923222"
     },
     {
       "bytes": 6408,
