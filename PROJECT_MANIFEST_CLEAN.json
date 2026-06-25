@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "56f7539a45c5952ce7dc2cc48ea9441644752c3ccf414569c1d349a38830a799",
+  "aggregate_sha256": "ef3db585d34db3a896f0c39ddf0d3b82429934f28157a4d8074184e044515288",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 174,
-    "manifested_files_total": 1032,
-    "python_files": 765,
+    "docs_files": 175,
+    "manifested_files_total": 1036,
+    "python_files": 768,
     "runtime_excluded_files_total": 0,
-    "test_files": 223,
-    "tracked_files_total": 1033,
+    "test_files": 224,
+    "tracked_files_total": 1037,
     "workflows": 1
   },
   "deterministic": true,
@@ -714,6 +714,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CURRENT_PROJECT_HANDOVER_AFTER_NTFY_TELEGRAM.md",
       "sha256": "f0524d05ad3016625c6a714fcae96b0b4c5170327cb6ddcb517a80b68d2d67c1"
+    },
+    {
+      "bytes": 4884,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_CANDLE_COVERAGE_ENTRY_FEATURES_V1.md",
+      "sha256": "c726512e5132774cbe8433b001e73c936f554cad5787a087acd983ac6f1e87ae"
     },
     {
       "bytes": 3482,
@@ -1962,6 +1968,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 4326,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_candle_coverage_entry_features_v1.py",
+      "sha256": "34ed40d374d199580eb64cd7d74eddc4d613adc035d1275db0e614bd0208c1d6"
     },
     {
       "bytes": 4301,
@@ -4622,6 +4634,12 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
+      "bytes": 22421,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_candle_coverage_entry_features.py",
+      "sha256": "536bf7a604d9bbb04f0fa45357cc74e08d7c5bd8827eb0c34c3e26f3fa7ab5ec"
+    },
+    {
       "bytes": 16021,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_contracts.py",
@@ -5052,6 +5070,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_current_project_handover_audit.py",
       "sha256": "1181f5de5121c60cd69a5b31dd0eacd5376d2152768c58099945ce9b7c345c0e"
+    },
+    {
+      "bytes": 14521,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_candle_coverage_entry_features_v1.py",
+      "sha256": "d8716318640cd42c7fa6150e58f5b75ab1b3efef0bf1ae0007e26019edb24efa"
     },
     {
       "bytes": 10675,
