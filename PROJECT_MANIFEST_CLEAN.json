@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "590b9bb06fc4b55e13d3ea9ff90bb5bae1465593fd97ebc7adbb3e05fad6b33d",
+  "aggregate_sha256": "41c53fdba12a210aa92a25f408cbb2d136e185f7fce1341994f158f472887a82",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 179,
-    "manifested_files_total": 1052,
-    "python_files": 780,
+    "docs_files": 180,
+    "manifested_files_total": 1056,
+    "python_files": 783,
     "runtime_excluded_files_total": 0,
-    "test_files": 228,
-    "tracked_files_total": 1053,
+    "test_files": 229,
+    "tracked_files_total": 1057,
     "workflows": 1
   },
   "deterministic": true,
@@ -732,6 +732,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_EVIDENCE_PACK_ORCHESTRATOR_V1.md",
       "sha256": "dd164fb3ebc89f7e5520140dd9a3294932634575ff2dcef3efa01838b62abf9d"
+    },
+    {
+      "bytes": 5731,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_LEARNING_AI_SHADOW_FEEDBACK_BRIDGE_V1.md",
+      "sha256": "4f6a4874d2dda20246a15d0dc5c7b11c1c4357d229cce1bcf6ffea78cb513320"
     },
     {
       "bytes": 6066,
@@ -2004,6 +2010,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_candle_coverage_entry_features_v1.py",
       "sha256": "34ed40d374d199580eb64cd7d74eddc4d613adc035d1275db0e614bd0208c1d6"
+    },
+    {
+      "bytes": 3309,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_learning_ai_shadow_feedback_bridge_v1.py",
+      "sha256": "d5e5c627bc5a0fcce17a4d3d9b027cda7477b3ced31c3f05ae33e205d8f12fde"
     },
     {
       "bytes": 4301,
@@ -4694,6 +4706,12 @@
       "sha256": "536bf7a604d9bbb04f0fa45357cc74e08d7c5bd8827eb0c34c3e26f3fa7ab5ec"
     },
     {
+      "bytes": 22413,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_learning_ai_shadow_feedback_bridge.py",
+      "sha256": "dc004207f2272c934bb7b3b9e9b06cc0f98fddda166a96b9ad2b70e88fa61ecb"
+    },
+    {
       "bytes": 16021,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_contracts.py",
@@ -5160,6 +5178,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
       "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
+    },
+    {
+      "bytes": 13579,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_learning_ai_shadow_feedback_bridge_v1.py",
+      "sha256": "99938615595ecb82cb7c299fa379bd034955b3b5bf5b531b86f9f770a8f982dc"
     },
     {
       "bytes": 10901,
