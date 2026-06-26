@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "c074a1f827273d4759f6a8902a5800687b5a927357a263a78490fca23c7c605f",
+  "aggregate_sha256": "8b681485c9fb62bb19a016b0ff6d34e874dd585a8dffd8b71fb95c6f12bdca14",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2624,10 +2624,10 @@
       "sha256": "07f2e4969e694573d3159372830c0a99e3647ad83eaa783f552797382d406960"
     },
     {
-      "bytes": 462,
+      "bytes": 1874,
       "hash_mode": "text_lf",
       "path": "scripts/inspect_phase11_freqtrade_db.py",
-      "sha256": "34a09dcee33cd736126cdaee8ec135bc63b880d475a2d11d031cd563490dbcdb"
+      "sha256": "89a1f7841b0a5ddc5800a095bb8dda7725747e6638aab75112bacf323bb24afb"
     },
     {
       "bytes": 2909,
