@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c3910bb179fdb4f10ef4515bde47131202a886a1dd891becf91ce53d88fda356",
+  "aggregate_sha256": "e6f510da8cbf44f3915994249c228fda90dcdc24d0481274f76cc2df0d493e4d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 186,
-    "manifested_files_total": 1081,
-    "python_files": 802,
+    "docs_files": 187,
+    "manifested_files_total": 1084,
+    "python_files": 804,
     "runtime_excluded_files_total": 0,
-    "test_files": 235,
-    "tracked_files_total": 1082,
+    "test_files": 236,
+    "tracked_files_total": 1085,
     "workflows": 1
   },
   "deterministic": true,
@@ -702,6 +702,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CRITICAL_NOTIFICATIONS_DASHBOARD_PANEL.md",
       "sha256": "e7e78a9e99cc9549b07011576682e0387a9a3ec8b456b76ec0011830c41533c5"
+    },
+    {
+      "bytes": 2700,
+      "hash_mode": "text_lf",
+      "path": "docs/CURRENT_DEV_AUDIT_REPLAY_DEV27_FINDINGS_V1.md",
+      "sha256": "ffc7c068c2e4ad13c9dccfc02a2ce6b65d5d55c2375ededf5b26623a878560c6"
     },
     {
       "bytes": 1687,
@@ -1806,6 +1812,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_bitradex_dependency_boundary.py",
       "sha256": "c072cb358f6412deb3994613feb4d22cb0e881b7c2d29e02bbb04ce5478a0f88"
+    },
+    {
+      "bytes": 22121,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_current_dev_dev27_findings_replay_v1.py",
+      "sha256": "0818f352bd8e6365da25a4e28a18e6abd035569c46d90b5cfdf1dc3bf5fb542f"
     },
     {
       "bytes": 6578,
@@ -5268,6 +5280,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_critical_notifications_dashboard_panel.py",
       "sha256": "ebf20d49c310b352a6eb9247bb29c2a68da1accd08342ccf8e06ac80f7d6b932"
+    },
+    {
+      "bytes": 8070,
+      "hash_mode": "text_lf",
+      "path": "tests/test_current_dev_audit_replay_dev27_findings_v1.py",
+      "sha256": "e887f69720513d4e6c20a8248d61eb15f1483878afa0c68d9e25513fce34c441"
     },
     {
       "bytes": 3736,
