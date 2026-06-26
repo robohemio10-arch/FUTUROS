@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "41c53fdba12a210aa92a25f408cbb2d136e185f7fce1341994f158f472887a82",
+  "aggregate_sha256": "eb707537fb960cab6928260c6999dfb3fe3fa245723840cfda6b977c913c4417",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 180,
-    "manifested_files_total": 1056,
-    "python_files": 783,
+    "docs_files": 181,
+    "manifested_files_total": 1060,
+    "python_files": 786,
     "runtime_excluded_files_total": 0,
-    "test_files": 229,
-    "tracked_files_total": 1057,
+    "test_files": 230,
+    "tracked_files_total": 1061,
     "workflows": 1
   },
   "deterministic": true,
@@ -744,6 +744,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_LEARNING_CONTRACTS_AND_SOURCE_MAP_V1.md",
       "sha256": "ef55acf2392f03b30a29d28cd836aad2e5cf5e7af493cdcd5a2d26d022fd025e"
+    },
+    {
+      "bytes": 3254,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_LEARNING_QLIB_RESEARCH_DATASET_V1.md",
+      "sha256": "8c7cdf4c572d38350d3e82763218017f6d8020009efc806c492c980175e24651"
     },
     {
       "bytes": 5012,
@@ -2016,6 +2022,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_learning_ai_shadow_feedback_bridge_v1.py",
       "sha256": "d5e5c627bc5a0fcce17a4d3d9b027cda7477b3ced31c3f05ae33e205d8f12fde"
+    },
+    {
+      "bytes": 3281,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_learning_qlib_research_dataset_v1.py",
+      "sha256": "a5061255664f7a6483d7a90b36831f4842708b22ac0c723407ddff480070771c"
     },
     {
       "bytes": 4301,
@@ -4718,6 +4730,12 @@
       "sha256": "615a3840973a52282477d656e395d2c8452ddf05db80478f09a361222254efd1"
     },
     {
+      "bytes": 23505,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_learning_qlib_research_dataset.py",
+      "sha256": "e64a6c41e7eb1aaadbf776fc1b9ba15e033b4cc8768205a496453a664341e6ef"
+    },
+    {
       "bytes": 13674,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_readonly_loaders.py",
@@ -5190,6 +5208,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_contracts_and_source_map_v1.py",
       "sha256": "b2438cdca9947f6e70ea0ade029d6d749ec1f4a830a0926c146c4b4849a377f5"
+    },
+    {
+      "bytes": 9883,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_learning_qlib_research_dataset_v1.py",
+      "sha256": "1864014cd6069c71e4479ffd7e287086d6127cf5cf4d0d16ac645e79b5b61e18"
     },
     {
       "bytes": 11801,
