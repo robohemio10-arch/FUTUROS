@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c045b37aecf279976943e1648a5b0d5cc08757ae27eadca7b65c7fdb65700849",
+  "aggregate_sha256": "0914baa1b830c222b8587697ea7f0f62ba73051b271286a6e70da8b28a09a0c9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 192,
-    "manifested_files_total": 1106,
-    "python_files": 821,
+    "docs_files": 193,
+    "manifested_files_total": 1111,
+    "python_files": 825,
     "runtime_excluded_files_total": 0,
-    "test_files": 241,
-    "tracked_files_total": 1107,
+    "test_files": 242,
+    "tracked_files_total": 1112,
     "workflows": 1
   },
   "deterministic": true,
@@ -1220,6 +1220,12 @@
       "sha256": "6de9b98c7c65cac51d4c488476f8310dd75aac1db761d4c7ee828032b8e9890d"
     },
     {
+      "bytes": 2701,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_MASTER_DIVERGENCE_OOS_REAL_SLICE_COMPUTATION_V1.md",
+      "sha256": "73dbd630e5dcf3af8f5c3a47567255293b3b4cdbd4cebb141fa5946a865453b7"
+    },
+    {
       "bytes": 3847,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MASTER_DIVERGENCE_OOS_REAL_SOURCE_LOADER_V1.md",
@@ -2280,6 +2286,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_master_divergence_oos_causal_attribution_v1.py",
       "sha256": "3326643b6f7b187245281f6b61fc044626e7b0a35ad651cf999a1b7db8a89169"
+    },
+    {
+      "bytes": 506,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_master_divergence_oos_real_slice_computation_v1.py",
+      "sha256": "6850eda403df51f374e75bfd396bc2c1892b6257bbfbb9a8a423b92aa9b1aed8"
     },
     {
       "bytes": 2643,
@@ -4976,6 +4988,18 @@
       "sha256": "1c9459f9847ad4298b3b037af2283d09e8e3ce8713623658173288ad5f2903f1"
     },
     {
+      "bytes": 583,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_master_divergence_oos_real_slice_computation/__init__.py",
+      "sha256": "62ebb8325dfe8ec2a4eb0ea67319eccd0bc8c2109f4ce5eded5463248c1cb4dd"
+    },
+    {
+      "bytes": 29786,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_master_divergence_oos_real_slice_computation/real_slice_computation.py",
+      "sha256": "54fe3b565bf48782fcfef83801e8d1feaeb51934cb74da937b445040998ca713"
+    },
+    {
       "bytes": 596,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_oos_real_source_loader/__init__.py",
@@ -6192,6 +6216,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_master_divergence_oos_causal_attribution_v1.py",
       "sha256": "db5b060bbdea1ee4ebad23138701da8be3ca027f0a0668ab8dcb0f29970ff1b5"
+    },
+    {
+      "bytes": 9729,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_master_divergence_oos_real_slice_computation_v1.py",
+      "sha256": "aba6accef7a4c4443e972a6103353aeb57524e194d94117404649d4bab501a99"
     },
     {
       "bytes": 10641,
