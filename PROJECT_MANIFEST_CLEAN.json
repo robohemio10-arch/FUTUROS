@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "50e0ef91bfeed4eb4d288c64968c5d29bcf993fdfe0d5da5672dd3fb765adc41",
+  "aggregate_sha256": "590b9bb06fc4b55e13d3ea9ff90bb5bae1465593fd97ebc7adbb3e05fad6b33d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 178,
-    "manifested_files_total": 1048,
-    "python_files": 777,
+    "docs_files": 179,
+    "manifested_files_total": 1052,
+    "python_files": 780,
     "runtime_excluded_files_total": 0,
-    "test_files": 227,
-    "tracked_files_total": 1049,
+    "test_files": 228,
+    "tracked_files_total": 1053,
     "workflows": 1
   },
   "deterministic": true,
@@ -768,6 +768,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_PATTERN_MINING_RESEARCH_V1.md",
       "sha256": "87b68bf2102b58c5ff93a31b7cc9e9ab77a2220866764bb23d855a223ed705c5"
+    },
+    {
+      "bytes": 6104,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_SHADOW_RULE_OOS_VALIDATION_V1.md",
+      "sha256": "232f148d181beba16f73859d825a34f97ad6c2057c0bb93b225ae60ebe62901c"
     },
     {
       "bytes": 5058,
@@ -2034,6 +2040,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_pattern_mining_research_v1.py",
       "sha256": "18101fba81a541bd3011435316920beea23f46e2217f12ffa261c1812b5516bb"
+    },
+    {
+      "bytes": 5193,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_shadow_rule_oos_validation_v1.py",
+      "sha256": "46bc1088572b3a0e7ba84c7220432560c4b10b324abe63ede3cf125f84d9189c"
     },
     {
       "bytes": 3356,
@@ -4718,6 +4730,12 @@
       "sha256": "2546d9a91c51484b24de6e96e544a55a1eba1b97b338540711ac49fe76d30349"
     },
     {
+      "bytes": 23019,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_shadow_rule_oos_validation.py",
+      "sha256": "3b604751c61b9a70d4a5fde7f35a6f01adb55a8446aa5012376a577fe0979dbe"
+    },
+    {
       "bytes": 16298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_costs.py",
@@ -5178,6 +5196,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_pattern_mining_research_v1.py",
       "sha256": "09eabf9c8087743a89d377a9737633d9ed405d7a4325cb16e3d139d9de923222"
+    },
+    {
+      "bytes": 17199,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_shadow_rule_oos_validation_v1.py",
+      "sha256": "084d6cf9d0f8dc974750e255d46343113a9f26e2d3caaafd14589be749eb34b0"
     },
     {
       "bytes": 6408,
