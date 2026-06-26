@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5def1b1f3276e3e083349ca83821ec458ef0ee615c1c83a27275f7f3f014ca77",
+  "aggregate_sha256": "d91416738b7fe922e69c8aa4c9520d1a52f0bdee5b31639dce196ba63cf54f54",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 184,
-    "manifested_files_total": 1073,
-    "python_files": 796,
+    "docs_files": 185,
+    "manifested_files_total": 1077,
+    "python_files": 799,
     "runtime_excluded_files_total": 0,
-    "test_files": 233,
-    "tracked_files_total": 1074,
+    "test_files": 234,
+    "tracked_files_total": 1078,
     "workflows": 1
   },
   "deterministic": true,
@@ -744,6 +744,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_LEARNING_CONTRACTS_AND_SOURCE_MAP_V1.md",
       "sha256": "ef55acf2392f03b30a29d28cd836aad2e5cf5e7af493cdcd5a2d26d022fd025e"
+    },
+    {
+      "bytes": 3128,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_LEARNING_EVIDENCE_READINESS_INTEGRATION_V1.md",
+      "sha256": "abc90f53a92d1e2037ecc3c01a39b3b6a443f3d0ec84fdf5fe709564272bf2e0"
     },
     {
       "bytes": 3254,
@@ -2040,6 +2046,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_learning_ai_shadow_feedback_bridge_v1.py",
       "sha256": "d5e5c627bc5a0fcce17a4d3d9b027cda7477b3ced31c3f05ae33e205d8f12fde"
+    },
+    {
+      "bytes": 4185,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_learning_evidence_readiness_integration_v1.py",
+      "sha256": "1a3607c277db92d7c54bf293afbc29ac76992081ea988589baeec919aee59d23"
     },
     {
       "bytes": 3281,
@@ -4778,6 +4790,12 @@
       "sha256": "615a3840973a52282477d656e395d2c8452ddf05db80478f09a361222254efd1"
     },
     {
+      "bytes": 30451,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/daily_learning_evidence_readiness_integration.py",
+      "sha256": "12e53e7bccdab5dc9e46b25feb2043c3df7aefa8a7b3cc5782996cc919f73217"
+    },
+    {
       "bytes": 23505,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_qlib_research_dataset.py",
@@ -5268,6 +5286,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_contracts_and_source_map_v1.py",
       "sha256": "b2438cdca9947f6e70ea0ade029d6d749ec1f4a830a0926c146c4b4849a377f5"
+    },
+    {
+      "bytes": 11807,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_learning_evidence_readiness_integration_v1.py",
+      "sha256": "38a37b0f9b465306cf7e9105314d9a7b82e3c411cbf33105d9996adffe0660d6"
     },
     {
       "bytes": 9883,
