@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4cc9672cb8d6d86cc247772aaf633f37bd9c0ce68077c52e8a188d94c3ba0c7e",
+  "aggregate_sha256": "5def1b1f3276e3e083349ca83821ec458ef0ee615c1c83a27275f7f3f014ca77",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 183,
-    "manifested_files_total": 1068,
-    "python_files": 792,
+    "docs_files": 184,
+    "manifested_files_total": 1073,
+    "python_files": 796,
     "runtime_excluded_files_total": 0,
-    "test_files": 232,
-    "tracked_files_total": 1069,
+    "test_files": 233,
+    "tracked_files_total": 1074,
     "workflows": 1
   },
   "deterministic": true,
@@ -816,6 +816,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DASHBOARD_AI_TRAINING_RESEARCH_COMMAND_CENTER_V1.md",
       "sha256": "a3b1f54d24ee10b0aa30be472bb62755a5e6a2c41bd7aceedfddec5c3ea71385"
+    },
+    {
+      "bytes": 3203,
+      "hash_mode": "text_lf",
+      "path": "docs/DASHBOARD_DAILY_LEARNING_COMMAND_CENTER_V1.md",
+      "sha256": "51c274d5808a42b9685b6be3e95f1bed67419fe11d41d463e7cce8d6148c298c"
     },
     {
       "bytes": 1482,
@@ -2094,6 +2100,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_shadow_rule_oos_validation_v1.py",
       "sha256": "46bc1088572b3a0e7ba84c7220432560c4b10b324abe63ede3cf125f84d9189c"
+    },
+    {
+      "bytes": 4145,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_dashboard_daily_learning_command_center_v1.py",
+      "sha256": "f0ae4f44769169c3b1f52d635d8789e79e73ef943131ad26e3330c557ab5acef"
     },
     {
       "bytes": 3356,
@@ -3632,6 +3644,12 @@
       "sha256": "a33677ca14ad0097ac049b162af39650ddfbf56dba82e014a5dfa06989608040"
     },
     {
+      "bytes": 2381,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/pages/daily_learning_command_center.py",
+      "sha256": "367923d71ecb11de3f9da7b78aa5f6e5e00e087cb54f3385a55f8e9402a48ca7"
+    },
+    {
       "bytes": 33807,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/risk_readiness_soak_panel.py",
@@ -3654,6 +3672,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/services/__init__.py",
       "sha256": "b3d0e8b78c8fd28a5fede7c3d7dd72bef7004c41af1cf2be1317ea0567f1e802"
+    },
+    {
+      "bytes": 25916,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/dashboard/services/daily_learning_command_center.py",
+      "sha256": "0cfeb7de7dddb3466fe679db79a918db57b48e3076cd88f15ee191795f1edc85"
     },
     {
       "bytes": 1479,
@@ -5400,6 +5424,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_controls_page_stubs_v2.py",
       "sha256": "1051774d5b0bfe2430446f142b99a8214673cbeb90e931113ea83b5ebbd5becf"
+    },
+    {
+      "bytes": 10064,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_daily_learning_command_center_v1.py",
+      "sha256": "11ceefdf8ada3b842ef6559e5360beb1d212a348ff133375b844d77ed685474e"
     },
     {
       "bytes": 1360,
