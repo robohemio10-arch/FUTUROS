@@ -37,10 +37,10 @@ def evaluate_dashboard_command_intent(intent: DashboardCommandIntent) -> Dashboa
             status=DashboardCommandStatus.HARD_BLOCKED,
             accepted=False,
             executed=False,
-            dry_run=False,
+            dry_run=True,
             hard_blocked=True,
             reason=policy.reason,
-            simulated_effect={"effect": "blocked_by_policy"},
+            simulated_effect={"effect": "blocked_by_policy_no_external_side_effect"},
             audit=audit,
         )
     valid, reason = validate_command_payload(intent, policy)

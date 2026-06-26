@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e6f510da8cbf44f3915994249c228fda90dcdc24d0481274f76cc2df0d493e4d",
+  "aggregate_sha256": "c074a1f827273d4759f6a8902a5800687b5a927357a263a78490fca23c7c605f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 187,
-    "manifested_files_total": 1084,
-    "python_files": 804,
+    "docs_files": 188,
+    "manifested_files_total": 1086,
+    "python_files": 805,
     "runtime_excluded_files_total": 0,
-    "test_files": 236,
-    "tracked_files_total": 1085,
+    "test_files": 237,
+    "tracked_files_total": 1087,
     "workflows": 1
   },
   "deterministic": true,
@@ -684,6 +684,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CLEANUP_REPORT.md",
       "sha256": "b324cbcab23b392b9ce6c0e740c9f96d815b895365e09c1dfc3a6a56b53ec10f"
+    },
+    {
+      "bytes": 2135,
+      "hash_mode": "text_lf",
+      "path": "docs/CLI_STANDALONE_BOOTSTRAP_AND_DASHBOARD_NOTIFICATION_HARDENING_V1.md",
+      "sha256": "bb1a7b3b35fcae03523087a0de39ccbae96e0fcf2d3522719ad4287bf2dfc807"
     },
     {
       "bytes": 5181,
@@ -2192,10 +2198,10 @@
       "sha256": "1b11e54579615410489993d9b7499bdc8c9bf57d4f00b0c72c50eaddeadb672b"
     },
     {
-      "bytes": 3422,
+      "bytes": 3590,
       "hash_mode": "text_lf",
       "path": "scripts/build_freqtrade_paper_ai_selector_integration.py",
-      "sha256": "b3f4ef5d14b4b4e50175ddd41e551236a04d012176429c96ade49b582bac5c2f"
+      "sha256": "ce980a0138bea044ed81563576db21401882e2249eb7802f315409f57bc61a2d"
     },
     {
       "bytes": 17376,
@@ -2330,10 +2336,10 @@
       "sha256": "7ceded7213329405b35ead6e55166156984c2d00bffed5c80a2265011d43c123"
     },
     {
-      "bytes": 336,
+      "bytes": 504,
       "hash_mode": "text_lf",
       "path": "scripts/collect_freqtrade_paper_history.py",
-      "sha256": "752287023383e75542b768f598ec07a13cffd4b78cafcd923913090fb6a94784"
+      "sha256": "92e72518d6cb6c484ff595233b24ed21046b7b586ce8f8c43c8eecdf138679ff"
     },
     {
       "bytes": 1478,
@@ -2540,16 +2546,16 @@
       "sha256": "f4fe6141d0223954787fa10aebd2e3a0e1119f102fcdc9e52c009994e5c69e76"
     },
     {
-      "bytes": 156,
+      "bytes": 361,
       "hash_mode": "text_lf",
       "path": "scripts/export_freqtrade_signals.py",
-      "sha256": "99fcd81533ea641059b1def4a2feef785b6896f64d8acebe0d376f97ecbe5592"
+      "sha256": "48e99295785483fffc011d2d655d2a25c24a0e2e46934dfe498df6b2f6677a59"
     },
     {
-      "bytes": 326,
+      "bytes": 494,
       "hash_mode": "text_lf",
       "path": "scripts/export_market_freqtrade_signals.py",
-      "sha256": "379d27c64b51e615aab7c14c89046db9f66be7b84d825a0cea11778c169a31d6"
+      "sha256": "02d3d1ec806f05e1f1cfa3a085be824e7f9ae0ff28a22d774ea8189f3fc2fd5f"
     },
     {
       "bytes": 337,
@@ -2564,10 +2570,10 @@
       "sha256": "59db86ebdca37890049b21cb917e7d43a8b1f9846c3f36471dac9a87c2fad096"
     },
     {
-      "bytes": 623,
+      "bytes": 791,
       "hash_mode": "text_lf",
       "path": "scripts/export_qlib_freqtrade_signals.py",
-      "sha256": "3d4e0b8ef73b2fe20532d458f1ffe30039745c46ef23565ee95ed423890676f0"
+      "sha256": "ad94ad099cddb2e7e57cdfd03ea27c6152bd2a4f72cc5f632f9356bad1d52969"
     },
     {
       "bytes": 693,
@@ -2618,10 +2624,10 @@
       "sha256": "07f2e4969e694573d3159372830c0a99e3647ad83eaa783f552797382d406960"
     },
     {
-      "bytes": 294,
+      "bytes": 462,
       "hash_mode": "text_lf",
       "path": "scripts/inspect_phase11_freqtrade_db.py",
-      "sha256": "cdd028144563f099fc0cac0b82406bfbcc5251a5199c84a9111467fa96505d70"
+      "sha256": "34a09dcee33cd736126cdaee8ec135bc63b880d475a2d11d031cd563490dbcdb"
     },
     {
       "bytes": 2909,
@@ -3590,10 +3596,10 @@
       "sha256": "a54e207ea25b024414ba1cc10faab36246bacfe68d3d18c463d8b689c1756d37"
     },
     {
-      "bytes": 2584,
+      "bytes": 2607,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/controls/command_stub_adapter.py",
-      "sha256": "d5df97a7891d467d8be7bf809a393ec472580eaf84e9e44df4e3900019f0d403"
+      "sha256": "c562c6acd5615b8a56b230bcbe40e9050801fa93c566ae515a926e70b0f55353"
     },
     {
       "bytes": 2772,
@@ -5256,6 +5262,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_v11_single_command_ingestion_orchestrator.py",
       "sha256": "003a94d8d0944d4b1ae74ea5a779571455dd67a70d9559f92933f3c39d38e55d"
+    },
+    {
+      "bytes": 3730,
+      "hash_mode": "text_lf",
+      "path": "tests/test_cli_standalone_bootstrap_and_dashboard_notification_hardening_v1.py",
+      "sha256": "06ebd86407a97f535e8af2e04293a007a560d2a55f2fb5ccd6919be743663281"
     },
     {
       "bytes": 9242,
