@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0914baa1b830c222b8587697ea7f0f62ba73051b271286a6e70da8b28a09a0c9",
+  "aggregate_sha256": "b46c3edf20601e7dd9b89c80cf04412d7e463e564445968776127cdc65607f4e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 193,
-    "manifested_files_total": 1111,
-    "python_files": 825,
+    "docs_files": 194,
+    "manifested_files_total": 1116,
+    "python_files": 829,
     "runtime_excluded_files_total": 0,
-    "test_files": 242,
-    "tracked_files_total": 1112,
+    "test_files": 243,
+    "tracked_files_total": 1117,
     "workflows": 1
   },
   "deterministic": true,
@@ -1238,6 +1238,12 @@
       "sha256": "3d386ebb1191615db9725e9a1d3a791842cf7591b77e9416943ee32466e6b1db"
     },
     {
+      "bytes": 1551,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_MASTER_DIVERGENCE_PAPER_SOURCE_DISCOVERY_V1.md",
+      "sha256": "1edcb9ad19a63091da61fe7e939479c1fc700ec20da1a528723a9c9c939f949e"
+    },
+    {
       "bytes": 3186,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MASTER_DIVERGENCE_REMEDIATION_RESEARCH_V1.md",
@@ -2304,6 +2310,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_master_divergence_oos_slice_metrics_v1.py",
       "sha256": "2d1f9c7066e77bbf7252b0db01496242afc4cf6d29f10e8d2020f015a66cb362"
+    },
+    {
+      "bytes": 444,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_master_divergence_paper_source_discovery_v1.py",
+      "sha256": "4932384e0a3b376ed1e8c6d43f8644ac919939ef424cf6e80b08534c757c52c0"
     },
     {
       "bytes": 2088,
@@ -5024,6 +5036,18 @@
       "sha256": "5cef8b5e0f7d61e356f7055e943d7262121abf373b8b8f691fb95addccc2b9c5"
     },
     {
+      "bytes": 616,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_master_divergence_paper_source_discovery/__init__.py",
+      "sha256": "acbe752818cf8b3b9b417049d6b41b603e58dc74461928b6b3849c6c75ae04bf"
+    },
+    {
+      "bytes": 25543,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_master_divergence_paper_source_discovery/paper_source_discovery.py",
+      "sha256": "4b7365941957eb5ef534887cde3f9d6db4c488139afcfdabf46b4468a581a687"
+    },
+    {
       "bytes": 383,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_remediation/__init__.py",
@@ -6234,6 +6258,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_master_divergence_oos_slice_metrics_v1.py",
       "sha256": "1621b49ef88da21c05ca2fb4eddc22da8daf69b8906de7693ae09078954e6561"
+    },
+    {
+      "bytes": 8799,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_master_divergence_paper_source_discovery_v1.py",
+      "sha256": "0b4cfc13fe6a86542e9511637e5f3972a9fd1d5963b863ab452241e3bf4a2acf"
     },
     {
       "bytes": 7090,
