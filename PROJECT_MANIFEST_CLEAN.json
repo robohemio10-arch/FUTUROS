@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "78c91d0fb02dd186099a1ae81ddcbce53aa03c0bc2d31ad880ffe85517edc055",
+  "aggregate_sha256": "6ab3470fc059a5b29130ea486b60d0ab9ef20e95590d7a8c887a1ab5312772f6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 195,
-    "manifested_files_total": 1121,
-    "python_files": 833,
+    "docs_files": 196,
+    "manifested_files_total": 1126,
+    "python_files": 837,
     "runtime_excluded_files_total": 0,
-    "test_files": 244,
-    "tracked_files_total": 1122,
+    "test_files": 245,
+    "tracked_files_total": 1127,
     "workflows": 1
   },
   "deterministic": true,
@@ -1166,6 +1166,12 @@
       "sha256": "3fd83437280849de443ae71223f3c8e92bffe02f2ecf11b69fe995dc71801762"
     },
     {
+      "bytes": 2197,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_MASTER_CANDLE_POSITIVE_EV_SLICE_MINING_V1.md",
+      "sha256": "ee3536896d28f9e88d27d241f46951aaabe620163bba1510c197b4d4eeec4cfa"
+    },
+    {
       "bytes": 4225,
       "hash_mode": "text_lf",
       "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
@@ -2280,6 +2286,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_aligned_oos_research_v1.py",
       "sha256": "6c5a1cd85f343e5074668dc75125cc493089c31d8057db290c41f8b8eb5cdc51"
+    },
+    {
+      "bytes": 2599,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ocr_master_candle_positive_ev_slice_mining_v1.py",
+      "sha256": "1eb3290e11bea8e437f2801bc0a5553b7eaed163fbb2bfd5cf10946aea39dc8e"
     },
     {
       "bytes": 1852,
@@ -5006,6 +5018,18 @@
       "sha256": "e1841047860e720a6d9e8066195ecaa250c04c74eeaa2fb5557776e6c5e4f8f5"
     },
     {
+      "bytes": 189,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_positive_ev_slice_mining/__init__.py",
+      "sha256": "ce207e888beb1098a81d6298f8cfe424549d5c019993e61d8cfcf567be1fc1e7"
+    },
+    {
+      "bytes": 32995,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_positive_ev_slice_mining/slice_mining.py",
+      "sha256": "66e366a1db87ad05a775d156c558f67bdba699b714e4ebccc1c6c671245f2404"
+    },
+    {
       "bytes": 32888,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_v11_dataset.py",
@@ -6192,6 +6216,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_aligned_oos_research_v1.py",
       "sha256": "055b9e21586ab1443ca2a58c5e1ffd375ebd94d60f2725b68e9b8a99b5b49e52"
+    },
+    {
+      "bytes": 8302,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_master_candle_positive_ev_slice_mining_v1.py",
+      "sha256": "05431995025043dc65215925d6ee4f69a39ed76820279c4303445eeb41cf8ca8"
     },
     {
       "bytes": 13867,
