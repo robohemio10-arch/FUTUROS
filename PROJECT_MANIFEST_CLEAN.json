@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "6ab3470fc059a5b29130ea486b60d0ab9ef20e95590d7a8c887a1ab5312772f6",
+  "aggregate_sha256": "1918d8badce47624af488d460ac45fb2356707bf6133d27d16fba3bfbd4596dd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 196,
-    "manifested_files_total": 1126,
-    "python_files": 837,
+    "docs_files": 197,
+    "manifested_files_total": 1131,
+    "python_files": 841,
     "runtime_excluded_files_total": 0,
-    "test_files": 245,
-    "tracked_files_total": 1127,
+    "test_files": 246,
+    "tracked_files_total": 1132,
     "workflows": 1
   },
   "deterministic": true,
@@ -1172,6 +1172,12 @@
       "sha256": "ee3536896d28f9e88d27d241f46951aaabe620163bba1510c197b4d4eeec4cfa"
     },
     {
+      "bytes": 1902,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_MASTER_CANDLE_POSITIVE_RULE_OOS_VALIDATION_V1.md",
+      "sha256": "e9507b91682c5553294d9f52a677d7e422c815b2ab1387d9e94c8d55329bb561"
+    },
+    {
       "bytes": 4225,
       "hash_mode": "text_lf",
       "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
@@ -2292,6 +2298,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_positive_ev_slice_mining_v1.py",
       "sha256": "1eb3290e11bea8e437f2801bc0a5553b7eaed163fbb2bfd5cf10946aea39dc8e"
+    },
+    {
+      "bytes": 3153,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ocr_master_candle_positive_rule_oos_validation_v1.py",
+      "sha256": "fb98027b0d308f86087416b466ccf22455622859030a5cc0f7af47862fddbbec"
     },
     {
       "bytes": 1852,
@@ -5030,6 +5042,18 @@
       "sha256": "66e366a1db87ad05a775d156c558f67bdba699b714e4ebccc1c6c671245f2404"
     },
     {
+      "bytes": 187,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_positive_rule_oos_validation/__init__.py",
+      "sha256": "a6bf5dfaf25fa686a9db31bfe7b70cd0ffa0462425deb0ef3d7fb640e66801c0"
+    },
+    {
+      "bytes": 29167,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_positive_rule_oos_validation/oos_validation.py",
+      "sha256": "e55e4db90e0d8d8eadbe86aa7e205bd4c58cecf6cfc5603f09d7709e964e6fee"
+    },
+    {
       "bytes": 32888,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_v11_dataset.py",
@@ -6222,6 +6246,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_positive_ev_slice_mining_v1.py",
       "sha256": "05431995025043dc65215925d6ee4f69a39ed76820279c4303445eeb41cf8ca8"
+    },
+    {
+      "bytes": 6222,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_master_candle_positive_rule_oos_validation_v1.py",
+      "sha256": "f09de255e1ab3a6a54e88faa56c34e180d96686576bd25afd31a3180e2395c66"
     },
     {
       "bytes": 13867,
