@@ -13,6 +13,7 @@ import csv
 import hashlib
 import json
 import math
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -35,6 +36,12 @@ EXPECTED_TRADE_VALUE_CONTRACT = (
 H6_10M = -0.0038501215827868
 H6_30M = -0.0060685748963285
 CANDIDATE_RULE = "lb_10m_ret_close <= -0.0038501215827868 AND lb_30m_ret_close <= -0.0060685748963285"
+CANONICAL_1M_CANDLE_FILES = (
+    Path("data/raw/binance_futures_klines/BTCUSDT_1m_20251230_20261208.csv"),
+    Path("data/raw/binance_futures_klines/ETHUSDT_1m_20251230_20261208.csv"),
+    Path("data/raw/binance_futures_klines/BTCUSDT_1m_20260106_20260519.parquet"),
+    Path("data/raw/binance_futures_klines/ETHUSDT_1m_20260106_20260519.parquet"),
+)
 FORBIDDEN_ACTIONS = [
     "alterar Freqtrade",
     "alterar RiskManager",
@@ -116,14 +123,50 @@ def _first(columns: Iterable[str], candidates: Sequence[str]) -> str | None:
     return None
 
 
+def _parse_number(value: Any) -> float | None:
+    if value is None:
+        return None
+    if pd is not None and pd.isna(value):
+        return None
+    if isinstance(value, (int, float)) and math.isfinite(float(value)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return None
+    text = (
+        text.replace("USDT", "")
+        .replace("BTC", "")
+        .replace("ETH", "")
+        .replace("%", "")
+        .replace("+", "")
+        .strip()
+    )
+    text = text.replace(" ", "")
+    if "," in text and "." in text:
+        text = text.replace(".", "").replace(",", ".")
+    else:
+        text = text.replace(",", ".")
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    return float(match.group(0)) if match else None
+
+
 def _symbol(value: Any) -> str:
-    text = str(value or "").upper().strip().replace("/USDT:USDT", "USDT")
-    text = text.replace("/", "").replace(":", "")
+    text = str(value or "").upper().strip()
+    text = text.replace("_", "").replace("/", "").replace(":USDT", "").replace(":", "")
     if "BTC" in text:
         return "BTCUSDT"
     if "ETH" in text:
         return "ETHUSDT"
     return text or "UNKNOWN"
+
+
+def _side(value: Any) -> str:
+    text = str(value or "").lower().strip()
+    if "long" in text:
+        return "long"
+    if "short" in text:
+        return "short"
+    return text or "unknown"
 
 
 def _read_table(path: Path) -> Any:
@@ -158,8 +201,11 @@ def _dt(series: Any) -> Any:
     if pd is None:
         return series
     numeric = pd.to_numeric(series, errors="coerce")
-    if numeric.notna().mean() > 0.8:
-        median = numeric.dropna().abs().median() if not numeric.dropna().empty else 0
+    non_null = numeric.dropna()
+    if not non_null.empty and numeric.notna().mean() > 0.8:
+        median = float(non_null.abs().median())
+        if 20_000 <= median <= 80_000:
+            return pd.to_datetime(numeric, errors="coerce", unit="D", origin="1899-12-30", utc=True)
         unit = "ms" if median > 10_000_000_000 else "s"
         return pd.to_datetime(numeric, errors="coerce", unit=unit, utc=True)
     return pd.to_datetime(series, errors="coerce", utc=True)
@@ -169,19 +215,33 @@ def _normalize_trades(raw: Any) -> Any:
     if pd is None:
         return raw
     df = raw.copy()
-    symbol_col = _first(df.columns, ["symbol", "pair", "asset", "ticker"])
-    side_col = _first(df.columns, ["side", "direction", "position_side", "trade_side"])
-    open_col = _first(df.columns, ["open_time_utc", "open_time", "open_date", "entry_time", "datetime", "timestamp", "date"])
-    close_col = _first(df.columns, ["close_time_utc", "close_time", "close_date", "exit_time"])
-    pnl_col = _first(df.columns, ["pnl_usdt", "net_pnl_usdt", "raw_pnl_usdt", "profit_abs", "close_profit_abs", "realized_pnl_usdt", "pnl"])
-    exit_col = _first(df.columns, ["exit_reason", "reason", "exit_tag", "close_reason"])
+    symbol_col = _first(df.columns, ["symbol", "pair", "asset", "ticker", "11_moeda", "moeda"])
+    side_col = _first(df.columns, ["side", "direction", "position_side", "trade_side", "12_fechar_long_short", "fechar_long_short"])
+    open_col = _first(
+        df.columns,
+        ["open_time_utc", "open_time", "open_date", "entry_time", "datetime", "timestamp", "date", "7_horario_de_abertura", "horario_de_abertura"],
+    )
+    close_col = _first(df.columns, ["close_time_utc", "close_time", "close_date", "exit_time", "8_horario_de_fechamento", "horario_de_fechamento"])
+    pnl_col = _first(
+        df.columns,
+        ["pnl_usdt", "net_pnl_usdt", "raw_pnl_usdt", "profit_abs", "close_profit_abs", "realized_pnl_usdt", "pnl", "1_pnl_fechado", "pnl_fechado"],
+    )
+    entry_price_col = _first(df.columns, ["entry_price", "open_rate", "open_price", "3_preco_de_abertura", "preco_de_abertura"])
+    exit_price_col = _first(df.columns, ["exit_price", "close_rate", "close_price", "4_preco_de_fechamento", "preco_de_fechamento"])
+    exit_col = _first(df.columns, ["exit_reason", "reason", "exit_tag", "close_reason", "final_bucket", "candidate_action_final"])
     dur_col = _first(df.columns, ["duration_minutes", "duration_min", "trade_duration", "duration"])
+    order_col = _first(df.columns, ["trade_id", "order_id", "10_numero_do_pedido", "numero_do_pedido", "fingerprint_operacional"])
+
     out = pd.DataFrame(index=df.index)
+    out["source_row_index"] = df.index.astype(int)
+    out["trade_id"] = df[order_col].astype(str) if order_col else out["source_row_index"].astype(str)
     out["symbol"] = df[symbol_col].map(_symbol) if symbol_col else "UNKNOWN"
-    out["side"] = df[side_col].astype(str).str.lower().str.strip() if side_col else "unknown"
+    out["side"] = df[side_col].map(_side) if side_col else "unknown"
     out["open_time"] = _dt(df[open_col]) if open_col else pd.NaT
     out["close_time"] = _dt(df[close_col]) if close_col else pd.NaT
-    out["pnl_usdt"] = pd.to_numeric(df[pnl_col], errors="coerce").fillna(0.0) if pnl_col else 0.0
+    out["pnl_usdt"] = df[pnl_col].map(_parse_number) if pnl_col else math.nan
+    out["entry_price"] = df[entry_price_col].map(_parse_number) if entry_price_col else math.nan
+    out["exit_price"] = df[exit_price_col].map(_parse_number) if exit_price_col else math.nan
     out["exit_reason"] = df[exit_col].astype(str).str.lower().str.strip() if exit_col else "unknown"
     if dur_col:
         out["duration_minutes"] = pd.to_numeric(df[dur_col], errors="coerce")
@@ -189,18 +249,19 @@ def _normalize_trades(raw: Any) -> Any:
         out["duration_minutes"] = (out["close_time"] - out["open_time"]).dt.total_seconds() / 60.0
     out["day"] = out["open_time"].dt.date.astype(str)
     out["hour"] = out["open_time"].dt.hour.fillna(-1).astype(int)
-    return out.dropna(subset=["open_time"])
+    return out.dropna(subset=["open_time", "pnl_usdt"])
 
 
 def _schema_status(columns: Sequence[str], source_type: str) -> str:
     lower = {str(col).lower() for col in columns}
     if source_type == "trades_master":
-        has_symbol = bool(lower & {"symbol", "pair"})
-        has_time = bool(lower & {"open_time_utc", "open_time", "open_date", "entry_time", "datetime", "timestamp", "date"})
-        has_pnl = bool(lower & {"pnl_usdt", "net_pnl_usdt", "raw_pnl_usdt", "profit_abs", "close_profit_abs", "pnl"})
-        return "candidate_trade_schema" if has_symbol and has_time and has_pnl else "partial_trade_schema"
+        has_symbol = bool(lower & {"symbol", "pair", "11_moeda", "moeda"})
+        has_time = bool(lower & {"open_time_utc", "open_time", "open_date", "entry_time", "datetime", "timestamp", "date", "7_horario_de_abertura"})
+        has_close_time = bool(lower & {"close_time_utc", "close_time", "close_date", "exit_time", "8_horario_de_fechamento"})
+        has_pnl = bool(lower & {"pnl_usdt", "net_pnl_usdt", "raw_pnl_usdt", "profit_abs", "close_profit_abs", "pnl", "1_pnl_fechado"})
+        return "candidate_trade_schema" if has_symbol and has_time and has_pnl else "partial_trade_schema" if has_symbol and has_close_time and has_pnl else "unknown_schema"
     if source_type == "candles":
-        has_time = bool(lower & {"open_time_utc", "open_time", "timestamp", "date", "datetime", "time", "ts"})
+        has_time = bool(lower & {"open_time_utc", "open_time", "timestamp", "date", "datetime", "time", "ts", "ts_ms"})
         has_close = bool(lower & {"close", "c"})
         return "candidate_candle_schema" if has_time and has_close else "unknown_schema"
     return "unknown_schema"
@@ -220,7 +281,7 @@ def _normalize_candles(raw: Any, fallback_symbol: str | None) -> Any:
         return raw
     df = raw.copy()
     symbol_col = _first(df.columns, ["symbol", "pair", "asset", "ticker"])
-    ts_col = _first(df.columns, ["open_time_utc", "open_time", "timestamp", "date", "datetime", "time", "ts"])
+    ts_col = _first(df.columns, ["ts", "timestamp", "open_time_utc", "open_time", "date", "datetime", "time", "ts_ms"])
     close_col = _first(df.columns, ["close", "close_price", "c"])
     open_col = _first(df.columns, ["open", "open_price", "o"])
     high_col = _first(df.columns, ["high", "h"])
@@ -241,6 +302,23 @@ def _normalize_candles(raw: Any, fallback_symbol: str | None) -> Any:
 
 def _discover_candle_paths(root: Path, candle_roots: Sequence[str | Path]) -> list[Path]:
     suffixes = {".csv", ".parquet", ".json", ".jsonl"}
+    explicit_files: list[Path] = []
+    for value in candle_roots:
+        base = Path(value)
+        if not base.is_absolute():
+            base = root / base
+        if base.is_file() and base.suffix.lower() in suffixes:
+            explicit_files.append(base)
+    if explicit_files:
+        return sorted({str(path.resolve()): path for path in explicit_files}.values(), key=lambda p: str(p).lower())
+
+    canonical = [root / rel for rel in CANONICAL_1M_CANDLE_FILES if (root / rel).exists()]
+    large_canonical = [path for path in canonical if "20251230_20261208" in path.name]
+    if large_canonical:
+        return sorted(large_canonical, key=lambda p: str(p).lower())
+    if canonical:
+        return sorted(canonical, key=lambda p: str(p).lower())
+
     paths: list[Path] = []
     for value in candle_roots:
         base = Path(value)
@@ -255,9 +333,11 @@ def _discover_candle_paths(root: Path, candle_roots: Sequence[str | Path]) -> li
             if not item.is_file() or item.suffix.lower() not in suffixes:
                 continue
             location = f"{item.parent} {item.name}".lower()
-            if any(token in location for token in ("candle", "ohlcv", "1m", "5m", "btc", "eth")):
+            is_1m = "1m" in location and "15s" not in location
+            has_symbol = "btcusdt" in location or "ethusdt" in location
+            if is_1m and has_symbol:
                 paths.append(item)
-    return sorted({str(path.resolve()): path for path in paths}.values(), key=lambda p: str(p).lower())[:200]
+    return sorted({str(path.resolve()): path for path in paths}.values(), key=lambda p: str(p).lower())[:20]
 
 
 def _audit(path: Path, root: Path, source_type: str, rows: int | None, columns: Sequence[str]) -> dict[str, Any]:
@@ -290,23 +370,8 @@ def _load_candles(root: Path, candle_roots: Sequence[str | Path]) -> tuple[Any, 
             warnings.append(f"candle_load_error:{_rel(path, root)}:{exc.__class__.__name__}")
     if not frames:
         return pd.DataFrame(columns=["symbol", "timestamp", "open", "high", "low", "close", "volume"]), audits, warnings
-    candles = pd.concat(frames, ignore_index=True).drop_duplicates(subset=["symbol", "timestamp"]).sort_values(["symbol", "timestamp"])
+    candles = pd.concat(frames, ignore_index=True).drop_duplicates(subset=["symbol", "timestamp"], keep="last").sort_values(["symbol", "timestamp"])
     return candles, audits, warnings
-
-
-def _lookback(group: Any, entry_time: Any, minutes: int) -> float | None:
-    before = group[group["timestamp"] <= entry_time]
-    if before.empty:
-        return None
-    current_close = float(before.iloc[-1]["close"])
-    target_time = entry_time - pd.Timedelta(minutes=minutes)
-    past = group[group["timestamp"] <= target_time]
-    if past.empty:
-        return None
-    past_close = float(past.iloc[-1]["close"])
-    if past_close == 0 or not math.isfinite(past_close):
-        return None
-    return (current_close / past_close) - 1.0
 
 
 def _duration_bucket(minutes: float) -> str:
@@ -335,31 +400,78 @@ def _regime(lb10: float | None, lb30: float | None) -> str:
     return "flat"
 
 
-def _align(trades: Any, candles: Any) -> Any:
+def _as_int_ns(timestamp: Any) -> int | None:
+    if pd is None or pd.isna(timestamp):
+        return None
+    return int(pd.Timestamp(timestamp).value)
+
+
+def _lookback_from_arrays(times: Any, closes: Any, entry_ns: int, minutes: int) -> float | None:
+    current_idx = int(times.searchsorted(entry_ns, side="right") - 1)
+    if current_idx < 0:
+        return None
+    target_ns = entry_ns - int(pd.Timedelta(minutes=minutes).value)
+    past_idx = int(times.searchsorted(target_ns, side="right") - 1)
+    if past_idx < 0:
+        return None
+    current_close = float(closes[current_idx])
+    past_close = float(closes[past_idx])
+    if past_close == 0 or not math.isfinite(past_close) or not math.isfinite(current_close):
+        return None
+    return (current_close / past_close) - 1.0
+
+
+def _entry_candle_from_arrays(times: Any, closes: Any, entry_ns: int) -> tuple[Any, float | None, float | None]:
+    idx = int(times.searchsorted(entry_ns, side="right") - 1)
+    if idx < 0:
+        return None, None, None
+    ts = pd.Timestamp(int(times[idx]), tz="UTC")
+    age_seconds = (entry_ns - int(times[idx])) / 1_000_000_000
+    return ts.isoformat(), float(closes[idx]), float(age_seconds)
+
+
+def _align(trades: Any, candles: Any, max_entry_candle_age_seconds: int = 300) -> Any:
     if pd is None or trades.empty or candles.empty:
         return pd.DataFrame()
-    groups = {symbol: group.sort_values("timestamp") for symbol, group in candles.groupby("symbol")}
+    candle_groups: dict[str, tuple[Any, Any]] = {}
+    for symbol, group in candles.groupby("symbol"):
+        ordered = group.sort_values("timestamp").dropna(subset=["timestamp", "close"])
+        if ordered.empty:
+            continue
+        times = pd.to_datetime(ordered["timestamp"], utc=True).astype("int64").to_numpy()
+        closes = pd.to_numeric(ordered["close"], errors="coerce").to_numpy()
+        candle_groups[str(symbol)] = (times, closes)
+
     rows: list[dict[str, Any]] = []
     for _, trade in trades.iterrows():
-        group = groups.get(trade["symbol"])
-        if group is None or group.empty:
+        symbol = str(trade.get("symbol", "UNKNOWN"))
+        arrays = candle_groups.get(symbol)
+        entry_ns = _as_int_ns(trade.get("open_time"))
+        if arrays is None or entry_ns is None:
             continue
-        lb5 = _lookback(group, trade["open_time"], 5)
-        lb10 = _lookback(group, trade["open_time"], 10)
-        lb30 = _lookback(group, trade["open_time"], 30)
+        times, closes = arrays
+        entry_candle_ts, entry_candle_close, entry_age_seconds = _entry_candle_from_arrays(times, closes, entry_ns)
+        if entry_age_seconds is None or entry_age_seconds > max_entry_candle_age_seconds:
+            continue
+        lb5 = _lookback_from_arrays(times, closes, entry_ns, 5)
+        lb10 = _lookback_from_arrays(times, closes, entry_ns, 10)
+        lb30 = _lookback_from_arrays(times, closes, entry_ns, 30)
         if lb5 is None and lb10 is None and lb30 is None:
             continue
         duration = float(trade.get("duration_minutes", math.nan)) if pd.notna(trade.get("duration_minutes")) else math.nan
         row = trade.to_dict()
         row.update(
             {
+                "entry_candle_timestamp": entry_candle_ts,
+                "entry_candle_close": entry_candle_close,
+                "entry_candle_age_seconds": entry_age_seconds,
                 "lb_5m_ret_close": lb5,
                 "lb_10m_ret_close": lb10,
                 "lb_30m_ret_close": lb30,
                 "duration_bucket": _duration_bucket(duration),
                 "regime_bucket": _regime(lb10, lb30),
                 "h1_triggered": bool((math.isfinite(duration) and duration <= 30) or "stop" in str(trade.get("exit_reason", ""))),
-                "h2_triggered": bool(trade["symbol"] == "ETHUSDT" and str(trade.get("side", "")).lower() == "long"),
+                "h2_triggered": bool(symbol == "ETHUSDT" and str(trade.get("side", "")).lower() == "long"),
                 "h6_triggered": bool(lb10 is not None and lb30 is not None and lb10 <= H6_10M and lb30 <= H6_30M),
             }
         )
@@ -591,6 +703,8 @@ def build_ocr_master_candle_aligned_oos_research_report(
                     "trades_master_sha256": _sha256(master_path),
                     "trades_master_schema_status": _schema_status(list(raw_master.columns), "trades_master"),
                 })
+                if int(len(trades)) == 0:
+                    warnings.append("normalized_trades_empty")
             except Exception as exc:
                 warnings.append(f"trades_master_load_error:{exc.__class__.__name__}")
 

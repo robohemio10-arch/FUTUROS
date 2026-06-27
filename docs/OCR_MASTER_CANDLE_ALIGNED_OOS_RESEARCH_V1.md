@@ -2,46 +2,74 @@
 
 ## Objetivo
 
-Esta branch pivota a trilha de pesquisa para o caminho correto: `trades_master.xlsx` + candles reais. Ela não depende de fonte paper/Freqtrade para medir edge histórico, regimes ou hipóteses H1/H2/H6.
+Alinhar o `trades_master.xlsx` oficial OCR/Bitradex às candles reais BTC/ETH em modo estritamente research-only/read-only.
 
-## Escopo
+Esta revisão corrige o contrato real do master OCR, que usa colunas em português:
 
-- Carregar `trades_master` em modo read-only.
-- Descobrir e carregar candles reais em roots explícitos.
-- Alinhar cada trade ao contexto de candle pré-entrada.
-- Calcular features de lookback: 5m, 10m e 30m.
-- Produzir métricas por slices: symbol, side, day, hour, duration_bucket e regime_bucket.
-- Medir H1, H2 e H6 em modo research-only.
+- `11_moeda`
+- `12_fechar_long_short`
+- `1_pnl_fechado`
+- `3_preco_de_abertura`
+- `4_preco_de_fechamento`
+- `7_horario_de_abertura`
+- `8_horario_de_fechamento`
 
-## Hipóteses
+A rotina normaliza símbolos, lado, PnL, preços e timestamps antes do alinhamento.
 
-- H1: fast stop / duração <= 30m / saída rápida negativa.
-- H2: ETH long como cluster estruturalmente negativo ou dependente de regime.
-- H6: candidate shadow rule baseada em retornos de 10m e 30m: `lb_10m_ret_close <= -0.0038501215827868 AND lb_30m_ret_close <= -0.0060685748963285`.
+## Fonte de candles priorizada
 
-## Segurança
+Quando disponíveis, as fontes canônicas 1m são priorizadas para evitar mistura com backups, datasets derivados e candles 15s:
 
-Esta branch não altera Freqtrade, RiskManager, Qlib runtime, IA Shadow runtime, SQLite operacional, dashboard runtime, registry, modelos, regras operacionais, live, canary ou orders.
+- `data/raw/binance_futures_klines/BTCUSDT_1m_20251230_20261208.csv`
+- `data/raw/binance_futures_klines/ETHUSDT_1m_20251230_20261208.csv`
 
-`allow_runtime_read=false` é o padrão. Escrita só ocorre com `--write` e `--output-path` explícitos.
+Se essas fontes não existirem, o loader recua para os arquivos 1m canônicos/parquet ou para descoberta restrita.
 
-## Comandos
+## Alinhamento
 
-```powershell
-python .\scripts\build_ocr_master_candle_aligned_oos_research_v1.py `
-  --project-root . `
-  --no-write `
-  --json
+O alinhamento usa:
+
+- `symbol` normalizado para `BTCUSDT`/`ETHUSDT`
+- `open_time` normalizado em UTC
+- candle de entrada nearest-prior `timestamp <= open_time`
+- tolerância máxima padrão de 300 segundos
+- retornos lookback de 5, 10 e 30 minutos usando close anterior
+
+## Hipóteses medidas
+
+- H1: duração rápida (`<=30m`) ou stop-like exit reason
+- H2: cluster `ETHUSDT` + `long`
+- H6: regra candidata shadow-only
+
+```text
+lb_10m_ret_close <= -0.0038501215827868 AND lb_30m_ret_close <= -0.0060685748963285
 ```
 
-```powershell
-python .\scripts\build_ocr_master_candle_aligned_oos_research_v1.py `
-  --project-root . `
-  --allow-runtime-read `
-  --trades-master ".\data\trades\trades_master.xlsx" `
-  --candle-root ".\data" `
-  --candle-root ".\freqtrade\user_data\data" `
-  --candle-root ".\user_data\data" `
-  --no-write `
-  --json
-```
+## Safety
+
+A branch não altera Freqtrade, RiskManager, Qlib runtime, IA Shadow runtime, registry, modelos, datasets oficiais ou qualquer superfície de execução.
+
+Flags permanentes:
+
+- `research_only=true`
+- `read_only=true`
+- `paper_only=true`
+- `shadow_only=true`
+- `operational_authority=false`
+- `can_promote_rules=false`
+- `can_promote_model=false`
+- `sends_orders=false`
+- `live_release_allowed=false`
+- `canary_release_allowed=false`
+
+## Resultado esperado em runtime real
+
+Com o master atual, espera-se:
+
+- `trades_master_rows=3058`
+- `normalized_trade_rows=2826`
+- `aligned_rows > 0`
+- `master_candle_alignment_computed=true`
+- `slice_count > 0`
+
+As 232 linhas `legacy_janeiro_sem_abertura` permanecem sem alinhamento por entrada porque não possuem horário de abertura no master OCR.
