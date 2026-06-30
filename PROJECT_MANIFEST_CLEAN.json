@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "14b694bb220be607fba11f4ddb0fc004e8286c344795b6d0e7c1f3a591c8803e",
+  "aggregate_sha256": "43e6a600dfd72d9526caed960f08f5e9f8c899a478253bc05fceef870cc4b232",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 198,
-    "manifested_files_total": 1136,
-    "python_files": 845,
+    "docs_files": 199,
+    "manifested_files_total": 1141,
+    "python_files": 849,
     "runtime_excluded_files_total": 0,
-    "test_files": 247,
-    "tracked_files_total": 1137,
+    "test_files": 248,
+    "tracked_files_total": 1142,
     "workflows": 1
   },
   "deterministic": true,
@@ -1184,6 +1184,12 @@
       "sha256": "847e6a29d4657826ecf30f8fe39f598edb91d3a4422b7e2d46daf11be8d1c98a"
     },
     {
+      "bytes": 4740,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_MASTER_CANDLE_SHADOW_OBSERVATION_REPLAY_V1.md",
+      "sha256": "98c47268a26fc989aae94767c473fa94a0ba0e2b5818f25162376889e8c781e0"
+    },
+    {
       "bytes": 4225,
       "hash_mode": "text_lf",
       "path": "docs/OCR_MASTER_V11_PHASE5_SOURCE_OF_TRUTH_ALIGNMENT_V1.md",
@@ -2316,6 +2322,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_shadow_observation_design_v1.py",
       "sha256": "a9a24de428259127b0e69b39337ff88a1c2ff137cdc9fc52745fd00fe1b0247d"
+    },
+    {
+      "bytes": 2224,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ocr_master_candle_shadow_observation_replay_v1.py",
+      "sha256": "63b51197c88557bbfd06f86e929a2f3d1c1b68ed652f3eecfde19be39975758f"
     },
     {
       "bytes": 1852,
@@ -5078,6 +5090,18 @@
       "sha256": "ffda20220c6abf3560bce2839da0757a454243e0a225103dfe65d6f8a493dc06"
     },
     {
+      "bytes": 578,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_shadow_observation_replay/__init__.py",
+      "sha256": "faa04fe0e1854f73e6e38befb5f45e5ff2a87546da055c5e28863b2c69856e8b"
+    },
+    {
+      "bytes": 23479,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_master_candle_shadow_observation_replay/replay.py",
+      "sha256": "6a0ad716c21f99fa28e8c361b5232aa1e494e49e3d238c2146f6a1188082cea7"
+    },
+    {
       "bytes": 32888,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_v11_dataset.py",
@@ -6282,6 +6306,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_shadow_observation_design_v1.py",
       "sha256": "957466fea263ad630faf246739a8b102cced90df69be053ec2a52ae67ccccb7c"
+    },
+    {
+      "bytes": 7359,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_master_candle_shadow_observation_replay_v1.py",
+      "sha256": "4bde89a5c9a40aca6a3dc0e05812f96e16607351aed2b11818fe5884b3eee84c"
     },
     {
       "bytes": 13867,
