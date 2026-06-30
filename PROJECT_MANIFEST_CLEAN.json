@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "43e6a600dfd72d9526caed960f08f5e9f8c899a478253bc05fceef870cc4b232",
+  "aggregate_sha256": "972e83fe3331cc9d7f6b396ef511d04a4a8b51234a44bd6849db82450fa1333e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 199,
-    "manifested_files_total": 1141,
-    "python_files": 849,
+    "docs_files": 200,
+    "manifested_files_total": 1146,
+    "python_files": 853,
     "runtime_excluded_files_total": 0,
-    "test_files": 248,
-    "tracked_files_total": 1142,
+    "test_files": 249,
+    "tracked_files_total": 1147,
     "workflows": 1
   },
   "deterministic": true,
@@ -1232,6 +1232,12 @@
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
     },
     {
+      "bytes": 4324,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_CLOSED_TRADES_SHADOW_RULE_ATTRIBUTION_V1.md",
+      "sha256": "db42c7a5ece7e480916b6613a158df4950c524a952a2e048ee850dad27783467"
+    },
+    {
       "bytes": 2726,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_FEEDBACK_INCREMENTAL_STORE.md",
@@ -2346,6 +2352,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 2479,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_closed_trades_shadow_rule_attribution_v1.py",
+      "sha256": "8905ca892112e7ea2f44b33a9422c3eb9a3f116904fd77e5a90492226c224529"
     },
     {
       "bytes": 3331,
@@ -5108,6 +5120,18 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
+      "bytes": 609,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_closed_trades_shadow_rule_attribution/__init__.py",
+      "sha256": "59f9d9af34ad47f529fe3740ff242aa72303d21466393a6898db68d2a11d07e6"
+    },
+    {
+      "bytes": 29741,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_closed_trades_shadow_rule_attribution/attribution.py",
+      "sha256": "6b76619253a07a53716d070bee5874a6bd37b81a501bd0d4edb58e2ea864d26e"
+    },
+    {
       "bytes": 512,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_oos_causal_attribution/__init__.py",
@@ -6372,6 +6396,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 8938,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_closed_trades_shadow_rule_attribution_v1.py",
+      "sha256": "8a555414c9aa215748429f9d4984e997500b518fc97149e5e6f2c7c9f6dc1504"
     },
     {
       "bytes": 7155,
