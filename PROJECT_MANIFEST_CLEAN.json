@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "972e83fe3331cc9d7f6b396ef511d04a4a8b51234a44bd6849db82450fa1333e",
+  "aggregate_sha256": "21748b07b1b325b1273010869ab2b0e8f6c570b9e0123a9c264e55162eca6ff9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 200,
-    "manifested_files_total": 1146,
-    "python_files": 853,
+    "docs_files": 201,
+    "manifested_files_total": 1151,
+    "python_files": 857,
     "runtime_excluded_files_total": 0,
-    "test_files": 249,
-    "tracked_files_total": 1147,
+    "test_files": 250,
+    "tracked_files_total": 1152,
     "workflows": 1
   },
   "deterministic": true,
@@ -1310,6 +1310,12 @@
       "sha256": "dd045f117a81c39c566622fc644c465bde8851e1a768ccbd8b792ad89d3328e2"
     },
     {
+      "bytes": 4867,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_SHADOW_OBSERVATION_READINESS_GATE_V1.md",
+      "sha256": "d58db6d7a3ca8e162c883019cbeafc3babdb434b8fc6a1a5ec8de3489bcd805d"
+    },
+    {
       "bytes": 4102,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SHADOW_SOAK_ANCHOR_AND_CONTINUITY_PACK.md",
@@ -2400,6 +2406,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_master_divergence_research_closeout_v1.py",
       "sha256": "c769fc302768e1b49784671ef41d6bc4ae0697182e535429e6cabf3dfcba7e93"
+    },
+    {
+      "bytes": 2721,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_shadow_observation_readiness_gate_v1.py",
+      "sha256": "d655f27799586259c405ab9b5bdb08dd0694d957dbf68e2cfa49adf000af4f25"
     },
     {
       "bytes": 4635,
@@ -5210,6 +5222,18 @@
       "sha256": "0094ed7ebcbdf3d802ace841a5282e1989274741a83a4333e6d098c8d26f4c33"
     },
     {
+      "bytes": 488,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_observation_readiness_gate/__init__.py",
+      "sha256": "c41b7e2c2944e36023d1a0084d7dbd581a40c90570a48b744a561db2b8efbe7d"
+    },
+    {
+      "bytes": 23345,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_observation_readiness_gate/readiness_gate.py",
+      "sha256": "3f02cc22241206b8f5c197ba1c859afe2c3490f11bfb283601e3b833811f4281"
+    },
+    {
       "bytes": 19697,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/qlib_ocr_v11_shadow_candidate_registry.py",
@@ -6480,6 +6504,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_session_singleton_lock.py",
       "sha256": "fa53a3a743fa9353c3efd297161260ad1c1ba3e35c876df698054092aeece55a"
+    },
+    {
+      "bytes": 9657,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_observation_readiness_gate_v1.py",
+      "sha256": "67187363459f215543e042044e84beb5d6e12f9e39c54537fb34b377afcc1a57"
     },
     {
       "bytes": 7110,
