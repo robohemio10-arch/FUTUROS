@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4e32e2d219c6c2fa76cfff1d50cd9afbf09d17733a5a9a704f0a98ad789edb14",
+  "aggregate_sha256": "587ce73a72e22c8db3b9cf5091c26f7201a70cb95c8313107aa5f750ba537cf1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 202,
-    "manifested_files_total": 1156,
-    "python_files": 861,
+    "docs_files": 203,
+    "manifested_files_total": 1161,
+    "python_files": 865,
     "runtime_excluded_files_total": 0,
-    "test_files": 251,
-    "tracked_files_total": 1157,
+    "test_files": 252,
+    "tracked_files_total": 1162,
     "workflows": 1
   },
   "deterministic": true,
@@ -1202,6 +1202,12 @@
       "sha256": "879768e9ad4a31013b96a5020e2313d9390c2f896567f4e6c2733955bf36e350"
     },
     {
+      "bytes": 3925,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_SHADOW_RESEARCH_EXPLICIT_EVIDENCE_PACK_V1.md",
+      "sha256": "c0a7d8f811728a442d10b132510000e1e352b9d233fda22806e1cc2657a3d242"
+    },
+    {
       "bytes": 4938,
       "hash_mode": "text_lf",
       "path": "docs/OCR_V11_RESEARCH_DATASET_AND_CANDLE_ALIGNMENT.md",
@@ -2352,6 +2358,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_shadow_research_evidence_closeout_v1.py",
       "sha256": "45243f7704f86bd6aaa9b2ddfd33b6a1bcd38bfe9667da93725c0b64f4ffadec"
+    },
+    {
+      "bytes": 2460,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ocr_shadow_research_explicit_evidence_pack_v1.py",
+      "sha256": "f291394c8076e5828fe4eb7fc93bac163f70035d57e3592db04a94ee145e67cf"
     },
     {
       "bytes": 1852,
@@ -5150,6 +5162,18 @@
       "sha256": "e24688834cb84c736a9d03122cd6a1ae0a1588a016af652c4c8eab96c70da6c7"
     },
     {
+      "bytes": 587,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_shadow_research_explicit_evidence_pack/__init__.py",
+      "sha256": "ab6e879fad5e8d6de6031240ee079cfc3541606415f901f15204807fe8430709"
+    },
+    {
+      "bytes": 23950,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_shadow_research_explicit_evidence_pack/evidence_pack.py",
+      "sha256": "1a1a98a5c269534115fc48a2dfef61753762edb23dfe597375c57e63f01105c1"
+    },
+    {
       "bytes": 32888,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_v11_dataset.py",
@@ -6396,6 +6420,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_shadow_research_evidence_closeout_v1.py",
       "sha256": "1ac64718734b565f7ad400bae4ffab22b894b278b96caedcdf97174e2db61734"
+    },
+    {
+      "bytes": 10912,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_shadow_research_explicit_evidence_pack_v1.py",
+      "sha256": "2f562a684ace3161a93b14257b9a126523e85b37beaaf70e2b59751fc9dc66a6"
     },
     {
       "bytes": 13241,
