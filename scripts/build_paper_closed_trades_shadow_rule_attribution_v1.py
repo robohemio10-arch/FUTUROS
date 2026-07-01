@@ -22,6 +22,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--project-root", default=".", help="Project root. Defaults to current directory.")
     parser.add_argument("--allow-runtime-read", action="store_true", help="Allow explicit read-only attribution inputs.")
     parser.add_argument("--closed-trades", default=None, help="Path to closed paper trades JSON or CSV source.")
+    parser.add_argument(
+        "--closed-trades-source-contract",
+        default=None,
+        help="Path to paper closed trades read-only source contract JSON report.",
+    )
     parser.add_argument("--shadow-replay-report", default=None, help="Path to shadow observation replay JSON report.")
     parser.add_argument("--observation-design-report", default=None, help="Path to shadow observation design JSON report.")
     parser.add_argument("--oos-report", default=None, help="Path to OOS survivor JSON report.")
@@ -38,6 +43,7 @@ def main() -> int:
         project_root=args.project_root,
         allow_runtime_read=args.allow_runtime_read,
         closed_trades_path=args.closed_trades,
+        closed_trades_source_contract=args.closed_trades_source_contract,
         shadow_replay_report=args.shadow_replay_report,
         observation_design_report=args.observation_design_report,
         oos_report=args.oos_report,

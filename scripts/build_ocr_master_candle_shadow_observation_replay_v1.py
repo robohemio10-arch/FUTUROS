@@ -24,6 +24,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--observation-design-report", default=None, help="Path to shadow observation design report.")
     parser.add_argument("--oos-report", default=None, help="Path to OOS survivor report.")
     parser.add_argument("--trades-master", default=None, help="Path to closed-trades JSON or CSV source.")
+    parser.add_argument(
+        "--closed-trades-source-contract",
+        default=None,
+        help="Path to paper closed trades read-only source contract JSON report.",
+    )
     parser.add_argument("--output-report", default=None, help="Optional JSON report path under data/reports.")
     parser.add_argument("--write", action="store_true", help="Write research-only JSON report to data/reports.")
     parser.add_argument("--no-write", action="store_true", help="Force no-write mode.")
@@ -39,6 +44,7 @@ def main() -> int:
         observation_design_report=args.observation_design_report,
         oos_report=args.oos_report,
         trades_master=args.trades_master,
+        closed_trades_source_contract=args.closed_trades_source_contract,
         output_report=args.output_report,
         write=args.write,
         no_write=args.no_write,

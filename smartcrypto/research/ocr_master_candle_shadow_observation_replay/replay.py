@@ -16,6 +16,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from smartcrypto.research.paper_closed_trades_readonly_source_contract.source_contract import (
+    load_closed_trade_source_candidates,
+    normalize_closed_trade_rows,
+)
+
 
 SCHEMA_VERSION = "ocr_master_candle_shadow_observation_replay_v1"
 PROJECT_NAME = "SMART FUTUROS"
@@ -104,6 +109,9 @@ class LoadedReplayInputs:
     survivor_source_sha256: str | None = None
     trades_source_path: str | None = None
     trades_source_sha256: str | None = None
+    closed_trades_source_contract_path: str | None = None
+    closed_trades_source_contract_sha256: str | None = None
+    closed_trades_contract_join_key: str | None = None
 
 
 def _utc_now_iso() -> str:
@@ -237,6 +245,9 @@ def replay_survivors_on_trades(
             {
                 "replay_row_id": f"replay_{index:06d}",
                 "trade_id": str(trade.get("trade_id") or trade.get("id") or f"trade_{index}"),
+                "order_id": trade.get("order_id"),
+                "internal_order_id": trade.get("internal_order_id"),
+                "row_fingerprint": trade.get("row_fingerprint"),
                 "symbol": _normalize_symbol(trade.get("symbol") or trade.get("moeda") or trade.get("pair")),
                 "side": _normalize_side(trade.get("side") or trade.get("fechar_side")),
                 "pnl": _round(pnl),
@@ -305,6 +316,7 @@ def compute_replay_metrics(
         "preserved_loss_count": sum(1 for row in block_rows if _safe_float(row.get("pnl")) < 0),
         "false_positive_observation_count": sum(1 for row in allow_rows if _safe_float(row.get("pnl")) < 0),
         "survivor_attribution_table": attribution_table,
+        "replay_rows": replay_rows,
         "replay_rows_sample": replay_rows[:20],
     }
     return metrics
@@ -347,6 +359,45 @@ def _read_trades_source(path: Path) -> tuple[list[dict[str, Any]], str]:
     return [], f"unsupported_trades_source:{suffix or 'no_suffix'}"
 
 
+def _read_closed_trades_from_contract(
+    *,
+    project_root: Path,
+    contract_path: Path,
+) -> tuple[list[dict[str, Any]], str | None, str | None, str]:
+    payload = _read_json(contract_path)
+    if not isinstance(payload, Mapping):
+        return [], None, None, "closed_trades_source_contract_invalid_payload"
+    if payload.get("source_contract_status") != "ok":
+        return [], None, None, "closed_trades_source_contract_not_ok"
+    recommended_join_key = payload.get("recommended_join_key")
+    selected_source = payload.get("selected_source_path")
+    normalized_sample = payload.get("normalized_rows_sample")
+    normalized_count = int(_safe_float(payload.get("normalized_closed_trade_count")))
+    if isinstance(normalized_sample, list) and normalized_count == len(normalized_sample):
+        return [dict(item) for item in normalized_sample if isinstance(item, Mapping)], None, str(recommended_join_key or ""), "closed_trades_loaded_from_contract_rows"
+    if not selected_source:
+        return [], None, str(recommended_join_key or ""), "closed_trades_source_contract_missing_selected_source_path"
+    selected_path = Path(str(selected_source))
+    if not selected_path.is_absolute():
+        selected_path = project_root / selected_path
+    loaded = load_closed_trade_source_candidates(
+        project_root=project_root,
+        allow_runtime_read=True,
+        source_paths=[selected_path],
+    )
+    selected = next((candidate for candidate in loaded.candidates if candidate.status == "ok" and candidate.rows), None)
+    if selected is None:
+        return [], _project_relative(selected_path, project_root), str(recommended_join_key or ""), loaded.source_reason
+    normalized, _rejected, _mapping = normalize_closed_trade_rows(
+        selected.rows,
+        source_path=_project_relative(selected.path, project_root),
+        source_sha256=selected.sha256,
+    )
+    return normalized, _project_relative(selected.path, project_root), str(recommended_join_key or ""), (
+        "closed_trades_loaded_from_contract_selected_source" if normalized else "closed_trades_source_contract_no_normalized_rows"
+    )
+
+
 def load_replay_inputs(
     *,
     project_root: str | Path,
@@ -354,6 +405,7 @@ def load_replay_inputs(
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
     trades_master: str | Path | None = None,
+    closed_trades_source_contract: str | Path | None = None,
     survivor_records: Sequence[Mapping[str, Any]] | None = None,
     closed_trades: Sequence[Mapping[str, Any]] | None = None,
 ) -> LoadedReplayInputs:
@@ -378,7 +430,7 @@ def load_replay_inputs(
         )
 
     survivor_path_raw = observation_design_report or oos_report
-    if survivor_path_raw is None or trades_master is None:
+    if survivor_path_raw is None or (trades_master is None and closed_trades_source_contract is None):
         return LoadedReplayInputs(
             survivors=[],
             trades=[],
@@ -388,12 +440,15 @@ def load_replay_inputs(
         )
 
     survivor_path = Path(survivor_path_raw)
-    trade_path = Path(trades_master)
+    trade_path = Path(trades_master) if trades_master is not None else None
+    contract_path = Path(closed_trades_source_contract) if closed_trades_source_contract is not None else None
     if not survivor_path.is_absolute():
         survivor_path = root / survivor_path
-    if not trade_path.is_absolute():
+    if trade_path is not None and not trade_path.is_absolute():
         trade_path = root / trade_path
-    if not survivor_path.exists() or not trade_path.exists():
+    if contract_path is not None and not contract_path.is_absolute():
+        contract_path = root / contract_path
+    if not survivor_path.exists() or (trade_path is not None and not trade_path.exists()) or (contract_path is not None and not contract_path.exists()):
         return LoadedReplayInputs(
             survivors=[],
             trades=[],
@@ -401,12 +456,27 @@ def load_replay_inputs(
             source_status="blocked",
             source_reason="source_path_missing",
             survivor_source_path=_project_relative(survivor_path, root),
-            trades_source_path=_project_relative(trade_path, root),
+            trades_source_path=None if trade_path is None else _project_relative(trade_path, root),
+            closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
         )
 
     try:
         survivors = _extract_survivors(_read_json(survivor_path))
-        trades, trade_source_mode = _read_trades_source(trade_path)
+        if contract_path is not None:
+            trades, selected_source_path, recommended_join_key, trade_source_mode = _read_closed_trades_from_contract(
+                project_root=root,
+                contract_path=contract_path,
+            )
+            trade_source_path = selected_source_path
+            trade_source_sha256 = None
+            contract_sha256 = _sha256_file(contract_path)
+        else:
+            assert trade_path is not None
+            trades, trade_source_mode = _read_trades_source(trade_path)
+            trade_source_path = _project_relative(trade_path, root)
+            trade_source_sha256 = _sha256_file(trade_path)
+            contract_sha256 = None
+            recommended_join_key = None
     except (OSError, json.JSONDecodeError, csv.Error) as exc:
         return LoadedReplayInputs(
             survivors=[],
@@ -416,8 +486,10 @@ def load_replay_inputs(
             source_reason=f"source_read_failed:{type(exc).__name__}",
             survivor_source_path=_project_relative(survivor_path, root),
             survivor_source_sha256=_sha256_file(survivor_path),
-            trades_source_path=_project_relative(trade_path, root),
-            trades_source_sha256=_sha256_file(trade_path),
+            trades_source_path=None if trade_path is None else _project_relative(trade_path, root),
+            trades_source_sha256=None if trade_path is None else _sha256_file(trade_path),
+            closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
+            closed_trades_source_contract_sha256=None if contract_path is None else _sha256_file(contract_path),
         )
     if trade_source_mode.startswith("unsupported_trades_source"):
         return LoadedReplayInputs(
@@ -428,8 +500,8 @@ def load_replay_inputs(
             source_reason=trade_source_mode,
             survivor_source_path=_project_relative(survivor_path, root),
             survivor_source_sha256=_sha256_file(survivor_path),
-            trades_source_path=_project_relative(trade_path, root),
-            trades_source_sha256=_sha256_file(trade_path),
+            trades_source_path=None if trade_path is None else _project_relative(trade_path, root),
+            trades_source_sha256=None if trade_path is None else _sha256_file(trade_path),
         )
     return LoadedReplayInputs(
         survivors=survivors,
@@ -439,8 +511,11 @@ def load_replay_inputs(
         source_reason="sources_loaded_read_only",
         survivor_source_path=_project_relative(survivor_path, root),
         survivor_source_sha256=_sha256_file(survivor_path),
-        trades_source_path=_project_relative(trade_path, root),
-        trades_source_sha256=_sha256_file(trade_path),
+        trades_source_path=trade_source_path,
+        trades_source_sha256=trade_source_sha256,
+        closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
+        closed_trades_source_contract_sha256=contract_sha256,
+        closed_trades_contract_join_key=recommended_join_key,
     )
 
 
@@ -463,6 +538,7 @@ def build_shadow_observation_replay_report(
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
     trades_master: str | Path | None = None,
+    closed_trades_source_contract: str | Path | None = None,
     survivor_records: Sequence[Mapping[str, Any]] | None = None,
     closed_trades: Sequence[Mapping[str, Any]] | None = None,
     write: bool = False,
@@ -478,6 +554,7 @@ def build_shadow_observation_replay_report(
         observation_design_report=observation_design_report,
         oos_report=oos_report,
         trades_master=trades_master,
+        closed_trades_source_contract=closed_trades_source_contract,
         survivor_records=survivor_records,
         closed_trades=closed_trades,
     )
@@ -503,6 +580,9 @@ def build_shadow_observation_replay_report(
         "survivor_source_sha256": inputs.survivor_source_sha256,
         "trades_source_path": inputs.trades_source_path,
         "trades_source_sha256": inputs.trades_source_sha256,
+        "closed_trades_source_contract_path": inputs.closed_trades_source_contract_path,
+        "closed_trades_source_contract_sha256": inputs.closed_trades_source_contract_sha256,
+        "closed_trades_contract_join_key": inputs.closed_trades_contract_join_key,
         "survivor_count": len(inputs.survivors),
         "closed_trade_count": len(inputs.trades),
         "replay_semantics": {
