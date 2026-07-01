@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "db546321ef9547b295f1e870a9b370e90c31f2488615490663a1c8fed19ca19b",
+  "aggregate_sha256": "8f83dc29b0928252124301fd828efeebbdaffd44221734030b9a1fd27e16bb30",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 206,
-    "manifested_files_total": 1173,
-    "python_files": 874,
+    "docs_files": 207,
+    "manifested_files_total": 1178,
+    "python_files": 878,
     "runtime_excluded_files_total": 0,
-    "test_files": 255,
-    "tracked_files_total": 1174,
+    "test_files": 256,
+    "tracked_files_total": 1179,
     "workflows": 1
   },
   "deterministic": true,
@@ -1340,6 +1340,12 @@
       "sha256": "dd045f117a81c39c566622fc644c465bde8851e1a768ccbd8b792ad89d3328e2"
     },
     {
+      "bytes": 3941,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_SHADOW_OBSERVATION_DAILY_IMPACT_REPORT_V1.md",
+      "sha256": "46f140855c3681772a7cff67fc905b2b4e0ff54fc0d51ba1e82d2bd119ed3970"
+    },
+    {
       "bytes": 4867,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SHADOW_OBSERVATION_READINESS_GATE_V1.md",
@@ -2460,6 +2466,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_master_divergence_research_closeout_v1.py",
       "sha256": "c769fc302768e1b49784671ef41d6bc4ae0697182e535429e6cabf3dfcba7e93"
+    },
+    {
+      "bytes": 2498,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_shadow_observation_daily_impact_report_v1.py",
+      "sha256": "c825934ee79280c598797c4fb657a5e5fd60265dd3ddeae7a93b0e8ad38117c6"
     },
     {
       "bytes": 2721,
@@ -5174,10 +5186,10 @@
       "sha256": "faa04fe0e1854f73e6e38befb5f45e5ff2a87546da055c5e28863b2c69856e8b"
     },
     {
-      "bytes": 28463,
+      "bytes": 28700,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_master_candle_shadow_observation_replay/replay.py",
-      "sha256": "25320071315a02550e024f67d8b616041704c59b8ae5d8f79cd1d27dafeaf233"
+      "sha256": "229d15e1fe33ad000fd22856d247db9b9f035d00ac0174bf2e392a57374807e2"
     },
     {
       "bytes": 615,
@@ -5240,10 +5252,10 @@
       "sha256": "59f9d9af34ad47f529fe3740ff242aa72303d21466393a6898db68d2a11d07e6"
     },
     {
-      "bytes": 35440,
+      "bytes": 35677,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_closed_trades_shadow_rule_attribution/attribution.py",
-      "sha256": "758ef20c51a5c926d4444937d528281012159148beffd5111eea6bdf018bbbc1"
+      "sha256": "11bd120d1dfad04bbcba1b48f1dde6e03b9fd523e42e06f7caa45acea79ab40f"
     },
     {
       "bytes": 512,
@@ -5322,6 +5334,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_research_closeout.py",
       "sha256": "0094ed7ebcbdf3d802ace841a5282e1989274741a83a4333e6d098c8d26f4c33"
+    },
+    {
+      "bytes": 545,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_observation_daily_impact_report/__init__.py",
+      "sha256": "6c3991d92f1af166bf6819facd1e236abb399d672676b45ef07e50d73e68f8a6"
+    },
+    {
+      "bytes": 30901,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_observation_daily_impact_report/impact_report.py",
+      "sha256": "08e8a4702e5e5c390057d0a936cbd52c74c2eeb757c02f9e2e0a854b77fe47b5"
     },
     {
       "bytes": 488,
@@ -6636,6 +6660,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_session_singleton_lock.py",
       "sha256": "fa53a3a743fa9353c3efd297161260ad1c1ba3e35c876df698054092aeece55a"
+    },
+    {
+      "bytes": 11008,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_observation_daily_impact_report_v1.py",
+      "sha256": "193a8ab6a8a4d50e19cea45247b16741ae10fc690b3fdd4dcfc8d146873addef"
     },
     {
       "bytes": 9657,

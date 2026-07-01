@@ -250,6 +250,8 @@ def replay_survivors_on_trades(
                 "row_fingerprint": trade.get("row_fingerprint"),
                 "symbol": _normalize_symbol(trade.get("symbol") or trade.get("moeda") or trade.get("pair")),
                 "side": _normalize_side(trade.get("side") or trade.get("fechar_side")),
+                "open_time": trade.get("open_time") or trade.get("open_time_utc") or trade.get("horario_abertura"),
+                "close_time": trade.get("close_time") or trade.get("close_time_utc") or trade.get("horario_fechamento"),
                 "pnl": _round(pnl),
                 "would_allow": would_allow,
                 "would_block": not would_allow,
