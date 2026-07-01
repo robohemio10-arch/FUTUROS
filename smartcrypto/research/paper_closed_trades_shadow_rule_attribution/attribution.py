@@ -19,6 +19,10 @@ from typing import Any, Mapping, Sequence
 from smartcrypto.research.ocr_master_candle_shadow_observation_replay.replay import (
     survivor_matches_trade,
 )
+from smartcrypto.research.paper_closed_trades_readonly_source_contract.source_contract import (
+    load_closed_trade_source_candidates,
+    normalize_closed_trade_rows,
+)
 
 
 SCHEMA_VERSION = "paper_closed_trades_shadow_rule_attribution_v1"
@@ -116,6 +120,9 @@ class LoadedAttributionInputs:
     closed_trades_source_sha256: str | None = None
     shadow_replay_source_path: str | None = None
     shadow_replay_source_sha256: str | None = None
+    closed_trades_source_contract_path: str | None = None
+    closed_trades_source_contract_sha256: str | None = None
+    recommended_join_key: str | None = None
 
 
 def _utc_now_iso() -> str:
@@ -186,6 +193,18 @@ def _trade_id(row: Mapping[str, Any], fallback_index: int | None = None) -> str:
     raw = row.get("trade_id") or row.get("id") or row.get("order_id")
     if raw is None or str(raw).strip() == "":
         return f"trade_{fallback_index}" if fallback_index is not None else ""
+    text = str(raw).strip()
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    return text
+
+
+def _join_value(row: Mapping[str, Any], join_key: str, fallback_index: int | None = None) -> str:
+    if join_key == "trade_id":
+        return _trade_id(row, fallback_index)
+    raw = row.get(join_key)
+    if raw is None or str(raw).strip() == "":
+        return _trade_id(row, fallback_index)
     text = str(raw).strip()
     if text.endswith(".0") and text[:-2].isdigit():
         return text[:-2]
@@ -288,6 +307,45 @@ def _read_replay_source(path: Path) -> tuple[list[dict[str, Any]], list[dict[str
     return _extract_replay_rows(payload), _extract_survivors(payload), "json"
 
 
+def _read_closed_trades_from_contract(
+    *,
+    project_root: Path,
+    contract_path: Path,
+) -> tuple[list[dict[str, Any]], str | None, str | None, str]:
+    payload = _read_json(contract_path)
+    if not isinstance(payload, Mapping):
+        return [], None, None, "closed_trades_source_contract_invalid_payload"
+    if payload.get("source_contract_status") != "ok":
+        return [], None, None, "closed_trades_source_contract_not_ok"
+    recommended_join_key = payload.get("recommended_join_key")
+    selected_source = payload.get("selected_source_path")
+    normalized_sample = payload.get("normalized_rows_sample")
+    normalized_count = int(_safe_float(payload.get("normalized_closed_trade_count")))
+    if isinstance(normalized_sample, list) and normalized_count == len(normalized_sample):
+        return [dict(item) for item in normalized_sample if isinstance(item, Mapping)], None, str(recommended_join_key or ""), "closed_trades_loaded_from_contract_rows"
+    if not selected_source:
+        return [], None, str(recommended_join_key or ""), "closed_trades_source_contract_missing_selected_source_path"
+    selected_path = Path(str(selected_source))
+    if not selected_path.is_absolute():
+        selected_path = project_root / selected_path
+    loaded = load_closed_trade_source_candidates(
+        project_root=project_root,
+        allow_runtime_read=True,
+        source_paths=[selected_path],
+    )
+    selected = next((candidate for candidate in loaded.candidates if candidate.status == "ok" and candidate.rows), None)
+    if selected is None:
+        return [], _project_relative(selected_path, project_root), str(recommended_join_key or ""), loaded.source_reason
+    normalized, _rejected, _mapping = normalize_closed_trade_rows(
+        selected.rows,
+        source_path=_project_relative(selected.path, project_root),
+        source_sha256=selected.sha256,
+    )
+    return normalized, _project_relative(selected.path, project_root), str(recommended_join_key or ""), (
+        "closed_trades_loaded_from_contract_selected_source" if normalized else "closed_trades_source_contract_no_normalized_rows"
+    )
+
+
 def _resolve_path(root: Path, value: str | Path | None) -> Path | None:
     if value is None:
         return None
@@ -302,6 +360,7 @@ def load_attribution_inputs(
     project_root: str | Path,
     allow_runtime_read: bool = False,
     closed_trades_path: str | Path | None = None,
+    closed_trades_source_contract: str | Path | None = None,
     shadow_replay_report: str | Path | None = None,
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
@@ -334,7 +393,8 @@ def load_attribution_inputs(
     replay_source_raw = shadow_replay_report or observation_design_report or oos_report
     closed_path = _resolve_path(root, closed_trades_path)
     replay_path = _resolve_path(root, replay_source_raw)
-    if closed_path is None or replay_path is None:
+    contract_path = _resolve_path(root, closed_trades_source_contract)
+    if (closed_path is None and contract_path is None) or replay_path is None:
         return LoadedAttributionInputs(
             closed_trades=[],
             replay_rows=[],
@@ -343,7 +403,7 @@ def load_attribution_inputs(
             source_status="blocked",
             source_reason="missing_required_sources",
         )
-    if not closed_path.exists() or not replay_path.exists():
+    if (closed_path is not None and not closed_path.exists()) or (contract_path is not None and not contract_path.exists()) or not replay_path.exists():
         return LoadedAttributionInputs(
             closed_trades=[],
             replay_rows=[],
@@ -351,12 +411,27 @@ def load_attribution_inputs(
             input_mode="runtime_read_requested",
             source_status="blocked",
             source_reason="source_path_missing",
-            closed_trades_source_path=_project_relative(closed_path, root),
+            closed_trades_source_path=None if closed_path is None else _project_relative(closed_path, root),
+            closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
             shadow_replay_source_path=_project_relative(replay_path, root),
         )
 
     try:
-        closed_rows, closed_mode = _read_closed_trades_source(closed_path)
+        if contract_path is not None:
+            closed_rows, selected_source_path, recommended_join_key, closed_mode = _read_closed_trades_from_contract(
+                project_root=root,
+                contract_path=contract_path,
+            )
+            closed_path_for_report = selected_source_path
+            closed_sha_for_report = None
+            contract_sha = _sha256_file(contract_path)
+        else:
+            assert closed_path is not None
+            closed_rows, closed_mode = _read_closed_trades_source(closed_path)
+            closed_path_for_report = _project_relative(closed_path, root)
+            closed_sha_for_report = _sha256_file(closed_path)
+            contract_sha = None
+            recommended_join_key = None
         replay_rows_loaded, survivors_loaded, replay_mode = _read_replay_source(replay_path)
     except (OSError, json.JSONDecodeError, csv.Error) as exc:
         return LoadedAttributionInputs(
@@ -366,8 +441,10 @@ def load_attribution_inputs(
             input_mode="runtime_read_requested",
             source_status="blocked",
             source_reason=f"source_read_failed:{type(exc).__name__}",
-            closed_trades_source_path=_project_relative(closed_path, root),
-            closed_trades_source_sha256=_sha256_file(closed_path),
+            closed_trades_source_path=None if closed_path is None else _project_relative(closed_path, root),
+            closed_trades_source_sha256=None if closed_path is None else _sha256_file(closed_path),
+            closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
+            closed_trades_source_contract_sha256=None if contract_path is None else _sha256_file(contract_path),
             shadow_replay_source_path=_project_relative(replay_path, root),
             shadow_replay_source_sha256=_sha256_file(replay_path),
         )
@@ -379,10 +456,13 @@ def load_attribution_inputs(
             input_mode="runtime_read_requested",
             source_status="blocked",
             source_reason=closed_mode if closed_mode.startswith("unsupported") else replay_mode,
-            closed_trades_source_path=_project_relative(closed_path, root),
-            closed_trades_source_sha256=_sha256_file(closed_path),
+            closed_trades_source_path=None if closed_path is None else _project_relative(closed_path, root),
+            closed_trades_source_sha256=None if closed_path is None else _sha256_file(closed_path),
             shadow_replay_source_path=_project_relative(replay_path, root),
             shadow_replay_source_sha256=_sha256_file(replay_path),
+            closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
+            closed_trades_source_contract_sha256=None if contract_path is None else _sha256_file(contract_path),
+            recommended_join_key=recommended_join_key,
         )
     return LoadedAttributionInputs(
         closed_trades=closed_rows,
@@ -391,19 +471,22 @@ def load_attribution_inputs(
         input_mode="runtime_read_requested",
         source_status="ok",
         source_reason="sources_loaded_read_only",
-        closed_trades_source_path=_project_relative(closed_path, root),
-        closed_trades_source_sha256=_sha256_file(closed_path),
+        closed_trades_source_path=closed_path_for_report,
+        closed_trades_source_sha256=closed_sha_for_report,
         shadow_replay_source_path=_project_relative(replay_path, root),
         shadow_replay_source_sha256=_sha256_file(replay_path),
+        closed_trades_source_contract_path=None if contract_path is None else _project_relative(contract_path, root),
+        closed_trades_source_contract_sha256=contract_sha,
+        recommended_join_key=recommended_join_key,
     )
 
 
-def _replay_rows_by_trade_id(replay_rows: Sequence[Mapping[str, Any]]) -> dict[str, Mapping[str, Any]]:
+def _replay_rows_by_join_key(replay_rows: Sequence[Mapping[str, Any]], join_key: str) -> dict[str, Mapping[str, Any]]:
     indexed: dict[str, Mapping[str, Any]] = {}
     for index, row in enumerate(replay_rows, start=1):
-        trade_id = _trade_id(row, index)
-        if trade_id and trade_id not in indexed:
-            indexed[trade_id] = row
+        value = _join_value(row, join_key, index)
+        if value and value not in indexed:
+            indexed[value] = row
     return indexed
 
 
@@ -436,14 +519,16 @@ def attribute_closed_trades_to_shadow_replay(
     closed_trades: Sequence[Mapping[str, Any]],
     replay_rows: Sequence[Mapping[str, Any]],
     survivor_records: Sequence[Mapping[str, Any]] | None = None,
+    *,
+    join_key: str = "trade_id",
 ) -> list[dict[str, Any]]:
     """Materialize deterministic research-only attribution rows."""
 
-    replay_by_trade_id = _replay_rows_by_trade_id(replay_rows)
+    replay_by_join_key = _replay_rows_by_join_key(replay_rows, join_key)
     rows: list[dict[str, Any]] = []
     for index, trade in enumerate(closed_trades, start=1):
         trade_id = _trade_id(trade, index)
-        replay = replay_by_trade_id.get(trade_id)
+        replay = replay_by_join_key.get(_join_value(trade, join_key, index))
         survivor = None if replay is not None else _find_survivor_match(survivor_records or [], trade)
         pnl = _trade_pnl(trade)
         attributed = replay is not None or survivor is not None
@@ -473,6 +558,11 @@ def attribute_closed_trades_to_shadow_replay(
             {
                 "attribution_row_id": f"paper_shadow_attr_{index:06d}",
                 "trade_id": trade_id,
+                "order_id": trade.get("order_id"),
+                "internal_order_id": trade.get("internal_order_id"),
+                "row_fingerprint": trade.get("row_fingerprint"),
+                "join_key": join_key,
+                "join_value": _join_value(trade, join_key, index),
                 "symbol": _normalize_symbol(trade.get("symbol") or trade.get("moeda") or trade.get("pair")),
                 "side": _normalize_side(trade.get("side") or trade.get("fechar_side")),
                 "pnl": _round(pnl),
@@ -563,6 +653,7 @@ def build_paper_closed_trades_shadow_rule_attribution_report(
     project_root: str | Path,
     allow_runtime_read: bool = False,
     closed_trades_path: str | Path | None = None,
+    closed_trades_source_contract: str | Path | None = None,
     shadow_replay_report: str | Path | None = None,
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
@@ -580,6 +671,7 @@ def build_paper_closed_trades_shadow_rule_attribution_report(
         project_root=root,
         allow_runtime_read=allow_runtime_read,
         closed_trades_path=closed_trades_path,
+        closed_trades_source_contract=closed_trades_source_contract,
         shadow_replay_report=shadow_replay_report,
         observation_design_report=observation_design_report,
         oos_report=oos_report,
@@ -591,8 +683,9 @@ def build_paper_closed_trades_shadow_rule_attribution_report(
     can_attribute = inputs.source_status == "ok" and bool(inputs.closed_trades) and (
         bool(inputs.replay_rows) or bool(inputs.survivors)
     )
+    join_key = inputs.recommended_join_key or "trade_id"
     attribution_rows = (
-        attribute_closed_trades_to_shadow_replay(inputs.closed_trades, inputs.replay_rows, inputs.survivors)
+        attribute_closed_trades_to_shadow_replay(inputs.closed_trades, inputs.replay_rows, inputs.survivors, join_key=join_key)
         if can_attribute
         else []
     )
@@ -619,6 +712,10 @@ def build_paper_closed_trades_shadow_rule_attribution_report(
         "output_path": None,
         "closed_trades_source_path": inputs.closed_trades_source_path,
         "closed_trades_source_sha256": inputs.closed_trades_source_sha256,
+        "closed_trades_source_contract_path": inputs.closed_trades_source_contract_path,
+        "closed_trades_source_contract_sha256": inputs.closed_trades_source_contract_sha256,
+        "recommended_join_key": inputs.recommended_join_key,
+        "join_key_used": join_key,
         "shadow_replay_source_path": inputs.shadow_replay_source_path,
         "shadow_replay_source_sha256": inputs.shadow_replay_source_sha256,
         "replay_row_count": len(inputs.replay_rows),
