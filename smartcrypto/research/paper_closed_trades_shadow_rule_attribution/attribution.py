@@ -565,6 +565,8 @@ def attribute_closed_trades_to_shadow_replay(
                 "join_value": _join_value(trade, join_key, index),
                 "symbol": _normalize_symbol(trade.get("symbol") or trade.get("moeda") or trade.get("pair")),
                 "side": _normalize_side(trade.get("side") or trade.get("fechar_side")),
+                "open_time": trade.get("open_time") or trade.get("open_time_utc") or trade.get("horario_abertura"),
+                "close_time": trade.get("close_time") or trade.get("close_time_utc") or trade.get("horario_fechamento"),
                 "pnl": _round(pnl),
                 "attributed": attributed,
                 "attribution_method": attribution_method,
