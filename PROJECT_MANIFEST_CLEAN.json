@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fb58496e8aecaa7a9ce6c65e99e2d43072d7e01bfeafb0206ffc275241332200",
+  "aggregate_sha256": "ad60af502fac99c1f57a835c2bfa178c68881e9d3b704fde3dbfe5137919e4f3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 204,
-    "manifested_files_total": 1166,
-    "python_files": 869,
+    "docs_files": 205,
+    "manifested_files_total": 1171,
+    "python_files": 873,
     "runtime_excluded_files_total": 0,
-    "test_files": 253,
-    "tracked_files_total": 1167,
+    "test_files": 254,
+    "tracked_files_total": 1172,
     "workflows": 1
   },
   "deterministic": true,
@@ -1250,6 +1250,12 @@
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
     },
     {
+      "bytes": 4329,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_CLOSED_TRADES_READONLY_SOURCE_CONTRACT_V1.md",
+      "sha256": "42deb084fa5beb53b634cc985b3253f8c752c5283104816fe0dc1ddcc7dfe38a"
+    },
+    {
       "bytes": 4324,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CLOSED_TRADES_SHADOW_RULE_ATTRIBUTION_V1.md",
@@ -2394,6 +2400,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 2227,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_closed_trades_readonly_source_contract_v1.py",
+      "sha256": "a80e409a6dca2f1e67c6933182fe0af1a0bc01123ae439e66e1ed95b2bf26896"
     },
     {
       "bytes": 2479,
@@ -5204,6 +5216,18 @@
       "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
     },
     {
+      "bytes": 668,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_closed_trades_readonly_source_contract/__init__.py",
+      "sha256": "c6bb143f1af6f8c460bf2400b83bf0490409bfa09d1b0ca2b417c79ee85df76b"
+    },
+    {
+      "bytes": 32699,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_closed_trades_readonly_source_contract/source_contract.py",
+      "sha256": "7cf41bb991871e6e13c985b678ba415ddd2bf7f997e4fe49b5f283d3f889a2c9"
+    },
+    {
       "bytes": 609,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_closed_trades_shadow_rule_attribution/__init__.py",
@@ -6510,6 +6534,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 10293,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_closed_trades_readonly_source_contract_v1.py",
+      "sha256": "2a37e07edc77ad4a903c29e3b22d2004e9dde1b27948f162e102f21dd3336816"
     },
     {
       "bytes": 8938,
