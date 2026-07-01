@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a0958c28da4975d5490d55aec222a5842c96c1228945a30a7118047bbf623a9e",
+  "aggregate_sha256": "0e2d31b4f0b3824173d277b2dcc1848f49b70f184dc7c4ccd119d9cffda889bf",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 208,
-    "manifested_files_total": 1183,
-    "python_files": 882,
+    "docs_files": 209,
+    "manifested_files_total": 1189,
+    "python_files": 887,
     "runtime_excluded_files_total": 0,
-    "test_files": 257,
-    "tracked_files_total": 1184,
+    "test_files": 258,
+    "tracked_files_total": 1190,
     "workflows": 1
   },
   "deterministic": true,
@@ -1320,6 +1320,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MASTER_DIVERGENCE_RESEARCH_CLOSEOUT_V1.md",
       "sha256": "8d23535ef4b1a1e01d7dbd9acc386d9891ad4660d6c0e356e5e98c63b94015dd"
+    },
+    {
+      "bytes": 3466,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_ONLY_CANDIDATE_STRATEGY_AB_TEST_V1.md",
+      "sha256": "804099dc55ec68cff64035059ee4696d6608e334d83deffd67943259ccb740b8"
     },
     {
       "bytes": 3178,
@@ -3318,6 +3324,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_financial_performance_metrics.py",
       "sha256": "d86784e7a13c81e8ec7605d13f3b71aec3b08a2ba47013048cef845e3c1981ef"
+    },
+    {
+      "bytes": 2422,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_only_candidate_strategy_ab_test_v1.py",
+      "sha256": "9fbae5cdd21fc4b36dc7e3bfe30dd5626c2a7ea2f8382775f6db22ad887d2114"
     },
     {
       "bytes": 797,
@@ -5348,6 +5360,24 @@
       "sha256": "0094ed7ebcbdf3d802ace841a5282e1989274741a83a4333e6d098c8d26f4c33"
     },
     {
+      "bytes": 689,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_only_candidate_strategy_ab_test/__init__.py",
+      "sha256": "c9c2168c9868c5049ff6e8a47f9c4443b4aeaed9c0be580d9af010b5ed169227"
+    },
+    {
+      "bytes": 29908,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_only_candidate_strategy_ab_test/ab_test.py",
+      "sha256": "a04f5310a4a25022ed4414e7e855ff5e0225bca9194ded1415e93ddc01445dc5"
+    },
+    {
+      "bytes": 4070,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_only_candidate_strategy_ab_test/decision_filter.py",
+      "sha256": "14a0545f217121cb3063ea122f0bbdc60ec36c8220e1dbb3e646910133b86db3"
+    },
+    {
       "bytes": 545,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_shadow_observation_daily_impact_report/__init__.py",
@@ -6660,6 +6690,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_master_divergence_research_closeout_v1.py",
       "sha256": "1aa90f3f9f0fd8307fdccb00dd389a4e64b90171b49b2b4e866b0ce929cc9a45"
+    },
+    {
+      "bytes": 9263,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_only_candidate_strategy_ab_test_v1.py",
+      "sha256": "2de7eb7c180811822b3ed55dfce90e300fdcf74da141b8b9ece407fc50ab8832"
     },
     {
       "bytes": 5824,
