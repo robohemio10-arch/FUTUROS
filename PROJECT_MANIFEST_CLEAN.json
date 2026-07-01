@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8f83dc29b0928252124301fd828efeebbdaffd44221734030b9a1fd27e16bb30",
+  "aggregate_sha256": "a0958c28da4975d5490d55aec222a5842c96c1228945a30a7118047bbf623a9e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 207,
-    "manifested_files_total": 1178,
-    "python_files": 878,
+    "docs_files": 208,
+    "manifested_files_total": 1183,
+    "python_files": 882,
     "runtime_excluded_files_total": 0,
-    "test_files": 256,
-    "tracked_files_total": 1179,
+    "test_files": 257,
+    "tracked_files_total": 1184,
     "workflows": 1
   },
   "deterministic": true,
@@ -1370,6 +1370,12 @@
       "sha256": "cf9c7fa9a73c72fc5029f4c4f10c008896adba7c0c8c91a1b3cd25b1e12491a5"
     },
     {
+      "bytes": 3565,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_SHADOW_SURVIVOR_REMEDIATION_RESEARCH_V1.md",
+      "sha256": "2e59b42fe8a318193a5612a83367740f98f019983b39c5c7d82af4d47bb46ba4"
+    },
+    {
       "bytes": 3207,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SOAK_EVIDENCE_AND_NO_TRADE_READINESS_CONTINUATION.md",
@@ -2484,6 +2490,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_shadow_soak_report.py",
       "sha256": "3662180b3fa8151f26433a91fef34b64f33be35cb335c55560db55a2936a219e"
+    },
+    {
+      "bytes": 2667,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_shadow_survivor_remediation_research_v1.py",
+      "sha256": "064b88d92065a28754765fdba114405438d04d78af146f07532d7662baf31659"
     },
     {
       "bytes": 30341,
@@ -5360,6 +5372,18 @@
       "sha256": "3f02cc22241206b8f5c197ba1c859afe2c3490f11bfb283601e3b833811f4281"
     },
     {
+      "bytes": 587,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_survivor_remediation_research/__init__.py",
+      "sha256": "f4d29e8dafc3cf77471bd43110acadf10183bdf141d5d80426699571626e90d4"
+    },
+    {
+      "bytes": 34593,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_shadow_survivor_remediation_research/remediation.py",
+      "sha256": "d1ffe019f07e07aaf73ae799ca84b9640807dabd52e8f480824469d90684e758"
+    },
+    {
       "bytes": 19697,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/qlib_ocr_v11_shadow_candidate_registry.py",
@@ -6732,6 +6756,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_shadow_soak_reporting_readiness_gate.py",
       "sha256": "97235ecf0c44e600a243d7a12c9a28b77a1102ab750357bc74c8859a9493d186"
+    },
+    {
+      "bytes": 11411,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_shadow_survivor_remediation_research_v1.py",
+      "sha256": "fed637a030dc8b4b7cf4893b6407fc0f149b2001e4c97338b87c480d8cea60b0"
     },
     {
       "bytes": 303,
