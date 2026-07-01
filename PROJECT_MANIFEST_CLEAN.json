@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "587ce73a72e22c8db3b9cf5091c26f7201a70cb95c8313107aa5f750ba537cf1",
+  "aggregate_sha256": "fb58496e8aecaa7a9ce6c65e99e2d43072d7e01bfeafb0206ffc275241332200",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 203,
-    "manifested_files_total": 1161,
-    "python_files": 865,
+    "docs_files": 204,
+    "manifested_files_total": 1166,
+    "python_files": 869,
     "runtime_excluded_files_total": 0,
-    "test_files": 252,
-    "tracked_files_total": 1162,
+    "test_files": 253,
+    "tracked_files_total": 1167,
     "workflows": 1
   },
   "deterministic": true,
@@ -1196,6 +1196,12 @@
       "sha256": "4740f3f4b38353aaa5c50de6f86263e972e4c5690a5d9dd534a02062e06b84c4"
     },
     {
+      "bytes": 3865,
+      "hash_mode": "text_lf",
+      "path": "docs/OCR_SHADOW_PAPER_REPLAY_ATTRIBUTION_SOURCE_DIAGNOSTICS_V1.md",
+      "sha256": "1861be06d7bf6e1e5a8b120b62760d6a95a814f0c6677f930da42efd66f5adfd"
+    },
+    {
       "bytes": 5140,
       "hash_mode": "text_lf",
       "path": "docs/OCR_SHADOW_RESEARCH_EVIDENCE_CLOSEOUT_V1.md",
@@ -2352,6 +2358,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_shadow_observation_replay_v1.py",
       "sha256": "63b51197c88557bbfd06f86e929a2f3d1c1b68ed652f3eecfde19be39975758f"
+    },
+    {
+      "bytes": 3328,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ocr_shadow_paper_replay_attribution_source_diagnostics_v1.py",
+      "sha256": "21e00944b74002f00e1a45d4a470f9cc44ba9045b9887bfd857a6103248c80d7"
     },
     {
       "bytes": 3049,
@@ -5150,6 +5162,18 @@
       "sha256": "6a0ad716c21f99fa28e8c361b5232aa1e494e49e3d238c2146f6a1188082cea7"
     },
     {
+      "bytes": 615,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_shadow_paper_replay_attribution_source_diagnostics/__init__.py",
+      "sha256": "ca104d3319720734a2ce26aa317c984faac4b3e6261e477d07963477435a4f02"
+    },
+    {
+      "bytes": 29811,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ocr_shadow_paper_replay_attribution_source_diagnostics/diagnostics.py",
+      "sha256": "aa8879e8611b1b8020cef4e990a41c932c121ab13de1cfb5aea3112b3e54bbba"
+    },
+    {
       "bytes": 520,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_shadow_research_evidence_closeout/__init__.py",
@@ -6414,6 +6438,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
       "sha256": "4671e6d4356dd95c621011db69375e71f78dc69502daa138383f2ce79a47ed11"
+    },
+    {
+      "bytes": 15449,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ocr_shadow_paper_replay_attribution_source_diagnostics_v1.py",
+      "sha256": "7eafa2e3409903c0ec5a435958be4676fbd74aa7284d6927faaf6305358038e7"
     },
     {
       "bytes": 10477,
