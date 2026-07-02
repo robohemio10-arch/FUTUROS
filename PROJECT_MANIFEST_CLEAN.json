@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "54c65958020c9b615ea58c8b56a9591c012c461d74669990f7f1b13beb8eec27",
+  "aggregate_sha256": "9016ff1be1461860baf857f72a9aaddb6d85ec6e43b42858ea141099a3b867a7",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 219,
-    "manifested_files_total": 1247,
-    "python_files": 934,
+    "docs_files": 220,
+    "manifested_files_total": 1256,
+    "python_files": 942,
     "runtime_excluded_files_total": 0,
-    "test_files": 268,
-    "tracked_files_total": 1248,
+    "test_files": 269,
+    "tracked_files_total": 1257,
     "workflows": 1
   },
   "deterministic": true,
@@ -1536,6 +1536,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_FRESH_PREDICTION_RUNNER.md",
       "sha256": "07f1e4c3fa2dd720546c116f572b47f50a96152041bf941047349e2d4d2879e3"
+    },
+    {
+      "bytes": 2888,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_INSTITUTIONAL_RANKING_TRAINER_V1.md",
+      "sha256": "76123e726551e857bfbf409d71465216260606982bf6d7206e6ec2abc29a44f9"
     },
     {
       "bytes": 3772,
@@ -3674,6 +3680,12 @@
       "sha256": "1df27886c3e14bfce329c1a37b81384b57340f41ac8a0ae0e168687ea4d8f2b2"
     },
     {
+      "bytes": 3599,
+      "hash_mode": "text_lf",
+      "path": "scripts/train_qlib_institutional_ranking_challenger_v1.py",
+      "sha256": "ce57efe16b5becf1a708004a3ad38ad3efb4d7c7b131925f0a211b5777e614d9"
+    },
+    {
       "bytes": 600,
       "hash_mode": "text_lf",
       "path": "scripts/train_qlib_market_model.py",
@@ -4458,6 +4470,42 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/scheduler_deployment.py",
       "sha256": "9a4469b719e1e8867623ad38396986b88aa1f4340ced9648cc43bc4db3e89aaf"
+    },
+    {
+      "bytes": 216,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/__init__.py",
+      "sha256": "221ee089de10070039a5805c1b1033b4c615637fccc879697c16480e7b6e9f54"
+    },
+    {
+      "bytes": 4134,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/challenger_artifacts.py",
+      "sha256": "183a1e348d4af7ba2d0297060f91f47be9aebf6b4bf5b479864dbf06abad231a"
+    },
+    {
+      "bytes": 11828,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/dataset_adapter.py",
+      "sha256": "080170d72de46a01cd0bfb65497ec5153965afb61eb37ec9ed8438541505b631"
+    },
+    {
+      "bytes": 6593,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/ranking_metrics.py",
+      "sha256": "9d977d883c327a0595a536f72d40b16d01eb6ec4c415301a1ae110838e6a4ecd"
+    },
+    {
+      "bytes": 13281,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/ranking_trainer.py",
+      "sha256": "481a06da6a512dc73686abffbc706c481d99be80c9b46ac27cf07304467b47d8"
+    },
+    {
+      "bytes": 4405,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_trainer/walkforward_evaluator.py",
+      "sha256": "3cf79fb60895daf71d9c52728ce2f8f77f3a09e10547a5bc54cbf7de8092fe99"
     },
     {
       "bytes": 208,
@@ -7236,6 +7284,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_fresh_prediction_runner.py",
       "sha256": "4c99dbf999ece0e0bec4a54bdf15036aa61eb4174b07d51f7270bb65d0f4bddb"
+    },
+    {
+      "bytes": 16209,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_institutional_ranking_trainer_v1.py",
+      "sha256": "c45cd961bda028734d3073a7867cc40b3df45a26eec4f16be5b195e1e0387dcc"
     },
     {
       "bytes": 8484,
