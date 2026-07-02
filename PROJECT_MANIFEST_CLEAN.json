@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "14aa8707ecc4bb5eac127c6e98bf81aa57da8f16ea21c712ce57f061e54bd07a",
+  "aggregate_sha256": "54c65958020c9b615ea58c8b56a9591c012c461d74669990f7f1b13beb8eec27",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 218,
-    "manifested_files_total": 1239,
-    "python_files": 927,
+    "docs_files": 219,
+    "manifested_files_total": 1247,
+    "python_files": 934,
     "runtime_excluded_files_total": 0,
-    "test_files": 267,
-    "tracked_files_total": 1240,
+    "test_files": 268,
+    "tracked_files_total": 1248,
     "workflows": 1
   },
   "deterministic": true,
@@ -1790,6 +1790,12 @@
       "sha256": "d6d029e7d7a42324db0dbac7fab88584cccfa52acdc8a038c94186fec4d68a33"
     },
     {
+      "bytes": 2571,
+      "hash_mode": "text_lf",
+      "path": "docs/WALKFORWARD_ANTI_LEAKAGE_SPLIT_ENGINE_V1.md",
+      "sha256": "684db5a6ab783568ca1a87b437b4902db010289c02301a3d789e1574dcfdaf8f"
+    },
+    {
       "bytes": 2728,
       "hash_mode": "text_lf",
       "path": "docs/ZIP_STANDALONE_AUDIT_FALLBACK.md",
@@ -2664,6 +2670,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_training_executive_report_pack.py",
       "sha256": "d9c8daeba7eebb8b389448ed8f2cdcb22086937b038124c180a47762aeed4883"
+    },
+    {
+      "bytes": 3222,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_walkforward_anti_leakage_split_engine_v1.py",
+      "sha256": "d4a7763a0870ddb3c84d91002326502a66608b44f080b4f3f13f2fe15fab017c"
     },
     {
       "bytes": 96,
@@ -4470,6 +4482,36 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/target_store/triple_barrier_schema.py",
       "sha256": "20574f97de542dc110cd5972c4a68eec99c6bc50a8b55f080124f04e47ceeb84"
+    },
+    {
+      "bytes": 206,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/walkforward/__init__.py",
+      "sha256": "89d28ce85597da441823a1dccdddacf3f0004297c990e9afb509cd51a2715b02"
+    },
+    {
+      "bytes": 2478,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/walkforward/baselines.py",
+      "sha256": "dc957129dff2065fb3b384b58fc924f1d6cf0f1ba485c1e96536427d061a11b1"
+    },
+    {
+      "bytes": 4529,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/walkforward/leakage_audit.py",
+      "sha256": "db85a9aef5191c2c14748e45cc62a5e5c5f1ab61e8bf63cec44ad8a6307cd878"
+    },
+    {
+      "bytes": 28132,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/walkforward/purged_split_engine.py",
+      "sha256": "eadeaf3525ba0ff2dde089d79dc44afc79f6a1cd142d1e08e6b7540009576852"
+    },
+    {
+      "bytes": 1683,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/walkforward/split_schema.py",
+      "sha256": "68a4bfc9386741209c4b27c2a16c43eae23248699038ac62ef55bc37cf14a8cf"
     },
     {
       "bytes": 516,
@@ -7434,6 +7476,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_transitive_lock_docker_runtime_reproducibility.py",
       "sha256": "6135c560d2f961353e88c3078e603d6f3c7dd07fa2da703a196149b1fa2c2847"
+    },
+    {
+      "bytes": 14553,
+      "hash_mode": "text_lf",
+      "path": "tests/test_walkforward_anti_leakage_split_engine_v1.py",
+      "sha256": "58e5ca3183a776f3b64c0ed827ee3ef9f0fd34c883ba1313674b501a4390bea3"
     },
     {
       "bytes": 2053,
