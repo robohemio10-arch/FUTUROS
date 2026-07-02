@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "90605323c7b9f4896121428e1add1092a08dce90a5c724c7a15ac60dfa479b4c",
+  "aggregate_sha256": "2c22f8caad446bab46d46a501562e12146ec6f4ea26338670c9eafdc1943fae1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -518,10 +518,10 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 6851,
+      "bytes": 7879,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "fdd3c517900aac3c59d4dd512bd3c90243c40b3d5a46185acfee5a6371ebbaa9"
+      "sha256": "c6aa28566cfe6b3a8a53f6e923df5ebf3c23f97d1de9c5d80dd1d8de9c3c04ab"
     },
     {
       "bytes": 1156,

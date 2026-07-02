@@ -1,0 +1,17 @@
+{
+  "schema_version": "paper_autolearning_scheduler_kill_switch_v1",
+  "enabled": true,
+  "paper_only": true,
+  "shadow_only": true,
+  "live_trading_enabled": false,
+  "order_submission_enabled": false,
+  "real_order_submission_enabled": false,
+  "exchange_private_access": false,
+  "sends_orders": false,
+  "changes_risk": false,
+  "master_update_allowed": false,
+  "model_promotion_allowed": false,
+  "active_model_change_allowed": false,
+  "runtime_path_planned": "data/runtime/autolearning_scheduler_kill_switch.json",
+  "notes": "Template only. Copy to the planned runtime path during operations; this repository file is the audited contract."
+}

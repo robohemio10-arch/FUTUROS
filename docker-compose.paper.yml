@@ -199,6 +199,40 @@ services:
       - --poll-seconds
       - ${SMARTCRYPTO_TRADE_EVENT_NOTIFICATIONS_POLL_SECONDS:-5}
 
+  paper-autolearning-scheduler:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: "no"
+    profiles:
+      - autolearning
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+      SMARTCRYPTO_AUTOLEARNING_KILL_SWITCH_CONTRACT: /app/docker/paper-autolearning-scheduler/autolearning_scheduler_kill_switch.template.json
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+      - ./docker/paper-autolearning-scheduler:/app/docker/paper-autolearning-scheduler:ro
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+    command:
+      - python
+      - scripts/run_paper_autolearning_scheduler_v1.py
+      - --project-root
+      - /app
+      - --once
+      - --write-feedback
+      - --train-smoke
+      - --json
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
