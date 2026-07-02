@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1e6495ccc3d0869f998a46a45c60b6d36cd05be3e860f36c4f7575a8e6b8ce4e",
+  "aggregate_sha256": "a8be78a15fdc4279eb006d75f329dc139d273d682c718880c46bea8678061040",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 212,
-    "manifested_files_total": 1202,
-    "python_files": 897,
+    "docs_files": 213,
+    "manifested_files_total": 1212,
+    "python_files": 906,
     "runtime_excluded_files_total": 0,
-    "test_files": 261,
-    "tracked_files_total": 1203,
+    "test_files": 262,
+    "tracked_files_total": 1213,
     "workflows": 1
   },
   "deterministic": true,
@@ -1248,6 +1248,12 @@
       "hash_mode": "text_lf",
       "path": "docs/OUTCOME_SIDECAR_FINANCIAL_EVALUATION.md",
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
+    },
+    {
+      "bytes": 3550,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOLEARNING_FOUNDATION_V1.md",
+      "sha256": "497c6739f68cd401b7a79be83786f64f4bcc3e9636fa757e964affa1b3df020c"
     },
     {
       "bytes": 3393,
@@ -3356,6 +3362,12 @@
       "sha256": "d65c8478cd3122f39edcb0dcc118c4a78e40fd26af927d9c6e82de9bfa1ffe4a"
     },
     {
+      "bytes": 2468,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_autolearning_foundation_v1.py",
+      "sha256": "7c3192ca3bcc5016c9bf7e6bfafeda7e204248557926de64f689c9cbb9c61c50"
+    },
+    {
       "bytes": 2633,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_financial_performance_metrics.py",
@@ -4284,6 +4296,48 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_store.py",
       "sha256": "b0b44b52837abe018f679e111e2eb4669847ac859042933322fcd45e577bfd8a"
+    },
+    {
+      "bytes": 62,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/__init__.py",
+      "sha256": "63a74a7bc48e0d5df2fc7e184128372d8022a565e5c0fd6610600747a036d4ab"
+    },
+    {
+      "bytes": 347,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/__init__.py",
+      "sha256": "b1110e0dbd1086dfa20d946dd1b40b0d222dc65780adfe23467a89e24ecd9478"
+    },
+    {
+      "bytes": 1734,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/challenger_training_smoke.py",
+      "sha256": "c4aac3cd42918fcc7b5551d2ff8285cca63cf7f083ff0147a74a3a060fc7b9a7"
+    },
+    {
+      "bytes": 10423,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/daily_foundation_runner.py",
+      "sha256": "e039e24c658353cb65eac46a824a95c45f51f136cc80369c5ca7f97d54af6c95"
+    },
+    {
+      "bytes": 20522,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/feedback_store.py",
+      "sha256": "95367cfbf519043f3dcac13a59734c3f78b818040d9b921b60373d23f1e0741b"
+    },
+    {
+      "bytes": 3856,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/microbatch_builder.py",
+      "sha256": "947bc8238781fb2aa3a86f279e4cffdaa9e43f37641c8b9adcc9b6676c2aa7ae"
+    },
+    {
+      "bytes": 3946,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/outcome_schema.py",
+      "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
     },
     {
       "bytes": 516,
@@ -6678,6 +6732,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 10716,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autolearning_foundation_v1.py",
+      "sha256": "dd232faf1b45426c5dcbcc11ef0d0f2ea4150858759ef5277884d87462185b5a"
     },
     {
       "bytes": 10096,
