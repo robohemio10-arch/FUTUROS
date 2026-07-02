@@ -29,6 +29,7 @@ SAFETY_FLAGS: dict[str, bool] = {
     "updates_risk_manager": False,
     "updates_qlib_runtime": False,
     "updates_ai_shadow_runtime": False,
+    "changes_model": False,
     "writes_runtime": False,
     "writes_sqlite": False,
     "writes_parquet": False,
