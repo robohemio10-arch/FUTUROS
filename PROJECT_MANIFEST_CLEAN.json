@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "517a1aa04e7c9a108d81703375a68600b2c33c6cf6e494d4ed70cef938d2709b",
+  "aggregate_sha256": "cc6cc6bbe439351f21b2f2928fec37a6f58a9c382e8c67de8ce94668bc5702b8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 210,
-    "manifested_files_total": 1193,
-    "python_files": 890,
+    "docs_files": 211,
+    "manifested_files_total": 1197,
+    "python_files": 893,
     "runtime_excluded_files_total": 0,
-    "test_files": 259,
-    "tracked_files_total": 1194,
+    "test_files": 260,
+    "tracked_files_total": 1198,
     "workflows": 1
   },
   "deterministic": true,
@@ -1250,6 +1250,12 @@
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
     },
     {
+      "bytes": 2350,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_CANDIDATE_FILTER_RUNTIME_WIRING_V1.md",
+      "sha256": "4182f88e0c587538e04311f4c7438a5be639122c74c7f0bcb05c17cba692e0b2"
+    },
+    {
       "bytes": 4329,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CLOSED_TRADES_READONLY_SOURCE_CONTRACT_V1.md",
@@ -2046,6 +2052,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_operational_exception_swallowing.py",
       "sha256": "d5d3b3ba2063067539d20a1fe171a1dfce7fa5394ec5fc953eed52ec5025b0b9"
+    },
+    {
+      "bytes": 5906,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_candidate_filter_runtime_wiring_v1.py",
+      "sha256": "bdda749bcb6d946533cddde11414db8e6d6b08049852523ba905b54d98d11e42"
     },
     {
       "bytes": 5405,
@@ -4212,6 +4224,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/paper_candidate_filter_adapter.py",
       "sha256": "0d52b3c01bdc4c97f1a4dd654c1d279e2e6ccc9b7be56e189bebac0b53055770"
+    },
+    {
+      "bytes": 7165,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_filter_runtime_wiring.py",
+      "sha256": "c7bf7349c2b7b435465a5613bec176a5e1d6cc1ec8c1c2fc7242135bd902d9fa"
     },
     {
       "bytes": 11360,
@@ -6636,6 +6654,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 9417,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_filter_runtime_wiring_v1.py",
+      "sha256": "1e47a18c2d89904671d99ccc56b35f052615c3b805166ae143c854c5fbf6d5d6"
     },
     {
       "bytes": 10293,
