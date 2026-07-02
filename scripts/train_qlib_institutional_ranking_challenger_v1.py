@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--report-markdown", default=None)
     parser.add_argument("--metrics-json", default=None)
     parser.add_argument("--metrics-markdown", default=None)
+    parser.add_argument("--backend-gate-report", default=None, help="Optional Qlib backend gate report JSON.")
     parser.add_argument("--train", action="store_true", help="Train a research-only challenger.")
     parser.add_argument("--write-report", action="store_true", help="Write report JSON/Markdown under data/reports.")
     parser.add_argument("--write-challenger-artifact", action="store_true", help="Write challenger artifact under data/models/challengers; requires --train.")
@@ -56,6 +57,7 @@ def main() -> int:
         report_markdown_path=args.report_markdown,
         metrics_json_path=args.metrics_json,
         metrics_markdown_path=args.metrics_markdown,
+        backend_gate_report_path=args.backend_gate_report,
         registry_write_requested=args.request_registry_write,
         model_promotion_requested=args.request_model_promotion,
     )

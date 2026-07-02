@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,7 @@ DEFAULT_REPORT_JSON = Path("data/reports/qlib_institutional_ranking_trainer_v1.j
 DEFAULT_REPORT_MD = Path("data/reports/qlib_institutional_ranking_trainer_v1.md")
 DEFAULT_METRICS_JSON = Path("data/reports/qlib_institutional_ranking_metrics_v1.json")
 DEFAULT_METRICS_MD = Path("data/reports/qlib_institutional_ranking_metrics_v1.md")
+DEFAULT_BACKEND_GATE_REPORT = Path("data/reports/qlib_research_backend_gate_v1.json")
 
 
 def build_qlib_institutional_ranking_trainer_report(
@@ -36,6 +38,7 @@ def build_qlib_institutional_ranking_trainer_report(
     report_markdown_path: str | Path | None = None,
     metrics_json_path: str | Path | None = None,
     metrics_markdown_path: str | Path | None = None,
+    backend_gate_report_path: str | Path | None = None,
     registry_write_requested: bool = False,
     model_promotion_requested: bool = False,
 ) -> dict[str, Any]:
@@ -50,7 +53,16 @@ def build_qlib_institutional_ranking_trainer_report(
         baseline_path=baseline_path,
         dataset_path=dataset_path,
     )
-    qlib_available = importlib.util.find_spec("qlib") is not None
+    backend_gate_report = load_backend_gate_report(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT))
+    backend_probe = qlib_backend_probe_from_gate(backend_gate_report)
+    if backend_probe is None:
+        qlib_available = importlib.util.find_spec("qlib") is not None
+        qlib_backend_status = "available" if qlib_available else "unavailable"
+        backend_gate_status = "not_provided"
+    else:
+        qlib_backend_status = backend_probe["qlib_backend_status"]
+        qlib_available = qlib_backend_status == "available"
+        backend_gate_status = "provided"
     validation_errors = list(bundle.validation_errors)
     if registry_write_requested:
         validation_errors.append("registry_write_forbidden")
@@ -61,7 +73,6 @@ def build_qlib_institutional_ranking_trainer_report(
 
     trainer_status = "ok"
     reason = "dry_run_validated"
-    qlib_backend_status = "available" if qlib_available else "unavailable"
     backend_name = "qlib_research" if qlib_available else "none"
     challenger_status = "not_trained"
     training_performed = False
@@ -71,10 +82,14 @@ def build_qlib_institutional_ranking_trainer_report(
     model_payload: dict[str, Any] = {}
 
     if train:
-        if not qlib_available and not allow_research_fallback:
+        if qlib_backend_status == "blocked":
             trainer_status = "blocked"
-            reason = "qlib_backend_unavailable"
-            validation_errors.append("qlib_backend_unavailable")
+            reason = "qlib_backend_blocked"
+            validation_errors.append("qlib_backend_blocked")
+        elif qlib_backend_status in {"unavailable", "partial"} and not allow_research_fallback:
+            trainer_status = "blocked"
+            reason = f"qlib_backend_{qlib_backend_status}"
+            validation_errors.append(reason)
         elif validation_errors:
             trainer_status = "blocked"
             reason = validation_errors[0]
@@ -89,7 +104,8 @@ def build_qlib_institutional_ranking_trainer_report(
                 "scaler_fit_row_counts": evaluation["scaler_fit_row_counts"],
             }
             backend_name = "qlib_research" if qlib_available else evaluation["backend_name"]
-            qlib_backend_status = "available" if qlib_available else "research_fallback_allowed"
+            if not qlib_available:
+                qlib_backend_status = "research_fallback_allowed"
             challenger_status = "trained_research_only"
             trainer_status = "ok"
             reason = "research_challenger_trained"
@@ -128,6 +144,8 @@ def build_qlib_institutional_ranking_trainer_report(
         "split_engine_hash": bundle.walkforward.get("split_engine_hash"),
         "lineage_drift_detected": bundle.lineage_drift_detected,
         "qlib_backend_status": qlib_backend_status,
+        "backend_gate_report_status": backend_gate_status,
+        "backend_gate_report_path": str(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT)),
         "trainer_status": trainer_status,
         "challenger_model_status": challenger_status,
         "backend_name": backend_name,
@@ -154,11 +172,11 @@ def build_qlib_institutional_ranking_trainer_report(
         "write_challenger_artifact_performed": False,
         "artifact_paths": artifact_paths,
         "artifact_hashes": artifact_hashes,
+        **safety_flags(),
         "training_requested": bool(train),
         "qlib_challenger_training_performed": bool(training_performed),
         "qlib_runtime_updated": False,
         "ai_shadow_training_performed": False,
-        **safety_flags(),
         "safety_flags": safety_flags(),
         "validation_errors": sorted(set(validation_errors)),
     }
@@ -235,7 +253,7 @@ def decide_candidate(
 ) -> str:
     if not train:
         return "NOT_TRAINED_DRY_RUN"
-    if reason == "qlib_backend_unavailable":
+    if reason in {"qlib_backend_unavailable", "qlib_backend_partial", "qlib_backend_blocked"}:
         return "BLOCKED_BACKEND_UNAVAILABLE"
     if not training_performed:
         return "MANTER_EM_RESEARCH"
@@ -283,6 +301,27 @@ def input_sources(root: Path, bundle: Any) -> list[dict[str, Any]]:
     if bundle.selected_dataset_path is not None:
         paths.append(bundle.selected_dataset_path)
     return [{"path": str(path.resolve()), "exists": path.exists()} for path in paths]
+
+
+def load_backend_gate_report(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_report_invalid"]}
+    if not isinstance(payload, dict):
+        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_report_invalid"]}
+    return payload
+
+
+def qlib_backend_probe_from_gate(report: dict[str, Any] | None) -> dict[str, str] | None:
+    if report is None:
+        return None
+    status = str(report.get("qlib_backend_status") or "")
+    if status not in {"available", "unavailable", "partial", "blocked"}:
+        status = "blocked"
+    return {"qlib_backend_status": status}
 
 
 def safety_flags() -> dict[str, bool]:
