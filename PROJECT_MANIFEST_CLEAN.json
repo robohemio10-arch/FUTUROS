@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ca0cf06bc841a33004a12b66b6403f3358ab670159807049b0714ec9679d8de2",
+  "aggregate_sha256": "14aa8707ecc4bb5eac127c6e98bf81aa57da8f16ea21c712ce57f061e54bd07a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 217,
-    "manifested_files_total": 1232,
-    "python_files": 921,
+    "docs_files": 218,
+    "manifested_files_total": 1239,
+    "python_files": 927,
     "runtime_excluded_files_total": 0,
-    "test_files": 266,
-    "tracked_files_total": 1233,
+    "test_files": 267,
+    "tracked_files_total": 1240,
     "workflows": 1
   },
   "deterministic": true,
@@ -990,6 +990,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FINANCIAL_EVENT_LOG_AND_ALERTING.md",
       "sha256": "2329feb4c2df2618936aa75ef4ee776b109c8de5bb274b9f55361cf1a9936188"
+    },
+    {
+      "bytes": 2460,
+      "hash_mode": "text_lf",
+      "path": "docs/FINANCIAL_LABEL_AND_TRIPLE_BARRIER_TARGET_STORE_V1.md",
+      "sha256": "7352bbe4500c94485efc3365330f446dc42fd50f53972ffe8ee653d300a115f6"
     },
     {
       "bytes": 3485,
@@ -2400,6 +2406,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_finance_grade_sidecar_input.py",
       "sha256": "1b11e54579615410489993d9b7499bdc8c9bf57d4f00b0c72c50eaddeadb672b"
+    },
+    {
+      "bytes": 3006,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_financial_label_target_store_v1.py",
+      "sha256": "2657cf17e5e7b50adedcf18c3a4c558234678b13c719e04b3a18599e319689ee"
     },
     {
       "bytes": 3590,
@@ -4434,6 +4446,30 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/scheduler_deployment.py",
       "sha256": "9a4469b719e1e8867623ad38396986b88aa1f4340ced9648cc43bc4db3e89aaf"
+    },
+    {
+      "bytes": 208,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/target_store/__init__.py",
+      "sha256": "55c688304d8d76acb797f0b90a9990877f029b8395688cf315d3c566c09e5daa"
+    },
+    {
+      "bytes": 10681,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/target_store/financial_labels.py",
+      "sha256": "2728dc540c6df17475990ebec330f8452f160e99e4e3360f1e36e280b61b3585"
+    },
+    {
+      "bytes": 23087,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/target_store/target_store_builder.py",
+      "sha256": "eed975b9e144377de8b1f56534dc808e1006c6087774e746ac38d04e0e9d5394"
+    },
+    {
+      "bytes": 1327,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/target_store/triple_barrier_schema.py",
+      "sha256": "20574f97de542dc110cd5972c4a68eec99c6bc50a8b55f080124f04e47ceeb84"
     },
     {
       "bytes": 516,
@@ -6522,6 +6558,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_financial_event_log_and_alerting.py",
       "sha256": "0a73f089a78fa4fc2114ccc0aa3c3408d6935617ca3e89bfe7bd28fe47e9444d"
+    },
+    {
+      "bytes": 14007,
+      "hash_mode": "text_lf",
+      "path": "tests/test_financial_label_triple_barrier_target_store_v1.py",
+      "sha256": "71a58a871f778017209db9164e7f4acdb0e78fe7702423405facca1a8ab62c71"
     },
     {
       "bytes": 7594,
