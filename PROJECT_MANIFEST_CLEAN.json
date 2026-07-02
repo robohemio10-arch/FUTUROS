@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9016ff1be1461860baf857f72a9aaddb6d85ec6e43b42858ea141099a3b867a7",
+  "aggregate_sha256": "f89a1b9273b09ca7c70f52ae265f6b93e8bd032baebcc7fcadc957c780f3b2f9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 220,
-    "manifested_files_total": 1256,
-    "python_files": 942,
+    "docs_files": 221,
+    "manifested_files_total": 1264,
+    "python_files": 949,
     "runtime_excluded_files_total": 0,
-    "test_files": 269,
-    "tracked_files_total": 1257,
+    "test_files": 270,
+    "tracked_files_total": 1265,
     "workflows": 1
   },
   "deterministic": true,
@@ -1574,6 +1574,12 @@
       "sha256": "a3eea080c68865b470a1ab107ffe0f3f29c89f0b3a2dc999abc7c201d056d121"
     },
     {
+      "bytes": 3099,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_RESEARCH_BACKEND_RUNTIME_DEPENDENCY_GATE_V1.md",
+      "sha256": "23632f8b7182734c21b2f615983ff159a1736843473aafc3b3ff1079bcd45a41"
+    },
+    {
       "bytes": 2484,
       "hash_mode": "text_lf",
       "path": "docs/READINESS_MONTE_CARLO_RISK_BUDGET_POLICY_INTEGRATION.md",
@@ -2166,6 +2172,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_project_ai_operating_instructions.py",
       "sha256": "3520ea21b428e5316a2adc4696d3bc1b926ffba8e221e7aba30809522c4d28d2"
+    },
+    {
+      "bytes": 1609,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_qlib_research_backend_gate_v1.py",
+      "sha256": "6f958fac00f74dc1d322969cd7c3acfee7fabfd3f3b567cfc0ddd4a225aaa73e"
     },
     {
       "bytes": 3520,
@@ -3680,10 +3692,10 @@
       "sha256": "1df27886c3e14bfce329c1a37b81384b57340f41ac8a0ae0e168687ea4d8f2b2"
     },
     {
-      "bytes": 3599,
+      "bytes": 3769,
       "hash_mode": "text_lf",
       "path": "scripts/train_qlib_institutional_ranking_challenger_v1.py",
-      "sha256": "ce57efe16b5becf1a708004a3ad38ad3efb4d7c7b131925f0a211b5777e614d9"
+      "sha256": "8a45f48a0cd771a907ea7352e4ffea9fd7962c913014d4c7c42d7049f8188074"
     },
     {
       "bytes": 600,
@@ -4472,6 +4484,36 @@
       "sha256": "9a4469b719e1e8867623ad38396986b88aa1f4340ced9648cc43bc4db3e89aaf"
     },
     {
+      "bytes": 182,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_gate/__init__.py",
+      "sha256": "020ffe3ea349ecff6520b4b9ac16d51e9db9c7b615f6961a9acd971e9db15307"
+    },
+    {
+      "bytes": 2663,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_gate/backend_probe.py",
+      "sha256": "65cee3525b419b8103dde4bb8ee37dbaaea9b2d2523b7a7a91696164313ef7f1"
+    },
+    {
+      "bytes": 10763,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_gate/dependency_contract.py",
+      "sha256": "053e0091ebc4bf48423036d2bbf7aa4966ee800d83821e15cc5274411c484b5e"
+    },
+    {
+      "bytes": 2459,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_gate/environment_audit.py",
+      "sha256": "0e719c52ce0eb9eb490c379751e216ca2638cebd4a459fc4309bb27a7ea1cac0"
+    },
+    {
+      "bytes": 1300,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_gate/runtime_isolation.py",
+      "sha256": "810cebc919c552f184e55518b5fcaf6bfe9992fa8b100937ce033818730f7209"
+    },
+    {
       "bytes": 216,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/__init__.py",
@@ -4496,10 +4538,10 @@
       "sha256": "9d977d883c327a0595a536f72d40b16d01eb6ec4c415301a1ae110838e6a4ecd"
     },
     {
-      "bytes": 13281,
+      "bytes": 15160,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/ranking_trainer.py",
-      "sha256": "481a06da6a512dc73686abffbc706c481d99be80c9b46ac27cf07304467b47d8"
+      "sha256": "1494e2f16dbec918a042c0f72a4f0c223fa02221396bf3d289f67cc66868b3cb"
     },
     {
       "bytes": 4405,
@@ -7322,6 +7364,12 @@
       "sha256": "caf3b500f0e1fd905f3f98bfe54b0b32563050e1ccbf934aa0cd99d76ed0e67a"
     },
     {
+      "bytes": 12311,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_research_backend_runtime_dependency_gate_v1.py",
+      "sha256": "4548e3ecc38d9bd27a068c14a7df66ecaf6aa9c5216daabbdfa140aeeb76203b"
+    },
+    {
       "bytes": 19789,
       "hash_mode": "text_lf",
       "path": "tests/test_readiness_integrates_monte_carlo_risk_budget_policy.py",
@@ -7424,10 +7472,10 @@
       "sha256": "10c045467ed9a01ac7da39fcdd20cc80630e5bf1d2eaf21961ad80bdf8a8ed4d"
     },
     {
-      "bytes": 12537,
+      "bytes": 12577,
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_freshness_producer_contracts_manual_closeout_v1.py",
-      "sha256": "2e1df45d4c806aaee7afc75ee0d37ee2a877c331cd2b5eb07a36c784a6bf5231"
+      "sha256": "4ddf9ed29957573b870e809e124da5cd617fd1a215835d291a7acebab6cc8edf"
     },
     {
       "bytes": 17432,

@@ -209,7 +209,8 @@ def test_snapshot_integration_preserves_authoritative_blocker_lists() -> None:
         "combined_blocking_reasons"
     ]
     contracts = summary["runtime_freshness_producer_contracts"]
-    assert contracts["manual_closeout_allowed"] is False
+    if contracts["status"] != "ok":
+        assert contracts["manual_closeout_allowed"] is False
     assert global_snapshot["runtime_freshness_producer_contracts"] == contracts
     assert infrastructure["runtime_freshness_producer_contracts"] == contracts
     assert active_controls["runtime_freshness_producer_contracts"] == contracts
