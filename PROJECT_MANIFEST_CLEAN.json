@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fb82d223f0b4eaedc3d4f6dbb230108b58098c9fcbd18509440be56df27d9e6d",
+  "aggregate_sha256": "3995be83471c13caebb1a1450a69c7ca4640e51434479ddc068fd704ff9b00fb",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 222,
-    "manifested_files_total": 1273,
-    "python_files": 957,
+    "docs_files": 223,
+    "manifested_files_total": 1281,
+    "python_files": 964,
     "runtime_excluded_files_total": 0,
-    "test_files": 271,
-    "tracked_files_total": 1274,
+    "test_files": 272,
+    "tracked_files_total": 1282,
     "workflows": 1
   },
   "deterministic": true,
@@ -660,6 +660,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AUDIT_DIAGNOSTIC_SCRIPTS.md",
       "sha256": "64709bd697793f6cbed70b52deaefc30d8bc4c31fdcfbf6ae714051299523227"
+    },
+    {
+      "bytes": 3378,
+      "hash_mode": "text_lf",
+      "path": "docs/AUTOLEARNING_CANONICAL_LOOP_CLOSEOUT_EVIDENCE_V1.md",
+      "sha256": "49d79864b279d6abd0aa7a9b66c8dded29caf1f5832bfcc293790b01a8c3c4b0"
     },
     {
       "bytes": 2533,
@@ -2292,6 +2298,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_unified_feature_contract_v1.py",
       "sha256": "e9c283ea77805ea6466c91f9873b4f0fbc410f2e6d91b8e2cfbe386fd7faa46f"
+    },
+    {
+      "bytes": 1655,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_autolearning_canonical_loop_closeout_evidence_v1.py",
+      "sha256": "9d76e72cf6bb060d48c369e9d3aff19a2b07f6fc534ae9280b405f1df12ea9e9"
     },
     {
       "bytes": 4936,
@@ -4454,6 +4466,36 @@
       "sha256": "e316ef433d0b9869704f6e2e546f88ef6fb4abb7f5967040fdef6073faa326d0"
     },
     {
+      "bytes": 156,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/autolearning_closeout/__init__.py",
+      "sha256": "887fd90eb3d0df2f82c751f11a013808e3f97448c52f989a4e26a05184a67028"
+    },
+    {
+      "bytes": 12614,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/autolearning_closeout/closeout_report.py",
+      "sha256": "a672c08d7040f58caf0fcf130d0e0eb62301871dc2c48f9d92b9f387ab3f877e"
+    },
+    {
+      "bytes": 4275,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/autolearning_closeout/evidence_loader.py",
+      "sha256": "e877fcc550e948f81145e5be0493eb5176605fc3fd3581375a21024c69f6810d"
+    },
+    {
+      "bytes": 3653,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/autolearning_closeout/lineage_validator.py",
+      "sha256": "bf576827ef8036e0fb4c711ad7d754c2cfbc45c50da5af0e13cac7e4929bb636"
+    },
+    {
+      "bytes": 3464,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/autolearning_closeout/safety_validator.py",
+      "sha256": "cc94e74d8757a0ff80b189847c8d3c3be787b6e7d13037adb260385e82ddeee6"
+    },
+    {
       "bytes": 411,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/feature_contracts/__init__.py",
@@ -6150,6 +6192,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_audit_freqtrade_paper_db_persistence.py",
       "sha256": "676af3eee511d7caf84259b02bbb8ab63b6d69a58be728d7e489f518b0795449"
+    },
+    {
+      "bytes": 13011,
+      "hash_mode": "text_lf",
+      "path": "tests/test_autolearning_canonical_loop_closeout_evidence_v1.py",
+      "sha256": "5fce3211b14b471d8e53386ff54b9e946dcab92bfdae9ca363c2829f1e68a84e"
     },
     {
       "bytes": 1435,
