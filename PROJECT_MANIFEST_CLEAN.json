@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8b03f15d27edcf05ebc54fa0a4c56fd98374c10936fdbd0f3640a7d1fb82a29e",
+  "aggregate_sha256": "ca0cf06bc841a33004a12b66b6403f3358ab670159807049b0714ec9679d8de2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 217,
-    "manifested_files_total": 1226,
-    "python_files": 915,
+    "manifested_files_total": 1232,
+    "python_files": 921,
     "runtime_excluded_files_total": 0,
-    "test_files": 265,
-    "tracked_files_total": 1227,
+    "test_files": 266,
+    "tracked_files_total": 1233,
     "workflows": 1
   },
   "deterministic": true,
@@ -644,10 +644,10 @@
       "sha256": "1d4848230005b047b9de81a1d31db530c32f7131cf0b8dc7c6415ae356a7ebfa"
     },
     {
-      "bytes": 4206,
+      "bytes": 4089,
       "hash_mode": "text_lf",
       "path": "docs/AI_UNIFIED_FEATURE_CONTRACT_AND_DATASET_MANIFEST.md",
-      "sha256": "170cc3882f4c16dc875700342c61d9d93de5b1bb635feca56c5cbef63add4214"
+      "sha256": "0c32527c3f8a56b52dea8172c6c368dc7cb5bb44694b2374bfc36b41ffdec47d"
     },
     {
       "bytes": 8114,
@@ -2250,6 +2250,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_threshold_evaluation_input.py",
       "sha256": "286f09e1fb6dab6e64398d9a845ab501c93eb855fb791e8492e03132829ea433"
+    },
+    {
+      "bytes": 1964,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_unified_feature_contract_v1.py",
+      "sha256": "e9c283ea77805ea6466c91f9873b4f0fbc410f2e6d91b8e2cfbe386fd7faa46f"
     },
     {
       "bytes": 4936,
@@ -4352,6 +4358,30 @@
       "sha256": "63a74a7bc48e0d5df2fc7e184128372d8022a565e5c0fd6610600747a036d4ab"
     },
     {
+      "bytes": 411,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_contracts/__init__.py",
+      "sha256": "a5bcc699a9c5b6a6f4fb9c6f0138090ec87104bedc638b3c84825112228400df"
+    },
+    {
+      "bytes": 12146,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_contracts/contract_builder.py",
+      "sha256": "98ef096069015eec78c2cc9a31c327daa5c1b4a963886f12d5bb8bacb8abad09"
+    },
+    {
+      "bytes": 7640,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_contracts/dataset_manifest.py",
+      "sha256": "410ad4d3e840b5b5c10bda1c221b28a95d79716450431e56ec3e6595bfbc1527"
+    },
+    {
+      "bytes": 7907,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_contracts/feature_contract.py",
+      "sha256": "89661eb7ced7cb1bde187087631bbe53b2e71ff0887f72328df12a35a4f8ebc6"
+    },
+    {
       "bytes": 461,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/__init__.py",
@@ -5874,6 +5904,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_unified_feature_contract_and_dataset_manifest.py",
       "sha256": "1f23940d247d31778798af786203ed4f83ff1f06d7815f735a0bde221307aff1"
+    },
+    {
+      "bytes": 11842,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_unified_feature_contract_dataset_manifest_v1.py",
+      "sha256": "2c38811d8669ee951dcd51c263df8df95df978acaef170e3009952a2816b5cd2"
     },
     {
       "bytes": 2753,
