@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0e2d31b4f0b3824173d277b2dcc1848f49b70f184dc7c4ccd119d9cffda889bf",
+  "aggregate_sha256": "f87df4ee2f5ebfdca2a16e108e99cea0cf8932578daf205dffb500395224aa2d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 209,
-    "manifested_files_total": 1189,
-    "python_files": 887,
+    "docs_files": 210,
+    "manifested_files_total": 1193,
+    "python_files": 890,
     "runtime_excluded_files_total": 0,
-    "test_files": 258,
-    "tracked_files_total": 1190,
+    "test_files": 259,
+    "tracked_files_total": 1194,
     "workflows": 1
   },
   "deterministic": true,
@@ -1322,6 +1322,12 @@
       "sha256": "8d23535ef4b1a1e01d7dbd9acc386d9891ad4660d6c0e356e5e98c63b94015dd"
     },
     {
+      "bytes": 2777,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_ONLY_CANDIDATE_FILTER_ADAPTER_V1.md",
+      "sha256": "bd4c55299de3249e43bcc529c863474412d8c5fcfd37bf14713098b04ab5bd98"
+    },
+    {
       "bytes": 3466,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_ONLY_CANDIDATE_STRATEGY_AB_TEST_V1.md",
@@ -2040,6 +2046,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_operational_exception_swallowing.py",
       "sha256": "d5d3b3ba2063067539d20a1fe171a1dfce7fa5394ec5fc953eed52ec5025b0b9"
+    },
+    {
+      "bytes": 5405,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_only_candidate_filter_adapter_v1.py",
+      "sha256": "771c93354aac582666de4aa7034f19adbc261a92e69111400402b07658a992b0"
     },
     {
       "bytes": 1862,
@@ -4194,6 +4206,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/order_manager.py",
       "sha256": "155b0017917a9030766ee8c11663fc2d4af9fc5d3a8626a36546efeaee3a37ee"
+    },
+    {
+      "bytes": 5018,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_filter_adapter.py",
+      "sha256": "248fde34baff9c16c01a4db8a1833bda4e1f35ba902cd4d96ed4a30314bcce08"
     },
     {
       "bytes": 11360,
@@ -6690,6 +6708,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_master_divergence_research_closeout_v1.py",
       "sha256": "1aa90f3f9f0fd8307fdccb00dd389a4e64b90171b49b2b4e866b0ce929cc9a45"
+    },
+    {
+      "bytes": 5530,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_only_candidate_filter_adapter_v1.py",
+      "sha256": "a88e78a39b3ccaa18b0a93a18c50b80afebf47f4335ba1c664c9c9ab71f2fb13"
     },
     {
       "bytes": 9263,
