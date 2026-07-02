@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e74e4242c4b77136497266fa163d839809e43318aed28a68f022f732bd797684",
+  "aggregate_sha256": "8b03f15d27edcf05ebc54fa0a4c56fd98374c10936fdbd0f3640a7d1fb82a29e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 216,
-    "manifested_files_total": 1222,
-    "python_files": 912,
+    "docs_files": 217,
+    "manifested_files_total": 1226,
+    "python_files": 915,
     "runtime_excluded_files_total": 0,
-    "test_files": 264,
-    "tracked_files_total": 1223,
+    "test_files": 265,
+    "tracked_files_total": 1227,
     "workflows": 1
   },
   "deterministic": true,
@@ -1314,6 +1314,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_FEEDBACK_INCREMENTAL_STORE.md",
       "sha256": "65be5e43d5e05e48f7c6d1abee2521d2cdd5320522487852f47bcdcaceb5d342"
+    },
+    {
+      "bytes": 3708,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_FEEDBACK_MASTER_CONSOLIDATION_V1.md",
+      "sha256": "1a295e884c54ae9d39374597e3d0f569fb8cf665a010850d1234330b7401777c"
     },
     {
       "bytes": 4156,
@@ -3404,6 +3410,12 @@
       "sha256": "41b8c04a94f1a3d6b9a9124c56223e29d5bacc8c07a71c10e87a4f5e47241502"
     },
     {
+      "bytes": 2448,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_feedback_master_consolidation_v1.py",
+      "sha256": "52497459ce0b947836ae95d6ae8444011dcc23d1cca9b320f6d0d0b40701d5fe"
+    },
+    {
       "bytes": 2633,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_financial_performance_metrics.py",
@@ -4362,6 +4374,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/feedback_store.py",
       "sha256": "95367cfbf519043f3dcac13a59734c3f78b818040d9b921b60373d23f1e0741b"
+    },
+    {
+      "bytes": 26339,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/master_consolidation.py",
+      "sha256": "706c68f3c7863fa8f72b09f709e7cf143aacddeb056bae8d601e98193c784370"
     },
     {
       "bytes": 3856,
@@ -6834,6 +6852,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_feedback_incremental_store.py",
       "sha256": "efe4f9434905d604d9508b4ab02e582bb8e65e57444d551a880d64644413a20d"
+    },
+    {
+      "bytes": 10172,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_feedback_master_consolidation_v1.py",
+      "sha256": "ac014390098f7084375d05ee321b1d75e66d926ae8b75de5257447e01b5dd89f"
     },
     {
       "bytes": 6173,
