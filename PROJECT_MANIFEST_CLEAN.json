@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "90605323c7b9f4896121428e1add1092a08dce90a5c724c7a15ac60dfa479b4c",
+  "aggregate_sha256": "e74e4242c4b77136497266fa163d839809e43318aed28a68f022f732bd797684",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 214,
-    "manifested_files_total": 1216,
-    "python_files": 909,
+    "docs_files": 216,
+    "manifested_files_total": 1222,
+    "python_files": 912,
     "runtime_excluded_files_total": 0,
-    "test_files": 263,
-    "tracked_files_total": 1217,
+    "test_files": 264,
+    "tracked_files_total": 1223,
     "workflows": 1
   },
   "deterministic": true,
@@ -518,16 +518,28 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 6851,
+      "bytes": 7879,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "fdd3c517900aac3c59d4dd512bd3c90243c40b3d5a46185acfee5a6371ebbaa9"
+      "sha256": "c6aa28566cfe6b3a8a53f6e923df5ebf3c23f97d1de9c5d80dd1d8de9c3c04ab"
     },
     {
       "bytes": 1156,
       "hash_mode": "text_lf",
       "path": "docker/dashboard/Dockerfile",
       "sha256": "ded7a6a28cdf1149732ca9947f6e6c5eb541c14177253e3286b0228e3dfe3aed"
+    },
+    {
+      "bytes": 506,
+      "hash_mode": "text_lf",
+      "path": "docker/paper-autolearning-scheduler/README.md",
+      "sha256": "fee6dd8c5cb2f52e29ecda800fc26b5cd5428d9f187011166a55eb18ab144cd3"
+    },
+    {
+      "bytes": 651,
+      "hash_mode": "text_lf",
+      "path": "docker/paper-autolearning-scheduler/autolearning_scheduler_kill_switch.template.json",
+      "sha256": "a40d67892ebeb310a326ab769a3e7b0a220de459889045b04cd8a8bcec31b81d"
     },
     {
       "bytes": 1432,
@@ -1260,6 +1272,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOLEARNING_FOUNDATION_V1.md",
       "sha256": "497c6739f68cd401b7a79be83786f64f4bcc3e9636fa757e964affa1b3df020c"
+    },
+    {
+      "bytes": 3780,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOLEARNING_SCHEDULER_DEPLOYMENT_V1.md",
+      "sha256": "102c17156d0b433ef61cd67b8cd9dbf004369f7aabdda3ea69d43b3bc2f6a6ef"
     },
     {
       "bytes": 3393,
@@ -2070,6 +2088,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_operational_exception_swallowing.py",
       "sha256": "d5d3b3ba2063067539d20a1fe171a1dfce7fa5394ec5fc953eed52ec5025b0b9"
+    },
+    {
+      "bytes": 1511,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_autolearning_scheduler_deployment_v1.py",
+      "sha256": "93e02c5ddf8f4288c839fcd48fdcea641ca41f60d288373c5f2f0909041a02a6"
     },
     {
       "bytes": 5906,
@@ -4356,6 +4380,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/scheduler.py",
       "sha256": "3f34965c2fb02081482d448ea06859793e111bf44af81e27a8c293ff4aece0de"
+    },
+    {
+      "bytes": 8616,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/scheduler_deployment.py",
+      "sha256": "9a4469b719e1e8867623ad38396986b88aa1f4340ced9648cc43bc4db3e89aaf"
     },
     {
       "bytes": 516,
@@ -6762,6 +6792,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_foundation_v1.py",
       "sha256": "dd232faf1b45426c5dcbcc11ef0d0f2ea4150858759ef5277884d87462185b5a"
+    },
+    {
+      "bytes": 6367,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autolearning_scheduler_deployment_v1.py",
+      "sha256": "d6f3f729b827852597cb183c0e00590ff6d29912de72ebbcb18f2286ab0bf5ad"
     },
     {
       "bytes": 10096,
