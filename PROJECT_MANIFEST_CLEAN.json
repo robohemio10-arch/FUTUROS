@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f89a1b9273b09ca7c70f52ae265f6b93e8bd032baebcc7fcadc957c780f3b2f9",
+  "aggregate_sha256": "fb82d223f0b4eaedc3d4f6dbb230108b58098c9fcbd18509440be56df27d9e6d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 221,
-    "manifested_files_total": 1264,
-    "python_files": 949,
+    "docs_files": 222,
+    "manifested_files_total": 1273,
+    "python_files": 957,
     "runtime_excluded_files_total": 0,
-    "test_files": 270,
-    "tracked_files_total": 1265,
+    "test_files": 271,
+    "tracked_files_total": 1274,
     "workflows": 1
   },
   "deterministic": true,
@@ -630,6 +630,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_SHADOW_OUTCOME_ATTRIBUTION.md",
       "sha256": "be1c91773396920be22e461f0c79b1cb6cf497ea18812b7946e6d3011cb632a6"
+    },
+    {
+      "bytes": 2789,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_SHADOW_QUALITY_VETO_TRAINER_V1.md",
+      "sha256": "bea1f05ac418ee00495e4dc87eac80a4853cde3dbb19a505a70d2a54b72be3ab"
     },
     {
       "bytes": 3674,
@@ -3674,6 +3680,12 @@
       "sha256": "1b37ac586ad849d731e0d45435496e68d5b9ec30eb579ed2a5d0abe1047a302c"
     },
     {
+      "bytes": 4056,
+      "hash_mode": "text_lf",
+      "path": "scripts/train_ai_shadow_quality_veto_challenger_v1.py",
+      "sha256": "f3e4347352229e50d5430b86af3941a79c34d9d9d1ce13388ae9fe1ccbb42774"
+    },
+    {
       "bytes": 4002,
       "hash_mode": "text_lf",
       "path": "scripts/train_baseline_model.py",
@@ -4404,6 +4416,42 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/__init__.py",
       "sha256": "63a74a7bc48e0d5df2fc7e184128372d8022a565e5c0fd6610600747a036d4ab"
+    },
+    {
+      "bytes": 189,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/__init__.py",
+      "sha256": "0b43350a1188ebd49dafba0ef872aa42a6fa4d9cfe69fcab0e0651e33e9082c5"
+    },
+    {
+      "bytes": 3800,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/challenger_artifacts.py",
+      "sha256": "1c21fd4db8040ec610e032df06560814edb0bcf3d8cc9065e7da9bb3c44a3dc0"
+    },
+    {
+      "bytes": 2966,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/quality_dataset.py",
+      "sha256": "0f6ee845d02e72af53710d9cea3ef2d8ec57e506d6e041faf50426d284e4082c"
+    },
+    {
+      "bytes": 17781,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/quality_veto_trainer.py",
+      "sha256": "3717e766b8feb046cf82837cdeb7a213e5ffc003a625862491ce5b176feb22e0"
+    },
+    {
+      "bytes": 5711,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/veto_metrics.py",
+      "sha256": "782f8417c08626e39ddea36a5b98128a13fcd11f8833c9ba72807016e73133f9"
+    },
+    {
+      "bytes": 1466,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_trainer/veto_thresholds.py",
+      "sha256": "e316ef433d0b9869704f6e2e546f88ef6fb4abb7f5967040fdef6073faa326d0"
     },
     {
       "bytes": 411,
@@ -6054,6 +6102,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_outcome_attribution.py",
       "sha256": "f81f949575a0169fd9df4d883bfd9335f4ab7c30d198db23c1f6c2784974999e"
+    },
+    {
+      "bytes": 20998,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_shadow_quality_veto_trainer_v1.py",
+      "sha256": "98a0d17ed92b2980146792fbbdaf42ebce7097466ab70aea7ad0631170bf7e71"
     },
     {
       "bytes": 15561,
