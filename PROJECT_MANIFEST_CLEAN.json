@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "f87df4ee2f5ebfdca2a16e108e99cea0cf8932578daf205dffb500395224aa2d",
+  "aggregate_sha256": "517a1aa04e7c9a108d81703375a68600b2c33c6cf6e494d4ed70cef938d2709b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4208,10 +4208,10 @@
       "sha256": "155b0017917a9030766ee8c11663fc2d4af9fc5d3a8626a36546efeaee3a37ee"
     },
     {
-      "bytes": 5018,
+      "bytes": 5046,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/paper_candidate_filter_adapter.py",
-      "sha256": "248fde34baff9c16c01a4db8a1833bda4e1f35ba902cd4d96ed4a30314bcce08"
+      "sha256": "0d52b3c01bdc4c97f1a4dd654c1d279e2e6ccc9b7be56e189bebac0b53055770"
     },
     {
       "bytes": 11360,
@@ -4244,10 +4244,10 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 19211,
+      "bytes": 19694,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "2f7801d2bd0d4c5c499c833c90298bb7cb4e9622fe590c859d14ecb465a20030"
+      "sha256": "19924c51557fec29fca4c4580bf6593962a6b7ae9550c2125ecc95f743b3d121"
     },
     {
       "bytes": 5373,

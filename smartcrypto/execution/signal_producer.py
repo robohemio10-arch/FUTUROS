@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import math
 import os
-from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Mapping
@@ -11,6 +10,10 @@ from typing import Any, Mapping
 import pandas as pd
 import yaml
 
+from smartcrypto.execution.paper_candidate_filter_runtime_wiring import (
+    apply_paper_candidate_filter_to_signals,
+    summarize_runtime_wiring,
+)
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 
 
@@ -362,11 +365,15 @@ def build_active_signals(
     selected = select_prediction_rows(frame, config)
 
     signals = [row_to_signal(row, config, generated_at, valid_until) for row in selected.to_dict(orient="records")]
+    runtime_mode = str(config.get("runtime_mode") or "paper")
+    paper_candidate_wiring = apply_paper_candidate_filter_to_signals(signals, runtime_mode=runtime_mode)
+    signals = list(paper_candidate_wiring["allowed_signals"])
+    paper_candidate_wiring_summary = summarize_runtime_wiring(paper_candidate_wiring)
     signal_payload = {
         "generated_at": generated_at.isoformat(),
         "source": "phase13_signal_producer_hardening",
         "model_version": str(config.get("model_version_default") or "qlib_lgbm_v1"),
-        "runtime_mode": str(config.get("runtime_mode") or "paper"),
+        "runtime_mode": runtime_mode,
         "signals": signals,
     }
 
@@ -402,6 +409,7 @@ def build_active_signals(
         "generated_at": generated_at.isoformat(),
         "valid_until_min": min([item["valid_until"] for item in signals], default=None),
         "valid_until_max": max([item["valid_until"] for item in signals], default=None),
+        "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
     }
 
     atomic_write_json(report_path, report)
