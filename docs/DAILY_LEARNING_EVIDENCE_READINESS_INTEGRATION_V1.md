@@ -4,7 +4,7 @@
 
 Esta branch cria uma integração **research-only/read-only** entre o Daily Learning Loop e a camada de evidence/readiness do SMART FUTUROS.
 
-O artefato produzido é um snapshot informativo e bloqueado. Ele consolida sinais de scheduler, dashboard command center, orquestrador, Qlib research dataset, feedback bridge, registry de regras candidatas e validação OOS apenas como evidência de governança.
+O artefato produzido é um snapshot informativo e bloqueado. Ele consolida sinais de scheduler, dashboard command center, orquestrador, Qlib research dataset, feedback bridge, registry de regras candidatas, validação OOS e `paper_autotrain_feedback_loop_v1` apenas como evidência de governança.
 
 ## Decisão institucional
 
@@ -56,6 +56,39 @@ A integração reconhece, em memória, estes payloads:
 5. AI Shadow feedback bridge.
 6. Candidate shadow rule registry.
 7. Shadow rule OOS validation.
+8. Paper auto-train feedback loop V1.
+
+### Paper auto-train feedback loop V1
+
+A seção `paper_autotrain_feedback_loop_v1` aceita um relatório existente em:
+
+```text
+data/reports/paper_autotrain_feedback_loop_v1.json
+```
+
+Quando o relatório não existe, o CLI executa apenas um probe seguro no-write chamando a lógica do loop com:
+
+```text
+write_report=false
+run_qlib_train=false
+run_ai_shadow_train=false
+```
+
+Esse probe pode ler evidências JSON existentes, mas não escreve relatório, não treina, não registra modelo, não promove modelo, não atualiza runtime e não envia ordens.
+
+A seção expõe:
+
+- `status`;
+- `decision`;
+- `reason`;
+- `blockers`;
+- `warnings`;
+- `hashes` / `lineage_hashes`;
+- `safety_flags`;
+- `source_report_write_performed`, quando o payload veio de relatório materializado anteriormente;
+- `write_performed=false` para a execução atual da integração diária.
+
+Um relatório fonte pode ter sido criado por outro comando com `--write-report`; isso é preservado como metadado de origem, mas não é tratado como escrita da integração diária.
 
 Quando nenhum payload é fornecido, o snapshot renderiza modo vazio seguro:
 
@@ -87,6 +120,16 @@ python .\scripts\build_daily_learning_evidence_readiness_integration_v1.py `
 ```
 
 O CLI não escreve por padrão. Escrita só ocorre com `--output` explícito e fora de árvores proibidas.
+
+Para desabilitar o probe no-write do loop auto-train:
+
+```powershell
+python .\scripts\build_daily_learning_evidence_readiness_integration_v1.py `
+  --project-root . `
+  --skip-paper-autotrain-probe `
+  --no-write `
+  --json
+```
 
 ## Safety flags obrigatórias
 

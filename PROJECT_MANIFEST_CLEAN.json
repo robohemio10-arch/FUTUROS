@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "86701c15d0d2ed8c2a00e0c9daf12483b39d405bca83d29f11782dc57e72ba18",
+  "aggregate_sha256": "ecb15016c20218df9554d9e27e38508bfa6c74ad4bcb291b879349a5930e38e5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 226,
-    "manifested_files_total": 1294,
-    "python_files": 973,
+    "manifested_files_total": 1295,
+    "python_files": 974,
     "runtime_excluded_files_total": 0,
-    "test_files": 275,
-    "tracked_files_total": 1295,
+    "test_files": 276,
+    "tracked_files_total": 1296,
     "workflows": 1
   },
   "deterministic": true,
@@ -782,10 +782,10 @@
       "sha256": "ef55acf2392f03b30a29d28cd836aad2e5cf5e7af493cdcd5a2d26d022fd025e"
     },
     {
-      "bytes": 3128,
+      "bytes": 4478,
       "hash_mode": "text_lf",
       "path": "docs/DAILY_LEARNING_EVIDENCE_READINESS_INTEGRATION_V1.md",
-      "sha256": "abc90f53a92d1e2037ecc3c01a39b3b6a443f3d0ec84fdf5fe709564272bf2e0"
+      "sha256": "4c607ea84506fb3472a6b970af6ec1e28c968b6fe6dc943a57ac47db46d7d2c6"
     },
     {
       "bytes": 3952,
@@ -2354,10 +2354,10 @@
       "sha256": "d5e5c627bc5a0fcce17a4d3d9b027cda7477b3ced31c3f05ae33e205d8f12fde"
     },
     {
-      "bytes": 4185,
+      "bytes": 8174,
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_learning_evidence_readiness_integration_v1.py",
-      "sha256": "1a3607c277db92d7c54bf293afbc29ac76992081ea988589baeec919aee59d23"
+      "sha256": "061ef963ab7b414d87bc9bfe58e7b891f99a8d5a46cfa2c3fa7ff9d0700fc137"
     },
     {
       "bytes": 2777,
@@ -5594,10 +5594,10 @@
       "sha256": "615a3840973a52282477d656e395d2c8452ddf05db80478f09a361222254efd1"
     },
     {
-      "bytes": 30451,
+      "bytes": 36078,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_evidence_readiness_integration.py",
-      "sha256": "12e53e7bccdab5dc9e46b25feb2043c3df7aefa8a7b3cc5782996cc919f73217"
+      "sha256": "9d24a8e9235625eb679a95ba2bcabfb77a1035c5c92883e878c9d285cafc55be"
     },
     {
       "bytes": 25415,
@@ -6374,10 +6374,10 @@
       "sha256": "b2438cdca9947f6e70ea0ade029d6d749ec1f4a830a0926c146c4b4849a377f5"
     },
     {
-      "bytes": 11807,
+      "bytes": 11851,
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_evidence_readiness_integration_v1.py",
-      "sha256": "38a37b0f9b465306cf7e9105314d9a7b82e3c411cbf33105d9996adffe0660d6"
+      "sha256": "c96c7ff3b7454ede024c73941e9e5b95b8d9a280659abccc8433ccea0745c764"
     },
     {
       "bytes": 8718,
@@ -7188,6 +7188,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_scheduler_deployment_v1.py",
       "sha256": "d6f3f729b827852597cb183c0e00590ff6d29912de72ebbcb18f2286ab0bf5ad"
+    },
+    {
+      "bytes": 6623,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_feedback_loop_daily_evidence_integration_v1.py",
+      "sha256": "28a97ab7d7d8d417d2046242280ac83f8aa03e93e23b3816d48d648ed2197d18"
     },
     {
       "bytes": 10624,
