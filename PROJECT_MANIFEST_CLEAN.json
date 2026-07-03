@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "051e8644fb353943e0b683dbd9e33c80aad8791a2e948b14ae34fe89cfe4911c",
+  "aggregate_sha256": "55519935a7b09588107745965e7cdf24aba779288e2a9d2af9af333dfcc736e0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 224,
-    "manifested_files_total": 1286,
-    "python_files": 968,
+    "docs_files": 225,
+    "manifested_files_total": 1289,
+    "python_files": 969,
     "runtime_excluded_files_total": 0,
-    "test_files": 273,
-    "tracked_files_total": 1287,
+    "test_files": 274,
+    "tracked_files_total": 1290,
     "workflows": 1
   },
   "deterministic": true,
@@ -1544,6 +1544,12 @@
       "sha256": "d4a8ba279050f2ae9d8eceae58f8a67466b7d8e6571be1e2f9dc6a96d18a5113"
     },
     {
+      "bytes": 6491,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_BACKEND_REPRODUCIBLE_RESOLUTION_V1.md",
+      "sha256": "0667e014cccf06e92c658dfc5bf6c816c10aa38d4ba1fba286171adf3e8048ee"
+    },
+    {
       "bytes": 2704,
       "hash_mode": "text_lf",
       "path": "docs/QLIB_FRESH_PREDICTION_RUNNER.md",
@@ -1950,6 +1956,12 @@
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
       "sha256": "9c697afedb08440dbfb64852865941ecce1c613200e6e87ae95bb345f778267c"
+    },
+    {
+      "bytes": 92,
+      "hash_mode": "text_lf",
+      "path": "requirements-qlib.lock",
+      "sha256": "0e525c4fd951e46f16aafb6019c36f36e5c5e588b2fc7502fdf637e16eb4239c"
     },
     {
       "bytes": 1209,
@@ -7494,6 +7506,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_research_backend_environment_lock_v1.py",
       "sha256": "8c1c9ebe87e21b2563ebaa1b6c1655d896ff38e09f43af92e79761d816300863"
+    },
+    {
+      "bytes": 4624,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_research_backend_gate_v1.py",
+      "sha256": "dac97f0d0626a5c0c912bad726aaf8a9ea0d42e94221c990c3a54ccd9e806ff0"
     },
     {
       "bytes": 12311,
