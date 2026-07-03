@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ecc112cef2d558a57381f9df6958e70fa446d1fbdcff3ac76653ea30e2eb4524",
+  "aggregate_sha256": "2fb8ffb7ecdcbea7bbfe13739e1fcf6f816bf8b10d4252c782e03c577b2bfe43",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 227,
-    "manifested_files_total": 1300,
-    "python_files": 978,
+    "docs_files": 228,
+    "manifested_files_total": 1305,
+    "python_files": 982,
     "runtime_excluded_files_total": 0,
-    "test_files": 277,
-    "tracked_files_total": 1301,
+    "test_files": 278,
+    "tracked_files_total": 1306,
     "workflows": 1
   },
   "deterministic": true,
@@ -774,6 +774,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DAILY_EVIDENCE_PACK_ORCHESTRATOR_V1.md",
       "sha256": "dd164fb3ebc89f7e5520140dd9a3294932634575ff2dcef3efa01838b62abf9d"
+    },
+    {
+      "bytes": 4623,
+      "hash_mode": "text_lf",
+      "path": "docs/DAILY_EVIDENCE_READINESS_EXECUTIVE_PACK_V1.md",
+      "sha256": "f89efc48e632b71aa97fd58d943dc94e8c0072f1768ea8f993858ecbe909893d"
     },
     {
       "bytes": 5731,
@@ -2358,6 +2364,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_daily_candle_coverage_entry_features_v1.py",
       "sha256": "34ed40d374d199580eb64cd7d74eddc4d613adc035d1275db0e614bd0208c1d6"
+    },
+    {
+      "bytes": 1927,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_daily_evidence_readiness_executive_pack_v1.py",
+      "sha256": "85d40bb8d2fc8ca92cd11c96be7e47137fa3aa40386187f65e9642b9e72c79c0"
     },
     {
       "bytes": 3309,
@@ -5102,6 +5114,18 @@
       "sha256": "94b9a6632cab316304772801e260541e9f047d074c040e7d053a25d530fcbabe"
     },
     {
+      "bytes": 189,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/daily_evidence_readiness_executive_pack/__init__.py",
+      "sha256": "8a7ac3c83ff48a3c1b408916f1160654104e3b76344466aa3a76caf4a8e2e425"
+    },
+    {
+      "bytes": 24211,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/daily_evidence_readiness_executive_pack/executive_pack.py",
+      "sha256": "634c5c2dda6a29bf41b3dfa7de447e9bb61c14ef664f5bc2061b4795a8ea0362"
+    },
+    {
       "bytes": 342,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_real_paper_sources/__init__.py",
@@ -6390,6 +6414,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_evidence_pack_orchestrator_v1.py",
       "sha256": "77a6dd7e3ff65a790354acbfbf0ad5dbd9945bf4efe030b0c51791300d49cff5"
+    },
+    {
+      "bytes": 9370,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_evidence_readiness_executive_pack_v1.py",
+      "sha256": "405feb012b962a1ea7f45deeaf2581d44c534bcc49a7578598c93672e62257a5"
     },
     {
       "bytes": 13579,
