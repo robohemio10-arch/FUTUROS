@@ -34,9 +34,9 @@ def test_empty_snapshot_is_blocked_informational_and_safe() -> None:
     assert validate_daily_learning_evidence_readiness_integration_snapshot(snapshot) == []
 
 
-def test_empty_snapshot_contains_seven_sources_as_not_loaded() -> None:
+def test_empty_snapshot_contains_eight_sources_as_not_loaded() -> None:
     snapshot = build_daily_learning_evidence_readiness_integration_snapshot()
-    assert snapshot["source_summary"]["source_count"] == 7
+    assert snapshot["source_summary"]["source_count"] == 8
     assert snapshot["source_summary"]["payload_loaded_count"] == 0
     assert snapshot["source_summary"]["unsafe_source_count"] == 0
     assert {card["status"] for card in snapshot["source_cards"]} == {"not_loaded"}
@@ -142,7 +142,7 @@ def test_view_model_is_compact_and_non_releasing() -> None:
     assert view_model["status"] == "blocked"
     assert view_model["decision"] == "MANTER_EM_RESEARCH"
     assert view_model["readiness_status"] == "blocked"
-    assert len(view_model["cards"]) == 7
+    assert len(view_model["cards"]) == 8
     assert view_model["safety_footer"]["daily_learning_evidence_is_informational"] is True
     assert view_model["safety_footer"]["readiness_release_authority"] is False
     assert view_model["safety_footer"]["order_submission_enabled"] is False
@@ -240,6 +240,7 @@ def test_snapshot_has_expected_evidence_sources() -> None:
         "ai_shadow_feedback_bridge",
         "candidate_shadow_rule_registry",
         "shadow_rule_oos_validation",
+        "paper_autotrain_feedback_loop_v1",
     }
 
 

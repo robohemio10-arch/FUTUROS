@@ -27,6 +27,7 @@ _EVIDENCE_SOURCE_ORDER: tuple[str, ...] = (
     "ai_shadow_feedback_bridge",
     "candidate_shadow_rule_registry",
     "shadow_rule_oos_validation",
+    "paper_autotrain_feedback_loop_v1",
 )
 
 _SOURCE_LABELS: dict[str, str] = {
@@ -37,6 +38,14 @@ _SOURCE_LABELS: dict[str, str] = {
     "ai_shadow_feedback_bridge": "AI Shadow feedback bridge",
     "candidate_shadow_rule_registry": "Candidate shadow rule registry",
     "shadow_rule_oos_validation": "Shadow rule OOS validation",
+    "paper_autotrain_feedback_loop_v1": "Paper auto-train feedback loop V1",
+}
+
+_SAFE_SOURCE_DECISIONS: set[str | None] = {
+    None,
+    DECISION_RESEARCH,
+    "BLOCKED",
+    "BLOCKED_BACKEND_UNAVAILABLE",
 }
 
 _REQUIRED_FALSE_FLAGS: tuple[str, ...] = (
@@ -241,7 +250,24 @@ def _collect_validation_errors(mapping: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(sorted(set(errors)))
 
 
+def _collect_string_list(value: Any) -> tuple[str, ...]:
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() else ()
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return tuple(sorted({str(item).strip() for item in value if str(item).strip()}))
+    return ()
+
+
+def _mapping_or_empty(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
 def _infer_row_count(source_id: str, payload: Mapping[str, Any]) -> int:
+    if source_id == "paper_autotrain_feedback_loop_v1":
+        input_sources = payload.get("input_sources")
+        if isinstance(input_sources, Sequence) and not isinstance(input_sources, (str, bytes)):
+            return len(input_sources)
+
     direct = _first_present(
         payload,
         (
@@ -314,9 +340,9 @@ def _source_has_release_authority(payload: Mapping[str, Any]) -> bool:
 def _source_is_safe(payload: Mapping[str, Any]) -> bool:
     if not payload:
         return True
-    if payload.get("decision") not in {None, DECISION_RESEARCH}:
+    if payload.get("decision") not in _SAFE_SOURCE_DECISIONS:
         return False
-    if payload.get("status") not in {None, STATUS_BLOCKED, "not_loaded", "not_executed", "warning"}:
+    if payload.get("status") not in {None, "ok", STATUS_BLOCKED, "not_loaded", "not_executed", "warning"}:
         return False
     if not _to_bool(payload.get("research_only"), default=True):
         return False
@@ -327,7 +353,80 @@ def _source_is_safe(payload: Mapping[str, Any]) -> bool:
     for key in _FORBIDDEN_SOURCE_TRUE_FLAGS:
         if _to_bool(payload.get(key), default=False):
             return False
+    safety_flags = payload.get("safety_flags")
+    if isinstance(safety_flags, Mapping):
+        for key in _FORBIDDEN_SOURCE_TRUE_FLAGS:
+            if _to_bool(safety_flags.get(key), default=False):
+                return False
     return True
+
+
+def _build_paper_autotrain_feedback_loop_section(payload: Mapping[str, Any] | None) -> dict[str, Any]:
+    mapping = _as_mapping(payload)
+    safety_flags = {
+        "research_only": _to_bool(mapping.get("research_only"), default=True),
+        "read_only": _to_bool(mapping.get("read_only"), default=True),
+        "paper_only": _to_bool(mapping.get("paper_only"), default=True),
+        "shadow_only": _to_bool(mapping.get("shadow_only"), default=True),
+        "operational_authority": _to_bool(mapping.get("operational_authority"), default=False),
+        "live_release_allowed": _to_bool(mapping.get("live_release_allowed"), default=False),
+        "canary_release_allowed": _to_bool(mapping.get("canary_release_allowed"), default=False),
+        "order_submission_enabled": _to_bool(mapping.get("order_submission_enabled"), default=False),
+        "real_order_submission_enabled": _to_bool(mapping.get("real_order_submission_enabled"), default=False),
+        "sends_orders": _to_bool(mapping.get("sends_orders"), default=False),
+        "exchange_private_access": _to_bool(mapping.get("exchange_private_access"), default=False),
+        "changes_risk": _to_bool(mapping.get("changes_risk"), default=False),
+        "changes_model": _to_bool(mapping.get("changes_model"), default=False),
+        "promotion_eligible": _to_bool(mapping.get("promotion_eligible"), default=False),
+        "registry_write_performed": _to_bool(mapping.get("registry_write_performed"), default=False),
+        "model_promotion_performed": _to_bool(mapping.get("model_promotion_performed"), default=False),
+        "qlib_runtime_updated": _to_bool(mapping.get("qlib_runtime_updated"), default=False),
+        "ai_shadow_runtime_updated": _to_bool(mapping.get("ai_shadow_runtime_updated"), default=False),
+        "writes_runtime": _to_bool(mapping.get("writes_runtime"), default=False),
+        "writes_sqlite": _to_bool(mapping.get("writes_sqlite"), default=False),
+        "writes_parquet": _to_bool(mapping.get("writes_parquet"), default=False),
+    }
+    nested_safety = mapping.get("safety_flags")
+    if isinstance(nested_safety, Mapping):
+        for key in safety_flags:
+            safety_flags[key] = _to_bool(nested_safety.get(key), default=safety_flags[key])
+
+    lineage_hashes = dict(_mapping_or_empty(mapping.get("lineage_hashes")))
+    source_hashes = {
+        key: value
+        for key, value in {
+            "report_sha256": mapping.get("report_sha256"),
+            "source_sha256": mapping.get("source_sha256"),
+            **lineage_hashes,
+        }.items()
+        if value is not None
+    }
+    return {
+        "source_id": "paper_autotrain_feedback_loop_v1",
+        "status": str(mapping.get("status", "not_loaded")) if mapping else "not_loaded",
+        "decision": str(mapping.get("decision", DECISION_RESEARCH)) if mapping else DECISION_RESEARCH,
+        "reason": str(mapping.get("reason", "source_payload_not_loaded")) if mapping else "source_payload_not_loaded",
+        "schema_version": mapping.get("schema_version"),
+        "payload_loaded": bool(mapping),
+        "blockers": list(_collect_string_list(mapping.get("blockers"))),
+        "warnings": list(_collect_string_list(mapping.get("warnings"))),
+        "hashes": source_hashes,
+        "lineage_hashes": lineage_hashes,
+        "safety_flags": safety_flags,
+        "write_performed": _to_bool(mapping.get("write_performed"), default=False),
+        "source_report_write_performed": _to_bool(mapping.get("source_report_write_performed"), default=False),
+        "run_qlib_train_requested": _to_bool(mapping.get("run_qlib_train_requested"), default=False),
+        "run_ai_shadow_train_requested": _to_bool(mapping.get("run_ai_shadow_train_requested"), default=False),
+        "source_report_run_qlib_train_requested": _to_bool(
+            mapping.get("source_report_run_qlib_train_requested"),
+            default=False,
+        ),
+        "source_report_run_ai_shadow_train_requested": _to_bool(
+            mapping.get("source_report_run_ai_shadow_train_requested"),
+            default=False,
+        ),
+        "safe_for_readiness": _source_is_safe(mapping),
+    }
 
 
 def _build_source_digest(source_id: str, payload: Mapping[str, Any] | None) -> EvidenceSourceDigest:
@@ -502,6 +601,7 @@ def build_daily_learning_evidence_readiness_integration_snapshot(
     ai_shadow_feedback_bridge_payload: Mapping[str, Any] | None = None,
     candidate_shadow_rule_registry_payload: Mapping[str, Any] | None = None,
     shadow_rule_oos_validation_payload: Mapping[str, Any] | None = None,
+    paper_autotrain_feedback_loop_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a blocked informative readiness snapshot for Daily Learning."""
 
@@ -513,6 +613,7 @@ def build_daily_learning_evidence_readiness_integration_snapshot(
         "ai_shadow_feedback_bridge": ai_shadow_feedback_bridge_payload,
         "candidate_shadow_rule_registry": candidate_shadow_rule_registry_payload,
         "shadow_rule_oos_validation": shadow_rule_oos_validation_payload,
+        "paper_autotrain_feedback_loop_v1": paper_autotrain_feedback_loop_payload,
     }
     digests = [_build_source_digest(source_id, payload_by_source[source_id]) for source_id in _EVIDENCE_SOURCE_ORDER]
     source_summary = _summarize_sources(digests)
@@ -648,6 +749,9 @@ def build_daily_learning_evidence_readiness_integration_snapshot(
             "ai_shadow_runtime_update_allowed": False,
         },
         "source_digests": [digest.as_dict() for digest in digests],
+        "paper_autotrain_feedback_loop_v1": _build_paper_autotrain_feedback_loop_section(
+            paper_autotrain_feedback_loop_payload
+        ),
         "source_cards": [
             {
                 "card_id": digest.source_id,
