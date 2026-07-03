@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "2860dc187403959cb371297da3c4ddf3cd716619636e29e31bd1e8236c5c6e9e",
+  "aggregate_sha256": "051e8644fb353943e0b683dbd9e33c80aad8791a2e948b14ae34fe89cfe4911c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1940,10 +1940,10 @@
       "sha256": "cf576f72ec7a95d98a77f1a827b6976aa1e198e3e9ea17cf9befb7c52ca5e410"
     },
     {
-      "bytes": 1722,
+      "bytes": 1721,
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
-      "sha256": "46b8d030b9384896cf7cebadd14f785f3b4c09f5a55a71209fb5d7e7a819ecd0"
+      "sha256": "b5c91731a515f9f96702315f069d2924cf1440ff90c223e92973bfe46f5edb31"
     },
     {
       "bytes": 1772,
@@ -4592,10 +4592,10 @@
       "sha256": "f46e6638b9c83741b8d3b72b236d4f8628154be73c296d31b776e67f221236b5"
     },
     {
-      "bytes": 11968,
+      "bytes": 14933,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_environment_lock/environment_lock.py",
-      "sha256": "f6346b58999a1e1b4781997945c7f43000f95e86e1b13400bd9184b2586f4c86"
+      "sha256": "cdacbb81618ecfce5c39d738d2739707167d6983150951d83ba7f8310e24a4f1"
     },
     {
       "bytes": 182,
@@ -4610,16 +4610,16 @@
       "sha256": "65cee3525b419b8103dde4bb8ee37dbaaea9b2d2523b7a7a91696164313ef7f1"
     },
     {
-      "bytes": 10763,
+      "bytes": 12758,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_gate/dependency_contract.py",
-      "sha256": "053e0091ebc4bf48423036d2bbf7aa4966ee800d83821e15cc5274411c484b5e"
+      "sha256": "c8f927bb2c0f0b92aaa4804fec94d8950ab71e3055060489043a476cc986ce2f"
     },
     {
-      "bytes": 2459,
+      "bytes": 6768,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_gate/environment_audit.py",
-      "sha256": "0e719c52ce0eb9eb490c379751e216ca2638cebd4a459fc4309bb27a7ea1cac0"
+      "sha256": "96847985d45503c04c5dcbe19ec885f7fd8303c1dfe70989b8cd4e4aadc44036"
     },
     {
       "bytes": 1300,
@@ -4652,10 +4652,10 @@
       "sha256": "9d977d883c327a0595a536f72d40b16d01eb6ec4c415301a1ae110838e6a4ecd"
     },
     {
-      "bytes": 15160,
+      "bytes": 17716,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/ranking_trainer.py",
-      "sha256": "1494e2f16dbec918a042c0f72a4f0c223fa02221396bf3d289f67cc66868b3cb"
+      "sha256": "dc5e4c3d76fa5d458c8253783338093a5a2bc3a8f8df902e88ee616fcffe4871"
     },
     {
       "bytes": 4405,
@@ -7454,10 +7454,10 @@
       "sha256": "4c99dbf999ece0e0bec4a54bdf15036aa61eb4174b07d51f7270bb65d0f4bddb"
     },
     {
-      "bytes": 16209,
+      "bytes": 19174,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_institutional_ranking_trainer_v1.py",
-      "sha256": "c45cd961bda028734d3073a7867cc40b3df45a26eec4f16be5b195e1e0387dcc"
+      "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
     },
     {
       "bytes": 8484,
@@ -7490,10 +7490,10 @@
       "sha256": "caf3b500f0e1fd905f3f98bfe54b0b32563050e1ccbf934aa0cd99d76ed0e67a"
     },
     {
-      "bytes": 6831,
+      "bytes": 8242,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_research_backend_environment_lock_v1.py",
-      "sha256": "0a04a2a559ef71e3540507f244eef5f8460f8394bd1c6aeb38a3ed34c48e2b06"
+      "sha256": "8c1c9ebe87e21b2563ebaa1b6c1655d896ff38e09f43af92e79761d816300863"
     },
     {
       "bytes": 12311,

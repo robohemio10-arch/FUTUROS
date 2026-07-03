@@ -29,7 +29,7 @@ ml = [
   "scikit-learn>=1.4,<1.9"
 ]
 qlib = [
-  "pyqlib>=0.9,<1"
+  "pyqlib==0.9.7"
 ]
 dashboard = [
   "streamlit>=1.54,<2",

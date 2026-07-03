@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.learning.paper_autolearning.outcome_schema import SAFETY_FLAGS, utc_now_iso
+from smartcrypto.learning.qlib_backend_gate import build_qlib_research_backend_gate_report
 
 from .challenger_artifacts import write_challenger_artifact, write_report_artifacts
 from .dataset_adapter import DEFAULT_WALKFORWARD_BASELINE_JSON, DEFAULT_WALKFORWARD_JSON, load_ranking_dataset_bundle, resolve
@@ -53,7 +54,10 @@ def build_qlib_institutional_ranking_trainer_report(
         baseline_path=baseline_path,
         dataset_path=dataset_path,
     )
-    backend_gate_report = load_backend_gate_report(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT))
+    backend_gate_report, backend_gate_status = resolve_backend_gate_report(
+        root=root,
+        backend_gate_report_path=backend_gate_report_path,
+    )
     backend_probe = qlib_backend_probe_from_gate(backend_gate_report)
     if backend_probe is None:
         qlib_available = importlib.util.find_spec("qlib") is not None
@@ -62,7 +66,6 @@ def build_qlib_institutional_ranking_trainer_report(
     else:
         qlib_backend_status = backend_probe["qlib_backend_status"]
         qlib_available = qlib_backend_status == "available"
-        backend_gate_status = "provided"
     validation_errors = list(bundle.validation_errors)
     if registry_write_requested:
         validation_errors.append("registry_write_forbidden")
@@ -130,6 +133,12 @@ def build_qlib_institutional_ranking_trainer_report(
     }
     artifact_paths: dict[str, str] = {}
     artifact_hashes: dict[str, str] = {}
+    qlib_training_performed_flag = bool(training_performed and qlib_backend_status == "available")
+    report_safety_flags = safety_flags(
+        training_requested=bool(train),
+        qlib_challenger_training_performed=bool(training_performed),
+        qlib_training_performed=qlib_training_performed_flag,
+    )
     report: dict[str, Any] = {
         "status": status,
         "reason": reason,
@@ -144,6 +153,10 @@ def build_qlib_institutional_ranking_trainer_report(
         "split_engine_hash": bundle.walkforward.get("split_engine_hash"),
         "lineage_drift_detected": bundle.lineage_drift_detected,
         "qlib_backend_status": qlib_backend_status,
+        "qlib_importable": bool(backend_gate_report.get("qlib_importable", qlib_available)) if isinstance(backend_gate_report, dict) else bool(qlib_available),
+        "qlib_version": backend_gate_report.get("qlib_version") if isinstance(backend_gate_report, dict) else None,
+        "environment_lock_status": backend_gate_report.get("environment_lock_status") if isinstance(backend_gate_report, dict) else None,
+        "dependency_contract_hash": backend_gate_report.get("dependency_contract_hash") if isinstance(backend_gate_report, dict) else None,
         "backend_gate_report_status": backend_gate_status,
         "backend_gate_report_path": str(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT)),
         "trainer_status": trainer_status,
@@ -172,12 +185,13 @@ def build_qlib_institutional_ranking_trainer_report(
         "write_challenger_artifact_performed": False,
         "artifact_paths": artifact_paths,
         "artifact_hashes": artifact_hashes,
-        **safety_flags(),
+        **report_safety_flags,
         "training_requested": bool(train),
         "qlib_challenger_training_performed": bool(training_performed),
+        "qlib_training_performed": qlib_training_performed_flag,
         "qlib_runtime_updated": False,
         "ai_shadow_training_performed": False,
-        "safety_flags": safety_flags(),
+        "safety_flags": report_safety_flags,
         "validation_errors": sorted(set(validation_errors)),
     }
     metrics_payload = {
@@ -201,7 +215,7 @@ def build_qlib_institutional_ranking_trainer_report(
             "backend_name": backend_name,
             "promotion_eligible": False,
             "candidate_decision": candidate_decision,
-            "safety_flags": safety_flags(),
+            "safety_flags": report_safety_flags,
         }
         artifact_paths, artifact_hashes = write_challenger_artifact_files(
             root=root,
@@ -303,6 +317,33 @@ def input_sources(root: Path, bundle: Any) -> list[dict[str, Any]]:
     return [{"path": str(path.resolve()), "exists": path.exists()} for path in paths]
 
 
+def resolve_backend_gate_report(
+    *,
+    root: Path,
+    backend_gate_report_path: str | Path | None,
+) -> tuple[dict[str, Any] | None, str]:
+    """Resolve Qlib backend status without trusting stale default runtime reports.
+
+    If the caller supplies --backend-gate-report, the trainer treats that file as an
+    explicit immutable evidence input. Otherwise, it performs a live no-write gate
+    probe, because data/reports/qlib_research_backend_gate_v1.json can be stale
+    when the auditor was previously run without --write.
+    """
+
+    if backend_gate_report_path is not None:
+        return load_backend_gate_report(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT)), "provided"
+    try:
+        report = build_qlib_research_backend_gate_report(project_root=root, write=False)
+    except Exception as exc:  # noqa: BLE001 - returned as controlled blocked evidence, not swallowed.
+        return {
+            "qlib_backend_status": "blocked",
+            "validation_errors": [f"backend_gate_live_probe_failed:{type(exc).__name__}"],
+        }, "live_probe_failed"
+    if not isinstance(report, dict):
+        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_live_probe_invalid"]}, "live_probe_failed"
+    return report, "live_probe"
+
+
 def load_backend_gate_report(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
@@ -324,12 +365,17 @@ def qlib_backend_probe_from_gate(report: dict[str, Any] | None) -> dict[str, str
     return {"qlib_backend_status": status}
 
 
-def safety_flags() -> dict[str, bool]:
+def safety_flags(
+    *,
+    training_requested: bool = False,
+    qlib_challenger_training_performed: bool = False,
+    qlib_training_performed: bool = False,
+) -> dict[str, bool]:
     return {
         **SAFETY_FLAGS,
-        "training_requested": False,
-        "qlib_challenger_training_performed": False,
-        "qlib_training_performed": False,
+        "training_requested": bool(training_requested),
+        "qlib_challenger_training_performed": bool(qlib_challenger_training_performed),
+        "qlib_training_performed": bool(qlib_training_performed),
         "qlib_runtime_updated": False,
         "ai_shadow_training_performed": False,
         "registry_write_performed": False,

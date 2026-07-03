@@ -17,6 +17,16 @@ SCHEMA_VERSION = "qlib_research_backend_environment_lock_v1"
 DEFAULT_REPORT_JSON = Path("data/reports/qlib_research_backend_environment_lock_v1.json")
 DEFAULT_REPORT_MD = Path("data/reports/qlib_research_backend_environment_lock_v1.md")
 QLIB_PACKAGE_NAMES = ("pyqlib", "qlib")
+QLIB_LOCKFILE_NAMES = (
+    "requirements-qlib.lock",
+    "requirements-dev.lock",
+    "requirements-runtime.lock",
+)
+DEPENDENCY_GLOBS = ("requirements*.lock", "requirements*.txt")
+PINNED_Q_LIB_RE = re.compile(
+    r"^(?P<package>pyqlib|qlib)(\[[^\]]+\])?==(?P<version>[^=<>!~;\s]+)",
+    flags=re.IGNORECASE,
+)
 
 
 def build_qlib_environment_lock_report(
@@ -35,9 +45,15 @@ def build_qlib_environment_lock_report(
     declaration = inspect_dependency_declaration(root)
     probe = (probe_func or probe_qlib_backend)(modules)
     qlib_status = str(probe.get("qlib_backend_status", "unavailable"))
+    qlib_importable = bool(probe.get("qlib_importable", False))
     dependency_declared = bool(declaration["qlib_dependency_declared"])
     dependency_pinned = bool(declaration["qlib_dependency_pinned"])
-    environment_lock_status = determine_environment_lock_status(dependency_declared, dependency_pinned)
+    environment_lock_status = determine_environment_lock_status(
+        dependency_declared=dependency_declared,
+        dependency_pinned=dependency_pinned,
+        qlib_status=qlib_status,
+        qlib_importable=qlib_importable,
+    )
     compatibility_status = determine_compatibility_status(qlib_status, dependency_declared)
     status, reason = determine_status_reason(
         qlib_status=qlib_status,
@@ -55,15 +71,20 @@ def build_qlib_environment_lock_report(
         "project_root": str(root),
         "qlib_dependency_declared": dependency_declared,
         "qlib_dependency_pinned": dependency_pinned,
+        "qlib_dependency_hash_locked": bool(declaration["qlib_dependency_hash_locked"]),
         "dependency_sources": declaration["dependency_sources"],
         "dependency_specifiers": declaration["dependency_specifiers"],
         "lockfile_entries": declaration["lockfile_entries"],
+        "accepted_lockfiles": list(QLIB_LOCKFILE_NAMES),
         "qlib_backend_status": qlib_status,
-        "qlib_importable": bool(probe.get("qlib_importable", False)),
+        "qlib_importable": qlib_importable,
         "qlib_version": probe.get("qlib_version"),
         "qlib_package_path": probe.get("qlib_package_path"),
         "required_modules": modules,
-        "required_modules_status": required_modules_status(probe.get("module_probe_results", {}), modules),
+        "required_modules_status": required_modules_status(
+            probe.get("module_probe_results", {}),
+            modules,
+        ),
         "python_version": sys.version.split()[0],
         "platform": platform.platform(),
         "environment_lock_status": environment_lock_status,
@@ -85,54 +106,124 @@ def build_qlib_environment_lock_report(
     }
     if write:
         report["write_performed"] = True
-        write_reports(report=report, output_json=Path(output_paths["report_json"]), output_md=Path(output_paths["report_markdown"]))
+        write_reports(
+            report=report,
+            output_json=Path(output_paths["report_json"]),
+            output_md=Path(output_paths["report_markdown"]),
+        )
     return report
 
 
 def inspect_dependency_declaration(project_root: Path) -> dict[str, Any]:
+    """Return Qlib declaration and lock status using one institutional rule.
+
+    ``qlib_dependency_pinned`` is true only when a version-exact ``pyqlib==X.Y.Z``
+    or ``qlib==X.Y.Z`` entry exists in a versioned lockfile. A pyproject optional
+    dependency, even when exact-pinned, is a declaration source but not a lock.
+    """
+
     pyproject = project_root / "pyproject.toml"
-    requirements = sorted(project_root.glob("requirements*.lock")) + sorted(project_root.glob("requirements*.txt"))
+    requirements = discover_dependency_files(project_root)
     dependency_sources: list[dict[str, Any]] = []
     specifiers: list[str] = []
-    lockfile_entries: list[dict[str, str]] = []
+    lockfile_entries: list[dict[str, Any]] = []
     if pyproject.exists():
         parsed = tomllib.loads(pyproject.read_text(encoding="utf-8"))
         optional = parsed.get("project", {}).get("optional-dependencies", {})
         for group_name, entries in optional.items():
             for entry in entries:
-                if is_qlib_requirement(str(entry)):
-                    specifiers.append(str(entry))
-                    dependency_sources.append({"path": "pyproject.toml", "group": str(group_name), "specifier": str(entry)})
+                entry_text = str(entry).strip()
+                if is_qlib_requirement(entry_text):
+                    specifiers.append(entry_text)
+                    dependency_sources.append(
+                        {
+                            "path": "pyproject.toml",
+                            "group": str(group_name),
+                            "specifier": entry_text,
+                            "source_type": "declaration",
+                        }
+                    )
     for path in requirements:
         relative = path.relative_to(project_root).as_posix()
-        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-            stripped = line.strip()
-            if stripped and not stripped.startswith("#") and is_qlib_requirement(stripped):
-                lockfile_entries.append({"path": relative, "specifier": stripped})
+        for line_number, line in enumerate(
+            path.read_text(encoding="utf-8", errors="ignore").splitlines(),
+            start=1,
+        ):
+            stripped = normalize_requirement_line(line)
+            if stripped and is_qlib_requirement(stripped):
+                pinned = is_pinned_requirement(stripped)
+                hash_locked = "--hash=sha256:" in stripped.lower()
+                entry = {
+                    "path": relative,
+                    "specifier": stripped,
+                    "line_number": line_number,
+                    "pinned": pinned,
+                    "hash_locked": hash_locked,
+                }
+                lockfile_entries.append(entry)
                 specifiers.append(stripped)
-                dependency_sources.append({"path": relative, "group": "lockfile", "specifier": stripped})
+                dependency_sources.append(
+                    {
+                        "path": relative,
+                        "group": "lockfile",
+                        "specifier": stripped,
+                        "source_type": "lockfile",
+                    }
+                )
     return {
         "qlib_dependency_declared": bool(dependency_sources),
-        "qlib_dependency_pinned": any(is_pinned_requirement(item) for item in specifiers),
+        "qlib_dependency_pinned": any(entry["pinned"] for entry in lockfile_entries),
+        "qlib_dependency_hash_locked": any(
+            entry["pinned"] and entry["hash_locked"] for entry in lockfile_entries
+        ),
         "dependency_sources": dependency_sources,
         "dependency_specifiers": sorted(set(specifiers)),
         "lockfile_entries": lockfile_entries,
     }
 
 
+def discover_dependency_files(project_root: Path) -> list[Path]:
+    """Discover dependency files, prioritising the dedicated research Qlib lock."""
+
+    files: list[Path] = []
+    for name in QLIB_LOCKFILE_NAMES:
+        path = project_root / name
+        if path.is_file():
+            files.append(path.resolve())
+    for pattern in DEPENDENCY_GLOBS:
+        files.extend(path.resolve() for path in project_root.glob(pattern) if path.is_file())
+    return sorted(set(files), key=lambda path: path.relative_to(project_root).as_posix())
+
+
+def normalize_requirement_line(value: str) -> str:
+    stripped = value.strip()
+    if not stripped or stripped.startswith("#"):
+        return ""
+    if " #" in stripped:
+        stripped = stripped.split(" #", 1)[0].strip()
+    return stripped
+
+
 def is_qlib_requirement(value: str) -> bool:
     normalized = value.strip().lower()
-    return any(normalized == name or normalized.startswith(f"{name}=") or normalized.startswith(f"{name}<") or normalized.startswith(f"{name}>") or normalized.startswith(f"{name}[") for name in QLIB_PACKAGE_NAMES)
+    return any(
+        normalized == name
+        or normalized.startswith(f"{name}=")
+        or normalized.startswith(f"{name}<")
+        or normalized.startswith(f"{name}>")
+        or normalized.startswith(f"{name}[")
+        for name in QLIB_PACKAGE_NAMES
+    )
 
 
 def is_pinned_requirement(value: str) -> bool:
-    stripped = value.strip()
-    if "--hash=sha256:" in stripped.lower():
-        return True
-    return bool(re.match(r"^(pyqlib|qlib)(\[[^\]]+\])?==[^=<>!~]+$", stripped, flags=re.IGNORECASE))
+    return bool(PINNED_Q_LIB_RE.match(value.strip()))
 
 
-def required_modules_status(module_probe_results: dict[str, Any], required_modules: list[str]) -> dict[str, Any]:
+def required_modules_status(
+    module_probe_results: dict[str, Any],
+    required_modules: list[str],
+) -> dict[str, Any]:
     rows: dict[str, Any] = {}
     for module in required_modules:
         result = module_probe_results.get(module, {})
@@ -142,15 +233,29 @@ def required_modules_status(module_probe_results: dict[str, Any], required_modul
             "reason": result.get("reason", "not_probed"),
         }
     missing = [module for module, result in rows.items() if not result["importable"]]
-    return {"modules": rows, "missing_modules": missing, "all_required_modules_importable": not missing}
+    return {
+        "modules": rows,
+        "missing_modules": missing,
+        "all_required_modules_importable": not missing,
+    }
 
 
-def determine_environment_lock_status(dependency_declared: bool, dependency_pinned: bool) -> str:
+def determine_environment_lock_status(
+    *,
+    dependency_declared: bool,
+    dependency_pinned: bool,
+    qlib_status: str,
+    qlib_importable: bool,
+) -> str:
     if not dependency_declared:
         return "missing_dependency_declaration"
-    if dependency_pinned:
-        return "locked"
-    return "declared_not_locked"
+    if not dependency_pinned:
+        return "declared_not_locked"
+    if qlib_status == "blocked":
+        return "locked_with_documented_backend_blocker"
+    if not qlib_importable or qlib_status == "unavailable":
+        return "locked_not_importable"
+    return "locked"
 
 
 def determine_compatibility_status(qlib_status: str, dependency_declared: bool) -> str:
@@ -186,20 +291,25 @@ def validation_errors(*, qlib_status: str, dependency_declared: bool) -> list[st
     return errors
 
 
-def recommended_action(*, qlib_status: str, dependency_declared: bool, dependency_pinned: bool) -> str:
+def recommended_action(
+    *,
+    qlib_status: str,
+    dependency_declared: bool,
+    dependency_pinned: bool,
+) -> str:
     if not dependency_declared:
         return "Declare pyqlib in a research-only optional dependency group before research training."
     if qlib_status == "available" and dependency_pinned:
         return "Environment is importable and locked for research-only Qlib challenger work."
     if qlib_status == "available":
-        return "Qlib is importable; consider adding a pinned research lock in a dependency-management branch."
+        return "Qlib is importable; add a pinned research lock before declaring readiness."
     if qlib_status == "partial":
-        return "Qlib is partially importable; align required modules and version metadata before explicit training."
+        return "Qlib is partially importable; align required modules and version metadata."
     if qlib_status == "blocked":
         return "Resolve backend isolation or environment blockers before any research training."
     if dependency_pinned:
-        return "Install the pinned research dependency set in the development environment; this auditor does not install packages."
-    return "Install the declared pyqlib research extra or create a pinned research lock; this auditor does not install packages."
+        return "Install the pinned research dependency set; this auditor does not install packages."
+    return "Create a pinned research lock for pyqlib; this auditor does not install packages."
 
 
 def write_reports(*, report: dict[str, Any], output_json: Path, output_md: Path) -> None:
@@ -218,6 +328,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Reason: `{report['reason']}`",
             f"- Dependency declared: `{report['qlib_dependency_declared']}`",
             f"- Dependency pinned: `{report['qlib_dependency_pinned']}`",
+            f"- Dependency hash locked: `{report['qlib_dependency_hash_locked']}`",
             f"- Qlib importable: `{report['qlib_importable']}`",
             f"- Qlib version: `{report['qlib_version']}`",
             f"- Environment lock status: `{report['environment_lock_status']}`",

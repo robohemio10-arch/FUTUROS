@@ -46,6 +46,13 @@ def build_qlib_research_backend_gate_report(
         required_modules=modules,
     )
     qlib_status = dependency_contract["backend_capabilities"]["qlib_backend_status"]
+    environment_lock_status = determine_environment_lock_status(
+        dependency_declared=bool(environment["qlib_dependency_declared"]),
+        dependency_pinned=bool(environment["qlib_dependency_pinned"]),
+        qlib_status=qlib_status,
+        qlib_importable=bool(dependency_contract["qlib_importable"]),
+    )
+    dependency_contract["environment_lock_status"] = environment_lock_status
     status = "blocked" if qlib_status == "blocked" else "ok"
     reason = {
         "available": "qlib_backend_available",
@@ -64,6 +71,12 @@ def build_qlib_research_backend_gate_report(
         "schema_version": SCHEMA_VERSION,
         "generated_at_utc": utc_now_iso(),
         "project_root": str(root),
+        "qlib_dependency_declared": environment["qlib_dependency_declared"],
+        "qlib_dependency_pinned": environment["qlib_dependency_pinned"],
+        "qlib_dependency_hash_locked": environment["qlib_dependency_hash_locked"],
+        "dependency_specifiers": environment["dependency_specifiers"],
+        "lockfile_entries": environment["lockfile_entries"],
+        "environment_lock_status": environment_lock_status,
         "qlib_backend_status": qlib_status,
         "qlib_importable": dependency_contract["qlib_importable"],
         "qlib_version": dependency_contract["qlib_version"],
@@ -123,6 +136,12 @@ def build_dependency_contract(
         "python_version": environment["python_version"],
         "platform": environment["platform"],
         "project_root": str(project_root),
+        "qlib_dependency_declared": environment["qlib_dependency_declared"],
+        "qlib_dependency_pinned": environment["qlib_dependency_pinned"],
+        "qlib_dependency_hash_locked": environment["qlib_dependency_hash_locked"],
+        "dependency_specifiers": environment["dependency_specifiers"],
+        "lockfile_entries": environment["lockfile_entries"],
+        "environment_lock_status": None,
         "qlib_importable": bool(probe.get("qlib_importable", False)),
         "qlib_version": probe.get("qlib_version"),
         "qlib_package_path": probe.get("qlib_package_path"),
@@ -141,6 +160,24 @@ def build_dependency_contract(
     contract["contract_id"] = f"qlib_backend_dependency_contract_{digest[:16]}"
     contract["contract_hash"] = digest
     return contract
+
+
+def determine_environment_lock_status(
+    *,
+    dependency_declared: bool,
+    dependency_pinned: bool,
+    qlib_status: str,
+    qlib_importable: bool,
+) -> str:
+    if not dependency_declared:
+        return "missing_dependency_declaration"
+    if not dependency_pinned:
+        return "declared_not_locked"
+    if qlib_status == "blocked":
+        return "locked_with_documented_backend_blocker"
+    if not qlib_importable or qlib_status == "unavailable":
+        return "locked_not_importable"
+    return "locked"
 
 
 def backend_capabilities(qlib_status: str) -> dict[str, Any]:
@@ -191,6 +228,9 @@ def render_markdown(report: Mapping[str, Any], contract: Mapping[str, Any]) -> s
             f"- Status: `{report.get('status')}`",
             f"- Reason: `{report.get('reason')}`",
             f"- Qlib backend status: `{report.get('qlib_backend_status')}`",
+            f"- Dependency declared: `{report.get('qlib_dependency_declared')}`",
+            f"- Dependency pinned: `{report.get('qlib_dependency_pinned')}`",
+            f"- Environment lock status: `{report.get('environment_lock_status')}`",
             f"- Qlib importable: `{report.get('qlib_importable')}`",
             f"- Qlib version: `{report.get('qlib_version')}`",
             f"- Dependency contract hash: `{contract.get('contract_hash')}`",
