@@ -72,13 +72,52 @@ def test_missing_dependency_declaration_blocks(tmp_path: Path) -> None:
     assert "qlib_dependency_not_declared" in report["validation_errors"]
 
 
-def test_exact_pin_is_detected(tmp_path: Path) -> None:
+def test_pyproject_exact_pin_is_declaration_not_lock(tmp_path: Path) -> None:
     write_pyproject(tmp_path, "pyqlib==0.9.7")
-    report = build_qlib_environment_lock_report(project_root=tmp_path, probe_func=lambda _modules: fake_probe("available"))
+    report = build_qlib_environment_lock_report(
+        project_root=tmp_path,
+        probe_func=lambda _modules: fake_probe("available"),
+    )
+
+    assert report["qlib_dependency_declared"] is True
+    assert report["qlib_dependency_pinned"] is False
+    assert report["environment_lock_status"] == "declared_not_locked"
+    assert report["status"] == "ok"
+
+
+def test_requirements_qlib_lock_exact_pin_is_detected(tmp_path: Path) -> None:
+    write_pyproject(tmp_path, "pyqlib==0.9.7")
+    (tmp_path / "requirements-qlib.lock").write_text("pyqlib==0.9.7\n", encoding="utf-8")
+    report = build_qlib_environment_lock_report(
+        project_root=tmp_path,
+        probe_func=lambda _modules: fake_probe("available"),
+    )
 
     assert report["qlib_dependency_pinned"] is True
     assert report["environment_lock_status"] == "locked"
-    assert report["status"] == "ok"
+    assert report["lockfile_entries"] == [
+        {
+            "path": "requirements-qlib.lock",
+            "specifier": "pyqlib==0.9.7",
+            "line_number": 1,
+            "pinned": True,
+            "hash_locked": False,
+        }
+    ]
+
+
+def test_locked_not_importable_state_is_reported(tmp_path: Path) -> None:
+    write_pyproject(tmp_path, "pyqlib==0.9.7")
+    (tmp_path / "requirements-qlib.lock").write_text("pyqlib==0.9.7\n", encoding="utf-8")
+    report = build_qlib_environment_lock_report(
+        project_root=tmp_path,
+        probe_func=lambda _modules: fake_probe("unavailable"),
+    )
+
+    assert report["qlib_dependency_pinned"] is True
+    assert report["qlib_importable"] is False
+    assert report["environment_lock_status"] == "locked_not_importable"
+    assert report["status"] == "warning"
 
 
 def test_hash_locked_lockfile_is_detected(tmp_path: Path) -> None:

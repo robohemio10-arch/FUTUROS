@@ -10,6 +10,7 @@ import pandas as pd
 
 from smartcrypto.learning.feature_contracts import build_dataset_manifest, build_feature_contract
 from smartcrypto.learning.qlib_trainer import build_qlib_institutional_ranking_trainer_report
+from smartcrypto.learning.qlib_trainer import ranking_trainer
 from smartcrypto.learning.target_store import build_financial_label_target_store_report
 from smartcrypto.learning.walkforward import build_walkforward_anti_leakage_report
 
@@ -375,6 +376,68 @@ def test_cli_train_research_mode_executes_or_blocks_cleanly_when_backend_unavail
 
     assert payload["candidate_decision"] in {"BLOCKED_BACKEND_UNAVAILABLE", "MANTER_EM_RESEARCH", "RESEARCH_CHALLENGER_ONLY"}
     assert payload["model_promotion_performed"] is False
+
+
+def test_default_backend_probe_uses_live_gate_instead_of_stale_default_report(tmp_path: Path, monkeypatch) -> None:
+    write_project_inputs(tmp_path)
+    stale_path = tmp_path / "data" / "reports" / "qlib_research_backend_gate_v1.json"
+    stale_path.write_text(json.dumps({"qlib_backend_status": "unavailable"}), encoding="utf-8")
+
+    def fake_live_gate_report(*, project_root: Path, write: bool = False, report_json_path=None, report_markdown_path=None) -> dict[str, Any]:
+        assert Path(project_root).resolve() == tmp_path.resolve()
+        assert write is False
+        return {
+            "status": "ok",
+            "reason": "qlib_backend_available",
+            "qlib_backend_status": "available",
+            "qlib_importable": True,
+            "qlib_version": "0.9.7",
+            "environment_lock_status": "locked",
+            "dependency_contract_hash": "live-contract",
+            "backend_capabilities": {
+                "can_use_research_backend": True,
+                "can_train_ranker": True,
+                "can_send_orders": False,
+                "can_promote_model": False,
+                "can_update_runtime": False,
+                "can_write_registry": False,
+            },
+        }
+
+    monkeypatch.setattr(ranking_trainer, "build_qlib_research_backend_gate_report", fake_live_gate_report)
+
+    report = ranking_trainer.build_qlib_institutional_ranking_trainer_report(project_root=tmp_path, train=True)
+
+    assert report["backend_gate_report_status"] == "live_probe"
+    assert report["qlib_backend_status"] == "available"
+    assert report["qlib_importable"] is True
+    assert report["environment_lock_status"] == "locked"
+    assert report["dependency_contract_hash"] == "live-contract"
+    assert report["qlib_challenger_training_performed"] is True
+    assert report["qlib_training_performed"] is True
+    assert report["safety_flags"]["training_requested"] is True
+    assert report["safety_flags"]["qlib_challenger_training_performed"] is True
+    assert report["safety_flags"]["qlib_training_performed"] is True
+    assert report["safety_flags"]["sends_orders"] is False
+    assert report["model_promotion_performed"] is False
+    assert report["registry_write_performed"] is False
+
+
+def test_explicit_backend_gate_report_is_still_honored(tmp_path: Path) -> None:
+    write_project_inputs(tmp_path)
+    explicit_path = tmp_path / "explicit_gate.json"
+    explicit_path.write_text(json.dumps({"qlib_backend_status": "unavailable"}), encoding="utf-8")
+
+    report = build_qlib_institutional_ranking_trainer_report(
+        project_root=tmp_path,
+        train=True,
+        backend_gate_report_path=explicit_path,
+    )
+
+    assert report["backend_gate_report_status"] == "provided"
+    assert report["qlib_backend_status"] == "unavailable"
+    assert report["status"] == "blocked"
+    assert "qlib_backend_unavailable" in report["validation_errors"]
 
 
 def mutate_feature_columns(root: Path, column: str) -> None:

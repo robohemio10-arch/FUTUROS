@@ -1,0 +1,2 @@
+# Research-only Qlib backend lock. Do not install in runtime executor images.
+pyqlib==0.9.7
