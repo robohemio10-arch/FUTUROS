@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2fb8ffb7ecdcbea7bbfe13739e1fcf6f816bf8b10d4252c782e03c577b2bfe43",
+  "aggregate_sha256": "f7e47de2da740948eea16e96a5a9b68e9183adcfeadfaef45497495a7af1bcec",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 228,
-    "manifested_files_total": 1305,
-    "python_files": 982,
+    "docs_files": 229,
+    "manifested_files_total": 1310,
+    "python_files": 986,
     "runtime_excluded_files_total": 0,
-    "test_files": 278,
-    "tracked_files_total": 1306,
+    "test_files": 279,
+    "tracked_files_total": 1311,
     "workflows": 1
   },
   "deterministic": true,
@@ -558,6 +558,12 @@
       "hash_mode": "text_lf",
       "path": "docker/smartcrypto/Dockerfile",
       "sha256": "faf82418f29e7890f2a6b56dc919c7264d3164fce66ec358af7955468f7edb18"
+    },
+    {
+      "bytes": 4419,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_FEATURE_MISSINGNESS_REMEDIATION_DESIGN_V1.md",
+      "sha256": "b0c6092f573f19d647d509d7cce4686c57afcead90e4765c3a8408995799b9e8"
     },
     {
       "bytes": 1421,
@@ -2304,6 +2310,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_15s_microstructure_shadow_features.py",
       "sha256": "2479152ba367e12e67a5d3ca8b10afa96d7c4e151967e6005313b07a9977e458"
+    },
+    {
+      "bytes": 1797,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_feature_missingness_remediation_design_v1.py",
+      "sha256": "607aef6dd245aae3bbdd0234f296b615e1e33d9d6fa86981e1fd498d930ea978"
     },
     {
       "bytes": 1791,
@@ -4592,6 +4604,18 @@
       "sha256": "89661eb7ced7cb1bde187087631bbe53b2e71ff0887f72328df12a35a4f8ebc6"
     },
     {
+      "bytes": 208,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_missingness_remediation_design/__init__.py",
+      "sha256": "99668a322902d177213bb6b046174b6d8a7b29315a73a9769cd3968b6bf83495"
+    },
+    {
+      "bytes": 35180,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_missingness_remediation_design/design.py",
+      "sha256": "7d8f0a61e16566a9ac806414f19d757e5ae715be0a24b233e9cb0d63e77c2dc7"
+    },
+    {
       "bytes": 461,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/__init__.py",
@@ -6186,6 +6210,12 @@
       "hash_mode": "text_lf",
       "path": "tests/fixtures/dashboard_sources/sample.json",
       "sha256": "f9f4b24bcb2d2701350fa4a315b833a43044a1ad4eb8b355f00074c62f6222f4"
+    },
+    {
+      "bytes": 11037,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_feature_missingness_remediation_design_v1.py",
+      "sha256": "a327bd5d8e5a4a27c695b163921942d021188fe77468c666e97fed6058296192"
     },
     {
       "bytes": 12931,
