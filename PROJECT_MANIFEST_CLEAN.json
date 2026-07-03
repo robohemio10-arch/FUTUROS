@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ecb15016c20218df9554d9e27e38508bfa6c74ad4bcb291b879349a5930e38e5",
+  "aggregate_sha256": "ecc112cef2d558a57381f9df6958e70fa446d1fbdcff3ac76653ea30e2eb4524",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 226,
-    "manifested_files_total": 1295,
-    "python_files": 974,
+    "docs_files": 227,
+    "manifested_files_total": 1300,
+    "python_files": 978,
     "runtime_excluded_files_total": 0,
-    "test_files": 276,
-    "tracked_files_total": 1296,
+    "test_files": 277,
+    "tracked_files_total": 1301,
     "workflows": 1
   },
   "deterministic": true,
@@ -564,6 +564,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_MODEL_GOVERNANCE.md",
       "sha256": "580f8a09c24cd89c0f98f6814c739042c7d6b7188eb142465077dcc01e2a471b"
+    },
+    {
+      "bytes": 4007,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_QLIB_DRIFT_REGIME_MONITOR_V1.md",
+      "sha256": "19c4f783c7f1dd2fc34f0e86dedfee7584d897cd6bee39bb58d4536118874e22"
     },
     {
       "bytes": 4036,
@@ -2292,6 +2298,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_15s_microstructure_shadow_features.py",
       "sha256": "2479152ba367e12e67a5d3ca8b10afa96d7c4e151967e6005313b07a9977e458"
+    },
+    {
+      "bytes": 1791,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_qlib_drift_regime_monitor_v1.py",
+      "sha256": "6ade8bf59e294f267255cb557a137aa1e2f287634a9706366dd3406b0eced80a"
     },
     {
       "bytes": 2758,
@@ -4466,6 +4478,18 @@
       "sha256": "63a74a7bc48e0d5df2fc7e184128372d8022a565e5c0fd6610600747a036d4ab"
     },
     {
+      "bytes": 161,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_qlib_drift_regime_monitor/__init__.py",
+      "sha256": "b4cc9dff5d92c8f9f6a3df400a8916feef3f93a5190b1cb689cbaef9f97aba1b"
+    },
+    {
+      "bytes": 30065,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_qlib_drift_regime_monitor/monitor.py",
+      "sha256": "f8190859edb9e45819a5b9e911a268025a51bed66251870cc4a5f35661bc9436"
+    },
+    {
       "bytes": 189,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/ai_shadow_trainer/__init__.py",
@@ -6138,6 +6162,12 @@
       "hash_mode": "text_lf",
       "path": "tests/fixtures/dashboard_sources/sample.json",
       "sha256": "f9f4b24bcb2d2701350fa4a315b833a43044a1ad4eb8b355f00074c62f6222f4"
+    },
+    {
+      "bytes": 12931,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_qlib_drift_regime_monitor_v1.py",
+      "sha256": "b31744ed4f897665028569e2d3ae16a0412201c2448d1431da2ffffd04d869c1"
     },
     {
       "bytes": 9712,
