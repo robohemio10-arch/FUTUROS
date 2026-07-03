@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f7e47de2da740948eea16e96a5a9b68e9183adcfeadfaef45497495a7af1bcec",
+  "aggregate_sha256": "bb6e44a42e041fb6ae36e295cc8511eff12b1768b21c0bc9cc422b82f6fc0a0a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 229,
-    "manifested_files_total": 1310,
-    "python_files": 986,
+    "docs_files": 230,
+    "manifested_files_total": 1315,
+    "python_files": 990,
     "runtime_excluded_files_total": 0,
-    "test_files": 279,
-    "tracked_files_total": 1311,
+    "test_files": 280,
+    "tracked_files_total": 1316,
     "workflows": 1
   },
   "deterministic": true,
@@ -564,6 +564,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_FEATURE_MISSINGNESS_REMEDIATION_DESIGN_V1.md",
       "sha256": "b0c6092f573f19d647d509d7cce4686c57afcead90e4765c3a8408995799b9e8"
+    },
+    {
+      "bytes": 9980,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_FEATURE_MISSINGNESS_REMEDIATION_IMPLEMENTATION_V1.md",
+      "sha256": "3b262ca5fd032fe8c1cd2218f6e4d2733de2715a7b1099519d76cd8d8741eba9"
     },
     {
       "bytes": 1421,
@@ -2316,6 +2322,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_feature_missingness_remediation_design_v1.py",
       "sha256": "607aef6dd245aae3bbdd0234f296b615e1e33d9d6fa86981e1fd498d930ea978"
+    },
+    {
+      "bytes": 1838,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_feature_missingness_remediation_implementation_v1.py",
+      "sha256": "e14a150503ef786bf543e2379f5940873e3c1f727716ccab862e76ee9f7267a2"
     },
     {
       "bytes": 1791,
@@ -4616,6 +4628,18 @@
       "sha256": "7d8f0a61e16566a9ac806414f19d757e5ae715be0a24b233e9cb0d63e77c2dc7"
     },
     {
+      "bytes": 482,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_missingness_remediation_implementation/__init__.py",
+      "sha256": "e2da7d21af0fe88ee9774cabbeded2aa8ab4b0ec69c3d23eaa1d671591b9f3b6"
+    },
+    {
+      "bytes": 27941,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_missingness_remediation_implementation/implementation.py",
+      "sha256": "f831ded869eaac932db1dd5125adff46a412fde7624de77ea9220d91f0e43785"
+    },
+    {
       "bytes": 461,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/__init__.py",
@@ -6216,6 +6240,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_feature_missingness_remediation_design_v1.py",
       "sha256": "a327bd5d8e5a4a27c695b163921942d021188fe77468c666e97fed6058296192"
+    },
+    {
+      "bytes": 12257,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_feature_missingness_remediation_implementation_v1.py",
+      "sha256": "096fcd7b86c4d3aed0cc392751f4a474071ebe9573a27731c625bc85babf23fd"
     },
     {
       "bytes": 12931,
