@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "bb6e44a42e041fb6ae36e295cc8511eff12b1768b21c0bc9cc422b82f6fc0a0a",
+  "aggregate_sha256": "c10a5de3f8c3ffb45fc94ec772b0410006c89dab90039b08064244886185641e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 230,
-    "manifested_files_total": 1315,
-    "python_files": 990,
+    "docs_files": 231,
+    "manifested_files_total": 1320,
+    "python_files": 994,
     "runtime_excluded_files_total": 0,
-    "test_files": 280,
-    "tracked_files_total": 1316,
+    "test_files": 281,
+    "tracked_files_total": 1321,
     "workflows": 1
   },
   "deterministic": true,
@@ -984,6 +984,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DOCKER_NON_ROOT_CONTAINER_SECURITY.md",
       "sha256": "291cafeff743d6cca540ed3454acd66084205350e67bd2062244b7e398f043e8"
+    },
+    {
+      "bytes": 2938,
+      "hash_mode": "text_lf",
+      "path": "docs/EVENT_DRIVEN_BACKTEST_EXECUTION_COST_GATE_V1.md",
+      "sha256": "fb1884f63140293d36d4dc9e9fdae8c73194d069804d822ccdf80c6f5fd6c881"
     },
     {
       "bytes": 3474,
@@ -2514,6 +2520,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_dataset_manifest.py",
       "sha256": "ad57f905260d64cf731e04593863360e96f1093a4e5cfd62974583e12b340e48"
+    },
+    {
+      "bytes": 2374,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_event_driven_backtest_execution_cost_gate_v1.py",
+      "sha256": "6dda83ca0210957e4608865f2564bc1c23a0bce11bb067ed9069ce863a6cbb02"
     },
     {
       "bytes": 1628,
@@ -4590,6 +4602,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/autolearning_closeout/safety_validator.py",
       "sha256": "cc94e74d8757a0ff80b189847c8d3c3be787b6e7d13037adb260385e82ddeee6"
+    },
+    {
+      "bytes": 199,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/event_driven_backtest_execution_cost_gate/__init__.py",
+      "sha256": "6401eb86488c058a8f5514038298bea6e3fdbe4cce073984e29bf09940a67413"
+    },
+    {
+      "bytes": 22205,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/event_driven_backtest_execution_cost_gate/gate.py",
+      "sha256": "7e20330913727e1f21d19d5113ab77391ab7ac3d2abf6eeb473ff5d547eb7d38"
     },
     {
       "bytes": 411,
@@ -6936,6 +6960,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_event_driven_backtest.py",
       "sha256": "1115abd750245a9025701adb864643f08195919cdd5cf50f46cebf0cdadd8f77"
+    },
+    {
+      "bytes": 9057,
+      "hash_mode": "text_lf",
+      "path": "tests/test_event_driven_backtest_execution_cost_gate_v1.py",
+      "sha256": "dfa28c26bbb2623c86e970c2df34d8714ce0b42a46a5c6bcb3df9bbd9ebedc2f"
     },
     {
       "bytes": 2575,
