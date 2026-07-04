@@ -11,6 +11,11 @@ import math
 import pandas as pd
 import yaml
 
+from smartcrypto.execution.signal_risk_gate import (
+    DEFAULT_RISK_LIMITS_PATH,
+    apply_risk_manager_gate,
+)
+
 
 @dataclass(frozen=True)
 class SignalGuardConfig:
@@ -23,6 +28,7 @@ class SignalGuardConfig:
     max_position_usdt: float
     leverage: float
     runtime_mode: str
+    risk_limits_path: Path
 
 
 def load_config(path: Path = Path("config/ops_loop.yml")) -> SignalGuardConfig:
@@ -30,6 +36,7 @@ def load_config(path: Path = Path("config/ops_loop.yml")) -> SignalGuardConfig:
     paths = raw.get("paths", {})
     contract = raw.get("signal_contract", {})
     risk = raw.get("risk", {})
+    risk_manager = raw.get("risk_manager", {})
     return SignalGuardConfig(
         signals_path=Path(paths.get("signals", "data/freqtrade_signals.json")),
         predictions_path=Path(paths.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")),
@@ -40,6 +47,7 @@ def load_config(path: Path = Path("config/ops_loop.yml")) -> SignalGuardConfig:
         max_position_usdt=float(risk.get("max_position_usdt", 50)),
         leverage=float(risk.get("leverage", 2)),
         runtime_mode=str(raw.get("runtime_mode", "paper")),
+        risk_limits_path=Path(risk_manager.get("limits_path", str(DEFAULT_RISK_LIMITS_PATH))),
     )
 
 
@@ -112,7 +120,7 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
 
     latest = frame.groupby("symbol", as_index=False, sort=False).tail(1) if "symbol" in frame.columns else frame.tail(2)
 
-    signals: list[dict[str, Any]] = []
+    candidate_signals: list[dict[str, Any]] = []
     for _, row in latest.iterrows():
         symbol = str(row.get("symbol", "")).upper()
         pair = _to_pair(symbol, row.get("pair", ""))
@@ -129,7 +137,10 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
         if side is None or confidence < config.min_confidence:
             continue
 
-        signals.append(
+        # NOTE: no "risk_approved" claim is made here. RiskManager is the
+        # only authority allowed to set that field, via
+        # apply_risk_manager_gate() below.
+        candidate_signals.append(
             {
                 "pair": pair,
                 "symbol": symbol,
@@ -140,7 +151,6 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
                 "timeframe": str(row.get("tf", "5m")),
                 "generated_at": now.isoformat(),
                 "valid_until": valid_until.isoformat(),
-                "risk_approved": True,
                 "max_position_usdt": config.max_position_usdt,
                 "leverage": config.leverage,
                 "model_version": str(row.get("model_version", "qlib_lgbm_v1")),
@@ -152,12 +162,25 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
     if "model_version" in latest.columns and not latest["model_version"].dropna().empty:
         model_version = str(latest["model_version"].dropna().iloc[-1])
 
+    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=config.risk_limits_path)
+    if risk_gate.status != "ok":
+        return {
+            "generated_at": now.isoformat(),
+            "runtime_mode": config.runtime_mode,
+            "model_version": model_version,
+            "source": "phase11_signal_contract_guard",
+            "signals": [],
+            "reason": risk_gate.reason,
+            "risk_manager_gate": risk_gate.to_dict(),
+        }
+
     return {
         "generated_at": now.isoformat(),
         "runtime_mode": config.runtime_mode,
         "model_version": model_version,
         "source": "phase11_signal_contract_guard",
-        "signals": signals,
+        "signals": risk_gate.approved_signals,
+        "risk_manager_gate": risk_gate.to_dict(),
     }
 
 

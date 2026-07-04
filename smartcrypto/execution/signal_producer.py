@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -13,6 +13,10 @@ import yaml
 from smartcrypto.execution.paper_candidate_filter_runtime_wiring import (
     apply_paper_candidate_filter_to_signals,
     summarize_runtime_wiring,
+)
+from smartcrypto.execution.signal_risk_gate import (
+    DEFAULT_RISK_LIMITS_PATH,
+    apply_risk_manager_gate,
 )
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 
@@ -31,11 +35,14 @@ def iso_utc(value: datetime | None = None) -> str:
 def parse_datetime(value: Any) -> datetime | None:
     if value is None:
         return None
+
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
     text = str(value).strip()
     if not text:
         return None
+
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
@@ -60,6 +67,7 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
                 "report": "data/reports/phase13_signal_producer_report.json",
                 "summary": "data/reports/phase13_summary.json",
                 "decision_log": "data/runtime/freqtrade_signal_decisions.jsonl",
+                "risk_limits": str(DEFAULT_RISK_LIMITS_PATH),
             },
             "policy": {
                 "validity_minutes": 30,
@@ -87,11 +95,13 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
 
 def deep_merge(left: dict[str, Any], right: Mapping[str, Any]) -> dict[str, Any]:
     merged = dict(left)
+
     for key, value in right.items():
         if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
             merged[key] = deep_merge(dict(merged[key]), value)
         else:
             merged[key] = value
+
     return merged
 
 
@@ -103,6 +113,7 @@ def read_json(path: str | os.PathLike[str]) -> dict[str, Any]:
     file_path = Path(path)
     if not file_path.exists():
         return {}
+
     try:
         with file_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
@@ -114,36 +125,47 @@ def read_json(path: str | os.PathLike[str]) -> dict[str, Any]:
 def atomic_write_json(path: str | os.PathLike[str], payload: Mapping[str, Any]) -> None:
     file_path = Path(path)
     ensure_parent(file_path)
+
     tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
     with tmp_path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2, default=str)
         handle.write("\n")
+
     tmp_path.replace(file_path)
 
 
 def active_signals_from_payload(payload: Mapping[str, Any], now: datetime | None = None) -> list[dict[str, Any]]:
     current = now or utc_now()
     signals = payload.get("signals", [])
+
     if not isinstance(signals, list):
         return []
 
     active: list[dict[str, Any]] = []
+
     for item in signals:
         if not isinstance(item, Mapping):
             continue
+
         valid_until = parse_datetime(item.get("valid_until"))
         if valid_until and valid_until < current:
             continue
-        if item.get("risk_approved") is False:
+
+        if item.get("risk_approved") is not True:
             continue
+
         pair = str(item.get("pair") or "").strip()
         symbol = str(item.get("symbol") or "").strip()
         side = str(item.get("side") or "").strip().lower()
+
         if not (pair or symbol):
             continue
+
         if side not in {"long", "short"}:
             continue
+
         active.append(dict(item))
+
     return active
 
 
@@ -166,8 +188,10 @@ def load_predictions(path: str | os.PathLike[str]) -> pd.DataFrame:
         return frame
 
     frame = frame.copy()
+
     if "pair" not in frame.columns and "symbol" in frame.columns:
         frame["pair"] = frame["symbol"].map(symbol_to_pair)
+
     if "symbol" not in frame.columns and "pair" in frame.columns:
         frame["symbol"] = frame["pair"].map(pair_to_symbol)
 
@@ -206,18 +230,23 @@ def load_predictions(path: str | os.PathLike[str]) -> pd.DataFrame:
 
 def symbol_to_pair(value: Any) -> str:
     symbol = str(value or "").replace("/", "").replace(":USDT", "").upper()
+
     if not symbol:
         return ""
+
     if symbol.endswith("USDT"):
         base = symbol[:-4]
         return f"{base}/USDT:USDT"
+
     return symbol
 
 
 def pair_to_symbol(value: Any) -> str:
     pair = str(value or "").upper()
+
     if not pair:
         return ""
+
     return pair.replace(":USDT", "").replace("/", "")
 
 
@@ -234,6 +263,7 @@ def select_prediction_rows(frame: pd.DataFrame, config: Mapping[str, Any]) -> pd
     clean = frame.copy()
     clean = clean[clean["side"].isin(["long", "short"])]
     clean = clean[(clean.get("pair", "") != "") | (clean.get("symbol", "") != "")]
+
     filtered = clean[(clean["score"].abs() >= min_abs_score) & (clean["confidence"] >= min_confidence)]
 
     if filtered.empty and include_top_n > 0:
@@ -243,17 +273,29 @@ def select_prediction_rows(frame: pd.DataFrame, config: Mapping[str, Any]) -> pd
     return filtered.reset_index(drop=True)
 
 
-def row_to_signal(row: Mapping[str, Any], config: Mapping[str, Any], generated_at: datetime, valid_until: datetime) -> dict[str, Any]:
+def row_to_signal(
+    row: Mapping[str, Any],
+    config: Mapping[str, Any],
+    generated_at: datetime,
+    valid_until: datetime,
+) -> dict[str, Any]:
     risk = config.get("risk", {})
     model_version = str(config.get("model_version_default") or "qlib_lgbm_v1")
 
     pair = str(row.get("pair") or symbol_to_pair(row.get("symbol"))).strip()
     symbol = str(row.get("symbol") or pair_to_symbol(pair)).strip()
-    side = str(row.get("side") or ("long" if float(row.get("score", 0.0)) > 0 else "short")).lower()
 
-    score = safe_float(row.get("score"), 0.0)
+    raw_score = safe_float(row.get("score"), 0.0)
+    score = float(raw_score if raw_score is not None else 0.0)
+
+    side = str(row.get("side") or ("long" if score > 0 else "short")).lower()
     confidence = safe_float(row.get("confidence"), abs(score))
 
+    # NOTE: this candidate signal is intentionally built WITHOUT a
+    # "risk_approved" claim. The only place allowed to set that field is
+    # smartcrypto.execution.signal_risk_gate.apply_risk_manager_gate, which
+    # only stamps risk_approved=True for signals RiskManager itself
+    # approved. See build_active_signals() below.
     return {
         "pair": pair,
         "symbol": symbol,
@@ -262,7 +304,6 @@ def row_to_signal(row: Mapping[str, Any], config: Mapping[str, Any], generated_a
         "confidence": confidence,
         "prob_up": safe_float(row.get("prob_up"), None),
         "predicted_direction": int(1 if side == "long" else -1),
-        "risk_approved": True,
         "leverage": safe_float(risk.get("leverage"), 2.0),
         "max_position_usdt": safe_float(risk.get("max_position_usdt"), 50.0),
         "model_version": str(row.get("model_version") or model_version),
@@ -276,9 +317,11 @@ def safe_float(value: Any, default: float | None = 0.0) -> float | None:
     try:
         if value is None:
             return default
+
         number = float(value)
         if math.isnan(number) or math.isinf(number):
             return default
+
         return number
     except Exception:
         return default
@@ -297,6 +340,7 @@ def build_active_signals(
     primary_path = paths.get("primary_signals", "data/freqtrade_signals.json")
     pinned_path = paths.get("pinned_signals", "data/runtime/active_freqtrade_signals.json")
     report_path = paths.get("report", "data/reports/phase13_signal_producer_report.json")
+    risk_limits_path = paths.get("risk_limits", str(DEFAULT_RISK_LIMITS_PATH))
 
     generated_at = utc_now()
     minutes = int(validity_minutes or policy.get("validity_minutes", 30) or 30)
@@ -313,6 +357,7 @@ def build_active_signals(
         max_input_data_age_minutes=max_input_data_age,
         now=generated_at,
     )
+
     if freshness.get("freshness_status") != "fresh":
         report = {
             "status": "blocked",
@@ -334,6 +379,7 @@ def build_active_signals(
         }
         atomic_write_json(report_path, report)
         return report
+
     if freshness.get("input_data_status") != "input_data_fresh":
         input_reason_by_status = {
             "input_data_stale": "qlib_input_data_stale",
@@ -364,11 +410,47 @@ def build_active_signals(
     frame = load_predictions(predictions_path)
     selected = select_prediction_rows(frame, config)
 
-    signals = [row_to_signal(row, config, generated_at, valid_until) for row in selected.to_dict(orient="records")]
+    candidate_signals = [
+        row_to_signal(row, config, generated_at, valid_until)
+        for row in selected.to_dict(orient="records")
+    ]
+
     runtime_mode = str(config.get("runtime_mode") or "paper")
-    paper_candidate_wiring = apply_paper_candidate_filter_to_signals(signals, runtime_mode=runtime_mode)
-    signals = list(paper_candidate_wiring["allowed_signals"])
+    paper_candidate_wiring = apply_paper_candidate_filter_to_signals(candidate_signals, runtime_mode=runtime_mode)
+    candidate_signals = list(paper_candidate_wiring["allowed_signals"])
     paper_candidate_wiring_summary = summarize_runtime_wiring(paper_candidate_wiring)
+
+    # Final authorization gate: RiskManager is the last word before any
+    # signal can be considered "active". Signals RiskManager rejects are
+    # never written as active signals; they only appear, for evidence, in
+    # risk_manager_gate.rejected_signal_reasons in the report below.
+    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=risk_limits_path)
+
+    if risk_gate.status != "ok":
+        report = {
+            "status": "blocked",
+            "reason": risk_gate.reason,
+            "created_at": generated_at.isoformat(),
+            "predictions_path": str(predictions_path),
+            "primary_signals_path": str(primary_path),
+            "pinned_signals_path": str(pinned_path),
+            "signals_before_primary": len(before_primary),
+            "signals_before_pinned": len(before_pinned),
+            "signals_after": 0,
+            "written_primary": False,
+            "written_pinned": False,
+            "prediction_rows": int(len(frame)),
+            "prediction_freshness": freshness,
+            "generated_at": generated_at.isoformat(),
+            "valid_until_min": None,
+            "valid_until_max": None,
+            "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
+            "risk_manager_gate": risk_gate.to_dict(),
+        }
+        atomic_write_json(report_path, report)
+        return report
+
+    signals = risk_gate.approved_signals
     signal_payload = {
         "generated_at": generated_at.isoformat(),
         "source": "phase13_signal_producer_hardening",
@@ -410,6 +492,7 @@ def build_active_signals(
         "valid_until_min": min([item["valid_until"] for item in signals], default=None),
         "valid_until_max": max([item["valid_until"] for item in signals], default=None),
         "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
+        "risk_manager_gate": risk_gate.to_dict(),
     }
 
     atomic_write_json(report_path, report)
@@ -419,6 +502,7 @@ def build_active_signals(
 def inspect_signal_file(path: str | os.PathLike[str]) -> dict[str, Any]:
     payload = read_json(path)
     active = active_signals_from_payload(payload)
+
     signals = payload.get("signals", [])
     signals = signals if isinstance(signals, list) else []
 
@@ -430,15 +514,27 @@ def inspect_signal_file(path: str | os.PathLike[str]) -> dict[str, Any]:
         "model_version": payload.get("model_version", "unknown"),
         "signal_count": len(signals),
         "active_signal_count": len(active),
-        "pairs": sorted({str(item.get("pair")) for item in signals if isinstance(item, Mapping) and item.get("pair")}),
+        "pairs": sorted(
+            {
+                str(item.get("pair"))
+                for item in signals
+                if isinstance(item, Mapping) and item.get("pair")
+            }
+        ),
         "active_pairs": sorted({str(item.get("pair")) for item in active if item.get("pair")}),
-        "sides": sorted({str(item.get("side")) for item in signals if isinstance(item, Mapping) and item.get("side")}),
+        "sides": sorted(
+            {
+                str(item.get("side"))
+                for item in signals
+                if isinstance(item, Mapping) and item.get("side")
+            }
+        ),
     }
 
 
 def inspect_decision_log(path: str | os.PathLike[str], sample_size: int = 80) -> dict[str, Any]:
     file_path = Path(path)
-    result = {
+    result: dict[str, Any] = {
         "path": str(path),
         "exists": file_path.exists(),
         "rows_sampled": 0,
@@ -447,11 +543,13 @@ def inspect_decision_log(path: str | os.PathLike[str], sample_size: int = 80) ->
         "exit_events": 0,
         "recent": [],
     }
+
     if not file_path.exists():
         return result
 
     lines = file_path.read_text(encoding="utf-8", errors="ignore").splitlines()
     recent_lines = lines[-sample_size:]
+
     events: list[dict[str, Any]] = []
     for line in recent_lines:
         try:
@@ -490,7 +588,9 @@ def write_phase13_summary(config_path: str | os.PathLike[str] | Mapping[str, Any
     config = load_config(config_path)
     summary = inspect_signal_runtime(config)
     summary_path = config.get("paths", {}).get("summary", "data/reports/phase13_summary.json")
+
     atomic_write_json(summary_path, summary)
+
     return {
         "status": "ok",
         "summary": summary_path,

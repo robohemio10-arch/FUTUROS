@@ -6,6 +6,10 @@ from typing import Any
 
 import pandas as pd
 
+from smartcrypto.execution.signal_risk_gate import (
+    DEFAULT_RISK_LIMITS_PATH,
+    apply_risk_manager_gate,
+)
 from smartcrypto.qlib_engine.common import QlibEngineConfig, write_json
 
 
@@ -15,9 +19,11 @@ def _freqtrade_pair(pair: str, symbol: str) -> str:
         return pair
     if "/" in pair:
         return f"{pair}:USDT"
+
     symbol = str(symbol).upper()
     if symbol.endswith("USDT"):
         return f"{symbol[:-4]}/USDT:USDT"
+
     return pair
 
 
@@ -27,22 +33,32 @@ def export_qlib_freqtrade_signals(
     output_path: str | Path,
     report_path: str | Path,
     config: QlibEngineConfig,
+    risk_limits_path: str | Path = DEFAULT_RISK_LIMITS_PATH,
 ) -> dict[str, Any]:
     source = Path(predictions_path)
+    report: dict[str, Any]
+
     if not source.exists():
-        report = {"status": "blocked", "reason": "predictions_missing", "predictions_path": str(source)}
+        report = {
+            "status": "blocked",
+            "reason": "predictions_missing",
+            "predictions_path": str(source),
+        }
         write_json(report_path, report)
         return report
 
     predictions = pd.read_parquet(source)
     if predictions.empty:
-        report = {"status": "blocked", "reason": "predictions_empty"}
+        report = {
+            "status": "blocked",
+            "reason": "predictions_empty",
+        }
         write_json(report_path, report)
         return report
 
     generated_at = datetime.now(timezone.utc)
     valid_until = generated_at + timedelta(minutes=config.signal_ttl_minutes)
-    signals: list[dict[str, Any]] = []
+    candidate_signals: list[dict[str, Any]] = []
 
     for row in predictions.to_dict("records"):
         prob_up = float(row["prob_up"])
@@ -57,7 +73,8 @@ def export_qlib_freqtrade_signals(
             continue
 
         pair = _freqtrade_pair(str(row.get("pair", "")), str(row.get("symbol", "")))
-        signals.append(
+
+        candidate_signals.append(
             {
                 "pair": pair,
                 "symbol": str(row["symbol"]),
@@ -68,7 +85,6 @@ def export_qlib_freqtrade_signals(
                 "timeframe": str(row.get("tf", config.timeframe)),
                 "generated_at": generated_at.isoformat(),
                 "valid_until": valid_until.isoformat(),
-                "risk_approved": True,
                 "max_position_usdt": float(config.max_position_usdt),
                 "leverage": float(config.leverage),
                 "model_version": str(row.get("model_version", config.model_version)),
@@ -77,7 +93,23 @@ def export_qlib_freqtrade_signals(
             }
         )
 
-    payload = {
+    # candidate_signals acima não carrega nenhuma alegação de risk_approved.
+    # A única autoridade autorizada a definir esse campo é o RiskManager,
+    # via apply_risk_manager_gate().
+    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=risk_limits_path)
+
+    if risk_gate.status != "ok":
+        report = {
+            "status": "blocked",
+            "reason": risk_gate.reason,
+            "signals_candidate": len(candidate_signals),
+            "risk_manager_gate": risk_gate.to_dict(),
+        }
+        write_json(report_path, report)
+        return report
+
+    signals = risk_gate.approved_signals
+    payload: dict[str, Any] = {
         "generated_at": generated_at.isoformat(),
         "runtime_mode": "paper",
         "model_version": config.model_version,
@@ -92,6 +124,7 @@ def export_qlib_freqtrade_signals(
         "signals": len(signals),
         "output_path": str(output_path),
         "created_at": generated_at.isoformat(),
+        "risk_manager_gate": risk_gate.to_dict(),
     }
     write_json(report_path, report)
     return report
