@@ -4,6 +4,12 @@ This module consumes existing evidence in read-only mode and estimates risk of
 ruin under deterministic Monte Carlo stress scenarios. It has no operational
 authority and never writes runtime, SQLite, parquet, model, registry, Freqtrade,
 or RiskManager artifacts.
+
+Boundary contract
+-----------------
+This module is a pure risk-domain calculator. It may read existing evidence and
+build in-memory reports, but persistence must be delegated to a CLI or an ops
+authority outside ``smartcrypto/risk``.
 """
 
 from __future__ import annotations
@@ -20,8 +26,6 @@ from typing import Any, Literal
 SCHEMA_VERSION = "monte_carlo_risk_ruin_stress_gate_v1"
 DECISION_RESEARCH = "MANTER_EM_RESEARCH"
 
-DEFAULT_REPORT_JSON = Path("data/reports/monte_carlo_risk_ruin_stress_gate_v1.json")
-DEFAULT_REPORT_MD = Path("data/reports/monte_carlo_risk_ruin_stress_gate_v1.md")
 DEFAULT_TARGET_STORE = Path("data/reports/financial_label_target_store_v1.json")
 DEFAULT_DRIFT_MONITOR = Path("data/reports/ai_qlib_drift_regime_monitor_v1.json")
 DEFAULT_PAPER_AUTOTRAIN = Path("data/reports/paper_autotrain_feedback_loop_v1.json")
@@ -111,7 +115,12 @@ def build_monte_carlo_risk_ruin_stress_gate_v1(
     cost_per_trade: float = 0.02,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
-    """Build the Monte Carlo risk-of-ruin stress gate report."""
+    """Build the Monte Carlo risk-of-ruin stress gate report in memory only.
+
+    ``write`` is accepted only as metadata compatibility with the CLI. This
+    risk-domain module never persists JSON/Markdown. Persistence is handled by
+    ``scripts/build_monte_carlo_risk_ruin_stress_gate_v1.py``.
+    """
 
     root = Path(project_root).resolve()
     generated_at = generated_at_utc or datetime.now(UTC).isoformat()
@@ -124,82 +133,101 @@ def build_monte_carlo_risk_ruin_stress_gate_v1(
         ruin_floor=float(ruin_floor),
         cost_per_trade=float(cost_per_trade),
     )
+
+    report_json = resolve(root, report_json_path, Path(report_json_path)) if report_json_path else None
+    report_md = resolve(root, report_markdown_path, Path(report_markdown_path)) if report_markdown_path else None
+
     sources = load_sources(root)
     payloads = {source.source_id: source.payload for source in sources if source.payload}
     returns = extract_returns(payloads.get("target_store", {}))
-    report_json = resolve(root, report_json_path, DEFAULT_REPORT_JSON)
-    report_md = resolve(root, report_markdown_path, DEFAULT_REPORT_MD)
     safety = safety_flags()
 
     if not returns:
-        report = blocked_no_returns_report(root, generated_at, sources, config, report_json, report_md, safety, write)
-    else:
-        scenario_results = [
-            run_scenario(scenario=scenario, returns=returns, config=config)
-            for scenario in SCENARIOS
-        ]
-        aggregate_decision = worst_decision(result["gate_decision"] for result in scenario_results)
-        blockers = sorted(
-            {
-                f"{result['scenario']}:{reason}"
-                for result in scenario_results
-                if result["gate_decision"] == "BLOCKED"
-                for reason in result["gate_reasons"]
-            }
+        return blocked_no_returns_report(
+            root=root,
+            generated_at=generated_at,
+            sources=sources,
+            config=config,
+            report_json=report_json,
+            report_md=report_md,
+            safety=safety,
+            write_requested=write,
         )
-        warnings = sorted(
-            {
-                f"{result['scenario']}:{reason}"
-                for result in scenario_results
-                if result["gate_decision"] == "WARNING"
-                for reason in result["gate_reasons"]
-            }
-        )
-        status = "blocked" if aggregate_decision == "BLOCKED" else "warning" if aggregate_decision == "WARNING" else "ok"
-        reason = (
-            "monte_carlo_risk_ruin_stress_gate_blocked"
-            if status == "blocked"
-            else "monte_carlo_risk_ruin_stress_gate_warning"
-            if status == "warning"
-            else "monte_carlo_risk_ruin_stress_gate_passed_research_only"
-        )
-        report = {
-            "schema_version": SCHEMA_VERSION,
-            "status": status,
-            "reason": reason,
-            "gate_decision": aggregate_decision,
-            "decision": DECISION_RESEARCH,
-            "generated_at_utc": generated_at,
-            "project_root": str(root),
-            "input_sources": [source.public_record() for source in sources],
-            "returns_source": "financial_label_target_store_v1.target_records",
-            "valid_return_count": len(returns),
-            "simulation_config": config.as_report_dict(),
-            "stress_scenarios": scenario_results,
-            "worst_scenario": select_worst_scenario(scenario_results),
-            "blockers": blockers,
-            "warnings": warnings,
-            "lineage_hashes": build_lineage_hashes(payloads),
-            "write_requested": bool(write),
-            "write_performed": False,
-            "output_paths": {"json": str(report_json), "markdown": str(report_md)},
-            **safety,
-            "safety_flags": safety,
+
+    scenario_results = [
+        run_scenario(scenario=scenario, returns=returns, config=config)
+        for scenario in SCENARIOS
+    ]
+    aggregate_decision = worst_decision(result["gate_decision"] for result in scenario_results)
+
+    blockers = sorted(
+        {
+            f"{result['scenario']}:{reason}"
+            for result in scenario_results
+            if result["gate_decision"] == "BLOCKED"
+            for reason in result["gate_reasons"]
         }
-    if write:
-        write_reports(report, report_json, report_md)
-        report["write_performed"] = True
-        write_json(report_json, report)
-    return report
+    )
+    warnings = sorted(
+        {
+            f"{result['scenario']}:{reason}"
+            for result in scenario_results
+            if result["gate_decision"] == "WARNING"
+            for reason in result["gate_reasons"]
+        }
+    )
+
+    status = (
+        "blocked"
+        if aggregate_decision == "BLOCKED"
+        else "warning"
+        if aggregate_decision == "WARNING"
+        else "ok"
+    )
+    reason = (
+        "monte_carlo_risk_ruin_stress_gate_blocked"
+        if status == "blocked"
+        else "monte_carlo_risk_ruin_stress_gate_warning"
+        if status == "warning"
+        else "monte_carlo_risk_ruin_stress_gate_passed_research_only"
+    )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "status": status,
+        "reason": reason,
+        "gate_decision": aggregate_decision,
+        "decision": DECISION_RESEARCH,
+        "generated_at_utc": generated_at,
+        "project_root": str(root),
+        "input_sources": [source.public_record() for source in sources],
+        "returns_source": "financial_label_target_store_v1.target_records",
+        "valid_return_count": len(returns),
+        "simulation_config": config.as_report_dict(),
+        "stress_scenarios": scenario_results,
+        "worst_scenario": select_worst_scenario(scenario_results),
+        "blockers": blockers,
+        "warnings": warnings,
+        "lineage_hashes": build_lineage_hashes(payloads),
+        "write_requested": bool(write),
+        "write_performed": False,
+        "output_paths": {
+            "json": str(report_json) if report_json is not None else None,
+            "markdown": str(report_md) if report_md is not None else None,
+        },
+        **safety,
+        "safety_flags": safety,
+    }
 
 
 def blocked_no_returns_report(
+    *,
     root: Path,
     generated_at: str,
     sources: Sequence[SourceRecord],
     config: SimulationConfig,
-    report_json: Path,
-    report_md: Path,
+    report_json: Path | None,
+    report_md: Path | None,
     safety: Mapping[str, bool],
     write_requested: bool,
 ) -> dict[str, Any]:
@@ -222,7 +250,10 @@ def blocked_no_returns_report(
         "lineage_hashes": {},
         "write_requested": bool(write_requested),
         "write_performed": False,
-        "output_paths": {"json": str(report_json), "markdown": str(report_md)},
+        "output_paths": {
+            "json": str(report_json) if report_json is not None else None,
+            "markdown": str(report_md) if report_md is not None else None,
+        },
         **safety,
         "safety_flags": dict(safety),
     }
@@ -236,11 +267,13 @@ def load_sources(project_root: Path) -> list[SourceRecord]:
         ("event_driven_execution_cost_gate", DEFAULT_COST_GATE, False),
     )
     records: list[SourceRecord] = []
+
     for source_id, relative_path, required in specs:
         path = project_root / relative_path
         exists = path.is_file()
         payload: dict[str, Any] = {}
         load_error: str | None = None
+
         if exists:
             try:
                 parsed = json.loads(path.read_text(encoding="utf-8-sig"))
@@ -251,6 +284,7 @@ def load_sources(project_root: Path) -> list[SourceRecord]:
                     payload = parsed
                 else:
                     load_error = "json_root_not_object"
+
         records.append(
             SourceRecord(
                 source_id=source_id,
@@ -263,12 +297,14 @@ def load_sources(project_root: Path) -> list[SourceRecord]:
                 payload=payload,
             )
         )
+
     return records
 
 
 def extract_returns(target_store: Mapping[str, Any]) -> list[float]:
     rows = list_of_mappings(target_store.get("target_records"))
     values: list[float] = []
+
     for row in rows:
         value = first_float(
             row.get("target_expected_value_component"),
@@ -278,6 +314,7 @@ def extract_returns(target_store: Mapping[str, Any]) -> list[float]:
         )
         if value is not None:
             values.append(value)
+
     return values
 
 
@@ -285,6 +322,7 @@ def run_scenario(*, scenario: str, returns: Sequence[float], config: SimulationC
     scenario_returns = apply_stress_scenario(returns, scenario, config)
     path_metrics = run_monte_carlo_paths(scenario_returns, config)
     decision, reasons = decide_scenario(path_metrics, config)
+
     return {
         "scenario": scenario,
         "gate_decision": decision,
@@ -296,20 +334,29 @@ def run_scenario(*, scenario: str, returns: Sequence[float], config: SimulationC
 def apply_stress_scenario(returns: Sequence[float], scenario: str, config: SimulationConfig) -> list[float]:
     if scenario == "baseline":
         return [float(value) for value in returns]
+
     if scenario == "fee_slippage_stress":
         return [float(value) - config.cost_per_trade for value in returns]
+
     if scenario == "loss_cluster_stress":
         return sorted((float(value) for value in returns), key=lambda item: (item >= 0, item))
+
     if scenario == "fat_tail_stress":
         return [float(value) * 2.0 if value < 0 else float(value) * 0.8 for value in returns]
+
     if scenario == "low_liquidity_stress":
         return [
             (float(value) * 1.25 if value < 0 else float(value) * 0.75) - (config.cost_per_trade * 1.5)
             for value in returns
         ]
+
     if scenario == "combined_adverse_stress":
         stressed = [float(value) * 2.25 if value < 0 else float(value) * 0.65 for value in returns]
-        return sorted((value - (config.cost_per_trade * 2.0) for value in stressed), key=lambda item: (item >= 0, item))
+        return sorted(
+            (value - (config.cost_per_trade * 2.0) for value in stressed),
+            key=lambda item: (item >= 0, item),
+        )
+
     return [float(value) for value in returns]
 
 
@@ -320,7 +367,9 @@ def run_monte_carlo_paths(returns: Sequence[float], config: SimulationConfig) ->
     loss_streaks: list[int] = []
     floor_breaches = 0
     ruin_breaches = 0
+
     rng = random.Random(config.seed)
+
     for _ in range(config.simulation_count):
         sampled = [returns[rng.randrange(len(returns))] for _ in range(sample_size)]
         equity = config.initial_capital
@@ -330,20 +379,26 @@ def run_monte_carlo_paths(returns: Sequence[float], config: SimulationConfig) ->
         max_loss_streak = 0
         breached_floor = False
         breached_ruin = False
+
         for result in sampled:
             equity += result
             peak = max(peak, equity)
+
             if peak > 0:
                 max_drawdown = max(max_drawdown, (peak - equity) / peak)
+
             if result < 0:
                 current_loss_streak += 1
                 max_loss_streak = max(max_loss_streak, current_loss_streak)
             else:
                 current_loss_streak = 0
+
             if equity <= config.capital_floor:
                 breached_floor = True
+
             if equity <= config.ruin_floor:
                 breached_ruin = True
+
         terminal_equities.append(equity)
         max_drawdowns.append(max_drawdown)
         loss_streaks.append(max_loss_streak)
@@ -351,6 +406,7 @@ def run_monte_carlo_paths(returns: Sequence[float], config: SimulationConfig) ->
         ruin_breaches += int(breached_ruin)
 
     terminal_losses = [config.initial_capital - equity for equity in terminal_equities]
+
     return {
         "risk_of_ruin": round(ruin_breaches / config.simulation_count, 10),
         "max_drawdown_p95": round(percentile(max_drawdowns, 0.95), 10),
@@ -370,29 +426,37 @@ def run_monte_carlo_paths(returns: Sequence[float], config: SimulationConfig) ->
 def decide_scenario(metrics: Mapping[str, Any], config: SimulationConfig) -> tuple[GateDecision, list[str]]:
     blockers: list[str] = []
     warnings: list[str] = []
+
     if to_float(metrics.get("risk_of_ruin")) > config.risk_of_ruin_block_threshold:
         blockers.append("risk_of_ruin_exceeds_threshold")
     elif to_float(metrics.get("risk_of_ruin")) > config.risk_of_ruin_warning_threshold:
         warnings.append("risk_of_ruin_warning_threshold_exceeded")
+
     if to_float(metrics.get("max_drawdown_p99")) > config.max_drawdown_p99_block_threshold:
         blockers.append("max_drawdown_p99_exceeds_threshold")
     elif to_float(metrics.get("max_drawdown_p99")) > config.max_drawdown_p99_warning_threshold:
         warnings.append("max_drawdown_p99_warning_threshold_exceeded")
+
     if to_float(metrics.get("capital_floor_breach_probability")) > config.capital_breach_block_threshold:
         blockers.append("capital_floor_breach_probability_exceeds_threshold")
     elif to_float(metrics.get("capital_floor_breach_probability")) > config.capital_breach_warning_threshold:
         warnings.append("capital_floor_breach_probability_warning_threshold_exceeded")
+
     if blockers:
         return "BLOCKED", blockers
+
     if warnings:
         return "WARNING", warnings
+
     return "PASS", []
 
 
 def select_worst_scenario(results: Sequence[Mapping[str, Any]]) -> dict[str, Any] | None:
     if not results:
         return None
+
     decision_rank = {"PASS": 0, "WARNING": 1, "BLOCKED": 2}
+
     return dict(
         max(
             results,
@@ -408,36 +472,46 @@ def select_worst_scenario(results: Sequence[Mapping[str, Any]]) -> dict[str, Any
 
 def worst_decision(decisions: Sequence[str] | Any) -> GateDecision:
     values = list(decisions)
+
     if "BLOCKED" in values:
         return "BLOCKED"
+
     if "WARNING" in values:
         return "WARNING"
+
     return "PASS"
 
 
 def percentile(values: Sequence[float] | Sequence[int], quantile: float) -> float:
     if not values:
         return 0.0
+
     ordered = sorted(float(value) for value in values)
+
     if len(ordered) == 1:
         return ordered[0]
+
     position = (len(ordered) - 1) * quantile
     lower = int(position)
     upper = min(lower + 1, len(ordered) - 1)
     weight = position - lower
+
     return ordered[lower] * (1 - weight) + ordered[upper] * weight
 
 
 def cvar(losses: Sequence[float], confidence: float) -> float:
     if not losses:
         return 0.0
+
     threshold = percentile(losses, confidence)
     tail = [loss for loss in losses if loss >= threshold]
+
     return sum(tail) / len(tail) if tail else threshold
 
 
 def build_lineage_hashes(payloads: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
     output: dict[str, Any] = {}
+
     for payload in payloads.values():
         for key in (
             "dataset_hash",
@@ -448,9 +522,11 @@ def build_lineage_hashes(payloads: Mapping[str, Mapping[str, Any]]) -> dict[str,
         ):
             if payload.get(key):
                 output[key] = payload[key]
+
         nested = payload.get("lineage_hashes")
         if isinstance(nested, dict):
             output.update({str(key): value for key, value in nested.items() if value})
+
     return output
 
 
@@ -494,8 +570,10 @@ def render_markdown(report: Mapping[str, Any]) -> str:
 
 def markdown_scenarios(rows: Any) -> list[str]:
     scenarios = list_of_mappings(rows)
+
     if not scenarios:
         return ["- No valid scenario results."]
+
     return [
         (
             f"- `{row.get('scenario')}`: decision=`{row.get('gate_decision')}`, "
@@ -505,20 +583,6 @@ def markdown_scenarios(rows: Any) -> list[str]:
         )
         for row in scenarios
     ]
-
-
-def write_reports(report: Mapping[str, Any], report_json: Path, report_md: Path) -> None:
-    report_json.parent.mkdir(parents=True, exist_ok=True)
-    report_md.parent.mkdir(parents=True, exist_ok=True)
-    write_json(report_json, report)
-    report_md.write_text(render_markdown(report), encoding="utf-8")
-
-
-def write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False, default=json_safe) + "\n",
-        encoding="utf-8",
-    )
 
 
 def safety_flags() -> dict[str, bool]:
@@ -555,9 +619,11 @@ def safety_flags() -> dict[str, bool]:
 
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
+
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
+
     return digest.hexdigest()
 
 
@@ -574,6 +640,7 @@ def first_float(*values: Any) -> float | None:
             return float(value)
         except (TypeError, ValueError):
             continue
+
     return None
 
 
@@ -589,6 +656,7 @@ def to_float(value: Any) -> float:
 def list_of_mappings(value: Any) -> list[Mapping[str, Any]]:
     if not isinstance(value, list):
         return []
+
     return [item for item in value if isinstance(item, Mapping)]
 
 
@@ -598,4 +666,5 @@ def json_safe(value: Any) -> Any:
             return value.item()
         except (TypeError, ValueError):
             pass
+
     return value

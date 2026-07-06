@@ -115,17 +115,20 @@ def test_worst_scenario_governs_aggregate_decision(tmp_path: Path) -> None:
     assert report["worst_scenario"]["gate_decision"] == "BLOCKED"
 
 
-def test_write_creates_only_report_files(tmp_path: Path) -> None:
+def test_domain_builder_never_writes_report_files(tmp_path: Path) -> None:
     create_target_store(tmp_path, [1.0] * 20)
+
     report = build_monte_carlo_risk_ruin_stress_gate_v1(project_root=tmp_path, write=True)
+
     reports = tmp_path / "data" / "reports"
-    assert report["write_performed"] is True
-    assert (reports / "monte_carlo_risk_ruin_stress_gate_v1.json").exists()
-    assert (reports / "monte_carlo_risk_ruin_stress_gate_v1.md").exists()
-    assert not (tmp_path / "data" / "runtime").exists()
-    assert not (tmp_path / "models").exists()
-    assert not list(tmp_path.rglob("*.sqlite"))
-    assert not list(tmp_path.rglob("*.parquet"))
+
+    assert report["write_requested"] is True
+    assert report["write_performed"] is False
+    assert not (reports / "monte_carlo_risk_ruin_stress_gate_v1.json").exists()
+    assert not (reports / "monte_carlo_risk_ruin_stress_gate_v1.md").exists()
+    assert report["writes_runtime"] is False
+    assert report["writes_sqlite"] is False
+    assert report["writes_parquet"] is False
 
 
 def test_cli_no_write_and_write_modes(tmp_path: Path) -> None:
@@ -160,6 +163,65 @@ def test_cli_no_write_and_write_modes(tmp_path: Path) -> None:
     )
     write_payload = json.loads(write.stdout)
     assert write_payload["write_performed"] is True
+
+def test_cli_write_creates_only_report_files(tmp_path: Path) -> None:
+    create_target_store(tmp_path, [1.0] * 20)
+
+    import subprocess
+    import sys
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "build_monte_carlo_risk_ruin_stress_gate_v1.py"
+
+    files_before = {
+        path.relative_to(tmp_path).as_posix()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    }
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--project-root",
+            str(tmp_path),
+            "--write",
+            "--json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    report = json.loads(completed.stdout)
+    reports = tmp_path / "data" / "reports"
+
+    files_after = {
+        path.relative_to(tmp_path).as_posix()
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    }
+    created_files = sorted(files_after - files_before)
+
+    assert report["write_requested"] is True
+    assert report["write_performed"] is True
+
+    assert created_files == [
+        "data/reports/monte_carlo_risk_ruin_stress_gate_v1.json",
+        "data/reports/monte_carlo_risk_ruin_stress_gate_v1.md",
+    ]
+
+    assert (reports / "monte_carlo_risk_ruin_stress_gate_v1.json").is_file()
+    assert (reports / "monte_carlo_risk_ruin_stress_gate_v1.md").is_file()
+
+    assert not (tmp_path / "data" / "runtime").exists()
+    assert not (tmp_path / "models").exists()
+    assert not (tmp_path / "registry").exists()
+
+    assert report["writes_runtime"] is False
+    assert report["writes_sqlite"] is False
+    assert report["writes_parquet"] is False
+    assert report["sends_orders"] is False
+    assert report["exchange_private_access"] is False
 
 
 def test_safety_flags_preserved(tmp_path: Path) -> None:

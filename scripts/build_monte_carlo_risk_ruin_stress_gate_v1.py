@@ -6,7 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -15,6 +17,14 @@ if str(PROJECT_ROOT) not in sys.path:
 from smartcrypto.risk.monte_carlo_risk_ruin_stress_gate import (  # noqa: E402
     build_monte_carlo_risk_ruin_stress_gate_v1,
 )
+from smartcrypto.risk.monte_carlo_risk_ruin_stress_gate.gate import (  # noqa: E402
+    json_safe,
+    render_markdown,
+)
+
+
+DEFAULT_REPORT_JSON = Path("data/reports/monte_carlo_risk_ruin_stress_gate_v1.json")
+DEFAULT_REPORT_MD = Path("data/reports/monte_carlo_risk_ruin_stress_gate_v1.md")
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,11 +47,18 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+
+    project_root = Path(args.project_root).resolve()
+    write_requested = bool(args.write and not args.no_write)
+
+    report_json = resolve_report_path(project_root, args.report_json, DEFAULT_REPORT_JSON)
+    report_markdown = resolve_report_path(project_root, args.report_markdown, DEFAULT_REPORT_MD)
+
     report = build_monte_carlo_risk_ruin_stress_gate_v1(
-        project_root=args.project_root,
-        write=bool(args.write and not args.no_write),
-        report_json_path=args.report_json,
-        report_markdown_path=args.report_markdown,
+        project_root=project_root,
+        write=write_requested,
+        report_json_path=report_json,
+        report_markdown_path=report_markdown,
         seed=args.seed,
         simulation_count=args.simulation_count,
         sample_size=args.sample_size,
@@ -50,11 +67,47 @@ def main() -> int:
         ruin_floor=args.ruin_floor,
         cost_per_trade=args.cost_per_trade,
     )
-    if args.json:
-        print(json.dumps(report, sort_keys=True, ensure_ascii=False, default=str))
+
+    if write_requested:
+        write_reports(report, report_json, report_markdown)
+        report["write_performed"] = True
     else:
-        print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False, default=str))
+        report["write_performed"] = False
+
+    report["write_requested"] = write_requested
+    report["output_paths"] = {
+        "json": str(report_json),
+        "markdown": str(report_markdown),
+    }
+
+    if write_requested:
+        write_reports(report, report_json, report_markdown)
+
+    if args.json:
+        print(json.dumps(report, sort_keys=True, ensure_ascii=False, default=json_safe))
+    else:
+        print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False, default=json_safe))
+
     return 0
+
+
+def resolve_report_path(project_root: Path, value: str | None, default: Path) -> Path:
+    path = Path(value) if value else default
+    return path if path.is_absolute() else project_root / path
+
+
+def write_reports(report: Mapping[str, Any], report_json: Path, report_markdown: Path) -> None:
+    report_json.parent.mkdir(parents=True, exist_ok=True)
+    report_markdown.parent.mkdir(parents=True, exist_ok=True)
+    write_json(report_json, report)
+    report_markdown.write_text(render_markdown(report), encoding="utf-8")
+
+
+def write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False, default=json_safe) + "\n",
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":

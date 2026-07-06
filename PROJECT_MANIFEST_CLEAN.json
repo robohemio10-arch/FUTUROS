@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "7ae50417460a00213c5108aee9267e78769f7b4504d64389fe79dfd4757972c5",
+  "aggregate_sha256": "aab6c7347a19e0d757d5911bab718503b2721c4a500fed35e07a5893eec909b3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2594,10 +2594,10 @@
       "sha256": "4c3ac4a3855a7d21bb2af1807870f22cf5a40a8ef8f01c518ee55138d9995eae"
     },
     {
-      "bytes": 2496,
+      "bytes": 4295,
       "hash_mode": "text_lf",
       "path": "scripts/build_monte_carlo_risk_ruin_stress_gate_v1.py",
-      "sha256": "1b559f5aac486baa3906af1212b051fa1ff810fe7c2bbe77049200a7024144dd"
+      "sha256": "0c18b4d32fd9ca8911fa2481ce2267cc35095924807afccc262f61e45b257903"
     },
     {
       "bytes": 3885,
@@ -6176,10 +6176,10 @@
       "sha256": "d0ae3dba75ece379cac0ab84b7dde47e3178c85f2d2a723381c77a58a85275e3"
     },
     {
-      "bytes": 22547,
+      "bytes": 22569,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/monte_carlo_risk_ruin_stress_gate/gate.py",
-      "sha256": "c9f2c1f0925b53d4fdad8dbaacfb857f2fed1e198a957d2d9d17db17be05dcf2"
+      "sha256": "adcc6ce1644cb0a3aaf10fc5a34f209ad05fcb5747d081e3bde2d04a7d8ee05f"
     },
     {
       "bytes": 21222,
@@ -7232,10 +7232,10 @@
       "sha256": "a610f3648c4f8f0048facf60932c272d57fc2ab86fb5f8aa4b7e8b3b670c9396"
     },
     {
-      "bytes": 7447,
+      "bytes": 9213,
       "hash_mode": "text_lf",
       "path": "tests/test_monte_carlo_risk_ruin_stress_gate_v1.py",
-      "sha256": "b476c26b66a19b631e21f785520a4fc7be75039af5812b3d1a9921cb9523649a"
+      "sha256": "d38d6a019a92718fc370548a9ee3a95523fac8c0d40beeac920fe9ea9f501e98"
     },
     {
       "bytes": 9985,
