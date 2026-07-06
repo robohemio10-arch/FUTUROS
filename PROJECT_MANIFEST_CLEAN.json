@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "aab6c7347a19e0d757d5911bab718503b2721c4a500fed35e07a5893eec909b3",
+  "aggregate_sha256": "f873c65f391aaea602b1dba61da97a27210141ad21765a9691249075d573f451",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 233,
-    "manifested_files_total": 1331,
-    "python_files": 1003,
+    "docs_files": 234,
+    "manifested_files_total": 1336,
+    "python_files": 1007,
     "runtime_excluded_files_total": 0,
-    "test_files": 283,
-    "tracked_files_total": 1332,
+    "test_files": 284,
+    "tracked_files_total": 1337,
     "workflows": 1
   },
   "deterministic": true,
@@ -1652,6 +1652,12 @@
       "sha256": "23632f8b7182734c21b2f615983ff159a1736843473aafc3b3ff1079bcd45a41"
     },
     {
+      "bytes": 3059,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_SHADOW_ENSEMBLE_THRESHOLD_CALIBRATION_V1.md",
+      "sha256": "2429420cc798327fd8b506f7b8145396c0d619e6e40cc9d25534d8ee18eb8a94"
+    },
+    {
       "bytes": 2484,
       "hash_mode": "text_lf",
       "path": "docs/READINESS_MONTE_CARLO_RISK_BUDGET_POLICY_INTEGRATION.md",
@@ -2772,6 +2778,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_dataset.py",
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
+    },
+    {
+      "bytes": 2394,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_shadow_ensemble_threshold_calibration_v1.py",
+      "sha256": "8ba0eb2b6345815a9cec7848b3f1bad251cd8782c220f6f4ae9f13ccd65e7884"
     },
     {
       "bytes": 20615,
@@ -4800,6 +4812,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_gate/runtime_isolation.py",
       "sha256": "810cebc919c552f184e55518b5fcaf6bfe9992fa8b100937ce033818730f7209"
+    },
+    {
+      "bytes": 211,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_shadow_ensemble_threshold_calibration/__init__.py",
+      "sha256": "38274c92227e3fa0cd2b00284c98cf787cc21436b35a8f79fa9ea66f1a7ce8cf"
+    },
+    {
+      "bytes": 17174,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_shadow_ensemble_threshold_calibration/calibrator.py",
+      "sha256": "86d47819eb0cd9cf26575df3b016a110b5d62dabc44bb9db8984f266d4cd9058"
     },
     {
       "bytes": 216,
@@ -7770,6 +7794,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_research_backend_runtime_dependency_gate_v1.py",
       "sha256": "4548e3ecc38d9bd27a068c14a7df66ecaf6aa9c5216daabbdfa140aeeb76203b"
+    },
+    {
+      "bytes": 9828,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_shadow_ensemble_threshold_calibration_v1.py",
+      "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
     },
     {
       "bytes": 19789,
