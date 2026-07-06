@@ -201,7 +201,13 @@ class SmartCryptoSignalStrategy(IStrategy):
 
         side = str(matching_signal.get("side", "")).lower()
         confidence = self._safe_float(matching_signal.get("confidence", matching_signal.get("prob_up", matching_signal.get("score", 0.0))))
-        risk_approved = bool(matching_signal.get("risk_approved", True))
+        # risk_approved must be the exact boolean True. Absent, null, "true"
+        # (string), 1, or any other truthy-but-not-True value is treated as
+        # NOT approved. This is deliberately stricter than a plain truthy
+        # check: the only acceptable source of "approved" is RiskManager
+        # (see smartcrypto/execution/signal_risk_gate.py), and a missing or
+        # malformed field must fail closed, never open.
+        risk_approved = matching_signal.get("risk_approved") is True
 
         if side not in {"long", "short"}:
             return {"accepted": False, "reason": "invalid_side", "side": side, "confidence": confidence}
@@ -252,15 +258,27 @@ class SmartCryptoSignalStrategy(IStrategy):
         return {"accepted": False, "reason": "no_active_exit_control"}
 
     def _read_first_active_signal_file(self) -> tuple[dict[str, Any] | None, Path | None, str]:
+        # Walks every known signal path in priority order. A file that
+        # exists but has no risk-approved, fresh signal for anyone (e.g. it
+        # is empty, stale, or every signal in it was rejected) no longer
+        # stops the search: the strategy keeps trying the next path. This
+        # is what makes the RiskManager-gated file usable as a real
+        # fallback instead of being permanently shadowed by whichever file
+        # happens to exist first. The fallback itself never grants
+        # approval: _is_signal_active() still requires risk_approved is
+        # True for every candidate, in every file, with no exception.
+        last_path: Path | None = None
+        last_reason = "no_signal_payload"
         for path in self._signal_paths:
             payload = self._read_json(path)
             if payload is None:
                 continue
+            last_path = path
             active_signals = [signal for signal in self._extract_signals(payload) if self._is_signal_active(signal)]
             if active_signals:
                 return payload, path, "active_signals_found"
-            return payload, path, "no_active_signals_in_file"
-        return None, None, "no_signal_payload"
+            last_reason = "no_active_signals_in_file"
+        return None, last_path, last_reason
 
     def _read_json(self, path: Path) -> dict[str, Any] | None:
         try:
@@ -289,6 +307,12 @@ class SmartCryptoSignalStrategy(IStrategy):
         return None
 
     def _is_signal_active(self, signal: dict[str, Any]) -> bool:
+        # "Active" requires both freshness AND explicit RiskManager
+        # approval. A signal missing risk_approved, or with risk_approved
+        # not equal to True, is never active - regardless of which signal
+        # file it came from.
+        if signal.get("risk_approved") is not True:
+            return False
         return self._valid_until_active(signal.get("valid_until"))
 
     def _valid_until_active(self, value: Any) -> bool:

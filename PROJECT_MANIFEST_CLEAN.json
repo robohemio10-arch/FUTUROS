@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c10a5de3f8c3ffb45fc94ec772b0410006c89dab90039b08064244886185641e",
+  "aggregate_sha256": "e8f34fac41e3927c9fbfe529f0914802488a79f0458035ab89473552026b8097",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 231,
-    "manifested_files_total": 1320,
-    "python_files": 994,
+    "docs_files": 232,
+    "manifested_files_total": 1326,
+    "python_files": 999,
     "runtime_excluded_files_total": 0,
-    "test_files": 281,
-    "tracked_files_total": 1321,
+    "test_files": 282,
+    "tracked_files_total": 1327,
     "workflows": 1
   },
   "deterministic": true,
@@ -56,10 +56,10 @@
       "sha256": "508599ae25c910119dfbb13f034e0271992269942cfdf90f4882dfaee7eade14"
     },
     {
-      "bytes": 2170,
+      "bytes": 3112,
       "hash_mode": "text_lf",
       "path": "Makefile",
-      "sha256": "0766f4f4becbc251cd736fd981b2f075109823ce8058d15d4c1b9b19cb91a50c"
+      "sha256": "96feb190d8eda33a367ae210e06213357b55016bbc60c5f64705242bad1a88e8"
     },
     {
       "bytes": 1675,
@@ -1490,6 +1490,12 @@
       "sha256": "2e59b42fe8a318193a5612a83367740f98f019983b39c5c7d82af4d47bb46ba4"
     },
     {
+      "bytes": 7127,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_SIGNAL_RISKMANAGER_RUNTIME_WIRING_AUDIT_V1.md",
+      "sha256": "babd5ee3025b57e53036420983f6eba615046d00f876ad733d39dad71682daf5"
+    },
+    {
       "bytes": 3207,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SOAK_EVIDENCE_AND_NO_TRADE_READINESS_CONTINUATION.md",
@@ -1892,10 +1898,10 @@
       "sha256": "6dfa520e4b03338e8442428f51d1ccbe6167ded39c73c9031891e6eb9b8055f6"
     },
     {
-      "bytes": 12113,
+      "bytes": 13607,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/strategies/SmartCryptoSignalStrategy.py",
-      "sha256": "b917f0e2c93ada061c38dd1fa9236c73362005022641a5f48c8993c5699943e2"
+      "sha256": "6e1aff89347a662ca6ec0742c6e1a9f5cc0bc5cdf728c0c5c5e647a22e42874a"
     },
     {
       "bytes": 1117,
@@ -2226,6 +2232,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_shadow_soak_continuity_and_gap_accounting.py",
       "sha256": "28edad0cdd297229b1bb850e7e9b25f85d5612374eb6c9e5fbbd34241e47a259"
+    },
+    {
+      "bytes": 1818,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_signal_riskmanager_runtime_wiring_v1.py",
+      "sha256": "efa2a006f40c4c0a6cc7405133ebf4d1ca650fa03655a70303f318ca8489b6c8"
     },
     {
       "bytes": 7550,
@@ -4496,10 +4508,10 @@
       "sha256": "ed489ab7761b8795ab2b961e5f815f8e4b7e3bffae6b8ffa6758bd4ce6c56862"
     },
     {
-      "bytes": 7013,
+      "bytes": 7996,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_contract_guard.py",
-      "sha256": "272065689ab602ac835fef41bbd5468c2a21a6935f8941d4f1ff2df75a26d9d9"
+      "sha256": "9bbe69e139d21c562e6ca574fcf4d267cede18cc2e7bc8e7b094ceab9ce14dbf"
     },
     {
       "bytes": 850,
@@ -4508,10 +4520,16 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 19694,
+      "bytes": 22069,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "19924c51557fec29fca4c4580bf6593962a6b7ae9550c2125ecc95f743b3d121"
+      "sha256": "835cd1ca8e2d18bd5eb044c7e16408363961ed14e018c6894633c012d185d989"
+    },
+    {
+      "bytes": 10881,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/signal_risk_gate.py",
+      "sha256": "6274b70c21d161b0091d7b6606b168c1b7d178a2e81333bbdb1203e7bbd35cce"
     },
     {
       "bytes": 5373,
@@ -5552,6 +5570,18 @@
       "sha256": "c3af8cd44648c045d3e829ef893a4b193129540d8c837e1e24eaf228a46c2825"
     },
     {
+      "bytes": 343,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_signal_riskmanager_runtime_wiring_audit/__init__.py",
+      "sha256": "1c0117505edc1170600a69ddcb8e18fa0979a1354c60cdf07d8563e8c2e8653f"
+    },
+    {
+      "bytes": 19594,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/paper_signal_riskmanager_runtime_wiring_audit/audit.py",
+      "sha256": "f675e19a2f88939411681c45f0e519a8536b0a14794a5744ded976bc7318acaa"
+    },
+    {
       "bytes": 5949,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/phase10_summary.py",
@@ -5648,10 +5678,10 @@
       "sha256": "85ddac68d8ac36b4bd6be9b29919b554e9fabab71dde57b496391777e71b9159"
     },
     {
-      "bytes": 3079,
+      "bytes": 4051,
       "hash_mode": "text_lf",
       "path": "smartcrypto/qlib_engine/signal_exporter.py",
-      "sha256": "0211e5f12fec760cd06046acb4f04093aad973729611cf53fceef0d9121dfd16"
+      "sha256": "36147dfee572fbc002c9db618425ae9d86255b4210edd40e23a10d2b85267908"
     },
     {
       "bytes": 3739,
@@ -7554,6 +7584,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_shadow_survivor_remediation_research_v1.py",
       "sha256": "fed637a030dc8b4b7cf4893b6407fc0f149b2001e4c97338b87c480d8cea60b0"
+    },
+    {
+      "bytes": 15380,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_signal_riskmanager_runtime_wiring_v1.py",
+      "sha256": "7f90c614e042d1c0c204c7091a77b27a2da2deddd9749b4a7103377d5db28200"
     },
     {
       "bytes": 303,

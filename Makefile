@@ -1,8 +1,8 @@
 PYTHON ?= python
 PIP ?= $(PYTHON) -m pip
-LINT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py tests/test_complete_ci_security_typecheck_runtime_readiness.py
-TYPECHECK_TARGETS ?= smartcrypto/runtime smartcrypto/config/runtime_safety_config.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
-BANDIT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcrypto/ops/system_healthcheck.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py
+LINT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py tests/test_complete_ci_security_typecheck_runtime_readiness.py smartcrypto/execution/signal_risk_gate.py smartcrypto/execution/signal_producer.py smartcrypto/execution/signal_contract_guard.py smartcrypto/qlib_engine/signal_exporter.py smartcrypto/ops/paper_signal_riskmanager_runtime_wiring_audit scripts/audit_paper_signal_riskmanager_runtime_wiring_v1.py tests/test_paper_signal_riskmanager_runtime_wiring_v1.py
+TYPECHECK_TARGETS ?= smartcrypto/runtime smartcrypto/config/runtime_safety_config.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py smartcrypto/execution/signal_risk_gate.py smartcrypto/execution/signal_producer.py smartcrypto/execution/signal_contract_guard.py smartcrypto/qlib_engine/signal_exporter.py smartcrypto/ops/paper_signal_riskmanager_runtime_wiring_audit scripts/audit_paper_signal_riskmanager_runtime_wiring_v1.py
+BANDIT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcrypto/ops/system_healthcheck.py scripts/generate_project_manifest.py scripts/scan_versioned_secrets.py smartcrypto/execution/signal_risk_gate.py smartcrypto/execution/signal_producer.py smartcrypto/execution/signal_contract_guard.py smartcrypto/qlib_engine/signal_exporter.py smartcrypto/ops/paper_signal_riskmanager_runtime_wiring_audit scripts/audit_paper_signal_riskmanager_runtime_wiring_v1.py
 
 .PHONY: install test test-fast compile lint typecheck security audit paper-check clean-cache
 
