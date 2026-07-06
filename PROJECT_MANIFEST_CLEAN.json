@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e8f34fac41e3927c9fbfe529f0914802488a79f0458035ab89473552026b8097",
+  "aggregate_sha256": "7ae50417460a00213c5108aee9267e78769f7b4504d64389fe79dfd4757972c5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 232,
-    "manifested_files_total": 1326,
-    "python_files": 999,
+    "docs_files": 233,
+    "manifested_files_total": 1331,
+    "python_files": 1003,
     "runtime_excluded_files_total": 0,
-    "test_files": 282,
-    "tracked_files_total": 1327,
+    "test_files": 283,
+    "tracked_files_total": 1332,
     "workflows": 1
   },
   "deterministic": true,
@@ -1176,6 +1176,12 @@
       "hash_mode": "text_lf",
       "path": "docs/MONTE_CARLO_RISK_BUDGET_POSITION_SIZING_POLICY.md",
       "sha256": "5fc8094f13fdf2984b0f9be294d442ee11f57fd716a8aecf309bf549eec2c9c5"
+    },
+    {
+      "bytes": 2595,
+      "hash_mode": "text_lf",
+      "path": "docs/MONTE_CARLO_RISK_RUIN_STRESS_GATE_V1.md",
+      "sha256": "44c90303c02b9412f550aa340d2592544581dd7027617b232c42223256f74025"
     },
     {
       "bytes": 3408,
@@ -2586,6 +2592,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_monte_carlo_risk_budget_policy.py",
       "sha256": "4c3ac4a3855a7d21bb2af1807870f22cf5a40a8ef8f01c518ee55138d9995eae"
+    },
+    {
+      "bytes": 2496,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_monte_carlo_risk_ruin_stress_gate_v1.py",
+      "sha256": "1b559f5aac486baa3906af1212b051fa1ff810fe7c2bbe77049200a7024144dd"
     },
     {
       "bytes": 3885,
@@ -6158,6 +6170,18 @@
       "sha256": "21a930c0a19f424da7c51daa7828c768464a8eafae8fee25139edd7ff363923a"
     },
     {
+      "bytes": 178,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/risk/monte_carlo_risk_ruin_stress_gate/__init__.py",
+      "sha256": "d0ae3dba75ece379cac0ab84b7dde47e3178c85f2d2a723381c77a58a85275e3"
+    },
+    {
+      "bytes": 22547,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/risk/monte_carlo_risk_ruin_stress_gate/gate.py",
+      "sha256": "c9f2c1f0925b53d4fdad8dbaacfb857f2fed1e198a957d2d9d17db17be05dcf2"
+    },
+    {
       "bytes": 21222,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/paper_risk_controller.py",
@@ -7206,6 +7230,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_monte_carlo_risk_budget_position_sizing_policy.py",
       "sha256": "a610f3648c4f8f0048facf60932c272d57fc2ab86fb5f8aa4b7e8b3b670c9396"
+    },
+    {
+      "bytes": 7447,
+      "hash_mode": "text_lf",
+      "path": "tests/test_monte_carlo_risk_ruin_stress_gate_v1.py",
+      "sha256": "b476c26b66a19b631e21f785520a4fc7be75039af5812b3d1a9921cb9523649a"
     },
     {
       "bytes": 9985,
