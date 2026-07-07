@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "601cdd2687d66ece49b4162d9cfb2d3837569c844d60209676623febc596d9c9",
+  "aggregate_sha256": "e0107792e2d5e3bdb4bdb18023465bb9db0a6eccb5d814f4acd21b27c2ebecb8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 238,
-    "manifested_files_total": 1356,
-    "python_files": 1023,
+    "docs_files": 239,
+    "manifested_files_total": 1361,
+    "python_files": 1027,
     "runtime_excluded_files_total": 0,
-    "test_files": 288,
-    "tracked_files_total": 1357,
+    "test_files": 289,
+    "tracked_files_total": 1362,
     "workflows": 1
   },
   "deterministic": true,
@@ -1326,6 +1326,12 @@
       "hash_mode": "text_lf",
       "path": "docs/OUTCOME_SIDECAR_FINANCIAL_EVALUATION.md",
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
+    },
+    {
+      "bytes": 4342,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AI_QLIB_AUTOTRAIN_ACTIVATION_CLOSEOUT_V1.md",
+      "sha256": "758e7d03d0c615a71aba3a14fa10c23bcf6c5486dcf63fd55096e3016abe3e4e"
     },
     {
       "bytes": 4867,
@@ -2712,6 +2718,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 2388,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_ai_qlib_autotrain_activation_closeout_v1.py",
+      "sha256": "92b62b63e71065a9a0f8953bddbafdf0069c035302e506935707b32368355f25"
     },
     {
       "bytes": 2503,
@@ -4776,6 +4788,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/freqtrade_paper_ai_selector_e2e_dryrun/selector_dryrun.py",
       "sha256": "e1f47864514311a6d6ac1eeff410221717431d1e6074b2fd32f8b388a6e2bf6d"
+    },
+    {
+      "bytes": 214,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_ai_qlib_autotrain_activation_closeout/__init__.py",
+      "sha256": "46acad3d886e5ecbdd177520e30c47d4ffdbb318d8e735482e2ebfd6e475fb9a"
+    },
+    {
+      "bytes": 25533,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_ai_qlib_autotrain_activation_closeout/activation_closeout.py",
+      "sha256": "b727964e6da4a8202f04dc72c27d88da482dba21e085dc1b7b3ce709dd34f226"
     },
     {
       "bytes": 199,
@@ -7512,6 +7536,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 13855,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_ai_qlib_autotrain_activation_closeout_v1.py",
+      "sha256": "e665db69b67b67b03066b88a69a3eb2bfb9645f592d01a132af6752fcccc8bad"
     },
     {
       "bytes": 10146,
