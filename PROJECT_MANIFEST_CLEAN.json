@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f873c65f391aaea602b1dba61da97a27210141ad21765a9691249075d573f451",
+  "aggregate_sha256": "d76d5876ad7bde4ae7f8224fb7a7220a4087fdb29d49dd9ea8178bf2e25bc135",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 234,
-    "manifested_files_total": 1336,
-    "python_files": 1007,
+    "docs_files": 235,
+    "manifested_files_total": 1341,
+    "python_files": 1011,
     "runtime_excluded_files_total": 0,
-    "test_files": 284,
-    "tracked_files_total": 1337,
+    "test_files": 285,
+    "tracked_files_total": 1342,
     "workflows": 1
   },
   "deterministic": true,
@@ -570,6 +570,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_FEATURE_MISSINGNESS_REMEDIATION_IMPLEMENTATION_V1.md",
       "sha256": "3b262ca5fd032fe8c1cd2218f6e4d2733de2715a7b1099519d76cd8d8741eba9"
+    },
+    {
+      "bytes": 3535,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_FEATURE_SOURCE_FIELDS_ENRICHMENT_CONTRACT_V1.md",
+      "sha256": "6afecde1f9dc6a04e3d5accfd8e3355022ab1683fe6906f6b9b91fac46d05ef3"
     },
     {
       "bytes": 1421,
@@ -2358,6 +2364,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_feature_missingness_remediation_implementation_v1.py",
       "sha256": "e14a150503ef786bf543e2379f5940873e3c1f727716ccab862e76ee9f7267a2"
+    },
+    {
+      "bytes": 2033,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_feature_source_fields_enrichment_contract_v1.py",
+      "sha256": "f356e51fcb6d680b26bb978fb497cfb530a088ed61eff2a8e78d3f8c7d3a4c21"
     },
     {
       "bytes": 1791,
@@ -4706,6 +4718,18 @@
       "sha256": "f831ded869eaac932db1dd5125adff46a412fde7624de77ea9220d91f0e43785"
     },
     {
+      "bytes": 234,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_source_fields_enrichment_contract/__init__.py",
+      "sha256": "d70b813d81898be92f573bc9c43895df44095a5d2d8a535c23904d692e6dfb33"
+    },
+    {
+      "bytes": 21726,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/feature_source_fields_enrichment_contract/source_contract.py",
+      "sha256": "0f2399c5c0fa60f147692bf31f0ba1ea28585ebd77448d7a2bd853cd3dadbb4d"
+    },
+    {
       "bytes": 461,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/__init__.py",
@@ -6348,6 +6372,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_feature_missingness_remediation_implementation_v1.py",
       "sha256": "096fcd7b86c4d3aed0cc392751f4a474071ebe9573a27731c625bc85babf23fd"
+    },
+    {
+      "bytes": 8265,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_feature_source_fields_enrichment_contract_v1.py",
+      "sha256": "f6c8ec9b77e4c0f7602e96c97be34e8d6aa6e755f56938478460f9430604c3da"
     },
     {
       "bytes": 12931,
