@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e0107792e2d5e3bdb4bdb18023465bb9db0a6eccb5d814f4acd21b27c2ebecb8",
+  "aggregate_sha256": "5eabbf09aa51e12df0f2ebc20d19c22f13b8fce6d2707db3303f2d685983ca0e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 239,
-    "manifested_files_total": 1361,
-    "python_files": 1027,
+    "docs_files": 240,
+    "manifested_files_total": 1366,
+    "python_files": 1031,
     "runtime_excluded_files_total": 0,
-    "test_files": 289,
-    "tracked_files_total": 1362,
+    "test_files": 290,
+    "tracked_files_total": 1367,
     "workflows": 1
   },
   "deterministic": true,
@@ -1356,6 +1356,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOLEARNING_SCHEDULER_DEPLOYMENT_V1.md",
       "sha256": "102c17156d0b433ef61cd67b8cd9dbf004369f7aabdda3ea69d43b3bc2f6a6ef"
+    },
+    {
+      "bytes": 3361,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_DAILY_QUARANTINE_ACTIVATION_V1.md",
+      "sha256": "2bd9f2785e3498f7c7382d6e47981fde107c933123159b134f467ff07be88e81"
     },
     {
       "bytes": 3509,
@@ -3668,6 +3674,12 @@
       "sha256": "41b8c04a94f1a3d6b9a9124c56223e29d5bacc8c07a71c10e87a4f5e47241502"
     },
     {
+      "bytes": 3595,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_autotrain_daily_quarantine_activation_v1.py",
+      "sha256": "e2892588a808448acd29ed70cab2999f349d93e9decd9f30b0c8c54cf7103426"
+    },
+    {
       "bytes": 2448,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_feedback_master_consolidation_v1.py",
@@ -4866,6 +4878,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/scheduler_deployment.py",
       "sha256": "9a4469b719e1e8867623ad38396986b88aa1f4340ced9648cc43bc4db3e89aaf"
+    },
+    {
+      "bytes": 206,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_daily_quarantine_activation/__init__.py",
+      "sha256": "4a194bb6e6777834053ebb2bca3f934391d1411d9dfadebae93d26f47b1fedb2"
+    },
+    {
+      "bytes": 29431,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_daily_quarantine_activation/activation.py",
+      "sha256": "4b47a449f433ab3f9887722684e974779fb1379352efbf09beb0cc3a53be0a6a"
     },
     {
       "bytes": 164,
@@ -7566,6 +7590,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_scheduler_deployment_v1.py",
       "sha256": "d6f3f729b827852597cb183c0e00590ff6d29912de72ebbcb18f2286ab0bf5ad"
+    },
+    {
+      "bytes": 13667,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_daily_quarantine_activation_v1.py",
+      "sha256": "4592108178335ebf7d20beef6089c7332d1d3ca7d09c30a72accd6db9e566d8b"
     },
     {
       "bytes": 6623,
