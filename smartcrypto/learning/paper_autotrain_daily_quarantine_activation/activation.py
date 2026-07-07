@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import pandas as pd
 
@@ -51,6 +51,55 @@ class QuarantinePaths:
     last_run_state_path: Path
 
 
+class QuarantineTrainerBackend(Protocol):
+    """Trainer backend boundary used to keep tests independent from local ML deps."""
+
+    def train_challenger(
+        self,
+        *,
+        root: Path,
+        run_id: str,
+        backend_id: str,
+        microbatch: pd.DataFrame,
+        paths: QuarantinePaths,
+        write_artifact: bool,
+    ) -> dict[str, Any]:
+        """Return the structured quarantine challenger training result."""
+
+
+class RealQuarantineTrainerBackend:
+    """Production trainer backend that preserves the existing dependency probes."""
+
+    def train_challenger(
+        self,
+        *,
+        root: Path,
+        run_id: str,
+        backend_id: str,
+        microbatch: pd.DataFrame,
+        paths: QuarantinePaths,
+        write_artifact: bool,
+    ) -> dict[str, Any]:
+        if backend_id == "qlib":
+            backend_available = importlib.util.find_spec("qlib") is not None
+            backend_unavailable_reason = "qlib_backend_unavailable"
+        elif backend_id == "ai_shadow":
+            backend_available = sklearn_available()
+            backend_unavailable_reason = "ai_shadow_backend_unavailable"
+        else:
+            return challenger_blocked(backend_id, "unknown_trainer_backend")
+        return train_quarantine_challenger(
+            root=root,
+            run_id=run_id,
+            backend_id=backend_id,
+            backend_available=backend_available,
+            backend_unavailable_reason=backend_unavailable_reason,
+            microbatch=microbatch,
+            paths=paths,
+            write_artifact=write_artifact,
+        )
+
+
 def build_paper_autotrain_daily_quarantine_activation_v1(
     *,
     project_root: str | Path,
@@ -67,10 +116,12 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
     generated_at_utc: str | None = None,
     closed_trades_frame: pd.DataFrame | None = None,
     microbatch_frame: pd.DataFrame | None = None,
+    trainer_backend: QuarantineTrainerBackend | None = None,
 ) -> dict[str, Any]:
     """Build and optionally execute the quarantine auto-training cycle."""
 
     root = Path(project_root).resolve()
+    backend = trainer_backend or RealQuarantineTrainerBackend()
     generated_at = generated_at_utc or datetime.now(UTC).isoformat()
     run_id = make_run_id(generated_at)
     paths = build_paths(root, run_id, output_json_path, output_markdown_path)
@@ -99,22 +150,18 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
     qlib_result = challenger_not_requested("qlib")
     ai_shadow_result = challenger_not_requested("ai_shadow")
     if train_challenger and not prepared_microbatch.empty:
-        qlib_result = train_quarantine_challenger(
+        qlib_result = backend.train_challenger(
             root=root,
             run_id=run_id,
             backend_id="qlib",
-            backend_available=importlib.util.find_spec("qlib") is not None,
-            backend_unavailable_reason="qlib_backend_unavailable",
             microbatch=prepared_microbatch,
             paths=paths,
             write_artifact=write_quarantine_artifacts,
         )
-        ai_shadow_result = train_quarantine_challenger(
+        ai_shadow_result = backend.train_challenger(
             root=root,
             run_id=run_id,
             backend_id="ai_shadow",
-            backend_available=sklearn_available(),
-            backend_unavailable_reason="ai_shadow_backend_unavailable",
             microbatch=prepared_microbatch,
             paths=paths,
             write_artifact=write_quarantine_artifacts,

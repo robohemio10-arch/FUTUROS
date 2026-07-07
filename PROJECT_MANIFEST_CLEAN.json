@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "5eabbf09aa51e12df0f2ebc20d19c22f13b8fce6d2707db3303f2d685983ca0e",
+  "aggregate_sha256": "82b55a7e39853b71fb4ab08343214904e531ef42301cdc8c23b7d620533b0fed",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4886,10 +4886,10 @@
       "sha256": "4a194bb6e6777834053ebb2bca3f934391d1411d9dfadebae93d26f47b1fedb2"
     },
     {
-      "bytes": 29431,
+      "bytes": 30891,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_daily_quarantine_activation/activation.py",
-      "sha256": "4b47a449f433ab3f9887722684e974779fb1379352efbf09beb0cc3a53be0a6a"
+      "sha256": "453e3c931bf6dbe31edc845cd885de0491f9820b86bfd3f0ef3e01bb5262d7f5"
     },
     {
       "bytes": 164,
@@ -7592,10 +7592,10 @@
       "sha256": "d6f3f729b827852597cb183c0e00590ff6d29912de72ebbcb18f2286ab0bf5ad"
     },
     {
-      "bytes": 13667,
+      "bytes": 16419,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_daily_quarantine_activation_v1.py",
-      "sha256": "4592108178335ebf7d20beef6089c7332d1d3ca7d09c30a72accd6db9e566d8b"
+      "sha256": "588b96734e5d6ef5b60d92df2a5e763808d2f51238efa827e5460e44658bd9b1"
     },
     {
       "bytes": 6623,
