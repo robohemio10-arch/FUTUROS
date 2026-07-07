@@ -17,6 +17,14 @@ from typing import Any, Protocol
 
 import pandas as pd
 
+from smartcrypto.learning.paper_autotrain_incremental_watermark_fix import (
+    evaluate_activation_incremental_watermark_gate,
+    write_watermark_state,
+)
+from smartcrypto.learning.paper_autotrain_incremental_watermark_fix.watermark import (
+    DEFAULT_WATERMARK_PATH,
+)
+
 SCHEMA_VERSION = "paper_autotrain_daily_quarantine_activation_v1"
 DECISION_QUARANTINE = "QUARANTINE_ONLY"
 
@@ -34,6 +42,7 @@ ALLOWED_WRITE_ROOTS = (
     Path("data/feedback"),
     Path("data/reports"),
     Path("data/research/paper_autotrain_daily_quarantine"),
+    Path("data/research/paper_autotrain_daily_quarantine_watermark"),
     Path("data/models/quarantine/paper_autotrain"),
     Path("data/registries/quarantine"),
 )
@@ -49,6 +58,7 @@ class QuarantinePaths:
     feedback_events_path: Path
     microbatch_snapshot_path: Path
     last_run_state_path: Path
+    watermark_path: Path
 
 
 class QuarantineTrainerBackend(Protocol):
@@ -133,6 +143,13 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
     normalized_closed = normalize_closed_trades(closed_trades)
     microbatch, microbatch_reason = load_microbatch(root, microbatch_frame)
     prepared_microbatch = prepare_microbatch(microbatch)
+    watermark_gate = evaluate_activation_incremental_watermark_gate(
+        root=root,
+        candidate_microbatch=prepared_microbatch,
+        generated_at_utc=generated_at,
+        watermark_path=paths.watermark_path,
+    )
+    incremental_microbatch = watermark_gate.filtered_frame
 
     blockers: list[str] = list(validation_errors)
     warnings: list[str] = []
@@ -144,17 +161,28 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
         blockers.append(microbatch_reason)
     if train_challenger and prepared_microbatch.empty:
         blockers.append("empty_microbatch")
+    if train_challenger and watermark_gate.blocks_quarantine_outputs:
+        blockers.extend(watermark_gate.blockers)
+    if watermark_gate.reason == "watermark_state_invalid":
+        blockers.extend(watermark_gate.blockers)
     if scheduler_check and scheduler_payload["status"] != "ok":
         warnings.append("scheduler_check_not_ready")
+    warnings.extend(watermark_gate.warnings)
 
     qlib_result = challenger_not_requested("qlib")
     ai_shadow_result = challenger_not_requested("ai_shadow")
-    if train_challenger and not prepared_microbatch.empty:
+    can_train_after_watermark = (
+        train_challenger
+        and not incremental_microbatch.empty
+        and not watermark_gate.blocks_quarantine_outputs
+        and watermark_gate.reason != "watermark_state_invalid"
+    )
+    if can_train_after_watermark:
         qlib_result = backend.train_challenger(
             root=root,
             run_id=run_id,
             backend_id="qlib",
-            microbatch=prepared_microbatch,
+            microbatch=incremental_microbatch,
             paths=paths,
             write_artifact=write_quarantine_artifacts,
         )
@@ -162,7 +190,7 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
             root=root,
             run_id=run_id,
             backend_id="ai_shadow",
-            microbatch=prepared_microbatch,
+            microbatch=incremental_microbatch,
             paths=paths,
             write_artifact=write_quarantine_artifacts,
         )
@@ -177,14 +205,28 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
         run_id=run_id,
         generated_at_utc=generated_at,
         normalized_closed=normalized_closed,
-        prepared_microbatch=prepared_microbatch,
+        prepared_microbatch=incremental_microbatch,
         qlib_result=qlib_result,
         ai_shadow_result=ai_shadow_result,
         write_feedback=write_feedback,
-        write_quarantine_artifacts=write_quarantine_artifacts,
+        write_quarantine_artifacts=bool(
+            write_quarantine_artifacts
+            and not validation_errors
+            and not watermark_gate.blocks_quarantine_outputs
+            and watermark_gate.reason != "watermark_state_invalid"
+        ),
         write_report=False,
         report=None,
     )
+    watermark_written = False
+    if (
+        write_quarantine_artifacts
+        and bool(write_results["microbatch_snapshot_written"])
+        and not incremental_microbatch.empty
+        and watermark_gate.reason != "watermark_state_invalid"
+    ):
+        write_watermark_state(paths.watermark_path, watermark_gate.state)
+        watermark_written = True
     if requested_writes and validation_errors:
         blockers.append("write_boundary_validation_failed")
 
@@ -195,13 +237,14 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
         train_challenger=train_challenger,
         blockers=blockers,
         normalized_closed=normalized_closed,
-        prepared_microbatch=prepared_microbatch,
+        prepared_microbatch=incremental_microbatch,
     )
     safety = safety_flags(
         writes_quarantine_registry=bool(write_results["quarantine_registry_written"]),
         writes_quarantined_model_artifacts=bool(
             qlib_result["artifact_written"] or ai_shadow_result["artifact_written"]
         ),
+        training_prevented_by_watermark=bool(watermark_gate.report_fields["training_prevented_by_watermark"]),
     )
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -222,9 +265,23 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
         "closed_trades_loaded_count": int(len(closed_trades)),
         "closed_trades_valid_count": int(len(normalized_closed)),
         "feedback_events_count": int(len(normalized_closed)),
-        "microbatch_rows": int(len(prepared_microbatch)),
-        "feature_count": len(feature_columns(prepared_microbatch)),
-        "label_count": label_count(prepared_microbatch),
+        "microbatch_rows": int(len(incremental_microbatch)),
+        "raw_microbatch_rows": int(len(prepared_microbatch)),
+        "incremental_microbatch_rows": int(len(incremental_microbatch)),
+        "feature_count": len(feature_columns(incremental_microbatch)),
+        "label_count": label_count(incremental_microbatch),
+        "incremental_watermark_status": watermark_gate.status,
+        "incremental_watermark_reason": watermark_gate.reason,
+        "incremental_watermark_decision": watermark_gate.decision,
+        "watermark_path": str(paths.watermark_path),
+        "watermark_written": watermark_written,
+        "new_unique_records_count": int(watermark_gate.report_fields["new_unique_records_count"]),
+        "already_seen_record_count": int(watermark_gate.report_fields["already_seen_record_count"]),
+        "stale_duplicate_microbatch_prevented": bool(
+            watermark_gate.report_fields["stale_duplicate_microbatch_prevented"]
+        ),
+        "training_prevented_by_watermark": bool(watermark_gate.report_fields["training_prevented_by_watermark"]),
+        "would_write_microbatch": bool(watermark_gate.report_fields["would_write_microbatch"]),
         "qlib_challenger_train_status": qlib_result["status"],
         "ai_shadow_challenger_train_status": ai_shadow_result["status"],
         "qlib_candidate_artifact_path": qlib_result["artifact_path"],
@@ -248,12 +305,14 @@ def build_paper_autotrain_daily_quarantine_activation_v1(
             "feedback_events": str(paths.feedback_events_path) if write_feedback else None,
             "microbatch_snapshot": str(paths.microbatch_snapshot_path) if write_quarantine_artifacts else None,
             "last_run_state": str(paths.last_run_state_path) if write_quarantine_artifacts else None,
+            "watermark": str(paths.watermark_path) if watermark_written else None,
             "quarantine_registry": str(paths.registry_path) if write_quarantine_artifacts else None,
             "quarantine_model_dir": str(paths.model_dir) if write_quarantine_artifacts else None,
         },
         "scheduler_check": scheduler_payload,
         "closed_trades_source_reason": closed_reason,
         "microbatch_source_reason": microbatch_reason,
+        "incremental_watermark_summary": watermark_gate.report_fields,
         "qlib_challenger_summary": qlib_result,
         "ai_shadow_challenger_summary": ai_shadow_result,
         **safety,
@@ -444,10 +503,12 @@ def write_quarantine_outputs(
         for result in (qlib_result, ai_shadow_result)
         if isinstance(result.get("candidate"), Mapping)
     ]
+    microbatch_snapshot_written = False
     if write_quarantine_artifacts:
         paths.research_dir.mkdir(parents=True, exist_ok=True)
         if not prepared_microbatch.empty:
             prepared_microbatch.to_parquet(paths.microbatch_snapshot_path, index=False)
+            microbatch_snapshot_written = True
         registry_payload = {
             "schema_version": "paper_autotrain_quarantine_candidate_registry_v1",
             "generated_at_utc": generated_at_utc,
@@ -467,6 +528,7 @@ def write_quarantine_outputs(
     return {
         "write_performed": write_performed,
         "quarantine_registry_written": bool(write_quarantine_artifacts),
+        "microbatch_snapshot_written": bool(write_quarantine_artifacts and microbatch_snapshot_written),
         "quarantine_candidate_count": len(candidate_rows),
     }
 
@@ -517,6 +579,10 @@ def decide_status(
         return "blocked", "missing_or_invalid_closed_trades"
     if train_challenger and ("missing_microbatch" in blocking or "empty_microbatch" in blocking):
         return "blocked", "missing_or_empty_microbatch"
+    if "no_new_incremental_records_after_watermark" in blocking:
+        return "blocked", "no_new_incremental_records_after_watermark"
+    if "watermark_state_invalid" in blocking:
+        return "blocked", "watermark_state_invalid"
     hard_training = [item for item in blocking if item.endswith("_unavailable") or item == "single_class_target"]
     if hard_training and not prepared_microbatch.empty:
         return "warning", "quarantine_cycle_executed_with_backend_warnings"
@@ -535,6 +601,7 @@ def safety_flags(
     *,
     writes_quarantine_registry: bool = False,
     writes_quarantined_model_artifacts: bool = False,
+    training_prevented_by_watermark: bool = False,
 ) -> dict[str, bool]:
     return {
         "research_only": True,
@@ -549,6 +616,7 @@ def safety_flags(
         "exchange_private_access": False,
         "sends_orders": False,
         "changes_risk": False,
+        "training_prevented_by_watermark": bool(training_prevented_by_watermark),
         "changes_active_model": False,
         "active_model_changed": False,
         "model_promotion_performed": False,
@@ -662,6 +730,7 @@ def build_paths(
         feedback_events_path=root / DEFAULT_FEEDBACK_EVENTS_PATH,
         microbatch_snapshot_path=research_dir / "incremental_training_microbatch.parquet",
         last_run_state_path=root / DEFAULT_RESEARCH_DIR / "last_run_state.json",
+        watermark_path=root / DEFAULT_WATERMARK_PATH,
     )
 
 
