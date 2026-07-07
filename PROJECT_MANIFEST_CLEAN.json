@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ed9400f1700d479946f1d0e427b9abeb06179b3963292bb0900d6749b03bda9b",
+  "aggregate_sha256": "601cdd2687d66ece49b4162d9cfb2d3837569c844d60209676623febc596d9c9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 237,
-    "manifested_files_total": 1351,
-    "python_files": 1019,
+    "docs_files": 238,
+    "manifested_files_total": 1356,
+    "python_files": 1023,
     "runtime_excluded_files_total": 0,
-    "test_files": 287,
-    "tracked_files_total": 1352,
+    "test_files": 288,
+    "tracked_files_total": 1357,
     "workflows": 1
   },
   "deterministic": true,
@@ -1050,6 +1050,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_IMAGE_PIN_DIGEST_POLICY_V1.md",
       "sha256": "6528ae2ff621ccef1b4e6eb7fb60e031054f34be3a2a011632a924b3fc24c654"
+    },
+    {
+      "bytes": 4039,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_AI_SELECTOR_E2E_DRYRUN_V1.md",
+      "sha256": "5da679b02662c9eee79d5eed333986d142313f8982e8e3af88230f68032eef1e"
     },
     {
       "bytes": 4582,
@@ -2592,6 +2598,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_financial_label_target_store_v1.py",
       "sha256": "2657cf17e5e7b50adedcf18c3a4c558234678b13c719e04b3a18599e319689ee"
+    },
+    {
+      "bytes": 2379,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_freqtrade_paper_ai_selector_e2e_dryrun_v1.py",
+      "sha256": "0912d934952df1affd0d13078aff10a9f91c2659f44cd40ef87aa1cfc84841ab"
     },
     {
       "bytes": 3590,
@@ -4752,6 +4764,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/feature_source_fields_enrichment_contract/source_contract.py",
       "sha256": "0f2399c5c0fa60f147692bf31f0ba1ea28585ebd77448d7a2bd853cd3dadbb4d"
+    },
+    {
+      "bytes": 203,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/freqtrade_paper_ai_selector_e2e_dryrun/__init__.py",
+      "sha256": "9ed2ed45b3fb47e73cbe4098e791a597917046f723321ec662d5d82be5aa9f62"
+    },
+    {
+      "bytes": 23166,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/freqtrade_paper_ai_selector_e2e_dryrun/selector_dryrun.py",
+      "sha256": "e1f47864514311a6d6ac1eeff410221717431d1e6074b2fd32f8b388a6e2bf6d"
     },
     {
       "bytes": 199,
@@ -7170,6 +7194,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_image_pin_digest_policy_v1.py",
       "sha256": "7ae87caa7252d906705983dd8404c25de154b2a3d3663071f55b5889d088a386"
+    },
+    {
+      "bytes": 11360,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_ai_selector_e2e_dryrun_v1.py",
+      "sha256": "e2ca89e2e0f8de7c8f075652572f0f1dbf39d9150eeb6aa06c6fbd6e39e8e318"
     },
     {
       "bytes": 14464,
