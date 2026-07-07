@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "82b55a7e39853b71fb4ab08343214904e531ef42301cdc8c23b7d620533b0fed",
+  "aggregate_sha256": "1eb35c116213d29809d56744e1e0a0edea5db06e613889943a2096dda80dede6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 240,
-    "manifested_files_total": 1366,
-    "python_files": 1031,
+    "docs_files": 241,
+    "manifested_files_total": 1371,
+    "python_files": 1035,
     "runtime_excluded_files_total": 0,
-    "test_files": 290,
-    "tracked_files_total": 1367,
+    "test_files": 291,
+    "tracked_files_total": 1372,
     "workflows": 1
   },
   "deterministic": true,
@@ -1368,6 +1368,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_FEEDBACK_LOOP_V1.md",
       "sha256": "00ddf5ddf7f65500c0e80d81ebb6a3c61d05f6b55209405909475cc42f9b262c"
+    },
+    {
+      "bytes": 4406,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_QUARANTINE_CANDIDATE_EVALUATION_V1.md",
+      "sha256": "447cf8c73604aa22a9f6ec13e3ece047225040627bcf401b34b50362ea81a012"
     },
     {
       "bytes": 3393,
@@ -2742,6 +2748,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_feedback_loop_v1.py",
       "sha256": "448445c1aab698ab4fd8f6c766c6a707975caa26442777aac5644624e8cbb460"
+    },
+    {
+      "bytes": 1924,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_quarantine_candidate_evaluation_v1.py",
+      "sha256": "bed2381180bc099a8a1be022be4b490bb286e22a327200bf5664e78e95f7db64"
     },
     {
       "bytes": 2753,
@@ -4902,6 +4914,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_feedback_loop/loop.py",
       "sha256": "524961eb0d7fa3a302a995ef620a0df372bfd108536b53975daf9700a2fac2f3"
+    },
+    {
+      "bytes": 221,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_quarantine_candidate_evaluation/__init__.py",
+      "sha256": "356fd4d0997ef8fde54f4726083be00be715c91fa57d52e048fbbb4e142b7341"
+    },
+    {
+      "bytes": 28763,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_quarantine_candidate_evaluation/evaluation.py",
+      "sha256": "986e4f226bac04da6d976b804e446ddcd36bc954122516372a2a1270e0bb4808"
     },
     {
       "bytes": 190,
@@ -7608,6 +7632,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_feedback_loop_v1.py",
       "sha256": "44a607a345074426137d0a7371037d426a6298a8495d59bb631ceb2422008b12"
+    },
+    {
+      "bytes": 15241,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_quarantine_candidate_evaluation_v1.py",
+      "sha256": "11a234196a7cdf75b40791b32a4e9e432417f968850e791d6dc058a55655e2c5"
     },
     {
       "bytes": 10096,
