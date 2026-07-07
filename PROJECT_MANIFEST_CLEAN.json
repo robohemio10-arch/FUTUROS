@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2ce0a4a0bffae1cbd96ad7681d6c6ff777b07d1c5efea1516203bbc9c5b6c6a5",
+  "aggregate_sha256": "ed9400f1700d479946f1d0e427b9abeb06179b3963292bb0900d6749b03bda9b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 236,
-    "manifested_files_total": 1346,
-    "python_files": 1015,
+    "docs_files": 237,
+    "manifested_files_total": 1351,
+    "python_files": 1019,
     "runtime_excluded_files_total": 0,
-    "test_files": 286,
-    "tracked_files_total": 1347,
+    "test_files": 287,
+    "tracked_files_total": 1352,
     "workflows": 1
   },
   "deterministic": true,
@@ -1320,6 +1320,12 @@
       "hash_mode": "text_lf",
       "path": "docs/OUTCOME_SIDECAR_FINANCIAL_EVALUATION.md",
       "sha256": "8c08c3e3aca7791b26f455a37dd7e2641d04b50b17729a9c666a83b1889b822d"
+    },
+    {
+      "bytes": 4867,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AI_SIGNAL_CANDIDATE_PRODUCER_V1.md",
+      "sha256": "7822d3b3b5aac4f76a19b72305cf76f428ec2732b053bcaf0766abde16dab53c"
     },
     {
       "bytes": 2777,
@@ -2694,6 +2700,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 2503,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_ai_signal_candidate_producer_v1.py",
+      "sha256": "e538bd3393cec342f00d7ab3a3c9344acb6e3229279f4bba0d9e59dce3589e17"
     },
     {
       "bytes": 2305,
@@ -4740,6 +4752,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/feature_source_fields_enrichment_contract/source_contract.py",
       "sha256": "0f2399c5c0fa60f147692bf31f0ba1ea28585ebd77448d7a2bd853cd3dadbb4d"
+    },
+    {
+      "bytes": 199,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_ai_signal_candidate_producer/__init__.py",
+      "sha256": "16a3e126cc15053ce81ac33043d466f47ad4765bcc0f33d5dd83ad3086216461"
+    },
+    {
+      "bytes": 20917,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_ai_signal_candidate_producer/signal_candidate_producer.py",
+      "sha256": "a576b319a3c92e04b0d8960335db977017bee504eeee2989d14055ac4c23f6c2"
     },
     {
       "bytes": 461,
@@ -7458,6 +7482,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 10146,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_ai_signal_candidate_producer_v1.py",
+      "sha256": "84fbc6775306ab5747685d01aa1a6560c479bafa71b692839e945a02ec386458"
     },
     {
       "bytes": 9816,
