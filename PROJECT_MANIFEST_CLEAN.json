@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c1eb3a4401dcfd648c8022aaea74714d338204e7a93b57fcbd530dbac546726e",
+  "aggregate_sha256": "d6bde91fb332ef66dc7c06b1c22927f1093137fd91c94cc17282664711f0029c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 244,
-    "manifested_files_total": 1386,
-    "python_files": 1047,
+    "docs_files": 245,
+    "manifested_files_total": 1391,
+    "python_files": 1051,
     "runtime_excluded_files_total": 0,
-    "test_files": 294,
-    "tracked_files_total": 1387,
+    "test_files": 295,
+    "tracked_files_total": 1392,
     "workflows": 1
   },
   "deterministic": true,
@@ -1392,6 +1392,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_QUARANTINE_CANDIDATE_EVALUATION_V1.md",
       "sha256": "447cf8c73604aa22a9f6ec13e3ece047225040627bcf401b34b50362ea81a012"
+    },
+    {
+      "bytes": 3207,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_WATERMARK_ACCUMULATION_RECHECK_V1.md",
+      "sha256": "89bef22de6fad8e4bf791979a6fff389323ffd0141d8ef4e22e96d0262707845"
     },
     {
       "bytes": 3393,
@@ -2790,6 +2796,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_quarantine_candidate_evaluation_v1.py",
       "sha256": "bed2381180bc099a8a1be022be4b490bb286e22a327200bf5664e78e95f7db64"
+    },
+    {
+      "bytes": 2143,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_watermark_accumulation_recheck_v1.py",
+      "sha256": "38ab0c9082945ab6968f8a91b772fdfe06c8d9201b1b0b76d12f02dc6d20f5ef"
     },
     {
       "bytes": 2753,
@@ -4998,6 +5010,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_quarantine_candidate_evaluation/evaluation.py",
       "sha256": "986e4f226bac04da6d976b804e446ddcd36bc954122516372a2a1270e0bb4808"
+    },
+    {
+      "bytes": 221,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_watermark_accumulation_recheck/__init__.py",
+      "sha256": "7f21c8668d449cc3ead0077fe8744bbf0f7ce9898d3ec79074fd71e071222e5e"
+    },
+    {
+      "bytes": 22541,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_watermark_accumulation_recheck/recheck.py",
+      "sha256": "2f1e379d95d8aed32e7f50c5aa91cc079a64c4b47e7e222d82d0835101a92a4e"
     },
     {
       "bytes": 190,
@@ -7728,6 +7752,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_quarantine_candidate_evaluation_v1.py",
       "sha256": "11a234196a7cdf75b40791b32a4e9e432417f968850e791d6dc058a55655e2c5"
+    },
+    {
+      "bytes": 10483,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_watermark_accumulation_recheck_v1.py",
+      "sha256": "47a9a25fef15761f71711c603d94e149b55afd127baf406d667eca095007b512"
     },
     {
       "bytes": 10096,
