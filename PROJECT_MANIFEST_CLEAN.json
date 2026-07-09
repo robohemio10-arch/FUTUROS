@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "07307ee89c9d908cd5b2ef583d6a9b47e799d78e41cba8fb320c2795f5024961",
+  "aggregate_sha256": "60f1edcb011b44d20c09e942b0478548bb6582b56c477b4b715cf4472dadd67a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 247,
-    "manifested_files_total": 1401,
-    "python_files": 1059,
+    "docs_files": 248,
+    "manifested_files_total": 1406,
+    "python_files": 1063,
     "runtime_excluded_files_total": 0,
-    "test_files": 297,
-    "tracked_files_total": 1402,
+    "test_files": 298,
+    "tracked_files_total": 1407,
     "workflows": 1
   },
   "deterministic": true,
@@ -1386,6 +1386,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_MICROBATCH_FRESHNESS_AND_WATERMARK_V1.md",
       "sha256": "ab0010409aefc8b58ab567df36b631596b75e1981220b2962d8739e80f33834d"
+    },
+    {
+      "bytes": 3086,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_MICROBATCH_SYNC_PLANNER_V1.md",
+      "sha256": "27108427f1417380a69702d0c95d1b4ee5e5db01e0da335c3172291df16890fe"
     },
     {
       "bytes": 2886,
@@ -2802,6 +2808,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_microbatch_freshness_and_watermark_v1.py",
       "sha256": "e3e10ce70959b6b90e87fcf9d2d897c4f23a0c6580ff8998e540db2f87d50847"
+    },
+    {
+      "bytes": 2657,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_microbatch_sync_planner_v1.py",
+      "sha256": "3ea0df8af5cd258a2a58e865febc3ed1996ff07c5fc6e97747145b7a49b257bc"
     },
     {
       "bytes": 2133,
@@ -5022,6 +5034,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_microbatch_freshness_and_watermark/freshness.py",
       "sha256": "30afa6031c047511c1acf4e2f38034d83371b541f714057a415ddbd5b91f1b0e"
+    },
+    {
+      "bytes": 211,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_microbatch_sync_planner/__init__.py",
+      "sha256": "3b8586c3cba12cdd6601f78e08f696562313cd314e6af4a6ae66479f23cde7cf"
+    },
+    {
+      "bytes": 27090,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_microbatch_sync_planner/planner.py",
+      "sha256": "0e67fc7e77aec6d669915cd2bf784efa85f5c0f997210bd07bb40af489d49da7"
     },
     {
       "bytes": 216,
@@ -7794,6 +7818,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_microbatch_freshness_and_watermark_v1.py",
       "sha256": "ecdce5bde7e842dda757513dd84eca2a49cdecc5f4dc3f64d02086e4f8f4a3c0"
+    },
+    {
+      "bytes": 13951,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_microbatch_sync_planner_v1.py",
+      "sha256": "39faf6cfb95a9ce2fcb0d69897a225b0423fc36e624757b32e98227152c2655e"
     },
     {
       "bytes": 10112,
