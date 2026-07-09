@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "60f1edcb011b44d20c09e942b0478548bb6582b56c477b4b715cf4472dadd67a",
+  "aggregate_sha256": "a1130500dc3f55bc53d83b841e2ce64aaf453ce6d28d3abba4e9a312b7286e28",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 248,
-    "manifested_files_total": 1406,
-    "python_files": 1063,
+    "docs_files": 249,
+    "manifested_files_total": 1412,
+    "python_files": 1068,
     "runtime_excluded_files_total": 0,
-    "test_files": 298,
-    "tracked_files_total": 1407,
+    "test_files": 300,
+    "tracked_files_total": 1413,
     "workflows": 1
   },
   "deterministic": true,
@@ -1410,6 +1410,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_QUARANTINE_CANDIDATE_EVALUATION_V1.md",
       "sha256": "447cf8c73604aa22a9f6ec13e3ece047225040627bcf401b34b50362ea81a012"
+    },
+    {
+      "bytes": 2436,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_SOURCE_KEY_RECONCILIATION_V1.md",
+      "sha256": "d2e00a402a3ce7e59f770e8557759d58a79ae190555596dff9cf2cd207ad1a2f"
     },
     {
       "bytes": 3207,
@@ -2832,6 +2838,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_quarantine_candidate_evaluation_v1.py",
       "sha256": "bed2381180bc099a8a1be022be4b490bb286e22a327200bf5664e78e95f7db64"
+    },
+    {
+      "bytes": 2632,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_source_key_reconciliation_v1.py",
+      "sha256": "b116ce6950d4f3d59a0d010fce2fccec51d89a5b702a95c415e49f59ea7e1dcf"
     },
     {
       "bytes": 2143,
@@ -5082,6 +5094,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_quarantine_candidate_evaluation/evaluation.py",
       "sha256": "986e4f226bac04da6d976b804e446ddcd36bc954122516372a2a1270e0bb4808"
+    },
+    {
+      "bytes": 319,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_source_key_reconciliation/__init__.py",
+      "sha256": "876d55444f026a65096e15e4721e9e12ffe4dd4729efe85ce8444bc17b87c131"
+    },
+    {
+      "bytes": 36634,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_source_key_reconciliation/reconciliation.py",
+      "sha256": "947ea2067318acbb901df6af968b680c6312abad5d314206e914ae241b60477e"
     },
     {
       "bytes": 221,
@@ -7842,6 +7866,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_quarantine_candidate_evaluation_v1.py",
       "sha256": "11a234196a7cdf75b40791b32a4e9e432417f968850e791d6dc058a55655e2c5"
+    },
+    {
+      "bytes": 8411,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_source_key_reconciliation_real_schema_v1.py",
+      "sha256": "a9df84e0b2f270e4f2f805551840d5d1b91fb8f07de7e92e2a022249f9a4d86c"
+    },
+    {
+      "bytes": 16266,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_source_key_reconciliation_v1.py",
+      "sha256": "fa49dda8dcfd1c3cd1abfaca98d10b96dc637f5d67246556ebf33e606ddc89de"
     },
     {
       "bytes": 10483,
