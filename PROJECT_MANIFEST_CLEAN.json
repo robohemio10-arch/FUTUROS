@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e937b1856f8c3f964108ce609f1d793fd8a3277c42a9a949a4e9b090e5f0b5da",
+  "aggregate_sha256": "8dccb9d172440af321d3e30b8e7039489ee850f27411f0cf00571ff10c424ae3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 246,
-    "manifested_files_total": 1396,
-    "python_files": 1055,
+    "docs_files": 247,
+    "manifested_files_total": 1401,
+    "python_files": 1059,
     "runtime_excluded_files_total": 0,
-    "test_files": 296,
-    "tracked_files_total": 1397,
+    "test_files": 297,
+    "tracked_files_total": 1402,
     "workflows": 1
   },
   "deterministic": true,
@@ -1392,6 +1392,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_NEW_TRADES_READINESS_GATE_V1.md",
       "sha256": "3b8b618c5af299e35cf7e51f65d15de36cfa53343c09a0529c87a2bceaccaf60"
+    },
+    {
+      "bytes": 4499,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_PAPER_RUNTIME_SOURCE_DIAGNOSTICS_V1.md",
+      "sha256": "f0491deb423d10154cffb78280d75e3e159d9c788f47208738dbee193857773a"
     },
     {
       "bytes": 4406,
@@ -2802,6 +2808,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_new_trades_readiness_gate_v1.py",
       "sha256": "3e02fd019548d5653aecd65b3109768b95a7e21b81f647de3aa6497d34cc50a4"
+    },
+    {
+      "bytes": 3106,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_paper_runtime_source_diagnostics_v1.py",
+      "sha256": "3d21f4a619a171100522735c1af00ae1ee82f9dd2fd427932f176c67c1679451"
     },
     {
       "bytes": 1924,
@@ -5022,6 +5034,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_new_trades_readiness_gate/gate.py",
       "sha256": "2149df1557c50f96b7dccca7060df8b242d31308d833decc13cc6806fb00572d"
+    },
+    {
+      "bytes": 228,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_paper_runtime_source_diagnostics/__init__.py",
+      "sha256": "ec513ce58001d4db393518efc205557a63cfabb099b3b7718816514191007381"
+    },
+    {
+      "bytes": 30568,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_paper_runtime_source_diagnostics/diagnostics.py",
+      "sha256": "d814eca102d585c750f132f5f2272786f5b37e0da5db255cd89d9f7194d3efc6"
     },
     {
       "bytes": 221,
@@ -7776,6 +7800,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_new_trades_readiness_gate_v1.py",
       "sha256": "841cd489c7b2ce0da0b0f51d893df66c0dd55564c484157a016488d8f8544738"
+    },
+    {
+      "bytes": 15670,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_paper_runtime_source_diagnostics_v1.py",
+      "sha256": "6e8f0e1afbd30602816a2ccedb526be85c2b21267bedf9ca10b1bc3d811d5762"
     },
     {
       "bytes": 15241,
