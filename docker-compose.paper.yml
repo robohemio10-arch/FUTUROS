@@ -50,7 +50,7 @@ services:
       - ./scripts:/app/scripts:ro
       - ./smartcrypto:/app/smartcrypto:ro
     ports:
-      - "8502:8501"
+      - "127.0.0.1:8502:8501"
     command: streamlit run smartcrypto/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
 
   freqtrade-paper:
