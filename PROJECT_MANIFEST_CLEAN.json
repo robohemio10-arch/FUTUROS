@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1539eefda13373c098f5934c25c85d24bce04c132a78ce1f75f8002941eb7bed",
+  "aggregate_sha256": "f65e4251ef1ea0d786478f7728e562e2e10b11c38d339ef7f9bddd4d2953ec6b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 253,
-    "manifested_files_total": 1435,
-    "python_files": 1087,
+    "docs_files": 254,
+    "manifested_files_total": 1443,
+    "python_files": 1094,
     "runtime_excluded_files_total": 0,
-    "test_files": 304,
-    "tracked_files_total": 1436,
+    "test_files": 305,
+    "tracked_files_total": 1444,
     "workflows": 1
   },
   "deterministic": true,
@@ -750,6 +750,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
+    },
+    {
+      "bytes": 4592,
+      "hash_mode": "text_lf",
+      "path": "docs/CREDENTIAL_ROTATION_ATTESTATION_GATE_V1.md",
+      "sha256": "b7a9b44a918d4f0dd2f08330745bae419fba203e2813e149cf6b4ff65ea5688e"
     },
     {
       "bytes": 2204,
@@ -4100,6 +4106,12 @@
       "sha256": "48866af9e4ffb591085168e62b81e4c62596ef80c177b53e8824ee314345f2b7"
     },
     {
+      "bytes": 1967,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_credential_rotation_attestation_v1.py",
+      "sha256": "3d9f76998d51ad0f3266d17d7fe2489dd5c2dd7f8b25775e40c2fe7c0e2d3297"
+    },
+    {
       "bytes": 2471,
       "hash_mode": "text_lf",
       "path": "scripts/validate_freqtrade_signal_contract.py",
@@ -6704,6 +6716,36 @@
       "sha256": "70f26637fdb5f7b29b50f6741d8bbb1aa932cbe0ad44aefca6e6361d61dbc0e6"
     },
     {
+      "bytes": 327,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/credential_rotation_attestation/__init__.py",
+      "sha256": "f643e9fe6ea9176efa9f67df9ecdaeedec31747a965592563dadc6431443776e"
+    },
+    {
+      "bytes": 1728,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/credential_rotation_attestation/contracts.py",
+      "sha256": "29eada0cfcc1b8327961724c9ce9b3830b3d800c695a4ac0c6a6e7a7aece73a0"
+    },
+    {
+      "bytes": 5408,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/credential_rotation_attestation/loader.py",
+      "sha256": "c89c13450bce04f7209327ffb165cdb64b755795c56ca66892f162f3b694e116"
+    },
+    {
+      "bytes": 1827,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/credential_rotation_attestation/report.py",
+      "sha256": "40b412634274193c29ed22e097daa0c9b88afb1de92c6a92f905d80f66e27c8f"
+    },
+    {
+      "bytes": 22558,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/credential_rotation_attestation/validator.py",
+      "sha256": "0d452178e5bb4893c5eea2b45ea71f9e5c56c5f6b63ac2c607aa7a727d8648d8"
+    },
+    {
       "bytes": 548,
       "hash_mode": "text_lf",
       "path": "smartcrypto/security/evidence_bundle_redaction/__init__.py",
@@ -6722,10 +6764,10 @@
       "sha256": "ca0452aacac231f0bff80d986739953c295c6c7536dcadfa0e8d42e6e9c0daa5"
     },
     {
-      "bytes": 6093,
+      "bytes": 6118,
       "hash_mode": "text_lf",
       "path": "smartcrypto/security/evidence_bundle_redaction/redactor.py",
-      "sha256": "71088b87e3430e2edf6942c23a000d1a7e6f4e9e6ce8791727b0f6f699ce430f"
+      "sha256": "aefeffb23187710cf0c61db75a7ad5c5511a7ebcdc45b25907bf76030f63f1af"
     },
     {
       "bytes": 11311,
@@ -7020,6 +7062,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 23118,
+      "hash_mode": "text_lf",
+      "path": "tests/test_credential_rotation_attestation_gate_v1.py",
+      "sha256": "884ecc71ba26d187c62206b37a2cb43b9527586f8f2011ab08cac8508576c7d7"
     },
     {
       "bytes": 9422,

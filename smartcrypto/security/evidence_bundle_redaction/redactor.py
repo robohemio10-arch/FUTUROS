@@ -12,7 +12,7 @@ from .contracts import RedactionResult, SecretFinding
 REDACTION_PREFIX_LENGTH = 12
 SENSITIVE_NAME = (
     r"(?:token|secret|password|pass|api[_-]?key|access[_-]?key|private[_-]?key|"
-    r"webhook|auth(?:orization)?|credential)"
+    r"webhook|auth(?:orization)?|credential(?![_-](?:id|category)\b))"
 )
 
 
