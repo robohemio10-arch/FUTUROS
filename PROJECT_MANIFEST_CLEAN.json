@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b54aa1f28989bedec2bcba6915cdffd33bf79dce722022c2d80f60cd64a40d4f",
+  "aggregate_sha256": "ba021d36c8401e837aa00027b939a469d92fc0ce0b298b641d6e51559fcd3653",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 250,
-    "manifested_files_total": 1417,
-    "python_files": 1072,
+    "docs_files": 251,
+    "manifested_files_total": 1422,
+    "python_files": 1076,
     "runtime_excluded_files_total": 0,
-    "test_files": 301,
-    "tracked_files_total": 1418,
+    "test_files": 302,
+    "tracked_files_total": 1423,
     "workflows": 1
   },
   "deterministic": true,
@@ -1374,6 +1374,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_FEEDBACK_GAP_DIAGNOSTICS_V1.md",
       "sha256": "79112e4fd4d05a99be35e7226a6fa88bf66f502e5a415540dd9e6dedc51b12be"
+    },
+    {
+      "bytes": 3678,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AUTOTRAIN_FEEDBACK_GAP_REMEDIATION_PLAN_V1.md",
+      "sha256": "de22ed5fa3b2fbafb6b24e8c2454fa6496f789f27b66e745d2bc2324c8e3e024"
     },
     {
       "bytes": 3509,
@@ -2808,6 +2814,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_feedback_gap_diagnostics_v1.py",
       "sha256": "dea212af45f03e58f7db0f665cf98dd2cec9b2fa999358ba628fa60bcb2ddf29"
+    },
+    {
+      "bytes": 2010,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autotrain_feedback_gap_remediation_plan_v1.py",
+      "sha256": "121696d0d0a9e669f20e2f1897bc635ad75f876f53adc8741603fdebb42f6f1b"
     },
     {
       "bytes": 2305,
@@ -5034,6 +5046,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_feedback_gap_diagnostics/diagnostics.py",
       "sha256": "3102013c7e5d80a637e288efc847c0ffd2191804d25ce76d8fbdc1fa6a76c84c"
+    },
+    {
+      "bytes": 417,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_feedback_gap_remediation_plan/__init__.py",
+      "sha256": "96fc598502e57bdd8e6ab0140838a8db8f8d091b2c2f9b04346a69ac8d9fb1ab"
+    },
+    {
+      "bytes": 21044,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autotrain_feedback_gap_remediation_plan/planner.py",
+      "sha256": "ace954e5dfa77ef909d6c01cdac1ea66138790e366754fecb894a7d481447a42"
     },
     {
       "bytes": 164,
@@ -7848,6 +7872,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_feedback_gap_diagnostics_v1.py",
       "sha256": "65a3720a05425c725fadac751c295b4639fd7ba8115b442a227b30a6d1c139b3"
+    },
+    {
+      "bytes": 8627,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autotrain_feedback_gap_remediation_plan_v1.py",
+      "sha256": "8348d44fcf13415bdcb0780609d75911cc1eccaa8369bbc472e7b39aac1df0b2"
     },
     {
       "bytes": 6623,
