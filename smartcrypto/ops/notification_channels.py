@@ -23,6 +23,8 @@ SAFE_RESULT_FLAGS: dict[str, Any] = {
     "shadow_only": True,
     "runtime_mode": "paper",
     "live_trading_enabled": False,
+    "live_release_allowed": False,
+    "canary_release_allowed": False,
     "order_submission_enabled": False,
     "real_order_submission_enabled": False,
     "exchange_private_access": False,
@@ -88,6 +90,33 @@ class NotificationSettings:
 
 
 @dataclass(frozen=True)
+class NotificationChannelPreflight:
+    status: str
+    reason: str
+    channels: str
+    failed_checks: tuple[str, ...]
+    ntfy_enabled: bool
+    telegram_enabled: bool
+    auth_mode: str
+    paper_only: bool = True
+    shadow_only: bool = True
+    runtime_mode: str = "paper"
+    live_trading_enabled: bool = False
+    live_release_allowed: bool = False
+    canary_release_allowed: bool = False
+    order_submission_enabled: bool = False
+    real_order_submission_enabled: bool = False
+    exchange_private_access: bool = False
+    sends_orders: bool = False
+    changes_risk: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["failed_checks"] = list(self.failed_checks)
+        return payload
+
+
+@dataclass(frozen=True)
 class DeliveryResult:
     channel: str
     enabled: bool
@@ -100,6 +129,8 @@ class DeliveryResult:
     shadow_only: bool = True
     runtime_mode: str = "paper"
     live_trading_enabled: bool = False
+    live_release_allowed: bool = False
+    canary_release_allowed: bool = False
     order_submission_enabled: bool = False
     real_order_submission_enabled: bool = False
     exchange_private_access: bool = False
@@ -397,21 +428,23 @@ def execute_request(
     try:
         with opener(request, float(timeout_seconds)) as response:
             status_code = int(getattr(response, "status", getattr(response, "code", 0)) or 0)
-            body = response.read(512).decode("utf-8", errors="replace") if hasattr(response, "read") else ""
+            if hasattr(response, "read"):
+                response.read(512)
     except urllib.error.HTTPError as exc:
-        body = exc.read(512).decode("utf-8", errors="replace") if hasattr(exc, "read") else str(exc)
-        return failed(channel, f"http_error:{exc.code}", http_status=int(exc.code), response_excerpt=body)
+        if hasattr(exc, "read"):
+            exc.read(512)
+        return failed(channel, f"http_error:{exc.code}", http_status=int(exc.code))
     except urllib.error.URLError as exc:
-        return failed(channel, f"url_error:{exc.reason}")
+        return failed(channel, f"url_error:{type(exc.reason).__name__}")
     except TimeoutError:
         return failed(channel, "timeout")
     except OSError as exc:
-        return failed(channel, f"os_error:{exc}")
+        return failed(channel, f"os_error:{type(exc).__name__}")
     except Exception as exc:  # pragma: no cover - defensive boundary around external IO
-        return failed(channel, f"unexpected_error:{type(exc).__name__}:{exc}")
+        return failed(channel, f"unexpected_error:{type(exc).__name__}")
     if 200 <= status_code < 300:
-        return sent(channel, reason="http_ok", http_status=status_code, response_excerpt=body)
-    return failed(channel, f"unexpected_http_status:{status_code}", http_status=status_code, response_excerpt=body)
+        return sent(channel, reason="http_ok", http_status=status_code)
+    return failed(channel, f"unexpected_http_status:{status_code}", http_status=status_code)
 
 
 def default_urlopen(request: urllib.request.Request, timeout: float) -> Any:
@@ -421,15 +454,91 @@ def default_urlopen(request: urllib.request.Request, timeout: float) -> Any:
 def validate_ntfy_config(config: NtfyConfig) -> str | None:
     if not config.topic.strip():
         return "missing_ntfy_topic"
-    if not config.server_url.startswith(("https://", "http://")):
+    try:
+        parsed_url = urllib.parse.urlsplit(config.server_url)
+        parsed_url.port
+    except ValueError:
         return "invalid_ntfy_server_url"
-    if bool(config.username) != bool(config.password):
+    if parsed_url.scheme.lower() != "https":
+        return "ntfy_https_required"
+    if not parsed_url.hostname or any(character.isspace() for character in parsed_url.hostname):
+        return "invalid_ntfy_server_url"
+    if parsed_url.username is not None or parsed_url.password is not None:
+        return "ntfy_url_userinfo_not_allowed"
+    if parsed_url.query or parsed_url.fragment:
+        return "invalid_ntfy_server_url"
+    has_token = bool(config.token.strip())
+    has_username = bool(config.username.strip())
+    has_password = bool(config.password.strip())
+    if has_username != has_password:
         return "invalid_ntfy_basic_auth_pair"
-    if config.token and (config.username or config.password):
+    if has_token and (has_username or has_password):
         return "ambiguous_ntfy_auth"
+    if not has_token and not (has_username and has_password):
+        return "missing_ntfy_authentication"
     if config.timeout_seconds <= 0:
         return "invalid_timeout_seconds"
     return None
+
+
+def ntfy_auth_mode(config: NtfyConfig) -> str:
+    has_token = bool(config.token.strip())
+    has_username = bool(config.username.strip())
+    has_password = bool(config.password.strip())
+    if has_token and (has_username or has_password):
+        return "ambiguous"
+    if has_token:
+        return "bearer"
+    if has_username and has_password:
+        return "basic"
+    if has_username or has_password:
+        return "ambiguous"
+    return "none"
+
+
+def preflight_notification_channels(
+    settings: NotificationSettings,
+    *,
+    channels: str,
+) -> NotificationChannelPreflight:
+    mode = str(channels or "").strip().lower()
+    if mode not in {"telegram", "ntfy", "all"}:
+        return NotificationChannelPreflight(
+            status="blocked",
+            reason="invalid_notification_channels",
+            channels=mode,
+            failed_checks=("invalid_notification_channels",),
+            ntfy_enabled=bool(settings.ntfy.enabled),
+            telegram_enabled=bool(settings.telegram.enabled),
+            auth_mode=ntfy_auth_mode(settings.ntfy),
+        )
+
+    failed_checks: list[str] = []
+    if mode in {"ntfy", "all"}:
+        if not settings.ntfy.enabled:
+            failed_checks.append("ntfy_disabled")
+        else:
+            ntfy_error = validate_ntfy_config(settings.ntfy)
+            if ntfy_error:
+                failed_checks.append(ntfy_error)
+
+    if mode in {"telegram", "all"}:
+        if not settings.telegram.enabled:
+            failed_checks.append("telegram_disabled")
+        else:
+            telegram_error = validate_telegram_config(settings.telegram)
+            if telegram_error:
+                failed_checks.append(telegram_error)
+
+    return NotificationChannelPreflight(
+        status="blocked" if failed_checks else "ok",
+        reason=failed_checks[0] if failed_checks else "notification_channel_preflight_ok",
+        channels=mode,
+        failed_checks=tuple(failed_checks),
+        ntfy_enabled=bool(settings.ntfy.enabled),
+        telegram_enabled=bool(settings.telegram.enabled),
+        auth_mode=ntfy_auth_mode(settings.ntfy),
+    )
 
 
 def validate_telegram_config(config: TelegramConfig) -> str | None:
@@ -505,8 +614,8 @@ def env_float(values: Mapping[str, str], key: str, default: float) -> float:
     try:
         parsed = float(str(raw).strip())
     except ValueError:
-        return float(default)
-    return parsed if parsed > 0 else float(default)
+        return 0.0
+    return parsed
 
 
 def dict_or_empty(value: Any) -> dict[str, Any]:

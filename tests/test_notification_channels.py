@@ -17,6 +17,7 @@ from smartcrypto.ops.notification_channels import (
     build_telegram_url,
     dispatch_alert_report,
     message_from_alert_report,
+    preflight_notification_channels,
     settings_from_env,
 )
 
@@ -83,6 +84,205 @@ def test_settings_from_env_loads_ntfy_and_telegram_without_real_secret_values() 
     assert settings.telegram.bot_token == "123456:ABC-DEF"
 
 
+def valid_ntfy_config(**overrides: Any) -> NtfyConfig:
+    values: dict[str, Any] = {
+        "enabled": True,
+        "topic": "paper-events",
+        "server_url": "https://ntfy.example.invalid",
+        "token": "test-auth",
+    }
+    values.update(overrides)
+    return NtfyConfig(**values)
+
+
+def valid_telegram_config(**overrides: Any) -> TelegramConfig:
+    values: dict[str, Any] = {
+        "enabled": True,
+        "bot_token": "test-bot",
+        "chat_id": "test-chat",
+    }
+    values.update(overrides)
+    return TelegramConfig(**values)
+
+
+def test_telegram_only_does_not_require_ntfy() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=NtfyConfig(enabled=False), telegram=valid_telegram_config()),
+        channels="telegram",
+    ).to_dict()
+
+    assert result["status"] == "ok"
+    assert result["failed_checks"] == []
+
+
+def test_telegram_only_requires_telegram_credentials() -> None:
+    missing_token = preflight_notification_channels(
+        NotificationSettings(
+            ntfy=NtfyConfig(enabled=False),
+            telegram=valid_telegram_config(bot_token=""),
+        ),
+        channels="telegram",
+    ).to_dict()
+    missing_chat = preflight_notification_channels(
+        NotificationSettings(
+            ntfy=NtfyConfig(enabled=False),
+            telegram=valid_telegram_config(chat_id=""),
+        ),
+        channels="telegram",
+    ).to_dict()
+
+    assert missing_token["reason"] == "missing_telegram_bot_token"
+    assert missing_chat["reason"] == "missing_telegram_chat_id"
+
+
+def test_ntfy_token_auth_is_allowed() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config()),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["status"] == "ok"
+    assert result["auth_mode"] == "bearer"
+
+
+def test_ntfy_basic_auth_is_allowed() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(
+            ntfy=valid_ntfy_config(token="", username="test-user", password="test-pass")
+        ),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["status"] == "ok"
+    assert result["auth_mode"] == "basic"
+
+
+def test_ntfy_enabled_without_auth_is_blocked() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config(token="")),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "missing_ntfy_authentication"
+    assert result["failed_checks"] == ["missing_ntfy_authentication"]
+
+
+def test_ntfy_partial_basic_auth_is_blocked() -> None:
+    for credentials in (
+        {"username": "test-user", "password": ""},
+        {"username": "", "password": "test-pass"},
+    ):
+        result = preflight_notification_channels(
+            NotificationSettings(ntfy=valid_ntfy_config(token="", **credentials)),
+            channels="ntfy",
+        ).to_dict()
+
+        assert result["reason"] == "invalid_ntfy_basic_auth_pair"
+        assert result["auth_mode"] == "ambiguous"
+
+
+def test_ntfy_token_and_basic_auth_is_blocked() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config(username="test-user", password="test-pass")),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["reason"] == "ambiguous_ntfy_auth"
+    assert result["auth_mode"] == "ambiguous"
+
+
+def test_ntfy_http_url_is_blocked() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config(server_url="http://ntfy.example.invalid")),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["reason"] == "ntfy_https_required"
+
+
+def test_ntfy_preflight_rejects_url_userinfo() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config(server_url="https://user:pass@ntfy.example.invalid")),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["reason"] == "ntfy_url_userinfo_not_allowed"
+
+
+def test_ntfy_preflight_blocks_invalid_timeout_from_environment() -> None:
+    settings = settings_from_env(
+        {
+            "SMARTCRYPTO_NTFY_ENABLED": "true",
+            "SMARTCRYPTO_NTFY_TOPIC": "paper-events",
+            "SMARTCRYPTO_NTFY_TOKEN": "test-auth",
+            "SMARTCRYPTO_NOTIFICATION_TIMEOUT_SECONDS": "invalid",
+        }
+    )
+
+    result = preflight_notification_channels(settings, channels="ntfy").to_dict()
+
+    assert result["reason"] == "invalid_timeout_seconds"
+
+
+def test_all_channels_with_ntfy_disabled_is_blocked() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=NtfyConfig(enabled=False), telegram=valid_telegram_config()),
+        channels="all",
+    ).to_dict()
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "ntfy_disabled"
+
+
+def test_preflight_payload_is_sanitized() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(
+            ntfy=valid_ntfy_config(token="test-auth"),
+            telegram=valid_telegram_config(bot_token="test-bot", chat_id="test-chat"),
+        ),
+        channels="all",
+    ).to_dict()
+    serialized = json.dumps(result, sort_keys=True)
+
+    assert result["status"] == "ok"
+    assert "test-auth" not in serialized
+    assert "test-bot" not in serialized
+    assert "test-chat" not in serialized
+    assert "topic" not in result
+
+
+def test_all_channels_requires_secure_ntfy() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(
+            ntfy=valid_ntfy_config(token=""),
+            telegram=valid_telegram_config(),
+        ),
+        channels="all",
+    ).to_dict()
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "missing_ntfy_authentication"
+
+
+def test_safe_flags_remain_fail_closed() -> None:
+    result = preflight_notification_channels(
+        NotificationSettings(ntfy=valid_ntfy_config()),
+        channels="ntfy",
+    ).to_dict()
+
+    assert result["paper_only"] is True
+    assert result["shadow_only"] is True
+    assert result["live_trading_enabled"] is False
+    assert result["live_release_allowed"] is False
+    assert result["canary_release_allowed"] is False
+    assert result["order_submission_enabled"] is False
+    assert result["real_order_submission_enabled"] is False
+    assert result["exchange_private_access"] is False
+    assert result["sends_orders"] is False
+    assert result["changes_risk"] is False
+
+
 def test_ntfy_url_quotes_topic() -> None:
     assert build_ntfy_url("https://ntfy.sh/", "topic with spaces") == "https://ntfy.sh/topic%20with%20spaces"
 
@@ -100,7 +300,7 @@ def test_dispatcher_dry_run_does_not_call_network() -> None:
 
     dispatcher = NotificationDispatcher(
         NotificationSettings(
-            ntfy=NtfyConfig(enabled=True, topic="topic"),
+            ntfy=NtfyConfig(enabled=True, topic="topic", token="test-auth"),
             telegram=TelegramConfig(enabled=True, bot_token="123:ABC", chat_id="1"),
         ),
         ntfy_opener=fail_network,
@@ -125,7 +325,7 @@ def test_dispatcher_posts_to_ntfy_and_telegram_with_injected_openers() -> None:
 
     dispatcher = NotificationDispatcher(
         NotificationSettings(
-            ntfy=NtfyConfig(enabled=True, topic="topic"),
+            ntfy=NtfyConfig(enabled=True, topic="topic", token="test-auth"),
             telegram=TelegramConfig(enabled=True, bot_token="123:ABC", chat_id="1"),
         ),
         ntfy_opener=opener,
@@ -213,6 +413,7 @@ def test_cli_dry_run_reads_alert_report_and_writes_dispatch_report(tmp_path: Pat
         **os.environ,
         "SMARTCRYPTO_NTFY_ENABLED": "true",
         "SMARTCRYPTO_NTFY_TOPIC": "topic",
+        "SMARTCRYPTO_NTFY_TOKEN": "test-auth",
         "SMARTCRYPTO_TELEGRAM_ENABLED": "true",
         "SMARTCRYPTO_TELEGRAM_BOT_TOKEN": "123:ABC",
         "SMARTCRYPTO_TELEGRAM_CHAT_ID": "1",
@@ -278,7 +479,7 @@ def test_ntfy_header_values_are_latin1_safe_for_unicode_title() -> None:
         return FakeResponse()
 
     dispatcher = NotificationDispatcher(
-        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic")),
+        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic", token="test-auth")),
         ntfy_opener=opener,
     )
 
@@ -303,7 +504,7 @@ def test_ntfy_preserves_unicode_body_as_utf8_while_sanitizing_headers() -> None:
         return FakeResponse()
 
     dispatcher = NotificationDispatcher(
-        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic")),
+        NotificationSettings(ntfy=NtfyConfig(enabled=True, topic="topic", token="test-auth")),
         ntfy_opener=opener,
     )
 

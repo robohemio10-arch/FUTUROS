@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from smartcrypto.ops.trade_event_notifications import (
     DEFAULT_REPORT_PATH,
     DEFAULT_STATE_DB_PATH,
     VALID_CHANNEL_MODES,
+    notification_channel_preflight,
     run_trade_event_notification_daemon,
     run_trade_event_notification_scan,
 )
@@ -89,9 +92,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None, *, env: Mapping[str, str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.dry_run and args.send_real:
         parser.error("--dry-run and --send-real are mutually exclusive")
@@ -101,6 +104,12 @@ def main() -> int:
 
     if args.persist_dry_run and args.send_real:
         parser.error("--persist-dry-run is only valid with dry-run/baseline flows")
+
+    environment = env if env is not None else os.environ
+    preflight = notification_channel_preflight(environment, channels=args.channels)
+    if preflight["status"] != "ok":
+        print(json.dumps(preflight, ensure_ascii=False, sort_keys=True))
+        return 1
 
     dry_run = not bool(args.send_real)
 
@@ -113,6 +122,7 @@ def main() -> int:
             state_db_path=Path(args.state_db),
             report_path=Path(args.report),
             dry_run=dry_run,
+            env=environment,
             limit=args.limit,
             channels=args.channels,
             poll_seconds=args.poll_seconds,
@@ -124,6 +134,7 @@ def main() -> int:
             state_db_path=Path(args.state_db),
             report_path=Path(args.report),
             dry_run=dry_run,
+            env=environment,
             limit=args.limit,
             persist_dry_run=bool(args.persist_dry_run),
             channels=args.channels,

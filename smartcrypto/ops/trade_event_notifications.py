@@ -15,6 +15,7 @@ from smartcrypto.ops.notification_channels import (
     NotificationSettings,
     NtfyConfig,
     TelegramConfig,
+    preflight_notification_channels,
     settings_from_env,
 )
 
@@ -494,6 +495,41 @@ def channel_settings(env: Mapping[str, str] | None = None, *, channels: str = "t
     return settings
 
 
+def notification_channel_preflight(
+    env: Mapping[str, str] | None = None,
+    *,
+    channels: str = "telegram",
+) -> dict[str, Any]:
+    mode = normalize_channels(channels)
+    return preflight_notification_channels(
+        settings_from_env(env if env is not None else os.environ),
+        channels=mode,
+    ).to_dict()
+
+
+def blocked_preflight_report(preflight: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "status": "blocked",
+        "reason": str(preflight.get("reason") or "notification_channel_preflight_blocked"),
+        "created_at": utc_now(),
+        "channels": str(preflight.get("channels") or ""),
+        "failed_checks": list(preflight.get("failed_checks") or []),
+        "ntfy_enabled": bool(preflight.get("ntfy_enabled")),
+        "telegram_enabled": bool(preflight.get("telegram_enabled")),
+        "auth_mode": str(preflight.get("auth_mode") or "none"),
+        "notification_preflight": "blocked",
+        "baseline": False,
+        "dry_run": True,
+        "events_detected": 0,
+        "events_pending": 0,
+        "events_dispatched": 0,
+        "events_marked_sent": 0,
+        "events_baselined": 0,
+        "dispatches": [],
+        **SAFE_FLAGS,
+    }
+
+
 def format_rate(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.8f}".rstrip("0").rstrip(".")
 
@@ -623,6 +659,9 @@ def dispatch_trade_events(
     telegram_opener: Any = None,
 ) -> dict[str, Any]:
     mode = normalize_channels(channels)
+    preflight = notification_channel_preflight(env, channels=mode)
+    if preflight["status"] != "ok":
+        return blocked_preflight_report(preflight)
 
     if baseline:
         return baseline_trade_events(events, state_db_path=state_db_path, limit=limit)
@@ -756,6 +795,10 @@ def run_trade_event_notification_scan(
     ntfy_opener: Any = None,
     telegram_opener: Any = None,
 ) -> dict[str, Any]:
+    preflight = notification_channel_preflight(env, channels=channels)
+    if preflight["status"] != "ok":
+        return blocked_preflight_report(preflight)
+
     events = load_trade_events(source_db_path)
     report = dispatch_trade_events(
         events,
@@ -785,6 +828,10 @@ def run_trade_event_notification_daemon(
     poll_seconds: float = 10.0,
     max_iterations: int | None = None,
 ) -> dict[str, Any]:
+    preflight = notification_channel_preflight(env, channels=channels)
+    if preflight["status"] != "ok":
+        return blocked_preflight_report(preflight)
+
     iterations = 0
     last_report: dict[str, Any] = {
         "status": "ok",
