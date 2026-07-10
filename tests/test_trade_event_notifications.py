@@ -20,6 +20,7 @@ from smartcrypto.ops.trade_event_notifications import (
     run_trade_event_notification_daemon,
     run_trade_event_notification_scan,
 )
+from scripts.run_trade_event_notifications import main as notification_cli_main
 
 
 class FakeResponse:
@@ -85,21 +86,25 @@ def notification_env(
     *,
     ntfy_enabled: bool = True,
     telegram_enabled: bool = True,
+    ntfy_token: str = "test-auth",
+    ntfy_username: str = "",
+    ntfy_password: str = "",
+    timeout: str = "10",
 ) -> dict[str, str]:
     return {
         "SMARTCRYPTO_NTFY_ENABLED": "true" if ntfy_enabled else "false",
         "SMARTCRYPTO_NTFY_TOPIC": "test-topic",
         "SMARTCRYPTO_NTFY_SERVER_URL": "https://ntfy.sh",
-        "SMARTCRYPTO_NTFY_TOKEN": "",
-        "SMARTCRYPTO_NTFY_USERNAME": "",
-        "SMARTCRYPTO_NTFY_PASSWORD": "",
+        "SMARTCRYPTO_NTFY_TOKEN": ntfy_token,
+        "SMARTCRYPTO_NTFY_USERNAME": ntfy_username,
+        "SMARTCRYPTO_NTFY_PASSWORD": ntfy_password,
         "SMARTCRYPTO_TELEGRAM_ENABLED": "true" if telegram_enabled else "false",
         "SMARTCRYPTO_TELEGRAM_BOT_TOKEN": "test-telegram-token",
         "SMARTCRYPTO_TELEGRAM_CHAT_ID": "test-chat-id",
         "SMARTCRYPTO_TELEGRAM_API_BASE_URL": "https://api.telegram.org",
         "SMARTCRYPTO_TELEGRAM_PARSE_MODE": "",
         "SMARTCRYPTO_TELEGRAM_DISABLE_NOTIFICATION": "false",
-        "SMARTCRYPTO_NOTIFICATION_TIMEOUT_SECONDS": "10",
+        "SMARTCRYPTO_NOTIFICATION_TIMEOUT_SECONDS": timeout,
     }
 
 
@@ -414,10 +419,12 @@ def test_channel_idempotency_prevents_duplicate_telegram_when_ntfy_is_disabled(t
     )
 
     assert first_report["status"] == "blocked"
+    assert first_report["reason"] == "ntfy_disabled"
     assert first_report["events_marked_sent"] == 0
-    assert first_report["dispatches"][0]["successful_channels"] == ["telegram"]
-    assert first_report["dispatches"][0]["remaining_channels_after"] == ["ntfy"]
-    assert telegram_success.calls == 1
+    assert first_report["events_dispatched"] == 0
+    assert first_report["dispatches"] == []
+    assert telegram_success.calls == 0
+    assert not state_db.exists()
 
     second_report = dispatch_trade_events(
         load_trade_events(db_path),
@@ -431,13 +438,11 @@ def test_channel_idempotency_prevents_duplicate_telegram_when_ntfy_is_disabled(t
     )
 
     assert second_report["status"] == "blocked"
-    assert second_report["events_dispatched"] == 1
+    assert second_report["reason"] == "ntfy_disabled"
+    assert second_report["events_dispatched"] == 0
     assert second_report["events_marked_sent"] == 0
-    assert second_report["dispatches"][0]["delivered_channels_before"] == ["telegram"]
-    assert second_report["dispatches"][0]["attempted_channels"] == ("ntfy",)
-    assert second_report["dispatches"][0]["successful_channels"] == []
-    assert second_report["dispatches"][0]["remaining_channels_after"] == ["ntfy"]
-    assert channel_rows(state_db) == [("1:OPEN_LONG", "telegram", "sent")]
+    assert second_report["dispatches"] == []
+    assert not state_db.exists()
 
 
 def test_legacy_event_state_is_treated_as_completed_for_backward_compatibility(tmp_path: Path) -> None:
@@ -597,7 +602,168 @@ def test_missing_source_db_raises(tmp_path: Path) -> None:
             state_db_path=tmp_path / "state.sqlite",
             report_path=tmp_path / "report.json",
             dry_run=True,
+            env=notification_env(ntfy_enabled=False, telegram_enabled=True),
+            channels="telegram",
         )
+
+
+def test_preflight_failure_performs_no_network_call(tmp_path: Path) -> None:
+    db_path = tmp_path / "trades.sqlite"
+    state_db = tmp_path / "state.sqlite"
+    create_trade_db(db_path)
+    ntfy_opener = CountingOpener()
+    telegram_opener = CountingOpener()
+
+    report = dispatch_trade_events(
+        load_trade_events(db_path),
+        state_db_path=state_db,
+        dry_run=False,
+        env=notification_env(ntfy_token=""),
+        channels="all",
+        ntfy_opener=ntfy_opener,
+        telegram_opener=telegram_opener,
+    )
+
+    assert report["reason"] == "missing_ntfy_authentication"
+    assert report["events_dispatched"] == 0
+    assert report["dispatches"] == []
+    assert ntfy_opener.calls == 0
+    assert telegram_opener.calls == 0
+    assert not state_db.exists()
+
+
+def test_preflight_failure_performs_no_state_db_write(tmp_path: Path) -> None:
+    state_db = tmp_path / "state.sqlite"
+    report_path = tmp_path / "report.json"
+
+    report = run_trade_event_notification_scan(
+        source_db_path=tmp_path / "missing-source.sqlite",
+        state_db_path=state_db,
+        report_path=report_path,
+        dry_run=False,
+        env=notification_env(ntfy_token=""),
+        channels="ntfy",
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "missing_ntfy_authentication"
+    assert report["events_detected"] == 0
+    assert not state_db.exists()
+    assert not report_path.exists()
+
+
+def test_preflight_failure_does_not_enter_daemon_loop(tmp_path: Path) -> None:
+    report_path = tmp_path / "report.json"
+
+    report = run_trade_event_notification_daemon(
+        source_db_path=tmp_path / "missing-source.sqlite",
+        state_db_path=tmp_path / "state.sqlite",
+        report_path=report_path,
+        dry_run=False,
+        env=notification_env(ntfy_enabled=False),
+        channels="all",
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "ntfy_disabled"
+    assert "daemon" not in report
+    assert not report_path.exists()
+
+
+def test_blocked_report_contains_no_secret_material(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    report_path = tmp_path / "report.json"
+    exit_code = notification_cli_main(
+        [
+            "--source-db",
+            str(tmp_path / "missing-source.sqlite"),
+            "--state-db",
+            str(tmp_path / "state.sqlite"),
+            "--report",
+            str(report_path),
+            "--channels",
+            "ntfy",
+            "--send-real",
+        ],
+        env=notification_env(ntfy_token=""),
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 1
+    assert payload["status"] == "blocked"
+    assert payload["reason"] == "missing_ntfy_authentication"
+    assert payload["auth_mode"] == "none"
+    assert set(payload) == {
+        "status",
+        "reason",
+        "channels",
+        "failed_checks",
+        "ntfy_enabled",
+        "telegram_enabled",
+        "auth_mode",
+        "paper_only",
+        "shadow_only",
+        "runtime_mode",
+        "live_trading_enabled",
+        "live_release_allowed",
+        "canary_release_allowed",
+        "order_submission_enabled",
+        "real_order_submission_enabled",
+        "exchange_private_access",
+        "sends_orders",
+        "changes_risk",
+    }
+    serialized = json.dumps(payload, sort_keys=True)
+    assert "test-topic" not in serialized
+    assert "test-telegram-token" not in serialized
+    assert "test-chat-id" not in serialized
+    assert "event" not in payload
+    assert not report_path.exists()
+
+
+def test_valid_telegram_runtime_behavior_is_preserved(tmp_path: Path) -> None:
+    db_path = tmp_path / "trades.sqlite"
+    state_db = tmp_path / "state.sqlite"
+    create_trade_db(db_path)
+    telegram_opener = CountingOpener()
+
+    report = dispatch_trade_events(
+        load_trade_events(db_path),
+        state_db_path=state_db,
+        dry_run=False,
+        env=notification_env(ntfy_enabled=False, telegram_enabled=True),
+        channels="telegram",
+        limit=1,
+        telegram_opener=telegram_opener,
+    )
+
+    assert report["status"] == "ok"
+    assert report["events_marked_sent"] == 1
+    assert telegram_opener.calls == 1
+
+
+def test_valid_authenticated_ntfy_runtime_behavior_is_preserved(tmp_path: Path) -> None:
+    db_path = tmp_path / "trades.sqlite"
+    state_db = tmp_path / "state.sqlite"
+    create_trade_db(db_path)
+    ntfy_opener = CountingOpener()
+
+    report = dispatch_trade_events(
+        load_trade_events(db_path),
+        state_db_path=state_db,
+        dry_run=False,
+        env=notification_env(ntfy_enabled=True, telegram_enabled=False),
+        channels="ntfy",
+        limit=1,
+        ntfy_opener=ntfy_opener,
+    )
+
+    assert report["status"] == "ok"
+    assert report["events_marked_sent"] == 1
+    assert ntfy_opener.calls == 1
+
 
 def test_trade_event_notifications_compose_service_uses_permission_bootstrap() -> None:
     compose_path = Path("docker-compose.paper.yml")
