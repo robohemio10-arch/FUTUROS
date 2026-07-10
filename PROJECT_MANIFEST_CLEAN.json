@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a342480f5f5c775fc01230ea4c2b5b530271860546520320a30098eb755f6c2e",
+  "aggregate_sha256": "1539eefda13373c098f5934c25c85d24bce04c132a78ce1f75f8002941eb7bed",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 252,
-    "manifested_files_total": 1427,
-    "python_files": 1080,
+    "docs_files": 253,
+    "manifested_files_total": 1435,
+    "python_files": 1087,
     "runtime_excluded_files_total": 0,
-    "test_files": 303,
-    "tracked_files_total": 1428,
+    "test_files": 304,
+    "tracked_files_total": 1436,
     "workflows": 1
   },
   "deterministic": true,
@@ -1002,6 +1002,12 @@
       "hash_mode": "text_lf",
       "path": "docs/EVENT_DRIVEN_BACKTEST_EXECUTION_SIMULATOR.md",
       "sha256": "eff41510239ea9e5fda54062a2e6873adb35ad049786868b49b6f5330a5b356b"
+    },
+    {
+      "bytes": 5065,
+      "hash_mode": "text_lf",
+      "path": "docs/EVIDENCE_BUNDLE_SECRET_REDACTION_GATE_V1.md",
+      "sha256": "ae1d84b97631679656e0442e0f015c1549f6b2eddfcfabd29a24083b56bde43f"
     },
     {
       "bytes": 2708,
@@ -3012,6 +3018,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_runtime_evidence_sidecar_bundle.py",
       "sha256": "7f40aa1681f9f7c1e63a0f9f0d0316c52f41b955b5ed4ae7021a815ba76bcecf"
+    },
+    {
+      "bytes": 2274,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_sanitized_evidence_bundle_v1.py",
+      "sha256": "f6792816d28aef955a13499e85b369820e8a25639a02a175e2586ad37213bbc4"
     },
     {
       "bytes": 751,
@@ -6692,6 +6704,36 @@
       "sha256": "70f26637fdb5f7b29b50f6741d8bbb1aa932cbe0ad44aefca6e6361d61dbc0e6"
     },
     {
+      "bytes": 548,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/evidence_bundle_redaction/__init__.py",
+      "sha256": "a989d2813fafaecbac6ec8db300980ea386260acab041dea2d42ae8b8331e181"
+    },
+    {
+      "bytes": 13766,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/evidence_bundle_redaction/builder.py",
+      "sha256": "e41f927b51a9c0922cd40be0c004dd4de9f7bd1ce040e42ae7d12715a4d3d5a8"
+    },
+    {
+      "bytes": 2197,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/evidence_bundle_redaction/contracts.py",
+      "sha256": "ca0452aacac231f0bff80d986739953c295c6c7536dcadfa0e8d42e6e9c0daa5"
+    },
+    {
+      "bytes": 6093,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/evidence_bundle_redaction/redactor.py",
+      "sha256": "71088b87e3430e2edf6942c23a000d1a7e6f4e9e6ce8791727b0f6f699ce430f"
+    },
+    {
+      "bytes": 11311,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/security/evidence_bundle_redaction/scanner.py",
+      "sha256": "2abe3b54caceb981a656a1fdee60ad82c18c16676af8cf0909f7e48f58dfb6cd"
+    },
+    {
       "bytes": 1796,
       "hash_mode": "text_lf",
       "path": "smartcrypto/settings.py",
@@ -7482,6 +7524,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_event_driven_backtest_execution_cost_gate_v1.py",
       "sha256": "dfa28c26bbb2623c86e970c2df34d8714ce0b42a46a5c6bcb3df9bbd9ebedc2f"
+    },
+    {
+      "bytes": 13052,
+      "hash_mode": "text_lf",
+      "path": "tests/test_evidence_bundle_secret_redaction_gate_v1.py",
+      "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
     },
     {
       "bytes": 2575,
