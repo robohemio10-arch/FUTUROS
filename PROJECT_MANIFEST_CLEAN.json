@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8985be62e74ebf327ac0b7e7fa80915c238d34b7f46eb0e921cba5e82a74cf46",
+  "aggregate_sha256": "99690283388862c1b33160a558b977817626f8cd2d48acebe9df27303c47a4fe",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 255,
-    "manifested_files_total": 1444,
-    "python_files": 1094,
+    "docs_files": 256,
+    "manifested_files_total": 1452,
+    "python_files": 1101,
     "runtime_excluded_files_total": 0,
-    "test_files": 305,
-    "tracked_files_total": 1445,
+    "test_files": 306,
+    "tracked_files_total": 1453,
     "workflows": 1
   },
   "deterministic": true,
@@ -1488,6 +1488,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CLOSED_TRADES_SHADOW_RULE_ATTRIBUTION_V1.md",
       "sha256": "db42c7a5ece7e480916b6613a158df4950c524a952a2e048ee850dad27783467"
+    },
+    {
+      "bytes": 4559,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_FEEDBACK_AUTOTRAIN_E2E_CLOSEOUT_V1.md",
+      "sha256": "a8b9880abd304addecc62a49ee3acba4e96cdb548d4343b090318413ecf461b0"
     },
     {
       "bytes": 2726,
@@ -3848,6 +3854,12 @@
       "sha256": "e2892588a808448acd29ed70cab2999f349d93e9decd9f30b0c8c54cf7103426"
     },
     {
+      "bytes": 2083,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_feedback_autotrain_e2e_closeout_v1.py",
+      "sha256": "2f7a07caa012458bb9ecb7cf2be458df4b3716b5dfa55766cf2a805858f33f95"
+    },
+    {
       "bytes": 2448,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_feedback_master_consolidation_v1.py",
@@ -5220,6 +5232,36 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autotrain_watermark_accumulation_recheck/recheck.py",
       "sha256": "2f1e379d95d8aed32e7f50c5aa91cc079a64c4b47e7e222d82d0835101a92a4e"
+    },
+    {
+      "bytes": 344,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_feedback_autotrain_e2e_closeout/__init__.py",
+      "sha256": "78064076c7496ccdfaa52a503a505232fd2860a1e3572d9f8dd9fb361838ae2c"
+    },
+    {
+      "bytes": 5041,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_feedback_autotrain_e2e_closeout/contracts.py",
+      "sha256": "8c53a7778fd390867d89ab45e4adcaad4df129c5c9229cac2f9dda44e9c0487e"
+    },
+    {
+      "bytes": 12939,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_feedback_autotrain_e2e_closeout/controlled_backfill.py",
+      "sha256": "c0e54e41f33183f364783019ce3796cd6992d09e061609205976cc4bdfbf2e1d"
+    },
+    {
+      "bytes": 16442,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_feedback_autotrain_e2e_closeout/orchestrator.py",
+      "sha256": "94b5ff25ac318b860779aa44dbf9f2eeb6940855f07b5365247e5dda66ba96c5"
+    },
+    {
+      "bytes": 5383,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_feedback_autotrain_e2e_closeout/readiness.py",
+      "sha256": "051efc2449a38c10b94a879a7a4ab35d827619cd11e1d7f5d87101f0a15bea4c"
     },
     {
       "bytes": 190,
@@ -8106,6 +8148,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_closed_trades_shadow_rule_attribution_v1.py",
       "sha256": "8a555414c9aa215748429f9d4984e997500b518fc97149e5e6f2c7c9f6dc1504"
+    },
+    {
+      "bytes": 20470,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_feedback_autotrain_e2e_closeout_v1.py",
+      "sha256": "e03384008f6ecf96f2422d16ef3bbc6351d93f23720667a638fc40fc9d69bfe6"
     },
     {
       "bytes": 7155,
