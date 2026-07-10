@@ -256,7 +256,7 @@ def search_writers(root: Path) -> dict[str, Any]:
     """
     matches: list[WriterSearchMatch] = []
     file_texts: dict[str, str] = {}
-    self_path = str(Path(__file__).resolve().relative_to(root)) if _is_under(Path(__file__).resolve(), root) else None
+    self_path = Path(__file__).resolve().relative_to(root).as_posix() if _is_under(Path(__file__).resolve(), root) else None
 
     for path in sorted(root.rglob("*.py")):
         relative_parts = path.relative_to(root).parts
@@ -269,7 +269,7 @@ def search_writers(root: Path) -> dict[str, Any]:
         if not any(term in text for term in SEARCH_TERMS):
             continue
 
-        relative = str(path.relative_to(root))
+        relative = path.relative_to(root).as_posix()
         file_texts[relative] = text
         in_tests = relative_parts[0] == "tests"
         lines = text.splitlines()
@@ -478,13 +478,60 @@ class MissingRecordRow:
         }
 
 
+def _csv_feedback_classification(source_records: Mapping[str, Sequence[Any]]) -> str:
+    """Classify a reconciliation group for this diagnostic's own purpose.
+
+    `classify_group()` (reused from paper_autotrain_source_key_reconciliation)
+    checks `SOURCE_PAPER_DB not in present` before it ever checks feedback
+    presence, so whenever the paper DB is absent or not read (the default,
+    `--allow-paper-db-read` not passed) every group is classified
+    `missing_in_db` and `missing_in_feedback` is never reached -- even when
+    `closed_trades_csv` genuinely has a record `feedback_events` lacks. This
+    diagnostic's whole purpose is detecting that CSV -> feedback gap, so it
+    must not depend on paper_db being present. The paper DB is used only to
+    enrich a missing row (trade_id, cross-check for conflicts); it must
+    never gate the missing_in_feedback detection itself.
+    """
+    csv_present = bool(source_records.get(SOURCE_CSV))
+    feedback_present = bool(source_records.get(SOURCE_FEEDBACK))
+    if csv_present and feedback_present:
+        return "conflicting" if has_field_conflict(source_records) else "reconciled_csv_feedback"
+    if csv_present and not feedback_present:
+        return "missing_in_feedback"
+    if feedback_present and not csv_present:
+        return "missing_in_csv"
+    return "missing_in_both_csv_and_feedback"
+
+
+def summarize_csv_feedback_classification(
+    groups: Mapping[str, Mapping[str, Sequence[Any]]],
+) -> dict[str, int]:
+    """Group counts using `_csv_feedback_classification`, independent of paper_db.
+
+    This is the authoritative source for `missing_in_feedback_count` and
+    `conflicting_group_count` in the report -- `reconciliation_summary`
+    (from the reused 3-way reconciliation module) is kept only as auxiliary
+    context, because it inherits `classify_group()`'s paper_db-gating bug.
+    """
+    counts = {
+        "reconciled_csv_feedback": 0,
+        "missing_in_feedback": 0,
+        "missing_in_csv": 0,
+        "missing_in_both_csv_and_feedback": 0,
+        "conflicting": 0,
+    }
+    for source_records in groups.values():
+        counts[_csv_feedback_classification(source_records)] += 1
+    return counts
+
+
 def build_missing_record_rows(
     groups: Mapping[str, Mapping[str, Sequence[Any]]],
 ) -> list[MissingRecordRow]:
     """Build one full row per `missing_in_feedback` group, never truncated."""
     rows: list[MissingRecordRow] = []
     for key, source_records in sorted(groups.items()):
-        classification = classify_group(source_records)
+        classification = _csv_feedback_classification(source_records)
         if classification != "missing_in_feedback":
             continue
 
@@ -495,8 +542,17 @@ def build_missing_record_rows(
         primary = db_record or csv_record
 
         present = sorted(source for source, records in source_records.items() if records)
-        missing = sorted(set(SOURCE_NAMES) - set(present))
-        conflict = has_field_conflict(source_records)
+        # paper_db is only ever "missing" here if a read was actually
+        # attempted for this group (SOURCE_PAPER_DB in source_records); a
+        # None/not-requested read is reported as "not_queried", not
+        # "missing", so callers cannot misread it as a data gap.
+        candidate_missing = set(SOURCE_NAMES) - set(present)
+        missing = sorted(
+            source
+            for source in candidate_missing
+            if source != SOURCE_PAPER_DB or SOURCE_PAPER_DB in source_records
+        )
+        conflict = has_field_conflict(source_records) if db_record is not None else False
 
         db_raw = dict(db_record.raw) if db_record is not None else {}
         csv_raw = dict(csv_record.raw) if csv_record is not None else {}
@@ -538,8 +594,14 @@ def build_missing_record_rows(
                 profit_ratio=_first_raw_value(merged_raw, PROFIT_RATIO_CANDIDATES),
                 source_presence=present,
                 missing_sources=missing,
-                db_csv_match_status="conflicting" if conflict else "match",
-                normalization_status="normalized_from_paper_db_and_csv",
+                db_csv_match_status=(
+                    "conflicting" if conflict else "match" if db_record is not None else "db_not_available"
+                ),
+                normalization_status=(
+                    "normalized_from_closed_trades_csv_and_paper_db"
+                    if db_record is not None
+                    else "normalized_from_closed_trades_csv"
+                ),
                 validation_status=validation,
                 causal_bucket=causal_bucket,
             )
@@ -619,6 +681,96 @@ def _count_causal_buckets(missing_rows: Sequence[MissingRecordRow]) -> dict[str,
 # --------------------------------------------------------------------------
 
 
+def _select_paper_db_source_against_csv(
+    *,
+    resolution: Any,
+    closed_trades_csv_max_close_time_utc: str | None,
+) -> dict[str, Any]:
+    """Independent paper_db freshness verdict, compared directly against the CSV.
+
+    `resolve_paper_db()` only compares candidates against a
+    `watermark_close_time` argument; this diagnostic deliberately passes
+    `watermark_close_time=None` (it must see every candidate record, not
+    just ones after some watermark), which also disables that function's
+    own staleness comparison -- so a genuinely stale runtime DB (e.g. data
+    ending weeks before the CSV's latest close) gets reported as fresh
+    simply because no watermark was given to compare it against.
+
+    This function does not modify `resolve_paper_db()` (shared, out of
+    scope). It re-derives freshness by comparing each candidate's own
+    `max_close_time_utc` directly against `closed_trades_csv`'s
+    `max_close_time_utc`, and prefers a fresh snapshot candidate over a
+    stale runtime candidate when both exist. It only affects paper_db
+    authority/enrichment reporting -- it never gates `missing_in_feedback`
+    detection, which is computed independently in
+    `_csv_feedback_classification`.
+    """
+    csv_dt = (
+        first_datetime_from_value(closed_trades_csv_max_close_time_utc)
+        if closed_trades_csv_max_close_time_utc
+        else None
+    )
+
+    def candidate_dt(candidate: Any) -> Any:
+        if candidate is None or not getattr(candidate, "max_close_time_utc", None):
+            return None
+        return first_datetime_from_value(candidate.max_close_time_utc)
+
+    snapshot = getattr(resolution, "snapshot_best", None)
+    runtime = getattr(resolution, "runtime_best", None)
+
+    if csv_dt is None:
+        return {
+            "selected_path": resolution.selected_path,
+            "selected_source_kind": resolution.selected_source_kind,
+            "status": resolution.authority_status,
+            "reason": "closed_trades_csv_max_close_time_utc_unavailable_direct_check_skipped",
+            "paper_db_max_close_time_utc": None,
+            "closed_trades_csv_max_close_time_utc": None,
+        }
+
+    snapshot_dt = candidate_dt(snapshot)
+    if snapshot is not None and snapshot_dt is not None and snapshot_dt >= csv_dt:
+        return {
+            "selected_path": snapshot.path,
+            "selected_source_kind": snapshot.source_kind,
+            "status": "snapshot_db_fresh_against_csv",
+            "reason": "snapshot_max_close_time_utc_not_before_closed_trades_csv_max_close_time_utc",
+            "paper_db_max_close_time_utc": snapshot.max_close_time_utc,
+            "closed_trades_csv_max_close_time_utc": closed_trades_csv_max_close_time_utc,
+        }
+
+    runtime_dt = candidate_dt(runtime)
+    if runtime is not None and runtime_dt is not None and runtime_dt >= csv_dt:
+        return {
+            "selected_path": runtime.path,
+            "selected_source_kind": runtime.source_kind,
+            "status": "runtime_db_fresh_against_csv",
+            "reason": "runtime_max_close_time_utc_not_before_closed_trades_csv_max_close_time_utc",
+            "paper_db_max_close_time_utc": runtime.max_close_time_utc,
+            "closed_trades_csv_max_close_time_utc": closed_trades_csv_max_close_time_utc,
+        }
+
+    stale_candidate = snapshot or runtime
+    if stale_candidate is None:
+        return {
+            "selected_path": resolution.selected_path,
+            "selected_source_kind": resolution.selected_source_kind,
+            "status": resolution.authority_status,
+            "reason": "no_paper_db_candidate_available_direct_check_skipped",
+            "paper_db_max_close_time_utc": None,
+            "closed_trades_csv_max_close_time_utc": closed_trades_csv_max_close_time_utc,
+        }
+    return {
+        "selected_path": stale_candidate.path,
+        "selected_source_kind": stale_candidate.source_kind,
+        "status": f"{stale_candidate.source_kind}_stale_against_csv",
+        "reason": "selected_candidate_max_close_time_utc_before_closed_trades_csv_max_close_time_utc",
+        "paper_db_max_close_time_utc": stale_candidate.max_close_time_utc,
+        "closed_trades_csv_max_close_time_utc": closed_trades_csv_max_close_time_utc,
+    }
+
+
 @dataclass(frozen=True)
 class DiagnosticsPaths:
     paper_db_path: Path | None
@@ -649,6 +801,9 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
 
     writer_search = search_writers(root)
 
+    closed_csv = load_csv_source(root / CLOSED_TRADES_CSV, None)
+    feedback = load_feedback_source(root / FEEDBACK_EVENTS, None)
+
     explicit_db = resolve_path(root, paper_db_path, Path("")) if paper_db_path else None
     resolution = resolve_paper_db(
         root=root,
@@ -658,14 +813,31 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
         closed_csv_new_record_count=0,
         feedback_new_record_count=0,
     )
+
+    if allow_paper_db_read:
+        paper_db_freshness = _select_paper_db_source_against_csv(
+            resolution=resolution,
+            closed_trades_csv_max_close_time_utc=closed_csv.metadata.get("max_close_time_utc"),
+        )
+    else:
+        paper_db_freshness = {
+            "selected_path": None,
+            "selected_source_kind": None,
+            "status": resolution.authority_status,
+            "reason": "paper_db_read_not_requested",
+            "paper_db_max_close_time_utc": None,
+            "closed_trades_csv_max_close_time_utc": closed_csv.metadata.get("max_close_time_utc"),
+        }
+
+    paper_db_selected_path = paper_db_freshness["selected_path"] or resolution.selected_path
+    paper_db_selected_source_kind = paper_db_freshness["selected_source_kind"] or resolution.selected_source_kind
+
     paper_db = load_paper_db_source(
-        path=resolution.selected_path,
+        path=paper_db_selected_path,
         read_requested=allow_paper_db_read,
         watermark_close_time=None,
-        selected_source_kind=resolution.selected_source_kind,
+        selected_source_kind=paper_db_selected_source_kind,
     )
-    closed_csv = load_csv_source(root / CLOSED_TRADES_CSV, None)
-    feedback = load_feedback_source(root / FEEDBACK_EVENTS, None)
 
     source_loads = {
         SOURCE_PAPER_DB: paper_db,
@@ -675,6 +847,7 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
     groups = build_reconciliation_groups(source_loads)
     source_summary = summarize_sources(source_loads)
     reconciliation_summary = summarize_reconciliation(groups)
+    csv_feedback_classification_counts = summarize_csv_feedback_classification(groups)
 
     missing_rows = build_missing_record_rows(groups)
     cadence_gap_mechanism_status = assess_cadence_gap_mechanism(root=root, missing_rows=missing_rows)
@@ -687,7 +860,7 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
     )
 
     paths = DiagnosticsPaths(
-        paper_db_path=resolution.selected_path,
+        paper_db_path=paper_db_selected_path,
         closed_trades_csv_path=root / CLOSED_TRADES_CSV,
         feedback_events_path=root / FEEDBACK_EVENTS,
         output_json=output_json,
@@ -704,8 +877,9 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
         "reason": reason,
         "paper_db_read_requested": bool(allow_paper_db_read),
         "paper_db_path": str(paths.paper_db_path) if paths.paper_db_path else None,
-        "paper_db_authority_status": resolution.authority_status,
-        "paper_db_selected_reason": resolution.selected_reason,
+        "paper_db_authority_status": paper_db_freshness["status"],
+        "paper_db_selected_reason": paper_db_freshness["reason"],
+        "paper_db_freshness_check": paper_db_freshness,
         "closed_trades_csv_path": str(paths.closed_trades_csv_path),
         "feedback_events_path": str(paths.feedback_events_path),
         "source_status": {name: source_to_status(load) for name, load in source_loads.items()},
@@ -714,8 +888,9 @@ def build_paper_autotrain_feedback_gap_diagnostics_v1(
         "paper_db_normalized_record_count": source_summary[SOURCE_PAPER_DB]["normalized_record_count"],
         "closed_trades_csv_normalized_record_count": source_summary[SOURCE_CSV]["normalized_record_count"],
         "feedback_events_normalized_record_count": source_summary[SOURCE_FEEDBACK]["normalized_record_count"],
-        "missing_in_feedback_count": reconciliation_summary["classification_counts"]["missing_in_feedback"],
-        "conflicting_group_count": reconciliation_summary["classification_counts"]["conflicting"],
+        "missing_in_feedback_count": csv_feedback_classification_counts["missing_in_feedback"],
+        "conflicting_group_count": csv_feedback_classification_counts["conflicting"],
+        "csv_feedback_classification_counts": csv_feedback_classification_counts,
         "missing_in_feedback_records": [row.to_dict() for row in missing_rows],
         "cadence_gap_mechanism_status": cadence_gap_mechanism_status,
         "validation_rejection_status": validation_rejection_status,
@@ -781,6 +956,7 @@ def render_markdown(report: Mapping[str, Any]) -> str:
             f"- feedback_events normalized: `{report.get('feedback_events_normalized_record_count')}`",
             f"- missing_in_feedback: `{report.get('missing_in_feedback_count')}`",
             f"- conflicting: `{report.get('conflicting_group_count')}`",
+            f"- paper_db_authority_status: `{report.get('paper_db_authority_status')}`",
             f"- parquet writer count: `{report.get('paper_closed_trades_incremental_writer_count')}`",
             f"- jsonl writer count: `{report.get('feedback_events_jsonl_writer_count')}`",
             f"- unexpected writer count: `{report.get('unexpected_writer_count')}`",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from smartcrypto.learning.paper_autotrain_feedback_gap_diagnostics import (
@@ -303,3 +304,153 @@ def test_writer_search_against_real_repo_matches_known_finding() -> None:
         "smartcrypto/learning/paper_autotrain_daily_quarantine_activation/activation.py"
         in result["candidate_jsonl_writer_files"]
     )
+
+
+def test_writer_search_paths_are_posix_normalized(tmp_path: Path) -> None:
+    """Report paths must be deterministic POSIX (forward-slash) strings, not
+    the OS-native separator. Before the fix, `search_writers()` built
+    relative paths with plain `str(path.relative_to(root))`, which emits
+    backslashes on Windows -- exactly the 2 pytest failures Rodrigo hit
+    running this branch for real on Windows. This test cannot reproduce a
+    backslash on this Linux sandbox (str() and .as_posix() coincide on
+    POSIX), so it locks in the contract two ways: functionally (no path in
+    the report may contain a backslash) and at the source level (the fix
+    must use `.as_posix()`, not a bare `str()` of a `relative_to()` result).
+    """
+    root = tmp_path / "mini_repo"
+    nested = root / "smartcrypto" / "learning" / "nested" / "package"
+    nested.mkdir(parents=True)
+    (nested / "real_writer.py").write_text(
+        "from pathlib import Path\n"
+        "DEFAULT_TARGET = Path('data/feedback/paper_closed_trades_incremental.parquet')\n"
+        "def write_feedback_outputs(frame, feedback_store_path=DEFAULT_TARGET):\n"
+        "    frame.to_parquet(feedback_store_path, index=False)\n",
+        encoding="utf-8",
+    )
+    (root / "tests").mkdir(parents=True)
+
+    result = search_writers(root)
+    all_paths = [
+        *result["candidate_parquet_writer_files"],
+        *result["candidate_jsonl_writer_files"],
+        *[match["file"] for match in result["writer_search_matches"]],
+    ]
+    assert all_paths, "expected the synthetic nested writer to be found"
+    for path_str in all_paths:
+        assert "\\" not in path_str, f"path must be POSIX-normalized, got {path_str!r}"
+    assert "smartcrypto/learning/nested/package/real_writer.py" in result["candidate_parquet_writer_files"]
+
+    source_path = (
+        Path(__file__).resolve().parents[1]
+        / "smartcrypto"
+        / "learning"
+        / "paper_autotrain_feedback_gap_diagnostics"
+        / "diagnostics.py"
+    )
+    source_text = source_path.read_text(encoding="utf-8")
+    assert "str(path.relative_to(root))" not in source_text
+    assert "path.relative_to(root).as_posix()" in source_text
+
+
+def test_missing_in_feedback_independent_of_paper_db(tmp_path: Path) -> None:
+    """Regression test for the exact production scenario Rodrigo reported:
+    closed_trades_csv has 539 records, feedback_events has 498 (the first
+    498 by order_id), and paper_db is never read (allow_paper_db_read
+    defaults to False, exactly like the reported run). Before the fix,
+    `classify_group()` checked SOURCE_PAPER_DB presence before feedback
+    presence, so with paper_db absent every group was misclassified
+    `missing_in_db` and `missing_in_feedback_count` was always 0 instead of
+    the correct, paper_db-independent answer of 41 (539 - 498).
+    """
+    root = tmp_path / "project"
+    base = datetime(2026, 6, 1, tzinfo=timezone.utc)
+    total_csv = 539
+    total_feedback = 498
+
+    csv_lines: list[str] = []
+    feedback_events: list[dict] = []
+    for i in range(1, total_csv + 1):
+        close_dt = base + timedelta(minutes=i)
+        close_iso = close_dt.isoformat()
+        open_iso = (close_dt - timedelta(hours=1)).isoformat()
+        symbol = "BTC/USDT:USDT" if i % 2 == 0 else "ETH/USDT:USDT"
+        csv_lines.append(f"{i},{symbol},long,{open_iso},{close_iso},100.0,101.0,1.0,0")
+        if i <= total_feedback:
+            feedback_events.append(
+                {
+                    "order_id": str(i),
+                    "symbol": symbol,
+                    "side": "long",
+                    "close_time_utc": close_iso,
+                    "net_pnl": 1.0,
+                }
+            )
+
+    _write_closed_trades_csv(root / "data" / "trades" / "inbox" / "freqtrade_paper_closed_trades.csv", csv_lines)
+    _write_feedback_jsonl(
+        root / "data" / "feedback" / "paper_autotrain_daily_quarantine_feedback_events_v1.jsonl",
+        feedback_events,
+    )
+
+    report = build_paper_autotrain_feedback_gap_diagnostics_v1(
+        project_root=root,
+        write_report=False,
+        # allow_paper_db_read defaults to False -- exactly like the reported run.
+    )
+
+    assert report["closed_trades_csv_normalized_record_count"] == total_csv
+    assert report["feedback_events_normalized_record_count"] == total_feedback
+    assert report["missing_in_feedback_count"] == total_csv - total_feedback
+    assert len(report["missing_in_feedback_records"]) == total_csv - total_feedback
+
+    missing_order_ids = {row["closed_trades_csv_order_id"] for row in report["missing_in_feedback_records"]}
+    assert missing_order_ids == {str(i) for i in range(total_feedback + 1, total_csv + 1)}
+    for row in report["missing_in_feedback_records"]:
+        assert row["db_csv_match_status"] == "db_not_available"
+        assert row["missing_sources"] == ["feedback_events"]
+
+
+def test_paper_db_stale_runtime_not_reported_as_fresh(tmp_path: Path) -> None:
+    """Regression test for the exact production scenario Rodrigo reported:
+    a runtime paper_db whose latest close (2026-05-29) predates
+    closed_trades_csv's latest close (2026-07-08) was reported as
+    `runtime_db_fresh`, because `resolve_paper_db()`'s own staleness check
+    is disabled when `watermark_close_time=None` (which this diagnostic
+    must pass, since it needs to see every candidate record, not just ones
+    after a watermark). The diagnostic's own freshness check must compare
+    directly against closed_trades_csv and must never call a stale DB
+    fresh -- and that staleness must never hide the CSV -> feedback gap.
+    """
+    root = tmp_path / "project"
+    _write_paper_db(
+        root / "paper-db" / "tradesv3.paper.sqlite",
+        [
+            (1, "BTC/USDT:USDT", 0, 0, "2026-05-28T10:00:00+00:00", "2026-05-29T10:00:00+00:00", 60000.0, 60500.0, 100.0, 5.0, "roi"),
+        ],
+    )
+    _write_closed_trades_csv(
+        root / "data" / "trades" / "inbox" / "freqtrade_paper_closed_trades.csv",
+        [
+            "1,BTC/USDT:USDT,long,2026-05-28T10:00:00+00:00,2026-05-29T10:00:00+00:00,60000.0,60500.0,5.0,0",
+            "2,ETH/USDT:USDT,long,2026-07-08T10:00:00+00:00,2026-07-08T12:00:00+00:00,3000.0,2950.0,-1.5,0",
+        ],
+    )
+    _write_feedback_jsonl(
+        root / "data" / "feedback" / "paper_autotrain_daily_quarantine_feedback_events_v1.jsonl", []
+    )
+
+    report = build_paper_autotrain_feedback_gap_diagnostics_v1(
+        project_root=root,
+        paper_db_path=root / "paper-db" / "tradesv3.paper.sqlite",
+        allow_paper_db_read=True,
+        write_report=False,
+    )
+
+    assert report["paper_db_authority_status"] != "runtime_db_fresh"
+    assert report["paper_db_authority_status"] == "runtime_db_stale_against_csv"
+    assert report["paper_db_selected_reason"] == "selected_candidate_max_close_time_utc_before_closed_trades_csv_max_close_time_utc"
+    freshness = report["paper_db_freshness_check"]
+    assert freshness["paper_db_max_close_time_utc"] == "2026-05-29T10:00:00+00:00"
+    assert freshness["closed_trades_csv_max_close_time_utc"] == "2026-07-08T12:00:00+00:00"
+    # The staleness of paper_db must never hide the CSV -> feedback gap.
+    assert report["missing_in_feedback_count"] == 2
