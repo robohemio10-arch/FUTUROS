@@ -1,119 +1,157 @@
-# Freqtrade Paper Closed Trades Source Profile e Adapter V2
+# Freqtrade Paper Closed Trades Source Profile + Read-Only Adapter V2
 
 ## Escopo
 
-Este bloco perfila os CSVs de trades paper fechados produzidos pela Fase 14 e os adapta em
-memoria ao Trader Master Fingerprint Spec V2. Ele nao compara com o Master, nao importa,
-nao executa backfill, nao atualiza feedback, nao treina e nao altera Freqtrade ou runtime.
+O Bloco 1A.1 enriquece, em memoria, o CSV de trades paper fechados com a evidencia
+financeira do snapshot SQLite autoritativo. O resultado canonico e entregue diretamente ao
+validator Trader Master V2. Nao existe writer, importacao, backfill ou comparacao com o Master.
 
-## Produtor autoritativo
+As garantias permanecem:
 
-O produtor full-repo e `smartcrypto.data.paper_trade_lifecycle.collect_closed_feedback`.
-Ele le uma copia local do SQLite paper, seleciona `is_open=0`, chama
-`normalize_closed_trades` e grava o mesmo DataFrame em:
+- `write_to_master_performed=false`;
+- `write_performed=false` no modo default;
+- `research_pipeline_writes_runtime=false`;
+- `sends_exchange_orders=false`;
+- `exchange_private_access=false`.
 
-- `data/trades/freqtrade_paper_closed_smartcrypto.csv`;
-- `data/trades/inbox/freqtrade_paper_closed_trades.csv`.
+## Fontes e autoridade
 
-No snapshot auditado em 13 de julho de 2026, ambos tinham 558 linhas, 133290 bytes e o mesmo
-SHA-256 `F367F1742CB233EFFA35EF07200FCA52C781B75FF2B6EA2A8518CAB64E0BF1FF`.
-Esse hash e evidencia do snapshot, nao pin permanente. O adapter recalcula hashes a cada run,
-classifica arquivos hash-identicos como replicas e processa apenas um lote logico.
+| Papel | Caminho | Politica |
+| --- | --- | --- |
+| CSV primario | `data/trades/inbox/freqtrade_paper_closed_trades.csv` | Fonte tabular do Phase14 |
+| Replica | `data/trades/freqtrade_paper_closed_smartcrypto.csv` | Mesmo lote quando SHA-256 for identico |
+| Financeiro autoritativo | `data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite` | Somente copia temporaria e `query_only` |
+| Nao autoritativo | `freqtrade/user_data/tradesv3.paper.sqlite` | Rejeitado explicitamente |
 
-## Origem e semantica das colunas
+No inventario de 13 de julho de 2026, os dois CSVs tinham 558 linhas e o mesmo SHA-256.
+Eles representam um lote logico, nao dois lotes. O snapshot continha 558 trades fechados e
+dois trades abertos, que nao participam do join.
+
+O adapter calcula SHA-256 do DB, WAL e SHM antes e depois. O arquivo original nunca e aberto
+pelo SQLite: DB e sidecars existentes sao copiados para um diretorio temporario, a copia e
+aberta com `mode=ro`, e `PRAGMA query_only=ON` e verificado antes do `SELECT`.
+
+## Produtor e origem das colunas CSV
+
+O produtor e `smartcrypto.data.paper_trade_lifecycle.collect_closed_feedback`, usando
+`normalize_closed_trades` sobre o snapshot Freqtrade paper.
 
 | CSV | Origem Freqtrade | Semantica |
 | --- | --- | --- |
-| `moeda` | `pair` | Simbolo normalizado, sem `/USDT:USDT` |
-| `fechar_side` | `is_short` | `short` quando 1; caso contrario `long` |
-| `leverage` | `leverage` | Informativo; produtor usa 1 se ausente |
-| `order_id` | `id` | `freqtrade-paper-{trades.id}` local; nao e exchange order ID |
-| `pnl_fechado` | `close_profit_abs`, fallback `realized_profit` | PnL reportado pelo Freqtrade |
-| `taxa_lucros_perdas_fechados_pct` | `close_profit` | Razao de lucro reportada |
-| `preco_abertura` | `open_rate` | Preco de entrada |
-| `preco_fechamento` | `close_rate` | Preco de saida; duas linhas reais estavam nulas |
-| `volume_posicao` | `amount` | Quantidade do ativo-base |
-| `volume_fechado` | `amount` | Quantidade fechada do ativo-base |
-| `horario_abertura` | `open_date` | Timestamp de abertura |
-| `horario_fechamento` | `close_date` | Timestamp de fechamento |
-| `taxa_1` | `fee_open_cost` | Custo de fee de entrada; produtor aplica `fillna(0)` |
-| `preco_transacao` | `open_rate` | Copia do preco de entrada |
-| `volume_transacao` | `amount` | Copia da quantidade |
-| `direcao_liquidez` | `enter_tag` | Nome legado enganoso; nao prova maker/taker |
-| `taxa_2` | `fee_close_cost` | Custo de fee de saida; produtor aplica `fillna(0)` |
-| `horario_transacao` | `close_date` | Copia do timestamp de fechamento |
+| `moeda` | `pair` | Par normalizado para `BTCUSDT`/`ETHUSDT` |
+| `fechar_side` | `is_short` | `long` quando falso, `short` quando verdadeiro |
+| `leverage` | `leverage` | Alavancagem registrada no trade |
+| `order_id` | `trades.id` | `freqtrade-paper-{id}`; nao e order ID da exchange |
+| `pnl_fechado` | `close_profit_abs`, fallback produtor `realized_profit` | PnL reportado do trade fechado |
+| `taxa_lucros_perdas_fechados_pct` | `close_profit` | Retorno percentual reportado |
+| `preco_abertura` | `open_rate` | Preco medio de entrada |
+| `preco_fechamento` | `close_rate` | Preco de fechamento; pode estar ausente |
+| `volume_posicao`, `volume_fechado` | `amount` | Quantidade em ativo base |
+| `horario_abertura`, `horario_fechamento` | `open_date`, `close_date` | Timestamp do trade |
+| `taxa_1` | `fee_open_cost` | Fee raw de entrada; o produtor aplicava `fillna(0)` |
+| `taxa_2` | `fee_close_cost` | Fee raw de saida; o produtor aplicava `fillna(0)` |
+| `preco_transacao` | `open_rate` | Campo legado de transacao |
+| `volume_transacao` | `amount` | Campo legado de quantidade |
+| `direcao_liquidez` | `enter_tag` | Tag de entrada, nao prova de maker/taker |
+| `horario_transacao` | `close_date` | Timestamp legado de transacao |
+
+## Contrato SQLite
+
+O source profile exige explicitamente as colunas:
+
+`id`, `exchange`, `pair`, `is_open`, `is_short`, `open_rate`, `close_rate`, `amount`,
+`contract_size`, `leverage`, `fee_open_cost`, `fee_close_cost`, `fee_open_currency`,
+`fee_close_currency`, `funding_fees`, `close_profit_abs`, `realized_profit`, `open_date` e
+`close_date`.
+
+O join e fixo:
+
+```text
+CSV order_id = freqtrade-paper-{id}
+SQLite key   = trades.id
+```
+
+O batch inteiro e bloqueado se houver ID malformado, duplicado, somente no CSV ou somente no
+conjunto SQLite de trades fechados. Linhas pareadas sao quarentenadas individualmente quando
+simbolo, lado, timestamp, PnL, preco, quantidade ou leverage divergem.
+
+`taxa_1` e `taxa_2` permanecem documentadas como linhagem, mas nao substituem as fees do
+snapshot e nao participam do gate de divergencia: o objetivo deste bloco e justamente
+substituir a ambiguidade do export pela evidencia financeira SQLite autoritativa.
 
 ## Identidade financeira
 
-O profile versionado e
-`config/freqtrade_paper_closed_trades_source_profile_v2.json`.
+O mercado e Binance USDT-M Futures, contrato linear perpetuo, settlement USDT, quantidade em
+ativo base e `contract_size` obtido por trade no SQLite.
 
-- venue: Binance;
-- market type: USDT-M Futures;
-- contract type: linear perpetual;
-- settlement currency: USDT;
-- quantity unit: base asset;
-- contract size: 1;
-- namespace do order ID: `freqtrade:paper:sqlite:trades.id:v1`.
-
-O `order_id` recebido e preservado literalmente. O adapter nao cria `source_trade_id` e nao
-deriva IDs nativos. `account_scope_hash` deve ser um SHA-256 hexadecimal fornecido
-explicitamente. O identificador de conta original nunca e recebido ou persistido e nenhum hash
-e derivado do filename.
-
-## Formula financeira
-
-Para contrato linear:
+As normalizacoes obrigatorias sao:
 
 ```text
-long gross_pnl  = (exit_price - entry_price) * quantity * contract_size
-short gross_pnl = (entry_price - exit_price) * quantity * contract_size
-trading_fee     = taxa_1 + taxa_2
-net_pnl         = gross_pnl - trading_fee - funding_fee
+effective_open_fee  = fee_open_cost * leverage
+effective_close_fee = fee_close_cost
+trading_fee          = effective_open_fee + effective_close_fee
+funding_fee          = -funding_fees
+
+long gross_pnl  = (close_rate - open_rate) * amount * contract_size
+short gross_pnl = (open_rate - close_rate) * amount * contract_size
+
+reconstructed_net_pnl = gross_pnl - trading_fee - funding_fee
+accounting_residual    = abs(reconstructed_net_pnl - close_profit_abs)
 ```
 
-Gross PnL e reconstruido apenas de side, precos, quantidade e contract size, nunca a partir de
-`pnl_fechado`. Fees devem estar presentes e ser custos nao negativos. Fee zero e bloqueada
-porque o produtor atual usa `fillna(0)` e o CSV nao preserva evidencia para distinguir zero real
-de dado ausente.
+O `gross_pnl` nunca e derivado de `close_profit_abs`, `realized_profit` ou do CSV. Zero de fee
+ou funding somente e aceito quando lido da coluna autoritativa. Campo ausente nao vira zero.
 
-Funding nao e exportado nesses CSVs. Ele pode estar incorporado no PnL reportado, mas isso nao
-pode ser demonstrado pela fonte. Portanto o profile declara `funding_availability=absent` e
-todas as linhas reais sao quarentenadas com `funding_fee_unavailable`. Nenhum zero e inventado.
+O epsilon da fonte e `0.00000001`. Acima dele, a linha recebe
+`financial_accounting_identity_violation` antes de chegar ao validator V2.
 
-A auditoria do snapshot real encontrou 556 linhas com gross calculavel; nenhuma fechou em
-tolerancia absoluta de `1e-8` sem funding e apenas duas fecharam na tolerancia relativa V2.
-Isso reforca o bloqueio fail-closed.
+## Resultado real observado
 
-## CLI read-only
+O probe read-only encontrou join exato para os 558 IDs, sem IDs exclusivos ou duplicados.
+Duas linhas, `freqtrade-paper-221` e `freqtrade-paper-234`, nao possuem `close_rate` e
+permanecem em quarentena.
+
+Tres linhas adicionais, `freqtrade-paper-141`, `freqtrade-paper-258` e
+`freqtrade-paper-561`, nao fecham a formula prescrita contra `close_profit_abs`. Elas sao
+quarentenadas, sem ajuste de epsilon ou derivacao circular. Assim, o estado real pode diferir
+do gate indicativo de 556 linhas aceitas; a evidencia observada prevalece.
+
+Resultado observado: 553 linhas aceitas, cinco quarentenadas, 553 formulas reconciliadas e
+tres divergencias contabeis. O residual maximo foi `1.28547708` USDT e o residual mediano foi
+`0.00000000068550000053` USDT.
+
+## CLI
+
+Execucao default sem escrita:
 
 ```powershell
 python .\scripts\validate_trader_master_staging_v2.py `
   --project-root . `
   --source-profile .\config\freqtrade_paper_closed_trades_source_profile_v2.json `
-  --account-scope-hash <sha256-hex-seguro> `
+  --account-scope-hash <sha256-sanitizado-da-conta-paper> `
   --no-write `
   --json
 ```
 
-`--source-profile` e `--account-scope-hash` ativam o adapter. Sem profile, o CLI preserva o
-validador genérico do Bloco 1. `--write-report` continua limitado a JSON/Markdown em
-`data/reports`; o adapter nunca escreve CSV, Parquet, XLSX ou SQLite.
+Override auditavel do snapshot:
 
-## Gates e seguranca
+```powershell
+python .\scripts\validate_trader_master_staging_v2.py `
+  --project-root . `
+  --source-profile .\config\freqtrade_paper_closed_trades_source_profile_v2.json `
+  --account-scope-hash <sha256-sanitizado-da-conta-paper> `
+  --authoritative-sqlite .\data\snapshots\freqtrade-paper\tradesv3.paper.snapshot.sqlite `
+  --no-write `
+  --json
+```
 
-- profile ausente ou invalido: blocked;
-- account scope hash ausente/invalido: blocked;
-- replica divergente: blocked;
-- fees ausentes, negativas ou zero sem proveniencia: quarentena;
-- funding ausente ou indeterminado: quarentena;
-- identidade contabil divergente: quarentena pelo validator V2;
-- `write_to_master_performed=false`;
-- `sends_exchange_orders=false`;
-- `exchange_private_access=false`;
-- `research_pipeline_writes_runtime=false`.
+O `account_scope_hash` deve ser SHA-256 hexadecimal fornecido explicitamente por configuracao
+segura. O adapter nao persiste o identificador original e nunca deriva esse hash do filename.
 
 ## Fora de escopo
 
-Nao ha comparacao com `trades_master.parquet`; ela pertence ao Bloco 1B. Tambem nao ha writer,
-importacao, backfill, feedback, treino, Strategy Factory, Qlib, IA Shadow ou Freqtrade runtime.
+- comparacao com `trades_master.parquet` (Bloco 1B);
+- escrita em CSV, Parquet, XLSX, SQLite ou Master;
+- importacao, backup ou backfill;
+- alteracao de Freqtrade, RiskManager, Qlib, IA Shadow ou Strategy Factory;
+- acesso privado a exchange ou envio de ordens.

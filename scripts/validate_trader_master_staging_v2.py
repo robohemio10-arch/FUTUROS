@@ -38,6 +38,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Explicit SHA-256 account-scope hash; never derived from filenames.",
     )
+    parser.add_argument(
+        "--authoritative-sqlite",
+        "--authoritative-sqlite-path",
+        dest="authoritative_sqlite",
+        default=None,
+        help="Optional authoritative paper snapshot override; opened only via a query-only temp copy.",
+    )
     parser.add_argument("--output-json", default=str(DEFAULT_JSON_REPORT))
     parser.add_argument("--output-markdown", default=str(DEFAULT_MARKDOWN_REPORT))
     parser.add_argument("--kill-switch-path", default=str(DEFAULT_KILL_SWITCH))
@@ -62,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
             source_profile_path=args.source_profile,
             account_scope_hash=args.account_scope_hash,
             staging_file=args.staging_file,
+            authoritative_sqlite_path=args.authoritative_sqlite,
             write_report=args.write_report,
             output_json=args.output_json,
             output_markdown=args.output_markdown,

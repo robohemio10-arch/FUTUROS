@@ -15,7 +15,7 @@
     "contract_type": "linear_perpetual",
     "settlement_currency": "USDT",
     "quantity_unit": "base_asset",
-    "contract_size": "1.00000000",
+    "contract_size_source": "authoritative_sqlite.trades.contract_size",
     "source_namespace": "phase14_freqtrade_paper_closed_trades",
     "order_id_namespace": "freqtrade:paper:sqlite:trades.id:v1",
     "order_id_semantics": "freqtrade-paper-{local_trades_table_id}; not an exchange order identifier"
@@ -31,15 +31,51 @@
     "quantity": "volume_fechado",
     "net_pnl": "pnl_fechado",
     "fee_open": "taxa_1",
-    "fee_close": "taxa_2"
+    "fee_close": "taxa_2",
+    "leverage": "leverage"
+  },
+  "authoritative_sqlite": {
+    "snapshot_path": "data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite",
+    "explicitly_non_authoritative_paths": [
+      "freqtrade/user_data/tradesv3.paper.sqlite"
+    ],
+    "table": "trades",
+    "closed_trade_filter": "is_open = 0",
+    "join_key_semantics": "freqtrade-paper-{trades.id}",
+    "access_mode": "temporary_copy_query_only",
+    "required_columns": [
+      "id",
+      "exchange",
+      "pair",
+      "is_open",
+      "is_short",
+      "open_rate",
+      "close_rate",
+      "amount",
+      "contract_size",
+      "leverage",
+      "fee_open_cost",
+      "fee_close_cost",
+      "fee_open_currency",
+      "fee_close_currency",
+      "funding_fees",
+      "close_profit_abs",
+      "realized_profit",
+      "open_date",
+      "close_date"
+    ]
   },
   "financial_contract": {
     "gross_pnl_formula": "linear_price_delta_times_quantity_contract_size",
     "fee_source_sign": "positive_cost",
-    "zero_fee_handling": "quarantine_as_unverifiable",
-    "funding_availability": "absent",
-    "funding_column": null,
-    "funding_sign": "positive_cost_negative_revenue",
+    "zero_fee_handling": "allow_authoritative_sqlite_zero",
+    "funding_availability": "authoritative_sqlite_column",
+    "funding_column": "funding_fees",
+    "funding_sign": "source_positive_revenue_negative_cost",
+    "fee_open_normalization": "fee_open_cost_times_leverage",
+    "fee_close_normalization": "fee_close_cost",
+    "funding_normalization": "negate_source_value_to_cost",
+    "net_reference_column": "close_profit_abs",
     "epsilon_abs_fonte": "0.00000001",
     "pnl_semantics": "reported net pnl from Freqtrade close_profit_abs, with realized_profit fallback in producer"
   }

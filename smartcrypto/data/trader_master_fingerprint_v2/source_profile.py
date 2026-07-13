@@ -22,6 +22,28 @@ REQUIRED_COLUMN_KEYS = (
     "net_pnl",
     "fee_open",
     "fee_close",
+    "leverage",
+)
+REQUIRED_SQLITE_COLUMNS = (
+    "id",
+    "exchange",
+    "pair",
+    "is_open",
+    "is_short",
+    "open_rate",
+    "close_rate",
+    "amount",
+    "contract_size",
+    "leverage",
+    "fee_open_cost",
+    "fee_close_cost",
+    "fee_open_currency",
+    "fee_close_currency",
+    "funding_fees",
+    "close_profit_abs",
+    "realized_profit",
+    "open_date",
+    "close_date",
 )
 
 
@@ -37,8 +59,23 @@ class FinancialContract:
     funding_availability: str
     funding_column: str | None
     funding_sign: str
+    fee_open_normalization: str
+    fee_close_normalization: str
+    funding_normalization: str
+    net_reference_column: str
     epsilon_abs_fonte: str
     pnl_semantics: str
+
+
+@dataclass(frozen=True)
+class AuthoritativeSQLiteContract:
+    snapshot_path: str
+    explicitly_non_authoritative_paths: tuple[str, ...]
+    table: str
+    closed_trade_filter: str
+    join_key_semantics: str
+    access_mode: str
+    required_columns: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -54,12 +91,13 @@ class FreqtradePaperSourceProfile:
     contract_type: str
     settlement_currency: str
     quantity_unit: str
-    contract_size: str
+    contract_size_source: str
     source_namespace: str
     order_id_namespace: str
     order_id_semantics: str
     column_map: dict[str, str]
     financial_contract: FinancialContract
+    authoritative_sqlite: AuthoritativeSQLiteContract
     profile_path: Path
     profile_sha256: str
 
@@ -91,9 +129,20 @@ def _parse_profile(
     identity = _mapping(payload, "identity")
     columns = _mapping(payload, "column_map")
     financial = _mapping(payload, "financial_contract")
+    sqlite_contract = _mapping(payload, "authoritative_sqlite")
     replicas = source_files.get("replica_source_paths")
     if not isinstance(replicas, list) or not all(isinstance(item, str) for item in replicas):
         raise SourceProfileError("invalid_replica_source_paths")
+    non_authoritative = sqlite_contract.get("explicitly_non_authoritative_paths")
+    if not isinstance(non_authoritative, list) or not all(
+        isinstance(item, str) and item.strip() for item in non_authoritative
+    ):
+        raise SourceProfileError("invalid_explicitly_non_authoritative_paths")
+    required_sqlite_columns = sqlite_contract.get("required_columns")
+    if not isinstance(required_sqlite_columns, list) or not all(
+        isinstance(item, str) and item.strip() for item in required_sqlite_columns
+    ):
+        raise SourceProfileError("invalid_required_sqlite_columns")
     return FreqtradePaperSourceProfile(
         schema_version=_string(payload, "schema_version"),
         profile_id=_string(payload, "profile_id"),
@@ -106,7 +155,7 @@ def _parse_profile(
         contract_type=_string(identity, "contract_type"),
         settlement_currency=_string(identity, "settlement_currency"),
         quantity_unit=_string(identity, "quantity_unit"),
-        contract_size=_string(identity, "contract_size"),
+        contract_size_source=_string(identity, "contract_size_source"),
         source_namespace=_string(identity, "source_namespace"),
         order_id_namespace=_string(identity, "order_id_namespace"),
         order_id_semantics=_string(identity, "order_id_semantics"),
@@ -118,8 +167,23 @@ def _parse_profile(
             funding_availability=_string(financial, "funding_availability"),
             funding_column=_optional_string(financial, "funding_column"),
             funding_sign=_string(financial, "funding_sign"),
+            fee_open_normalization=_string(financial, "fee_open_normalization"),
+            fee_close_normalization=_string(financial, "fee_close_normalization"),
+            funding_normalization=_string(financial, "funding_normalization"),
+            net_reference_column=_string(financial, "net_reference_column"),
             epsilon_abs_fonte=_string(financial, "epsilon_abs_fonte"),
             pnl_semantics=_string(financial, "pnl_semantics"),
+        ),
+        authoritative_sqlite=AuthoritativeSQLiteContract(
+            snapshot_path=_string(sqlite_contract, "snapshot_path"),
+            explicitly_non_authoritative_paths=tuple(
+                item.strip() for item in non_authoritative
+            ),
+            table=_string(sqlite_contract, "table"),
+            closed_trade_filter=_string(sqlite_contract, "closed_trade_filter"),
+            join_key_semantics=_string(sqlite_contract, "join_key_semantics"),
+            access_mode=_string(sqlite_contract, "access_mode"),
+            required_columns=tuple(item.strip() for item in required_sqlite_columns),
         ),
         profile_path=profile_path,
         profile_sha256=profile_sha256,
@@ -135,25 +199,47 @@ def _validate_profile(profile: FreqtradePaperSourceProfile) -> None:
         errors.append(f"source_profile_missing_column_map:{','.join(missing_columns)}")
     if not profile.order_id_namespace.strip():
         errors.append("source_profile_order_id_namespace_missing")
+    if profile.contract_size_source != "authoritative_sqlite.trades.contract_size":
+        errors.append("unsupported_contract_size_source")
     if profile.financial_contract.gross_pnl_formula != "linear_price_delta_times_quantity_contract_size":
         errors.append("unsupported_gross_pnl_formula")
     if profile.financial_contract.fee_source_sign != "positive_cost":
         errors.append("unsupported_fee_source_sign")
-    if profile.financial_contract.zero_fee_handling != "quarantine_as_unverifiable":
+    if profile.financial_contract.zero_fee_handling != "allow_authoritative_sqlite_zero":
         errors.append("unsafe_zero_fee_handling")
-    if profile.financial_contract.funding_sign != "positive_cost_negative_revenue":
+    if profile.financial_contract.funding_sign != "source_positive_revenue_negative_cost":
         errors.append("unsupported_funding_sign")
-    if profile.financial_contract.funding_availability not in {
-        "column",
-        "absent",
-        "incorporated_unverifiable",
-    }:
+    if profile.financial_contract.funding_availability != "authoritative_sqlite_column":
         errors.append("invalid_funding_availability")
-    if (
-        profile.financial_contract.funding_availability == "column"
-        and not profile.financial_contract.funding_column
-    ):
+    if not profile.financial_contract.funding_column:
         errors.append("funding_column_required")
+    elif profile.financial_contract.funding_column != "funding_fees":
+        errors.append("unsupported_funding_column")
+    expected_financial_contract = {
+        "fee_open_normalization": "fee_open_cost_times_leverage",
+        "fee_close_normalization": "fee_close_cost",
+        "funding_normalization": "negate_source_value_to_cost",
+        "net_reference_column": "close_profit_abs",
+    }
+    for field, expected in expected_financial_contract.items():
+        if getattr(profile.financial_contract, field) != expected:
+            errors.append(f"unsupported_{field}")
+    sqlite_contract = profile.authoritative_sqlite
+    if sqlite_contract.table != "trades":
+        errors.append("unsupported_authoritative_sqlite_table")
+    if sqlite_contract.closed_trade_filter != "is_open = 0":
+        errors.append("unsupported_closed_trade_filter")
+    if sqlite_contract.join_key_semantics != "freqtrade-paper-{trades.id}":
+        errors.append("unsupported_sqlite_join_key_semantics")
+    if sqlite_contract.access_mode != "temporary_copy_query_only":
+        errors.append("unsafe_authoritative_sqlite_access_mode")
+    missing_sqlite_columns = sorted(
+        set(REQUIRED_SQLITE_COLUMNS) - set(sqlite_contract.required_columns)
+    )
+    if missing_sqlite_columns:
+        errors.append(
+            "source_profile_missing_sqlite_columns:" + ",".join(missing_sqlite_columns)
+        )
     if errors:
         raise SourceProfileError(";".join(sorted(errors)))
 
