@@ -126,6 +126,8 @@ smartcrypto/data/*
 !smartcrypto/data/__init__.py
 !smartcrypto/data/*.py
 !smartcrypto/data/paper_trade_lifecycle.py
+!smartcrypto/data/trader_master_fingerprint_v2/
+!smartcrypto/data/trader_master_fingerprint_v2/*.py
 /report.json
 /CLAUDE_*.md
 
