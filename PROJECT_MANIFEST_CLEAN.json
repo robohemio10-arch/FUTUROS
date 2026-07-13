@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "59e3a79d7d657984a3187ad75eeecd7f57716691a43a2618938ffa221c5ad203",
+  "aggregate_sha256": "73437700462c0b62cebdda04414e27973ab876127c061b0d180a9f3bd3ae9df5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 262,
-    "manifested_files_total": 1481,
-    "python_files": 1123,
+    "docs_files": 263,
+    "manifested_files_total": 1485,
+    "python_files": 1126,
     "runtime_excluded_files_total": 0,
-    "test_files": 312,
-    "tracked_files_total": 1482,
+    "test_files": 313,
+    "tracked_files_total": 1486,
     "workflows": 1
   },
   "deterministic": true,
@@ -2000,6 +2000,12 @@
       "sha256": "00f7ef5d8f2f95dd39f3a83b7c6180fa0ca5eb7f960d03c372290c8185535d9e"
     },
     {
+      "bytes": 5524,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_AUTHORITATIVE_EVIDENCE_INVENTORY_V2.md",
+      "sha256": "9c4378a74ef16200202f722881393c167145cbae0294839366ec9b71dc186eda"
+    },
+    {
       "bytes": 5868,
       "hash_mode": "text_lf",
       "path": "docs/TRADER_MASTER_FINGERPRINT_SPEC_V2_STAGING_VALIDATOR.md",
@@ -3542,6 +3548,12 @@
       "sha256": "b077c57ead0c2f9bfcfa9ae662fc9292c7fe2410a9457fdc5bcb9d2b21ec37bf"
     },
     {
+      "bytes": 2631,
+      "hash_mode": "text_lf",
+      "path": "scripts/inventory_trader_master_authoritative_evidence_v2.py",
+      "sha256": "495d7a6dea212d0a739bd5d0ad1eb85ff7113538a1f03812533a2f635f989475"
+    },
+    {
       "bytes": 16716,
       "hash_mode": "text_lf",
       "path": "scripts/join_training_dataset_with_15s_shadow_features.py",
@@ -4784,16 +4796,22 @@
       "sha256": "de937f10315a55c96fc61ed541536acbd1902a47e9593259de3a561428d609aa"
     },
     {
-      "bytes": 1830,
+      "bytes": 2192,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/__init__.py",
-      "sha256": "cf38d1623b61fe9f3dad1193a42a34938f3965d6b2fa04a13b537d147774db1d"
+      "sha256": "4c044eb87925243ea762e2c90fe4c9a271e6bb4bd4286034c2f1fc5ab2417333"
     },
     {
-      "bytes": 12118,
+      "bytes": 54843,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_evidence_inventory.py",
+      "sha256": "8f013d681c9604da171f2f6b10be6e867b871becdc70dc46058c7bf3362cc5f4"
+    },
+    {
+      "bytes": 17809,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_sqlite.py",
-      "sha256": "cc340f7db2e6a925e48c96368b4a51dd788e2939b13522ac2935bbedbf43fd89"
+      "sha256": "5abba1d579155eac93b1d9944fe66164692a690c45876a41604f10796c02efc6"
     },
     {
       "bytes": 10169,
@@ -8850,6 +8868,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trade_financial_input_repair.py",
       "sha256": "d5f822b15c8df4f269cabf4189ee3a822cceed673283218047232fa4e6cbe8d1"
+    },
+    {
+      "bytes": 20635,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_authoritative_evidence_inventory_v2.py",
+      "sha256": "ec7ac515979b5b647c7cea85928198264d1cb349e33bd803b369365f91b31e85"
     },
     {
       "bytes": 13692,

@@ -1,5 +1,11 @@
 """Trader Master fingerprint V2 and read-only staging validation."""
 
+from .authoritative_evidence_inventory import (
+    EvidenceArtifact,
+    build_trader_master_authoritative_evidence_inventory_report,
+    discover_evidence_candidates,
+    inspect_evidence_artifact,
+)
 from .fingerprint_spec import (
     FINGERPRINT_SPEC_VERSION,
     NORMALIZER_VERSION,
@@ -33,6 +39,7 @@ from .staging_validator import (
 )
 
 __all__ = [
+    "EvidenceArtifact",
     "FINGERPRINT_SPEC_VERSION",
     "KillSwitchMonitor",
     "NORMALIZER_VERSION",
@@ -41,6 +48,7 @@ __all__ = [
     "canonical_trade_id_for",
     "build_freqtrade_paper_closed_trades_adapter_bundle",
     "build_freqtrade_paper_closed_trades_adapter_report",
+    "build_trader_master_authoritative_evidence_inventory_report",
     "build_trader_master_legacy_lineage_profile_report",
     "build_trader_master_reconciliation_report",
     "build_targeted_quarantine_forensics_report",
@@ -50,6 +58,8 @@ __all__ = [
     "load_source_profile",
     "LEGACY_OBSERVATION_KEY_VERSION",
     "legacy_observation_key_for",
+    "discover_evidence_candidates",
+    "inspect_evidence_artifact",
     "normalize_trade_row",
     "primary_identity_for",
     "row_fingerprint_for",

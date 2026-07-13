@@ -14,6 +14,13 @@ from .source_profile import FreqtradePaperSourceProfile
 
 SQLITE_SIDECAR_SUFFIXES = ("", "-wal", "-shm")
 FORENSIC_RELATED_TABLES = ("trades", "orders", "trade_custom_data")
+JOIN_DIAGNOSTIC_COLUMNS = (
+    "source_trade_id",
+    "order_id",
+    "source_row_index",
+    "candidate_source_row_index",
+    "image_sha256",
+)
 
 
 def read_authoritative_closed_trades(
@@ -172,6 +179,66 @@ def snapshot_artifact_hashes(snapshot_path: Path, project_root: Path) -> dict[st
     return artifacts
 
 
+def inspect_sqlite_schema_readonly(
+    *,
+    project_root: Path,
+    snapshot_path: Path,
+) -> dict[str, Any]:
+    """Inspect SQLite schema and exact-key uniqueness through a query-only copy."""
+
+    before = snapshot_artifact_hashes(snapshot_path, project_root)
+    result: dict[str, Any] = {
+        "status": "blocked",
+        "reason": "sqlite_schema_not_evaluated",
+        "snapshot_path": _display_path(snapshot_path, project_root),
+        "snapshot_temp_copy_used": False,
+        "snapshot_query_only": False,
+        "snapshot_source_hashes_before": before,
+        "snapshot_source_hashes_after": {},
+        "snapshot_source_hashes_preserved": False,
+        "table_schemas": {},
+        "table_row_counts": {},
+        "join_column_diagnostics": {},
+        "validation_errors": [],
+    }
+    errors = _validate_generic_sqlite_path(project_root, snapshot_path)
+    if errors:
+        result.update(reason=errors[0], validation_errors=errors)
+        result["snapshot_source_hashes_after"] = snapshot_artifact_hashes(
+            snapshot_path, project_root
+        )
+        result["snapshot_source_hashes_preserved"] = (
+            result["snapshot_source_hashes_after"] == before
+        )
+        return result
+    try:
+        with tempfile.TemporaryDirectory(prefix="smart-futuros-sqlite-inventory-") as temp_dir:
+            copied_db = _copy_snapshot_artifacts(snapshot_path, Path(temp_dir))
+            result["snapshot_temp_copy_used"] = True
+            result.update(_query_sqlite_schema(copied_db))
+    except (OSError, sqlite3.Error, ValueError) as exc:
+        result.update(
+            reason="sqlite_schema_unreadable",
+            validation_errors=[f"sqlite_schema_unreadable:{type(exc).__name__}"],
+        )
+    else:
+        result.update(status="ok", reason="sqlite_schema_loaded_query_only")
+    finally:
+        after = snapshot_artifact_hashes(snapshot_path, project_root)
+        result["snapshot_source_hashes_after"] = after
+        result["snapshot_source_hashes_preserved"] = before == after
+        if before != after:
+            result.update(
+                status="blocked",
+                reason="sqlite_source_hash_changed",
+                table_schemas={},
+                table_row_counts={},
+                join_column_diagnostics={},
+                validation_errors=["sqlite_source_hash_changed"],
+            )
+    return result
+
+
 def _validate_snapshot_path(
     *,
     project_root: Path,
@@ -195,6 +262,22 @@ def _validate_snapshot_path(
         return ["authoritative_sqlite_extension_invalid"]
     if any(Path(f"{snapshot_path}{suffix}").is_symlink() for suffix in SQLITE_SIDECAR_SUFFIXES):
         return ["authoritative_sqlite_sidecar_symlink_forbidden"]
+    return []
+
+
+def _validate_generic_sqlite_path(project_root: Path, snapshot_path: Path) -> list[str]:
+    try:
+        snapshot_path.resolve().relative_to(project_root.resolve())
+    except ValueError:
+        return ["sqlite_outside_project_root"]
+    if snapshot_path.is_symlink():
+        return ["sqlite_symlink_forbidden"]
+    if not snapshot_path.exists() or not snapshot_path.is_file():
+        return ["sqlite_missing"]
+    if snapshot_path.suffix.casefold() not in {".sqlite", ".db"}:
+        return ["sqlite_extension_invalid"]
+    if any(Path(f"{snapshot_path}{suffix}").is_symlink() for suffix in SQLITE_SIDECAR_SUFFIXES):
+        return ["sqlite_sidecar_symlink_forbidden"]
     return []
 
 
@@ -237,6 +320,66 @@ def _query_closed_trades(
         return rows, schema_columns, query_only
     finally:
         connection.close()
+
+
+def _query_sqlite_schema(copied_db: Path) -> dict[str, Any]:
+    connection = sqlite3.connect(f"{copied_db.as_uri()}?mode=ro", uri=True, timeout=2.0)
+    try:
+        connection.execute("PRAGMA query_only = ON")
+        query_only = connection.execute("PRAGMA query_only").fetchone()[0] == 1
+        if not query_only:
+            raise ValueError("sqlite_query_only_not_enabled")
+        tables = [
+            str(row[0])
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+            ).fetchall()
+        ]
+        schemas: dict[str, list[str]] = {}
+        row_counts: dict[str, int] = {}
+        join_diagnostics: dict[str, dict[str, dict[str, Any]]] = {}
+        for table in tables:
+            quoted_table = _quote_identifier(table)
+            columns = [
+                str(row[1])
+                for row in connection.execute(f"PRAGMA table_info({quoted_table})").fetchall()
+            ]
+            schemas[table] = columns
+            row_count = int(
+                connection.execute(
+                    f"SELECT COUNT(*) FROM {quoted_table}"  # nosec B608
+                ).fetchone()[0]
+            )
+            row_counts[table] = row_count
+            diagnostics: dict[str, dict[str, Any]] = {}
+            for column in JOIN_DIAGNOSTIC_COLUMNS:
+                if column not in columns:
+                    continue
+                quoted_column = _quote_identifier(column)
+                present_count, distinct_count = connection.execute(
+                    f"SELECT COUNT({quoted_column}), COUNT(DISTINCT {quoted_column}) "  # nosec B608
+                    f"FROM {quoted_table}"
+                ).fetchone()
+                diagnostics[column] = {
+                    "present_count": int(present_count),
+                    "distinct_count": int(distinct_count),
+                    "unique_when_present": int(present_count) == int(distinct_count),
+                }
+            if diagnostics:
+                join_diagnostics[table] = diagnostics
+        return {
+            "snapshot_query_only": query_only,
+            "table_schemas": schemas,
+            "table_row_counts": row_counts,
+            "join_column_diagnostics": join_diagnostics,
+        }
+    finally:
+        connection.close()
+
+
+def _quote_identifier(value: str) -> str:
+    return '"' + value.replace('"', '""') + '"'
 
 
 def _query_trade_evidence(
