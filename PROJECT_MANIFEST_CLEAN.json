@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "c711b0540aff5a32092abafd772348805f9ac5d697761cdef7dc840919078a20",
+  "aggregate_sha256": "59e3a79d7d657984a3187ad75eeecd7f57716691a43a2618938ffa221c5ad203",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 261,
-    "manifested_files_total": 1477,
-    "python_files": 1120,
+    "docs_files": 262,
+    "manifested_files_total": 1481,
+    "python_files": 1123,
     "runtime_excluded_files_total": 0,
-    "test_files": 311,
-    "tracked_files_total": 1478,
+    "test_files": 312,
+    "tracked_files_total": 1482,
     "workflows": 1
   },
   "deterministic": true,
@@ -2006,6 +2006,12 @@
       "sha256": "ab1191d3b28c349b283e8ac3a3b0340d2878445f4c29d86c660a62429480e575"
     },
     {
+      "bytes": 4916,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_LEGACY_LINEAGE_PROFILE_V2.md",
+      "sha256": "40766f7d020a6dc84387e9ee6dd485dff4f87977e3ad75d925eb86995b010d6d"
+    },
+    {
       "bytes": 3667,
       "hash_mode": "text_lf",
       "path": "docs/TRADER_MASTER_READONLY_RECONCILIATION_V2.md",
@@ -3704,6 +3710,12 @@
       "sha256": "77103264da4176b311429d490e9f1d2e80f70ce5dcf3a122ba8592c7d5e4d712"
     },
     {
+      "bytes": 2293,
+      "hash_mode": "text_lf",
+      "path": "scripts/profile_trader_master_legacy_lineage_v2.py",
+      "sha256": "0c7c6a61c77edc725f0e29a14368ef4cf668fcf865e38d14abd05d2ed7b2db48"
+    },
+    {
       "bytes": 6750,
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
@@ -4772,10 +4784,10 @@
       "sha256": "de937f10315a55c96fc61ed541536acbd1902a47e9593259de3a561428d609aa"
     },
     {
-      "bytes": 1538,
+      "bytes": 1830,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/__init__.py",
-      "sha256": "e61e8b8b46250e59763a5de822dd423c2e879fb276d0d03b73643bdb59c1e7cf"
+      "sha256": "cf38d1623b61fe9f3dad1193a42a34938f3965d6b2fa04a13b537d147774db1d"
     },
     {
       "bytes": 12118,
@@ -4796,10 +4808,16 @@
       "sha256": "b9e557d6c0d72dad9b8e2c70a6031910e42caf054de4804180c13e5950ed0c8f"
     },
     {
-      "bytes": 12380,
+      "bytes": 50432,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_lineage_profile.py",
+      "sha256": "def349e05fcc7b3a25eeb05703f8a5db40de31e99c5279a4320312afbfcc4ed7"
+    },
+    {
+      "bytes": 12510,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
-      "sha256": "494e179e9af9de6b138b7ddc849b2186ab44500a2322d8693dc3f2ea646e663f"
+      "sha256": "c413781e99773513b1111c718d6f4fb672a5bb8a02f7a43134295a4d082be0ee"
     },
     {
       "bytes": 28632,
@@ -8838,6 +8856,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_fingerprint_staging_validator_v2.py",
       "sha256": "37aee2ed0d8ac33c83f54ddd92a4b2d067a58191e0cf689acc8e408f3c5e5db3"
+    },
+    {
+      "bytes": 18355,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_legacy_lineage_profile_v2.py",
+      "sha256": "0f27b70c5d47adb212f9baa13ad3198c759bc97c97a64a6702430cc30c0057de"
     },
     {
       "bytes": 22863,

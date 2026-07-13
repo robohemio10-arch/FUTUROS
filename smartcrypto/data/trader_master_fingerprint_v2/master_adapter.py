@@ -89,6 +89,7 @@ class MasterReadBundle:
     report: dict[str, Any]
     canonical_records: tuple[MasterCanonicalRecord, ...]
     unverifiable_rows: tuple[dict[str, Any], ...]
+    source_rows: tuple[dict[str, Any], ...] = ()
 
 
 def read_trader_master_readonly(
@@ -262,6 +263,7 @@ def read_trader_master_readonly(
         report=report,
         canonical_records=tuple(canonical_records),
         unverifiable_rows=tuple(unverifiable_rows),
+        source_rows=tuple(dict(row) for row in frame.to_dict(orient="records")),
     )
 
 
