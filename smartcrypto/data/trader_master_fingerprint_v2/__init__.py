@@ -10,6 +10,11 @@ from .fingerprint_spec import (
 )
 from .freqtrade_adapter import build_freqtrade_paper_closed_trades_adapter_report
 from .quarantine_forensics import build_targeted_quarantine_forensics_report
+from .quarantine_recovery import (
+    AuthoritativeRecovery,
+    apply_authoritative_recoveries,
+    build_authoritative_recovery_map,
+)
 from .source_profile import load_source_profile
 from .staging_validator import (
     KillSwitchMonitor,
@@ -23,6 +28,9 @@ __all__ = [
     "canonical_trade_id_for",
     "build_freqtrade_paper_closed_trades_adapter_report",
     "build_targeted_quarantine_forensics_report",
+    "AuthoritativeRecovery",
+    "apply_authoritative_recoveries",
+    "build_authoritative_recovery_map",
     "load_source_profile",
     "normalize_trade_row",
     "primary_identity_for",

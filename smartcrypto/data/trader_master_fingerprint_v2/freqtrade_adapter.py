@@ -20,6 +20,17 @@ from .fingerprint_spec import (
     decimal_from_value,
     normalize_timestamp,
 )
+from .quarantine_forensics import (
+    RECOVERED as FORENSIC_RECOVERED,
+    build_targeted_quarantine_forensics_report,
+)
+from .quarantine_recovery import (
+    RECOVERY_METADATA_KEY,
+    RECOVERY_TRADE_IDS,
+    RecoveryValidationError,
+    apply_authoritative_recoveries,
+    assess_authoritative_recovery_map,
+)
 from .source_profile import (
     FreqtradePaperSourceProfile,
     SourceProfileError,
@@ -50,6 +61,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
     output_json: str | Path = DEFAULT_JSON_REPORT,
     output_markdown: str | Path = DEFAULT_MARKDOWN_REPORT,
     write_to_master_requested: bool = False,
+    apply_authoritative_forensic_recovery: bool = False,
 ) -> dict[str, Any]:
     root = Path(project_root).resolve()
     json_report = resolve_path(root, output_json)
@@ -60,6 +72,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         write_report=write_report,
         json_report=json_report,
         markdown_report=markdown_report,
+        apply_authoritative_forensic_recovery=apply_authoritative_forensic_recovery,
     )
     if write_to_master_requested:
         return _blocked(base, "write_to_master_forbidden")
@@ -122,43 +135,63 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         )
 
     records = frame.to_dict(orient="records")
-    adapted = reconcile_and_adapt_records(
+    baseline_adapted = reconcile_and_adapt_records(
         records,
         sqlite_rows,
         profile=profile,
         account_scope_hash=normalized_account_hash,
     )
-    report.update(_without_internal_records(adapted))
-    if adapted["structural_errors"]:
+    report.update(_without_internal_records(baseline_adapted))
+    if baseline_adapted["structural_errors"]:
         report.update(
             raw_row_count=len(records),
             adapter_quarantined_row_count=len(records),
             quarantined_row_count=len(records),
             accepted_row_count=0,
         )
-        return _blocked(report, "authoritative_sqlite_join_contract_violation", adapted["structural_errors"])
+        return _blocked(
+            report,
+            "authoritative_sqlite_join_contract_violation",
+            baseline_adapted["structural_errors"],
+        )
+
+    baseline_validator = _validate_adapted_records(
+        baseline_adapted,
+        source=source,
+        root=root,
+        source_sha256=str(source_summary["primary_source_sha256"]),
+    )
+    baseline_quarantined_count = int(baseline_adapted["adapter_quarantined_row_count"]) + int(
+        baseline_validator.get("quarantined_row_count", 0)
+    )
+    forensic_context = _default_forensic_context(apply_authoritative_forensic_recovery)
+    adapted = baseline_adapted
+    validator = baseline_validator
+    if apply_authoritative_forensic_recovery:
+        forensic_context, recovered_sqlite_rows, forensic_results = _execute_forensic_recovery(
+            root=root,
+            source_profile_path=source_profile_path,
+            snapshot=snapshot,
+            profile=profile,
+            sqlite_rows=sqlite_rows,
+            adapter_snapshot_hashes=report.get("snapshot_source_hashes_before"),
+        )
+        adapted = reconcile_and_adapt_records(
+            records,
+            recovered_sqlite_rows,
+            profile=profile,
+            account_scope_hash=normalized_account_hash,
+            forensic_trade_results=forensic_results,
+        )
+        validator = _validate_adapted_records(
+            adapted,
+            source=source,
+            root=root,
+            source_sha256=str(source_summary["primary_source_sha256"]),
+        )
+        report.update(_without_internal_records(adapted))
 
     canonical_records = adapted["canonical_records"]
-    validator = (
-        validate_staging_records(
-            canonical_records,
-            source_file=display_path(source, root),
-            source_sha256=str(source_summary["primary_source_sha256"]),
-            ingestion_run_id=f"freqtrade-paper-v2-{str(source_summary['primary_source_sha256'])[:16]}",
-        )
-        if canonical_records
-        else _empty_validator_report()
-    )
-    candidate_indices = adapted["candidate_source_row_indices"]
-    candidate_order_ids = adapted["candidate_order_ids"]
-    for item, original_index, order_id in zip(
-        validator.get("row_results", []),
-        candidate_indices,
-        candidate_order_ids,
-        strict=True,
-    ):
-        item["source_row_index"] = original_index
-        item["order_id"] = order_id
 
     reason_counts = Counter(adapted["quarantine_reason_counts"])
     validator_quarantined_ids: list[str] = []
@@ -176,6 +209,29 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         if quarantined_count
         else str(validator.get("reason", "ok"))
     )
+    quarantined_order_ids = sorted(
+        set(adapted["quarantined_order_ids"] + validator_quarantined_ids)
+    )
+    expected_remaining = {
+        "freqtrade-paper-141",
+        "freqtrade-paper-258",
+        "freqtrade-paper-561",
+    }
+    applied_order_ids = set(forensic_context["forensic_recovered_order_ids"])
+    closeout_complete = (
+        apply_authoritative_forensic_recovery
+        and applied_order_ids == {"freqtrade-paper-221", "freqtrade-paper-234"}
+        and set(quarantined_order_ids) == expected_remaining
+    )
+    if not apply_authoritative_forensic_recovery:
+        batch_closeout_status = "not_requested"
+        batch_closeout_reason = "authoritative_forensic_recovery_not_requested"
+    elif closeout_complete:
+        batch_closeout_status = "completed_with_quarantine"
+        batch_closeout_reason = "three_accounting_unexplained_rows_remain_quarantined"
+    else:
+        batch_closeout_status = "blocked"
+        batch_closeout_reason = "authoritative_forensic_recovery_contract_not_fully_satisfied"
     combined = {
         **report,
         **validator,
@@ -187,11 +243,20 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         "adapter_quarantined_row_count": int(adapted["adapter_quarantined_row_count"]),
         "accepted_row_count": accepted_count,
         "quarantined_row_count": quarantined_count,
-        "quarantined_order_ids": sorted(
-            set(adapted["quarantined_order_ids"] + validator_quarantined_ids)
-        ),
+        "quarantined_order_ids": quarantined_order_ids,
+        "remaining_quarantined_order_ids": quarantined_order_ids,
         "quarantined_reason_counts": dict(sorted(reason_counts.items())),
         "adapter_row_results": adapted["adapter_row_results"],
+        "pre_forensic_accepted_row_count": int(
+            baseline_validator.get("accepted_row_count", 0)
+        ),
+        "pre_forensic_quarantined_row_count": baseline_quarantined_count,
+        "batch_closeout_status": batch_closeout_status,
+        "batch_closeout_reason": batch_closeout_reason,
+        "recovery_writes_performed": False,
+        "recovery_changes_fingerprint_spec": False,
+        "recovery_changes_epsilon": False,
+        **forensic_context,
         "account_scope_hash_present": True,
         "account_scope_hash_valid": True,
         "account_scope_original_identifier_persisted": False,
@@ -220,6 +285,7 @@ def reconcile_and_adapt_records(
     *,
     profile: FreqtradePaperSourceProfile,
     account_scope_hash: str,
+    forensic_trade_results: Mapping[int, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     parsed_csv: list[tuple[int, str, Mapping[str, Any], int]] = []
     malformed_order_ids: list[str] = []
@@ -284,12 +350,14 @@ def reconcile_and_adapt_records(
         return base
 
     epsilon = decimal_from_value(profile.financial_contract.epsilon_abs_fonte)
+    forensic_results = forensic_trade_results or {}
     residuals: list[Decimal] = []
     for trade_id in sorted(csv_by_id):
         _, order_id, csv_row, source_index = csv_by_id[trade_id]
+        sqlite_row = sqlite_by_id[trade_id]
         canonical, reasons, metrics = adapt_record(
             csv_row,
-            sqlite_by_id[trade_id],
+            sqlite_row,
             profile=profile,
             account_scope_hash=account_scope_hash,
         )
@@ -314,6 +382,10 @@ def reconcile_and_adapt_records(
             "accounting_residual": _decimal_text(residual),
             "fee_open_currency": metrics.get("fee_open_currency"),
             "fee_close_currency": metrics.get("fee_close_currency"),
+            **_forensic_row_provenance(
+                sqlite_row,
+                forensic_results.get(trade_id),
+            ),
         }
         base["adapter_row_results"].append(row_result)
         if reasons:
@@ -455,6 +527,181 @@ def parse_freqtrade_order_id(value: object) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def _validate_adapted_records(
+    adapted: Mapping[str, Any],
+    *,
+    source: Path,
+    root: Path,
+    source_sha256: str,
+) -> dict[str, Any]:
+    canonical_records = adapted["canonical_records"]
+    validator = (
+        validate_staging_records(
+            canonical_records,
+            source_file=display_path(source, root),
+            source_sha256=source_sha256,
+            ingestion_run_id=f"freqtrade-paper-v2-{source_sha256[:16]}",
+        )
+        if canonical_records
+        else _empty_validator_report()
+    )
+    for item, original_index, order_id in zip(
+        validator.get("row_results", []),
+        adapted["candidate_source_row_indices"],
+        adapted["candidate_order_ids"],
+        strict=True,
+    ):
+        item["source_row_index"] = original_index
+        item["order_id"] = order_id
+    return validator
+
+
+def _execute_forensic_recovery(
+    *,
+    root: Path,
+    source_profile_path: str | Path,
+    snapshot: Path,
+    profile: FreqtradePaperSourceProfile,
+    sqlite_rows: Sequence[Mapping[str, Any]],
+    adapter_snapshot_hashes: object,
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[int, Mapping[str, Any]]]:
+    forensic_report = build_targeted_quarantine_forensics_report(
+        project_root=root,
+        source_profile_path=source_profile_path,
+        authoritative_sqlite_path=snapshot,
+    )
+    raw_results = forensic_report.get("trade_results")
+    forensic_results: dict[int, Mapping[str, Any]] = {}
+    if isinstance(raw_results, Sequence) and not isinstance(raw_results, (str, bytes)):
+        for item in raw_results:
+            if isinstance(item, Mapping):
+                trade_id = parse_freqtrade_order_id(item.get("order_id"))
+                if trade_id is not None:
+                    forensic_results[trade_id] = item
+    candidate_ids = sorted(RECOVERY_TRADE_IDS & set(forensic_results))
+    forensic_hashes = forensic_report.get("snapshot_source_hashes_before")
+    hash_match = (
+        isinstance(adapter_snapshot_hashes, Mapping)
+        and bool(adapter_snapshot_hashes)
+        and adapter_snapshot_hashes == forensic_hashes
+    )
+    context = _default_forensic_context(True)
+    context.update(
+        authoritative_forensic_recovery_executed=True,
+        forensic_report_status=str(forensic_report.get("status", "blocked")),
+        forensic_snapshot_hash_match=hash_match,
+        forensic_recovery_candidate_count=len(candidate_ids),
+    )
+    untouched = [dict(row) for row in sqlite_rows]
+    if forensic_report.get("status") != "ok":
+        context.update(
+            forensic_recovery_rejected_count=len(candidate_ids),
+            forensic_recovery_rejected_order_ids=[
+                f"freqtrade-paper-{trade_id}" for trade_id in candidate_ids
+            ],
+            forensic_recovery_gate_errors=["forensic_report_not_ok"],
+        )
+        return context, untouched, forensic_results
+    if not hash_match:
+        context.update(
+            forensic_recovery_rejected_count=len(candidate_ids),
+            forensic_recovery_rejected_order_ids=[
+                f"freqtrade-paper-{trade_id}" for trade_id in candidate_ids
+            ],
+            forensic_recovery_gate_errors=["forensic_snapshot_hash_mismatch"],
+        )
+        return context, untouched, forensic_results
+
+    epsilon = decimal_from_value(profile.financial_contract.epsilon_abs_fonte)
+    try:
+        assessment = assess_authoritative_recovery_map(forensic_report, epsilon=epsilon)
+        recovered_rows, application = apply_authoritative_recoveries(
+            sqlite_rows,
+            assessment.recoveries,
+        )
+    except RecoveryValidationError as exc:
+        context.update(
+            forensic_recovery_rejected_count=len(candidate_ids),
+            forensic_recovery_rejected_order_ids=[
+                f"freqtrade-paper-{trade_id}" for trade_id in candidate_ids
+            ],
+            forensic_recovery_gate_errors=[str(exc)],
+        )
+        return context, untouched, forensic_results
+
+    applied_ids = set(application["applied_trade_ids"])
+    rejected_ids = (set(candidate_ids) - applied_ids) | set(application["rejected_trade_ids"])
+    rejected_reasons = {
+        str(trade_id): list(reasons)
+        for trade_id, reasons in assessment.rejected_reasons.items()
+        if trade_id in rejected_ids
+    }
+    rejected_reasons.update(application["rejected_reasons"])
+    context.update(
+        forensic_recovery_applied_count=len(applied_ids),
+        forensic_recovered_order_ids=[
+            f"freqtrade-paper-{trade_id}" for trade_id in sorted(applied_ids)
+        ],
+        forensic_recovery_rejected_count=len(rejected_ids),
+        forensic_recovery_rejected_order_ids=[
+            f"freqtrade-paper-{trade_id}" for trade_id in sorted(rejected_ids)
+        ],
+        forensic_recovery_rejected_reasons=rejected_reasons,
+        forensic_recovery_gate_errors=[],
+    )
+    return context, recovered_rows, forensic_results
+
+
+def _default_forensic_context(requested: bool) -> dict[str, Any]:
+    return {
+        "authoritative_forensic_recovery_requested": bool(requested),
+        "authoritative_forensic_recovery_executed": False,
+        "forensic_report_status": "not_requested",
+        "forensic_snapshot_hash_match": None,
+        "forensic_recovery_candidate_count": 0,
+        "forensic_recovery_applied_count": 0,
+        "forensic_recovered_order_ids": [],
+        "forensic_recovery_rejected_count": 0,
+        "forensic_recovery_rejected_order_ids": [],
+        "forensic_recovery_rejected_reasons": {},
+        "forensic_recovery_gate_errors": [],
+    }
+
+
+def _forensic_row_provenance(
+    sqlite_row: Mapping[str, Any],
+    forensic_result: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    metadata = sqlite_row.get(RECOVERY_METADATA_KEY)
+    applied = isinstance(metadata, Mapping)
+    candidate = bool(
+        forensic_result is not None
+        and forensic_result.get("recovery_decision") == FORENSIC_RECOVERED
+    )
+    provenance: dict[str, Any] = {
+        "forensic_recovery_candidate": candidate,
+        "forensic_recovery_applied": applied,
+        "remains_quarantined_after_forensics": bool(forensic_result is not None and not applied),
+    }
+    if isinstance(metadata, Mapping):
+        provenance.update(
+            original_close_rate=metadata.get("original_close_rate"),
+            recovered_close_rate=metadata.get("recovered_close_rate"),
+            recovery_source=metadata.get("recovery_source"),
+            recovery_formula_version=metadata.get("formula_version"),
+            forensic_recovered_residual=metadata.get("recovered_residual"),
+            forensic_evidence_tables=metadata.get("evidence_tables"),
+            forensic_evidence_row_ids=metadata.get("evidence_row_ids"),
+            close_rate_requested_used=False,
+        )
+    elif forensic_result is not None:
+        provenance.update(
+            forensic_recovery_decision=forensic_result.get("recovery_decision"),
+            forensic_remaining_blockers=forensic_result.get("remaining_blockers", []),
+        )
+    return provenance
+
+
 def _source_divergence_reasons(
     csv_row: Mapping[str, Any],
     sqlite_row: Mapping[str, Any],
@@ -495,7 +742,15 @@ def _source_divergence_reasons(
         ("quantity", csv_row.get(columns["quantity"]), sqlite_row.get("amount")),
         ("leverage", csv_row.get(columns["leverage"]), sqlite_row.get("leverage")),
     )
+    recovery_metadata = sqlite_row.get(RECOVERY_METADATA_KEY)
+    forensic_exit_recovery_applied = isinstance(recovery_metadata, Mapping)
     for field, csv_value, sqlite_value in decimal_comparisons:
+        if (
+            field == "exit_price"
+            and forensic_exit_recovery_applied
+            and _normalized_decimal(csv_value) is None
+        ):
+            continue
         if not _decimal_values_match(csv_value, sqlite_value, epsilon):
             reasons.append(f"{field}_divergence")
     if (_text(sqlite_row.get("exchange")) or "").casefold() != profile.venue.casefold():
@@ -559,6 +814,7 @@ def _base_report(
     write_report: bool,
     json_report: Path,
     markdown_report: Path,
+    apply_authoritative_forensic_recovery: bool,
 ) -> dict[str, Any]:
     return {
         "schema_version": ADAPTER_SCHEMA_VERSION,
@@ -578,6 +834,25 @@ def _base_report(
         "formula_match_count": 0,
         "max_accounting_residual": None,
         "median_accounting_residual": None,
+        "authoritative_forensic_recovery_requested": bool(
+            apply_authoritative_forensic_recovery
+        ),
+        "authoritative_forensic_recovery_executed": False,
+        "forensic_report_status": "not_requested",
+        "forensic_snapshot_hash_match": None,
+        "forensic_recovery_candidate_count": 0,
+        "forensic_recovery_applied_count": 0,
+        "forensic_recovered_order_ids": [],
+        "forensic_recovery_rejected_count": 0,
+        "forensic_recovery_rejected_order_ids": [],
+        "pre_forensic_accepted_row_count": 0,
+        "pre_forensic_quarantined_row_count": 0,
+        "remaining_quarantined_order_ids": [],
+        "batch_closeout_status": "not_requested",
+        "batch_closeout_reason": "authoritative_forensic_recovery_not_requested",
+        "recovery_writes_performed": False,
+        "recovery_changes_fingerprint_spec": False,
+        "recovery_changes_epsilon": False,
         "write_requested": bool(write_report),
         "write_performed": False,
         "output_paths": {"json": str(json_report), "markdown": str(markdown_report)},

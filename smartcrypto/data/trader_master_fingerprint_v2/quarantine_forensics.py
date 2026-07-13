@@ -224,6 +224,7 @@ def analyze_quarantined_trade(
         "filled_exit_order_count": len(exit_orders),
         "filled_entry_quantity": _decimal_text(entry_quantity),
         "filled_exit_quantity": _decimal_text(exit_quantity),
+        "verified_open_rate": _decimal_text(_decimal_or_none(trade.get("open_rate"))),
         "weighted_entry_price": _decimal_text(entry_average),
         "weighted_exit_price": _decimal_text(exit_average),
         "weighted_average_fill_validated": weighted_candidate["valid_for_recovery"],

@@ -57,6 +57,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Forbidden compatibility probe; always returns blocked without writing.",
     )
+    parser.add_argument(
+        "--apply-authoritative-forensic-recovery",
+        action="store_true",
+        help="Revalidate and apply the fixed 221/234 close-rate recoveries in memory only.",
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -74,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
             output_json=args.output_json,
             output_markdown=args.output_markdown,
             write_to_master_requested=args.write_to_master,
+            apply_authoritative_forensic_recovery=args.apply_authoritative_forensic_recovery,
         )
     else:
         report = build_trader_master_staging_validation_report(
