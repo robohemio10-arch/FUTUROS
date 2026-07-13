@@ -340,3 +340,27 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def resolve_path(root: Path, value: str | Path) -> Path:
+    """Resolve a runner input path without changing the filesystem."""
+
+    return _resolve(root, value)
+
+
+def validate_report_output_paths(root: Path, *paths: Path) -> list[str]:
+    """Expose the canonical report-path boundary to source adapters."""
+
+    return _validate_report_paths(root, *paths)
+
+
+def maybe_write_validation_report(
+    report: dict[str, Any],
+    *,
+    write_report: bool,
+    json_report: Path,
+    markdown_report: Path,
+) -> dict[str, Any]:
+    """Write only canonical JSON/Markdown reports when explicitly requested."""
+
+    return _maybe_write(report, write_report, json_report, markdown_report)

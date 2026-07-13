@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7823f203f3735685d719f859701348fdefbd9be643c7d20e1f5266207ee3147e",
+  "aggregate_sha256": "1d06f3cbf3551c3cd6e528297664c096b249a5253990e607733a8018db971ed0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 257,
-    "manifested_files_total": 1459,
-    "python_files": 1107,
+    "docs_files": 258,
+    "manifested_files_total": 1464,
+    "python_files": 1110,
     "runtime_excluded_files_total": 0,
-    "test_files": 307,
-    "tracked_files_total": 1460,
+    "test_files": 308,
+    "tracked_files_total": 1465,
     "workflows": 1
   },
   "deterministic": true,
@@ -312,6 +312,12 @@
       "hash_mode": "text_lf",
       "path": "config/financial_event_log.example.yml",
       "sha256": "1b985c2215cbc5be73e5ac84d1769c33b81562b1e7a4baaf351ad35047fbe577"
+    },
+    {
+      "bytes": 1778,
+      "hash_mode": "text_lf",
+      "path": "config/freqtrade_paper_closed_trades_source_profile_v2.json",
+      "sha256": "81ae920d32e8909a36b76c3052725122d1e2eb8389650f9bfeaa35f7c964e91c"
     },
     {
       "bytes": 773,
@@ -1074,6 +1080,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_AI_SELECTOR_INTEGRATION_V1.md",
       "sha256": "73643fc836c2558a687d9c5dbbe77fee6deb9398a5e9a04259546b4b94d392e7"
+    },
+    {
+      "bytes": 5378,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_CLOSED_TRADES_SOURCE_PROFILE_ADAPTER_V2.md",
+      "sha256": "02fea4ab3e474faa92b4499d437aa78f2fdfc94d417f37a94c0b8faebf2d835d"
     },
     {
       "bytes": 3842,
@@ -4154,10 +4166,10 @@
       "sha256": "6bf5f094ea57bbb44b3c3f3e730ebda46cdb97ec4a62d070cf9fc3ce0a07a560"
     },
     {
-      "bytes": 2342,
+      "bytes": 3379,
       "hash_mode": "text_lf",
       "path": "scripts/validate_trader_master_staging_v2.py",
-      "sha256": "2ffbb952c118a6a170eed5793b9906310e435a76a966f0fdf88462a3bf143c40"
+      "sha256": "dbab1c9a05381aee7fdf11c91a62aef5499e58df5612fa64a079e1f88d2c3d57"
     },
     {
       "bytes": 3091,
@@ -4730,10 +4742,10 @@
       "sha256": "de937f10315a55c96fc61ed541536acbd1902a47e9593259de3a561428d609aa"
     },
     {
-      "bytes": 592,
+      "bytes": 807,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/__init__.py",
-      "sha256": "27ece2dc821d1d719208b52cb6059453e2ee6c0abf05e132a62f7a109342fdd2"
+      "sha256": "5aa0230195ba3dcea2a97c5ef519df54d0b40aff9baa6de8a32040c764ccbce6"
     },
     {
       "bytes": 10169,
@@ -4742,10 +4754,22 @@
       "sha256": "7efee2c2ac682242796ac9954ddea525cd34c4a69ab985cdefcdb4e5fe223147"
     },
     {
-      "bytes": 12114,
+      "bytes": 15945,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/freqtrade_adapter.py",
+      "sha256": "6fdb7f9442714e8b4d2ed5ef264efd580f3ed320d2298e65aceb4e81261d2ac1"
+    },
+    {
+      "bytes": 7027,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/source_profile.py",
+      "sha256": "02019cc819ebc5a8d889885eb8ee7c8fce45a037e53a9fb7e2d16ad361cc3935"
+    },
+    {
+      "bytes": 12798,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/staging_runner.py",
-      "sha256": "94d29621c0c87f4cfb6870d3e8cc58c092366812e5a80644263bc73c856ab4dd"
+      "sha256": "3d5bf61078b65731ef334d9f7dadd933e0bb63bcee8d4cec4292ec3a74a126c5"
     },
     {
       "bytes": 17240,
@@ -7722,6 +7746,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_ai_selector_integration_v1.py",
       "sha256": "2c7f7d90133e1a10244eee3a2aa1ca6d5849a1475ff99852c8826afe281a9249"
+    },
+    {
+      "bytes": 12326,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_closed_trades_adapter_v2.py",
+      "sha256": "84e3b16987d8f2c95fd10c70ddbd140fb20ffa3cea15739427dd65ebfdbca49a"
     },
     {
       "bytes": 14241,

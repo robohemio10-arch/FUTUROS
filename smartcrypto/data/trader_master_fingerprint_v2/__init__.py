@@ -8,6 +8,8 @@ from .fingerprint_spec import (
     primary_identity_for,
     row_fingerprint_for,
 )
+from .freqtrade_adapter import build_freqtrade_paper_closed_trades_adapter_report
+from .source_profile import load_source_profile
 from .staging_validator import (
     KillSwitchMonitor,
     validate_staging_records,
@@ -18,6 +20,8 @@ __all__ = [
     "KillSwitchMonitor",
     "NORMALIZER_VERSION",
     "canonical_trade_id_for",
+    "build_freqtrade_paper_closed_trades_adapter_report",
+    "load_source_profile",
     "normalize_trade_row",
     "primary_identity_for",
     "row_fingerprint_for",

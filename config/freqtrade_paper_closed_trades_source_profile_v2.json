@@ -1,0 +1,46 @@
+{
+  "schema_version": "freqtrade_paper_closed_trades_source_profile_v2",
+  "profile_id": "phase14_freqtrade_paper_closed_trades_v2",
+  "producer_module": "smartcrypto.data.paper_trade_lifecycle",
+  "producer_function": "collect_closed_feedback.normalize_closed_trades",
+  "source_files": {
+    "primary_source_path": "data/trades/inbox/freqtrade_paper_closed_trades.csv",
+    "replica_source_paths": [
+      "data/trades/freqtrade_paper_closed_smartcrypto.csv"
+    ]
+  },
+  "identity": {
+    "venue": "binance",
+    "market_type": "usdt-m_futures",
+    "contract_type": "linear_perpetual",
+    "settlement_currency": "USDT",
+    "quantity_unit": "base_asset",
+    "contract_size": "1.00000000",
+    "source_namespace": "phase14_freqtrade_paper_closed_trades",
+    "order_id_namespace": "freqtrade:paper:sqlite:trades.id:v1",
+    "order_id_semantics": "freqtrade-paper-{local_trades_table_id}; not an exchange order identifier"
+  },
+  "column_map": {
+    "symbol": "moeda",
+    "side": "fechar_side",
+    "order_id": "order_id",
+    "open_time": "horario_abertura",
+    "close_time": "horario_fechamento",
+    "entry_price": "preco_abertura",
+    "exit_price": "preco_fechamento",
+    "quantity": "volume_fechado",
+    "net_pnl": "pnl_fechado",
+    "fee_open": "taxa_1",
+    "fee_close": "taxa_2"
+  },
+  "financial_contract": {
+    "gross_pnl_formula": "linear_price_delta_times_quantity_contract_size",
+    "fee_source_sign": "positive_cost",
+    "zero_fee_handling": "quarantine_as_unverifiable",
+    "funding_availability": "absent",
+    "funding_column": null,
+    "funding_sign": "positive_cost_negative_revenue",
+    "epsilon_abs_fonte": "0.00000001",
+    "pnl_semantics": "reported net pnl from Freqtrade close_profit_abs, with realized_profit fallback in producer"
+  }
+}

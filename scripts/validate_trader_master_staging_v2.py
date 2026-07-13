@@ -19,12 +19,25 @@ from smartcrypto.data.trader_master_fingerprint_v2.staging_runner import (  # no
     DEFAULT_STAGING_PATH,
     build_trader_master_staging_validation_report,
 )
+from smartcrypto.data.trader_master_fingerprint_v2.freqtrade_adapter import (  # noqa: E402
+    build_freqtrade_paper_closed_trades_adapter_report,
+)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", default=".")
-    parser.add_argument("--staging-file", default=str(DEFAULT_STAGING_PATH))
+    parser.add_argument("--staging-file", default=None)
+    parser.add_argument(
+        "--source-profile",
+        default=None,
+        help="Versioned JSON source profile. Enables the in-memory source adapter.",
+    )
+    parser.add_argument(
+        "--account-scope-hash",
+        default=None,
+        help="Explicit SHA-256 account-scope hash; never derived from filenames.",
+    )
     parser.add_argument("--output-json", default=str(DEFAULT_JSON_REPORT))
     parser.add_argument("--output-markdown", default=str(DEFAULT_MARKDOWN_REPORT))
     parser.add_argument("--kill-switch-path", default=str(DEFAULT_KILL_SWITCH))
@@ -43,16 +56,28 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    report = build_trader_master_staging_validation_report(
-        project_root=args.project_root,
-        staging_file=args.staging_file,
-        write_report=args.write_report,
-        output_json=args.output_json,
-        output_markdown=args.output_markdown,
-        kill_switch_path=args.kill_switch_path,
-        batch_size=args.batch_size,
-        write_to_master_requested=args.write_to_master,
-    )
+    if args.source_profile:
+        report = build_freqtrade_paper_closed_trades_adapter_report(
+            project_root=args.project_root,
+            source_profile_path=args.source_profile,
+            account_scope_hash=args.account_scope_hash,
+            staging_file=args.staging_file,
+            write_report=args.write_report,
+            output_json=args.output_json,
+            output_markdown=args.output_markdown,
+            write_to_master_requested=args.write_to_master,
+        )
+    else:
+        report = build_trader_master_staging_validation_report(
+            project_root=args.project_root,
+            staging_file=args.staging_file or DEFAULT_STAGING_PATH,
+            write_report=args.write_report,
+            output_json=args.output_json,
+            output_markdown=args.output_markdown,
+            kill_switch_path=args.kill_switch_path,
+            batch_size=args.batch_size,
+            write_to_master_requested=args.write_to_master,
+        )
     print(
         json.dumps(
             report,
