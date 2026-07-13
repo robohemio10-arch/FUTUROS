@@ -6,6 +6,7 @@ import hashlib
 import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 from statistics import median
@@ -50,6 +51,16 @@ ADAPTER_SCHEMA_VERSION = "freqtrade_paper_closed_trades_readonly_adapter_v2"
 ORDER_ID_PATTERN = re.compile(r"^freqtrade-paper-([1-9][0-9]*)$")
 
 
+@dataclass(frozen=True)
+class FreqtradePaperAdapterBundle:
+    """Sanitized report plus in-memory records for read-only downstream checks."""
+
+    report: dict[str, Any]
+    accepted_canonical_records: tuple[dict[str, Any], ...]
+    quarantined_row_summaries: tuple[dict[str, Any], ...]
+    batch_identity: dict[str, Any]
+
+
 def build_freqtrade_paper_closed_trades_adapter_report(
     *,
     project_root: str | Path,
@@ -62,6 +73,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
     output_markdown: str | Path = DEFAULT_MARKDOWN_REPORT,
     write_to_master_requested: bool = False,
     apply_authoritative_forensic_recovery: bool = False,
+    _internal_capture: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = Path(project_root).resolve()
     json_report = resolve_path(root, output_json)
@@ -271,11 +283,83 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         **SAFETY_FLAGS,
         "safety_flags": dict(SAFETY_FLAGS),
     }
+    if _internal_capture is not None:
+        accepted_records = [
+            dict(record)
+            for record, row_result in zip(
+                canonical_records,
+                validator.get("row_results", []),
+                strict=True,
+            )
+            if row_result.get("status") == "accepted"
+        ]
+        _internal_capture.update(
+            accepted_canonical_records=accepted_records,
+            quarantined_row_summaries=[
+                dict(item)
+                for item in combined.get("adapter_row_results", [])
+                if item.get("status") == "quarantined"
+            ],
+        )
     return maybe_write_validation_report(
         combined,
         write_report=write_report,
         json_report=json_report,
         markdown_report=markdown_report,
+    )
+
+
+def build_freqtrade_paper_closed_trades_adapter_bundle(
+    *,
+    project_root: str | Path,
+    source_profile_path: str | Path,
+    account_scope_hash: str | None,
+    staging_file: str | Path | None = None,
+    authoritative_sqlite_path: str | Path | None = None,
+    apply_authoritative_forensic_recovery: bool = False,
+) -> FreqtradePaperAdapterBundle:
+    """Return an in-memory adapter bundle without enabling report or Master writes."""
+
+    capture: dict[str, Any] = {}
+    report = build_freqtrade_paper_closed_trades_adapter_report(
+        project_root=project_root,
+        source_profile_path=source_profile_path,
+        account_scope_hash=account_scope_hash,
+        staging_file=staging_file,
+        authoritative_sqlite_path=authoritative_sqlite_path,
+        write_report=False,
+        write_to_master_requested=False,
+        apply_authoritative_forensic_recovery=apply_authoritative_forensic_recovery,
+        _internal_capture=capture,
+    )
+    quarantined = capture.get("quarantined_row_summaries")
+    if not isinstance(quarantined, list):
+        quarantined = [
+            dict(item)
+            for item in report.get("adapter_row_results", [])
+            if isinstance(item, Mapping) and item.get("status") == "quarantined"
+        ]
+    batch_identity = {
+        "source_profile_id": report.get("source_profile_id"),
+        "paper_source_path": report.get("source_file"),
+        "paper_source_hash": report.get("primary_source_sha256"),
+        "sqlite_hashes_before": report.get("snapshot_source_hashes_before", {}),
+        "sqlite_hashes_after": report.get("snapshot_source_hashes_after", {}),
+        "raw_row_count": int(report.get("raw_row_count", 0)),
+        "accepted_row_count": int(report.get("accepted_row_count", 0)),
+        "quarantined_row_count": int(report.get("quarantined_row_count", 0)),
+        "quarantined_order_ids": list(report.get("quarantined_order_ids", [])),
+        "forensic_recovery_applied_count": int(
+            report.get("forensic_recovery_applied_count", 0)
+        ),
+    }
+    return FreqtradePaperAdapterBundle(
+        report=report,
+        accepted_canonical_records=tuple(
+            dict(item) for item in capture.get("accepted_canonical_records", [])
+        ),
+        quarantined_row_summaries=tuple(dict(item) for item in quarantined),
+        batch_identity=batch_identity,
     )
 
 
