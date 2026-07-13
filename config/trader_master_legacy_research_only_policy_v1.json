@@ -1,0 +1,184 @@
+{
+  "schema_version": "trader_master_legacy_research_only_policy_v1",
+  "policy_id": "trader_master_legacy_research_only_boundary_v1",
+  "dataset_id": "trader_master_legacy_3058_v1",
+  "relative_path": "data/trades/trades_master.parquet",
+  "dataset_classification": "research_only_legacy_non_v2",
+  "expected_sha256": "24e049b3ca7a72dbde071a056548035fed87651d48959cd0cf4c6c8b0dac7295",
+  "expected_size_bytes": 491355,
+  "expected_row_count": 3058,
+  "expected_schema_columns": [
+    "moeda",
+    "fechar_side",
+    "leverage",
+    "order_id",
+    "pnl_fechado",
+    "taxa_lucros_perdas_fechados_pct",
+    "preco_abertura",
+    "preco_fechamento",
+    "volume_posicao",
+    "volume_fechado",
+    "horario_abertura",
+    "horario_fechamento",
+    "taxa_1",
+    "preco_transacao",
+    "volume_transacao",
+    "direcao_liquidez",
+    "taxa_2",
+    "horario_transacao",
+    "source_file",
+    "imported_at",
+    "_dedup_key",
+    "_relaxed_dedup_key",
+    "exchange_source",
+    "market_data_source",
+    "ocr_source"
+  ],
+  "fingerprint_v2_compatible": false,
+  "authoritative_for_identity": false,
+  "authoritative_for_deduplication": false,
+  "authoritative_for_financial_decomposition": false,
+  "bridge_authorized": false,
+  "import_authorized": false,
+  "write_authorized": false,
+  "operational_training_authorized": false,
+  "paper_signal_selection_authorized": false,
+  "live_signal_selection_authorized": false,
+  "risk_decision_authorized": false,
+  "order_execution_authorized": false,
+  "operational_authority": false,
+  "evidence_basis": {
+    "reconciliation_decision": "BLOCKED_BY_UNVERIFIABLE_MASTER_ROWS",
+    "trader_master_row_count": 3058,
+    "master_valid_fingerprint_row_count": 0,
+    "lineage_decision": "EXTERNAL_AUTHORITATIVE_EVIDENCE_REQUIRED",
+    "blocked_by_multiple_lineage_gaps_count": 3058,
+    "fingerprint_generation_allowed_count": 0,
+    "evidence_inventory_decision": "NO_AUTHORITATIVE_EVIDENCE_FOUND",
+    "evidence_decision_scope": "safely_inspected_artifacts_only",
+    "inventory_coverage_complete": false,
+    "authoritative_evidence_absence_proven": false,
+    "blocked_artifacts_may_contain_unassessed_evidence": true,
+    "bridge_design_preconditions_satisfied": false
+  },
+  "allowed_purposes": [
+    "historical_readonly_research",
+    "lineage_diagnostics",
+    "evidence_inventory",
+    "non_operational_strategy_research",
+    "read_only_data_quality_analysis"
+  ],
+  "prohibited_capabilities": [
+    "write",
+    "import",
+    "fingerprint_generation",
+    "deduplication",
+    "operational_training",
+    "paper_signal_selection",
+    "live_signal_selection",
+    "risk_decision",
+    "order_execution",
+    "model_promotion",
+    "operational_release"
+  ],
+  "registered_consumers": [
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_governance.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "evidence_inventory", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Versioned governance domain that validates the pinned artifact through the institutional read-only adapter.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Institutional temporary-copy reader for schema and lineage diagnostics.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/master_reconciliation.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Read-only reconciliation preview with no import authority.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_lineage_profile.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Profiles legacy lineage gaps without generating Fingerprint V2.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_evidence_inventory.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["evidence_inventory", "lineage_diagnostics"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Inventories evidence without applying values or authorizing a bridge.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "scripts/reconcile_trader_master_preview_v2.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["diagnostic_metrics"],
+      "justification": "No-write CLI for reconciliation preview.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "scripts/profile_trader_master_legacy_lineage_v2.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["diagnostic_metrics"],
+      "justification": "No-write CLI for legacy lineage profiling.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "scripts/inventory_trader_master_authoritative_evidence_v2.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["evidence_inventory", "lineage_diagnostics"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["diagnostic_metrics"],
+      "justification": "No-write CLI for authoritative evidence inventory.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "scripts/audit_trader_master_legacy_research_only_boundary_v1.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["lineage_diagnostics", "evidence_inventory", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Static and artifact boundary auditor for this policy.",
+      "operational_authority": false
+    }
+  ],
+  "quarantined_legacy_implementations": [
+    {
+      "relative_path": "smartcrypto/data/trades_importer.py",
+      "classification": "quarantined_legacy_implementation",
+      "capabilities": ["read_master", "write_master", "import_trades_incrementally"],
+      "authorized_consumer": false,
+      "justification": "Legacy writer retained for inventory only; this policy never executes or authorizes it."
+    }
+  ],
+  "reassessment_triggers": [
+    "new_authoritative_joinable_evidence",
+    "sanitized_resolution_of_blocked_artifacts",
+    "versioned_source_contract_approved",
+    "authoritative_account_scope_attestation",
+    "authoritative_instrument_contract_recovered",
+    "authoritative_financial_decomposition_recovered"
+  ]
+}
