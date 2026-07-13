@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "40003e74d8a8a5f04aa1396d673e7ee722ba5cb97351564828e0654305670b3c",
+  "aggregate_sha256": "3a81cd4b0a378a1882c03a218c196fdc6e0dc381938c04e1b016581e74b0c29d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 264,
-    "manifested_files_total": 1490,
-    "python_files": 1129,
+    "docs_files": 265,
+    "manifested_files_total": 1495,
+    "python_files": 1132,
     "runtime_excluded_files_total": 0,
-    "test_files": 314,
-    "tracked_files_total": 1491,
+    "test_files": 315,
+    "tracked_files_total": 1496,
     "workflows": 1
   },
   "deterministic": true,
@@ -504,6 +504,12 @@
       "hash_mode": "text_lf",
       "path": "config/state_repository.example.yml",
       "sha256": "0a9c6923c9b05523c292b91e03cb269eebe278e043871165ffd7e12cc327aeec"
+    },
+    {
+      "bytes": 9636,
+      "hash_mode": "text_lf",
+      "path": "config/trader_master_legacy_boundary_remediation_taxonomy_v1.json",
+      "sha256": "f71b0d5f91368cfbf5f9c820cd0562b16178f7dd9e7e798b22e5c25280907e61"
     },
     {
       "bytes": 8056,
@@ -2016,6 +2022,12 @@
       "hash_mode": "text_lf",
       "path": "docs/TRADER_MASTER_FINGERPRINT_SPEC_V2_STAGING_VALIDATOR.md",
       "sha256": "ab1191d3b28c349b283e8ac3a3b0340d2878445f4c29d86c660a62429480e575"
+    },
+    {
+      "bytes": 5522,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_LEGACY_BOUNDARY_REMEDIATION_PLAN_V1.md",
+      "sha256": "c126ea5d9879b5b059c76432367b43335199535d5f6d8f64e01752c3ea5b94df"
     },
     {
       "bytes": 4916,
@@ -3734,6 +3746,12 @@
       "sha256": "46685afcf496c57ee3728929a2bb05553568eed4df97e95745bd56d4f4b6479a"
     },
     {
+      "bytes": 2190,
+      "hash_mode": "text_lf",
+      "path": "scripts/plan_trader_master_legacy_boundary_remediation_v1.py",
+      "sha256": "676af3dc82d50769493a6c5b615223324775c82f7cfb57b500eda3d2419d5c8c"
+    },
+    {
       "bytes": 89,
       "hash_mode": "text_lf",
       "path": "scripts/preflight.py",
@@ -4814,10 +4832,10 @@
       "sha256": "de937f10315a55c96fc61ed541536acbd1902a47e9593259de3a561428d609aa"
     },
     {
-      "bytes": 3114,
+      "bytes": 3952,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/__init__.py",
-      "sha256": "baebd6a806cabf68db5d28bb1d88c221090dd5f06197be99982edeef2209a88a"
+      "sha256": "9a7729cb85285d0f617c371b3a79e0733b27d63b31f0ccfd9635a4191ce9df39"
     },
     {
       "bytes": 58680,
@@ -4854,6 +4872,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_governance.py",
       "sha256": "8499d6f8591ea0241aca454769d34d7bdfae7ccae6ee8a9122f07fa24e27ab75"
+    },
+    {
+      "bytes": 55083,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_remediation_plan.py",
+      "sha256": "e66a652cd8ac11f2290a8a08823829abc8e95b87270839cb2b1498d40bfdc46e"
     },
     {
       "bytes": 12510,
@@ -8904,6 +8928,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_fingerprint_staging_validator_v2.py",
       "sha256": "37aee2ed0d8ac33c83f54ddd92a4b2d067a58191e0cf689acc8e408f3c5e5db3"
+    },
+    {
+      "bytes": 27785,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_legacy_boundary_remediation_plan_v1.py",
+      "sha256": "dc41f0d976024262d5aa08d3636304b9fd36778a8557ee188a0c060e277bc8cb"
     },
     {
       "bytes": 18355,

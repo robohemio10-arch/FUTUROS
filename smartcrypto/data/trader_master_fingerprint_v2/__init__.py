@@ -43,6 +43,22 @@ from .legacy_master_governance import (
     verify_legacy_master_policy,
     verify_pinned_legacy_master_artifact,
 )
+from .legacy_master_remediation_plan import (
+    BranchRemediationPackage,
+    FindingReference,
+    RemediationAction,
+    RemediationDecision,
+    RemediationDependency,
+    RemediationItem,
+    RemediationPlanSummary,
+    StructuralProof,
+    build_branch_packages,
+    build_remediation_plan_report,
+    classify_finding,
+    finding_reference_from_payload,
+    load_remediation_taxonomy,
+    verify_remediation_taxonomy,
+)
 from .master_reconciliation import build_trader_master_reconciliation_report
 from .quarantine_forensics import build_targeted_quarantine_forensics_report
 from .quarantine_recovery import (
@@ -92,6 +108,20 @@ __all__ = [
     "load_legacy_master_policy",
     "verify_legacy_master_policy",
     "verify_pinned_legacy_master_artifact",
+    "BranchRemediationPackage",
+    "FindingReference",
+    "RemediationAction",
+    "RemediationDecision",
+    "RemediationDependency",
+    "RemediationItem",
+    "RemediationPlanSummary",
+    "StructuralProof",
+    "build_branch_packages",
+    "build_remediation_plan_report",
+    "classify_finding",
+    "finding_reference_from_payload",
+    "load_remediation_taxonomy",
+    "verify_remediation_taxonomy",
     "discover_evidence_candidates",
     "inspect_evidence_artifact",
     "normalize_trade_row",
