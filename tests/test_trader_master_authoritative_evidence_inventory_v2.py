@@ -7,15 +7,20 @@ import sqlite3
 import subprocess
 import sys
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pytest
 
+from smartcrypto.data.trader_master_fingerprint_v2 import (
+    authoritative_evidence_inventory as inventory_module,
+)
 from smartcrypto.data.trader_master_fingerprint_v2.authoritative_evidence_inventory import (
     PRIORITY_FIELDS,
     SAFETY_FLAGS,
+    build_inventory_coverage,
     build_trader_master_authoritative_evidence_inventory_report,
     discover_evidence_candidates,
     inspect_evidence_artifact,
@@ -196,6 +201,42 @@ def test_secret_content_is_blocked_and_not_exposed(tmp_path: Path) -> None:
     serialized = json.dumps(report)
     assert token not in serialized
     assert report["artifact_blocked_count"] == 1
+    assert report["artifact_uninspected_count"] == 1
+    assert report["inventory_coverage_complete"] is False
+    assert report["authoritative_evidence_absence_proven"] is False
+    assert report["blocked_artifacts_may_contain_unassessed_evidence"] is True
+    assert report["decision_scope"] == "safely_inspected_artifacts_only"
+    assert report["reason"] == "no_authoritative_evidence_found_in_safely_inspected_artifacts"
+
+
+def test_invalid_json_remains_uninspected(tmp_path: Path) -> None:
+    master, profile, evidence = setup_project(tmp_path)
+    (evidence / "full_ocr_3141_invalid.json").write_text("{invalid", encoding="utf-8")
+    report = build_trader_master_authoritative_evidence_inventory_report(
+        project_root=tmp_path,
+        trader_master_path=master,
+        source_profile_path=profile,
+        account_scope_hash=ACCOUNT_HASH,
+        evidence_roots=[evidence],
+        generated_at_utc=FIXED_TIME,
+    )
+    assert report["artifact_uninspected_count"] == 1
+    assert report["artifact_blocked_count"] == 1
+    assert report["inventory_coverage_complete"] is False
+    assert report["decision_scope"] == "safely_inspected_artifacts_only"
+
+
+def test_public_coverage_field_name_is_not_secret_material(tmp_path: Path) -> None:
+    _, _, evidence = setup_project(tmp_path)
+    path = evidence / "full_ocr_3141_coverage.json"
+    path.write_text(
+        json.dumps({"authoritative_evidence_absence_proven": False}),
+        encoding="utf-8",
+    )
+    artifact = inspect_evidence_artifact(project_root=tmp_path, path=path)
+    assert artifact.inspection_status == "inspected"
+    assert artifact.sensitive_content_detected is False
+    assert artifact.blockers == ()
 
 
 def test_artifact_hash_and_size_are_preserved(tmp_path: Path) -> None:
@@ -416,6 +457,55 @@ def test_complete_synthetic_coverage_reaches_complete_decision(tmp_path: Path) -
 def test_no_authoritative_evidence_decision(tmp_path: Path) -> None:
     report = run_inventory(tmp_path)
     assert report["decision"] == "NO_AUTHORITATIVE_EVIDENCE_FOUND"
+    assert report["inventory_accounting_consistent"] is True
+    assert report["artifact_uninspected_count"] == 0
+    assert report["inventory_coverage_complete"] is True
+    assert report["authoritative_evidence_absence_proven"] is True
+    assert report["blocked_artifacts_may_contain_unassessed_evidence"] is False
+    assert report["decision_scope"] == "complete_candidate_inventory"
+    assert report["reason"] == "no_authoritative_evidence_found_after_complete_candidate_inventory"
+
+
+def test_impossible_inventory_accounting_blocks_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    master, profile, evidence = setup_project(tmp_path)
+    original = inventory_module.inspect_evidence_artifact
+
+    def inconsistent_artifact(**kwargs: Any) -> Any:
+        artifact = original(**kwargs)
+        return replace(
+            artifact,
+            inspection_status="inspected",
+            blockers=("forced_accounting_inconsistency",),
+        )
+
+    monkeypatch.setattr(inventory_module, "inspect_evidence_artifact", inconsistent_artifact)
+    report = build_trader_master_authoritative_evidence_inventory_report(
+        project_root=tmp_path,
+        trader_master_path=master,
+        source_profile_path=profile,
+        account_scope_hash=ACCOUNT_HASH,
+        evidence_roots=[evidence],
+        generated_at_utc=FIXED_TIME,
+    )
+    assert report["status"] == "blocked"
+    assert report["reason"] == "inventory_accounting_inconsistent"
+    assert report["inventory_accounting_consistent"] is False
+
+
+def test_inspected_count_above_candidates_is_inconsistent() -> None:
+    coverage = build_inventory_coverage(
+        artifact_candidate_count=1,
+        artifact_inspected_count=2,
+        artifact_blocked_count=0,
+        decision="NO_AUTHORITATIVE_EVIDENCE_FOUND",
+    )
+    assert coverage["artifact_uninspected_count"] == 0
+    assert coverage["inventory_accounting_consistent"] is False
+    assert coverage["inventory_coverage_complete"] is False
+    assert coverage["authoritative_evidence_absence_proven"] is False
 
 
 def test_account_attestation_must_match_explicit_hash(tmp_path: Path) -> None:
@@ -456,6 +546,8 @@ def test_safety_flags_and_import_eligibility_remain_closed(tmp_path: Path) -> No
     report = run_inventory(tmp_path)
     assert report["import_eligible_true_count"] == 0
     assert report["fingerprint_generation_allowed"] is False
+    assert report["bridge_applied"] is False
+    assert report["import_performed"] is False
     assert all(report[key] is value for key, value in SAFETY_FLAGS.items())
 
 
@@ -468,8 +560,14 @@ def test_default_mode_does_not_write(tmp_path: Path) -> None:
 def test_write_report_is_limited_to_data_reports(tmp_path: Path) -> None:
     report = run_inventory(tmp_path, write_report=True)
     assert report["write_performed"] is True
-    assert (tmp_path / report["output_paths"]["json"]).is_file()
-    assert (tmp_path / report["output_paths"]["markdown"]).is_file()
+    json_path = tmp_path / report["output_paths"]["json"]
+    markdown_path = tmp_path / report["output_paths"]["markdown"]
+    assert json_path.is_file()
+    assert markdown_path.is_file()
+    persisted = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert persisted["decision_scope"] == "complete_candidate_inventory"
+    assert "Decision scope: `complete_candidate_inventory`" in markdown
 
 
 def test_unsafe_write_paths_are_blocked(tmp_path: Path) -> None:

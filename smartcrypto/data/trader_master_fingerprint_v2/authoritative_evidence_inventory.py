@@ -121,6 +121,9 @@ SOURCE_ROW_COLUMNS = frozenset(
     {"source_row_index", "candidate_source_row_index", "source_line_number", "image_sha256"}
 )
 NATIVE_ID_COLUMNS = frozenset({"source_trade_id"})
+SECRET_SCANNER_PUBLIC_CONTRACT_KEYS = (
+    "authoritative_evidence_absence_proven",
+)
 INSTRUMENT_CONTRACT_FIELDS = frozenset(
     {"market_type", "contract_type", "settlement_currency", "quantity_unit", "contract_size"}
 )
@@ -303,18 +306,36 @@ def build_trader_master_authoritative_evidence_inventory_report(
     }
     decision = evidence_decision(classification_counts, all_resolvable)
     financial_by_cohort = build_financial_evidence_summary(evidence_by_field, cohorts)
+    artifact_candidate_count = len(artifacts)
+    artifact_inspected_count = sum(
+        artifact.inspection_status == "inspected" for artifact in artifacts
+    )
+    artifact_blocked_count = sum(bool(artifact.blockers) for artifact in artifacts)
+    coverage = build_inventory_coverage(
+        artifact_candidate_count=artifact_candidate_count,
+        artifact_inspected_count=artifact_inspected_count,
+        artifact_blocked_count=artifact_blocked_count,
+        decision=decision,
+    )
+    if not coverage["inventory_accounting_consistent"]:
+        report.update(
+            artifact_candidate_count=artifact_candidate_count,
+            artifact_inspected_count=artifact_inspected_count,
+            artifact_blocked_count=artifact_blocked_count,
+            **coverage,
+        )
+        return _blocked(report, "inventory_accounting_inconsistent")
     report.update(
         status="ok",
-        reason="authoritative_evidence_inventory_completed",
+        reason=_inventory_reason(decision, bool(coverage["inventory_coverage_complete"])),
         decision=decision,
         trader_master_sha256=master_bundle.report.get("trader_master_sha256_before"),
         source_cohorts=list(cohorts),
         source_cohort_profiles=cohort_profiles,
-        artifact_candidate_count=len(artifacts),
-        artifact_inspected_count=sum(
-            artifact.inspection_status == "inspected" for artifact in artifacts
-        ),
-        artifact_blocked_count=sum(bool(artifact.blockers) for artifact in artifacts),
+        artifact_candidate_count=artifact_candidate_count,
+        artifact_inspected_count=artifact_inspected_count,
+        artifact_blocked_count=artifact_blocked_count,
+        **coverage,
         evidence_inventory=[artifact.to_dict() for artifact in artifacts],
         evidence_by_cohort_and_field=evidence_by_field,
         authoritative_and_joinable_count=int(
@@ -610,6 +631,58 @@ def evidence_decision(
     return "NO_AUTHORITATIVE_EVIDENCE_FOUND"
 
 
+def build_inventory_coverage(
+    *,
+    artifact_candidate_count: int,
+    artifact_inspected_count: int,
+    artifact_blocked_count: int,
+    decision: str,
+) -> dict[str, bool | int | str]:
+    """Qualify decision scope without hiding impossible artifact accounting."""
+
+    artifact_uninspected_count = max(
+        0,
+        artifact_candidate_count - artifact_inspected_count,
+    )
+    inventory_accounting_consistent = (
+        artifact_candidate_count >= artifact_inspected_count
+        and artifact_uninspected_count >= artifact_blocked_count
+    )
+    inventory_coverage_complete = (
+        inventory_accounting_consistent
+        and artifact_uninspected_count == 0
+        and artifact_blocked_count == 0
+    )
+    authoritative_evidence_absence_proven = (
+        decision == "NO_AUTHORITATIVE_EVIDENCE_FOUND"
+        and inventory_coverage_complete
+    )
+    blocked_artifacts_may_contain_unassessed_evidence = artifact_uninspected_count > 0
+    decision_scope = (
+        "complete_candidate_inventory"
+        if inventory_coverage_complete
+        else "safely_inspected_artifacts_only"
+    )
+    return {
+        "artifact_uninspected_count": artifact_uninspected_count,
+        "inventory_accounting_consistent": inventory_accounting_consistent,
+        "inventory_coverage_complete": inventory_coverage_complete,
+        "authoritative_evidence_absence_proven": authoritative_evidence_absence_proven,
+        "blocked_artifacts_may_contain_unassessed_evidence": (
+            blocked_artifacts_may_contain_unassessed_evidence
+        ),
+        "decision_scope": decision_scope,
+    }
+
+
+def _inventory_reason(decision: str, inventory_coverage_complete: bool) -> str:
+    if decision != "NO_AUTHORITATIVE_EVIDENCE_FOUND":
+        return "authoritative_evidence_inventory_completed"
+    if inventory_coverage_complete:
+        return "no_authoritative_evidence_found_after_complete_candidate_inventory"
+    return "no_authoritative_evidence_found_in_safely_inspected_artifacts"
+
+
 def render_markdown(report: Mapping[str, Any]) -> str:
     return "\n".join(
         [
@@ -620,7 +693,11 @@ def render_markdown(report: Mapping[str, Any]) -> str:
             f"- Master rows: `{report.get('trader_master_row_count')}`",
             f"- Candidate artifacts: `{report.get('artifact_candidate_count')}`",
             f"- Inspected artifacts: `{report.get('artifact_inspected_count')}`",
+            f"- Uninspected artifacts: `{report.get('artifact_uninspected_count')}`",
             f"- Blocked artifacts: `{report.get('artifact_blocked_count')}`",
+            f"- Inventory coverage complete: `{report.get('inventory_coverage_complete')}`",
+            f"- Authoritative absence proven: `{report.get('authoritative_evidence_absence_proven')}`",
+            f"- Decision scope: `{report.get('decision_scope')}`",
             f"- Authoritative and joinable field/cohort pairs: `{report.get('authoritative_and_joinable_count')}`",
             f"- Missing field/cohort pairs: `{report.get('missing_field_count')}`",
             f"- Bridge preconditions satisfied: `{report.get('bridge_design_preconditions_satisfied')}`",
@@ -660,7 +737,7 @@ def _inspect_copied_artifact(
         }
     if extension in TEXT_EXTENSIONS:
         text = copied.read_text(encoding="utf-8-sig")
-        if contains_secret(text):
+        if _contains_sensitive_material(text):
             return {
                 "inspection_status": "blocked",
                 "artifact_type": _artifact_type(extension),
@@ -683,6 +760,13 @@ def _inspect_copied_artifact(
     if extension == ".xlsx":
         return _inspect_xlsx(copied)
     raise ValueError("unsupported_evidence_extension")
+
+
+def _contains_sensitive_material(text: str) -> bool:
+    sanitized = text
+    for field in SECRET_SCANNER_PUBLIC_CONTRACT_KEYS:
+        sanitized = sanitized.replace(field, "public_evidence_contract_field")
+    return contains_secret(sanitized)
 
 
 def _inspect_json(
@@ -1335,7 +1419,13 @@ def _base_report(
         "ignored_forbidden_file_count": 0,
         "artifact_candidate_count": 0,
         "artifact_inspected_count": 0,
+        "artifact_uninspected_count": 0,
         "artifact_blocked_count": 0,
+        "inventory_accounting_consistent": True,
+        "inventory_coverage_complete": True,
+        "authoritative_evidence_absence_proven": False,
+        "blocked_artifacts_may_contain_unassessed_evidence": False,
+        "decision_scope": "complete_candidate_inventory",
         "evidence_inventory": [],
         "evidence_by_cohort_and_field": [],
         "authoritative_and_joinable_count": 0,

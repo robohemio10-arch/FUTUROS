@@ -53,13 +53,28 @@ Cada par cohort/campo recebe exatamente uma classificação:
 
 Fontes autoritativas joináveis com digests incompatíveis são classificadas como conflito. Nenhuma fonte é selecionada automaticamente nesse cenário.
 
+## Cobertura e escopo da decisão
+
+O Bloco 1B.2.1 separa ausência observada de ausência comprovada. A contabilidade publicada inclui:
+
+- `artifact_uninspected_count`: candidatos que não concluíram inspeção segura;
+- `inventory_accounting_consistent`: prova que inspecionados não excedem candidatos e que todos os bloqueados estão dentro dos não inspecionados;
+- `inventory_coverage_complete`: verdadeiro somente quando não existe artefato bloqueado ou não inspecionado;
+- `authoritative_evidence_absence_proven`: verdadeiro apenas para `NO_AUTHORITATIVE_EVIDENCE_FOUND` com cobertura completa;
+- `blocked_artifacts_may_contain_unassessed_evidence`: explicita que artefatos bloqueados podem conter evidência ainda não avaliada;
+- `decision_scope`: `complete_candidate_inventory` ou `safely_inspected_artifacts_only`.
+
+Se inspecionados excederem candidatos, ou se o número de bloqueados não couber nos artefatos não inspecionados, o relatório retorna `status=blocked` e `reason=inventory_accounting_inconsistent`. O uso de `max(0, ...)` no cálculo não converte essa inconsistência em sucesso.
+
+Quando a cobertura é incompleta, `NO_AUTHORITATIVE_EVIDENCE_FOUND` significa somente que nenhuma evidência autoritativa foi encontrada entre os artefatos inspecionados com segurança. Nesse caso, o motivo é `no_authoritative_evidence_found_in_safely_inspected_artifacts`, `authoritative_evidence_absence_proven=false` e a decisão não representa conclusão global sobre os artefatos bloqueados.
+
 ## Decisões
 
 - `AUTHORITATIVE_EVIDENCE_COMPLETE_AND_JOINABLE`: todos os campos dos dois cohorts têm evidência autoritativa e join determinístico. A única ação permitida é desenhar um contrato de bridge futuro.
 - `PARTIAL_AUTHORITATIVE_EVIDENCE_FOUND`: existe evidência joinável, mas a cobertura permanece incompleta.
 - `AUTHORITATIVE_EVIDENCE_NOT_JOINABLE`: há autoridade documentada sem vínculo determinístico por linha.
 - `CONFLICTING_AUTHORITATIVE_EVIDENCE`: fontes equivalentes divergem.
-- `NO_AUTHORITATIVE_EVIDENCE_FOUND`: não foi encontrada evidência autoritativa utilizável.
+- `NO_AUTHORITATIVE_EVIDENCE_FOUND`: não foi encontrada evidência autoritativa utilizável dentro do `decision_scope` publicado.
 
 Nenhuma decisão torna uma linha importável. `fingerprint_generation_allowed`, `bridge_applied`, `import_performed`, writers operacionais, ordens e acesso privado permanecem falsos.
 
