@@ -451,10 +451,13 @@ def test_real_batch_no_write_preserves_csv_master_db_wal_and_shm() -> None:
     ]
     if not all(path.exists() for path in paths):
         pytest.skip("runtime paper evidence is not present in this checkout")
+    expected_closed_rows = len(pd.read_csv(paths[0]))
     before = {path: sha256(path) for path in paths}
     report = build(ROOT, profile)
     after = {path: sha256(path) for path in paths}
-    assert report["exact_join_count"] == 558
+    assert report["exact_join_count"] == expected_closed_rows
+    assert report["csv_only_trade_id_count"] == 0
+    assert report["sqlite_only_trade_id_count"] == 0
     assert report["snapshot_source_hashes_preserved"] is True
     assert report["write_performed"] is False
     assert before == after
