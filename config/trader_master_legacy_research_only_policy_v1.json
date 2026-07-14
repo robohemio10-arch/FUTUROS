@@ -162,6 +162,24 @@
       "allowed_capabilities": ["read_schema", "compute_hash", "diagnostic_metrics"],
       "justification": "Static and artifact boundary auditor for this policy.",
       "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/bitradex_ocr_adapter.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Read-only Bitradex OCR evidence adapter that inspects the pinned legacy Master exclusively through the institutional temporary-copy reader, without import, deduplication, fingerprint, training or operational authority.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/research/profit_research/paper_analysis.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "non_operational_strategy_research", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "Non-operational profit research analysis that reads the pinned legacy Master exclusively for historical diagnostics and economic hypothesis generation, with no import, signal, risk, model or execution authority.",
+      "operational_authority": false
     }
   ],
   "quarantined_legacy_implementations": [

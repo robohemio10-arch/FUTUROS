@@ -1,0 +1,37 @@
+{
+  "schema_version": "bitradex_ocr_locked_candidates_source_profile_v2",
+  "profile_id": "bitradex_ocr_locked_candidates_20260714_151816_v2",
+  "batch_id": "20260714_151816",
+  "source_files": {
+    "package_v4": "E:\\bitradex\\transfer_packages\\bitradex_ocr_locked_candidates_20260714_151816_time_repaired_v4",
+    "package_v5": "data/staging/bitradex_ocr/bitradex_ocr_locked_candidates_20260714_151816_time_repaired_orderid_synthetic_v5",
+    "canonical_v4_csv": "bitradex_import_canonical_locked_candidates_time_repaired_v4.csv",
+    "excluded_duplicates_v5_csv": "EXACT_TRADE_DUPLICATES_EXCLUDED_V5.csv",
+    "duplicate_groups_v5_csv": "EXACT_TRADE_DUPLICATE_GROUPS_V5.csv",
+    "synthetic_mapping_v5_csv": "ORDER_ID_SYNTHETIC_MAPPING_V5.csv"
+  },
+  "identity": {
+    "venue": "bitradex",
+    "market_type": "usdt_m_futures",
+    "contract_type": "linear_perpetual",
+    "settlement_currency": "USDT",
+    "quantity_unit": "base_asset",
+    "contract_size": "1",
+    "source_namespace": "bitradex_ocr_locked_candidates_20260714_151816",
+    "native_order_identity_policy": "raw_ocr_evidence_only_no_native_identity"
+  },
+  "financial_contract": {
+    "gross_pnl_formula": "long=(exit-entry)*quantity*contract_size;short=(entry-exit)*quantity*contract_size",
+    "taxa_total_column": "taxa_1",
+    "taxa_execucao_column": "taxa_2",
+    "fee_relation": "distinct_additive_negative_cost_components",
+    "fee_source_sign": "negative_cost",
+    "trading_fee_formula": "abs(taxa_total)+abs(taxa_execucao)",
+    "fee_contract_approved": true,
+    "funding_source_column": null,
+    "funding_source_rule": "authoritative_funding_unavailable_block",
+    "funding_contract_approved": false,
+    "net_pnl_column": "pnl_fechado",
+    "epsilon_abs_fonte": "0.000001"
+  }
+}
