@@ -19,6 +19,9 @@ from smartcrypto.data.trader_master_fingerprint_v2.authoritative_sqlite import (
     read_authoritative_closed_trades,
     read_authoritative_trade_evidence,
 )
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
 from smartcrypto.data.trader_master_fingerprint_v2.source_profile import (
     FreqtradePaperSourceProfile,
     load_source_profile,
@@ -173,8 +176,23 @@ def build_profit_research(
     write: bool = False,
 ) -> ProfitResearchResult:
     report = _base_report(paths, write)
-    master_hash_before = file_sha256(paths.trader_master)
-    report["trader_master_sha256_before"] = master_hash_before
+    master_read = read_trader_master_readonly(
+        project_root=paths.project_root,
+        trader_master_path=paths.trader_master,
+    )
+    master_read_report = dict(master_read.report)
+    report["trader_master_read"] = master_read_report
+    report["trader_master_sha256_before"] = master_read_report.get(
+        "trader_master_sha256_before"
+    )
+    if master_read_report.get("status") != "ok":
+        report.update(
+            reason="protected_trader_master_read_failed",
+            validation_errors=[
+                f"protected_trader_master_read_failed:{master_read_report.get('reason', 'unknown')}"
+            ],
+        )
+        return ProfitResearchResult(pd.DataFrame(), report)
     try:
         profile = load_source_profile(paths.source_profile)
         snapshot_frame, snapshot_meta = load_snapshot_closed_trades(paths, profile)
@@ -200,6 +218,7 @@ def build_profit_research(
             snapshot_frame=snapshot_frame,
             snapshot_meta=snapshot_meta,
             candles_inventory=candle_inventory,
+            master_read_report=master_read_report,
         )
         reconciliation = reconcile_sources(paths, dataset)
         eligible = dataset.loc[dataset["analysis_eligible"]].copy()
@@ -1143,6 +1162,7 @@ def build_source_inventory(
     snapshot_frame: pd.DataFrame,
     snapshot_meta: Mapping[str, Any],
     candles_inventory: Mapping[str, Any],
+    master_read_report: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     snapshot = inventory_frame(
         paths.snapshot_db,
@@ -1165,8 +1185,10 @@ def build_source_inventory(
     feedback_inventory["source_role"] = "auxiliary_feedback_source"
     microbatch_inventory = inventory_tabular(paths.microbatch)
     microbatch_inventory["source_role"] = "incomplete_training_evidence"
-    master_inventory = inventory_tabular(paths.trader_master, metadata_only=True)
-    master_inventory["source_role"] = "protected_legacy_reference_not_loaded"
+    master_inventory = inventory_trader_master_readonly(
+        paths.trader_master,
+        master_read_report,
+    )
     candle_item = dict(candles_inventory)
     candle_item["source_role"] = "market_context_source"
     image_inventory = inventory_image_directory(paths.new_trades_source)
@@ -1253,6 +1275,37 @@ def inventory_tabular(path: Path, *, metadata_only: bool = False) -> dict[str, A
         )
         return item
     return inventory_frame(path, frame, source_role=None, source_format=item["format"])
+
+
+def inventory_trader_master_readonly(
+    path: Path,
+    master_read_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Render Master inventory exclusively from institutional read evidence."""
+
+    return {
+        "path": str(path),
+        "exists": master_read_report.get("status") == "ok",
+        "format": "parquet",
+        "size_bytes": master_read_report.get("trader_master_size_before"),
+        "row_count": master_read_report.get("trader_master_row_count"),
+        "columns": list(master_read_report.get("trader_master_schema_columns", [])),
+        "min_timestamp_utc": None,
+        "max_timestamp_utc": None,
+        "symbols": [],
+        "duplicate_order_id_count": None,
+        "integrity_status": master_read_report.get("status", "blocked"),
+        "freshness_seconds": None,
+        "metadata_only": False,
+        "sha256": master_read_report.get("trader_master_sha256_before"),
+        "temporary_copy_used": bool(
+            master_read_report.get("trader_master_temp_copy_used")
+        ),
+        "source_hash_preserved": bool(
+            master_read_report.get("trader_master_hash_preserved")
+        ),
+        "source_role": "protected_legacy_reference_readonly",
+    }
 
 
 def inventory_frame(
@@ -1632,9 +1685,19 @@ def _finalize_master_hash(
     report: dict[str, Any],
     paths: ProfitResearchPaths,
 ) -> dict[str, Any]:
-    after = file_sha256(paths.trader_master)
+    final_read = read_trader_master_readonly(
+        project_root=paths.project_root,
+        trader_master_path=paths.trader_master,
+    )
+    final_read_report = dict(final_read.report)
+    after = final_read_report.get("trader_master_sha256_after")
+    report["trader_master_final_read"] = final_read_report
     report["trader_master_sha256_after"] = after
-    report["trader_master_hash_preserved"] = report.get("trader_master_sha256_before") == after
+    report["trader_master_hash_preserved"] = (
+        final_read_report.get("status") == "ok"
+        and report.get("trader_master_sha256_before") is not None
+        and report.get("trader_master_sha256_before") == after
+    )
     return report
 
 

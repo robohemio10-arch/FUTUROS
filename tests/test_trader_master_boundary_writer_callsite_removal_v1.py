@@ -180,5 +180,5 @@ def test_protected_contract_files_are_unchanged() -> None:
         "7efee2c2ac682242796ac9954ddea525cd34c4a69ab985cdefcdb4e5fe223147"
     )
     assert sha256(POLICY) == (
-        "b9d19a863132008c61221ade0fdf8726ef5c194f7d4ffb55552f33d26f3bd7b1"
+        "1d5f4ab5fc31726e8949e74cc8777eeef89fca69f0beba92b566e4018310b741"
     )
