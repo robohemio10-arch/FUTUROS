@@ -11,8 +11,6 @@ from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_MASTER = ROOT / "data" / "trades" / "trades_master.parquet"
-PROTECTED_SHA256 = "24e049b3ca7a72dbde071a056548035fed87651d48959cd0cf4c6c8b0dac7295"
 TARGETS = (
     "scripts/audit_bitradex_dependency_boundary.py",
     "scripts/collect_phase5_summary.py",
@@ -36,6 +34,18 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def write_unverifiable_master(path: Path, *, row_count: int) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    records = [
+        {
+            "moeda": "BTCUSDT" if index % 2 == 0 else "ETHUSDT",
+            "pnl_fechado": float(index + 1),
+        }
+        for index in range(row_count)
+    ]
+    pd.DataFrame(records).to_parquet(path, index=False)
+
+
 def test_all_target_consumers_reference_institutional_readonly_adapter() -> None:
     for relative_path in TARGETS:
         source = (ROOT / relative_path).read_text(encoding="utf-8")
@@ -44,35 +54,53 @@ def test_all_target_consumers_reference_institutional_readonly_adapter() -> None
         assert "read_master(" not in source
 
 
-def test_real_legacy_master_read_preserves_hash_and_uses_temp_copy() -> None:
-    before = sha256(PROTECTED_MASTER)
+def test_real_legacy_master_read_preserves_hash_and_uses_temp_copy(
+    tmp_path: Path,
+) -> None:
+    master = tmp_path / "data" / "trades" / "trades_master.parquet"
+    write_unverifiable_master(master, row_count=2)
+    before = sha256(master)
+
     bundle = read_trader_master_readonly(
-        project_root=ROOT,
-        trader_master_path=PROTECTED_MASTER,
+        project_root=tmp_path,
+        trader_master_path=master,
     )
 
-    assert before == PROTECTED_SHA256
-    assert sha256(PROTECTED_MASTER) == before
+    assert sha256(master) == before
     assert bundle.report["status"] == "ok"
     assert bundle.report["trader_master_temp_copy_used"] is True
     assert bundle.report["trader_master_hash_preserved"] is True
+    assert bundle.report["trader_master_sha256_before"] == before
+    assert bundle.report["trader_master_sha256_after"] == before
     assert bundle.report["operational_authority"] is False
     assert bundle.report["write_performed"] is False
+    assert bundle.report["writes_trader_master"] is False
 
 
-def test_unverifiable_rows_remain_segregated_from_canonical_records() -> None:
+def test_unverifiable_rows_remain_segregated_from_canonical_records(
+    tmp_path: Path,
+) -> None:
+    master = tmp_path / "data" / "trades" / "trades_master.parquet"
+    write_unverifiable_master(master, row_count=3)
+    before = sha256(master)
+
     bundle = read_trader_master_readonly(
-        project_root=ROOT,
-        trader_master_path=PROTECTED_MASTER,
+        project_root=tmp_path,
+        trader_master_path=master,
     )
 
-    assert len(bundle.source_rows) == 3058
+    assert len(bundle.source_rows) == 3
     assert len(bundle.canonical_records) == 0
-    assert len(bundle.unverifiable_rows) == 3058
-    assert bundle.report["master_unverifiable_row_count"] == 3058
+    assert len(bundle.unverifiable_rows) == 3
+    assert bundle.report["master_valid_fingerprint_row_count"] == 0
+    assert bundle.report["master_unverifiable_row_count"] == 3
+    assert bundle.report["trader_master_hash_preserved"] is True
+    assert sha256(master) == before
 
 
-def test_missing_legacy_master_blocks_without_creating_fallback(tmp_path: Path) -> None:
+def test_missing_legacy_master_blocks_without_creating_fallback(
+    tmp_path: Path,
+) -> None:
     missing = tmp_path / "missing.parquet"
     bundle = read_trader_master_readonly(
         project_root=tmp_path,
@@ -80,12 +108,16 @@ def test_missing_legacy_master_blocks_without_creating_fallback(tmp_path: Path) 
     )
 
     assert bundle.report["status"] == "blocked"
+    assert bundle.report["reason"] == "trader_master_missing"
     assert bundle.report["write_performed"] is False
     assert bundle.report["operational_authority"] is False
+    assert bundle.report["writes_trader_master"] is False
     assert list(tmp_path.iterdir()) == []
 
 
-def test_adapter_preserves_invalid_source_rows_without_promoting_them(tmp_path: Path) -> None:
+def test_adapter_preserves_invalid_source_rows_without_promoting_them(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "invalid.parquet"
     pd.DataFrame([{"moeda": "BTCUSDT", "pnl_fechado": 1.0}]).to_parquet(
         source,
@@ -102,4 +134,6 @@ def test_adapter_preserves_invalid_source_rows_without_promoting_them(tmp_path: 
     assert len(bundle.source_rows) == 1
     assert len(bundle.unverifiable_rows) == 1
     assert bundle.canonical_records == ()
+    assert bundle.report["write_performed"] is False
+    assert bundle.report["writes_trader_master"] is False
     assert sha256(source) == before

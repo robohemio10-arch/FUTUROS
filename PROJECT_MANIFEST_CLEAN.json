@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "3737989354e5def411e6c7d14204c9051918f4b4822d05ab0c2f3e35d8cf4f04",
+  "aggregate_sha256": "179d14e99c243ca294673feae341e7f3498da510710dd6eb28ad1c26cea44e8e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8948,16 +8948,16 @@
       "sha256": "e564fb134715b52b053c5e2db15094b2bce27a0f5461755a157d16f2b664db5b"
     },
     {
-      "bytes": 3667,
+      "bytes": 4714,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_readonly_adapter_migration_v1.py",
-      "sha256": "62a0639e56da2bd0660ef3e2fa8e49d4135653f76846cc6717bb6e5d5e00ac3e"
+      "sha256": "d0a196455ebb7b87a3321d118cf4f5d8a1d582af03f004a4b6eae4c7f697cefc"
     },
     {
-      "bytes": 3289,
+      "bytes": 7559,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_reverification_closeout_v1.py",
-      "sha256": "385856b3cf4f20867b23fe514ad6bb43910027028cf4111cebbc0ce49c75d55d"
+      "sha256": "d65fa8cbafd0df94628fb73166c08981d5123e68cdf66098e9c993b55e47bd9a"
     },
     {
       "bytes": 6081,
