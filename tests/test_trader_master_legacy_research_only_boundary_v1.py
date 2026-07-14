@@ -563,17 +563,47 @@ def test_legacy_writer_source_is_never_executed(tmp_path: Path) -> None:
     assert not marker.exists()
 
 
-def test_master_and_fingerprint_spec_remain_unchanged_during_audit() -> None:
-    master = ROOT / gov.DEFAULT_MASTER
-    fingerprint_spec = ROOT / "smartcrypto/data/trader_master_fingerprint_v2/fingerprint_spec.py"
-    before = (sha256(master), sha256(fingerprint_spec))
+def test_master_and_fingerprint_spec_remain_unchanged_during_audit(
+    tmp_path: Path,
+) -> None:
+    master, policy_path, _ = setup_project(tmp_path)
+
+    fingerprint_spec = (
+        tmp_path
+        / "smartcrypto"
+        / "data"
+        / "trader_master_fingerprint_v2"
+        / "fingerprint_spec.py"
+    )
+    fingerprint_spec.parent.mkdir(parents=True, exist_ok=True)
+    fingerprint_spec.write_text(
+        "FINGERPRINT_SPEC_SENTINEL = 'v2'\n",
+        encoding="utf-8",
+    )
+
+    before = (
+        sha256(master),
+        sha256(fingerprint_spec),
+    )
+
     report = gov.build_legacy_master_boundary_report(
-        project_root=ROOT,
-        runner=fake_git(),
+        project_root=tmp_path,
+        policy_path=policy_path,
+        trader_master_path=master,
+        runner=fake_git(
+            [
+                "smartcrypto/data/trader_master_fingerprint_v2/"
+                "fingerprint_spec.py",
+            ]
+        ),
         generated_at_utc=FIXED_TIME,
     )
+
     assert report["writes_trader_master"] is False
-    assert (sha256(master), sha256(fingerprint_spec)) == before
+    assert (
+        sha256(master),
+        sha256(fingerprint_spec),
+    ) == before
 
 
 def test_cli_no_write_json_executes_without_pythonpath() -> None:

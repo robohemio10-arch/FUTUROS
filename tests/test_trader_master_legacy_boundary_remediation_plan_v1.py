@@ -728,8 +728,27 @@ def test_cli_executes_without_pythonpath(tmp_path: Path) -> None:
     assert payload["operational_authority"] is False
 
 
-def test_real_data_artifact_is_not_changed_by_injected_plan(tmp_path: Path) -> None:
-    master = ROOT / "data" / "trades" / "trades_master.parquet"
+def test_real_data_artifact_is_not_changed_by_injected_plan(
+    tmp_path: Path,
+) -> None:
+    master = tmp_path / "data" / "trades" / "trades_master.parquet"
+    master.parent.mkdir(parents=True, exist_ok=True)
+
+    pd.DataFrame(
+        {
+            "trade_id": ["synthetic-trade-001"],
+            "pnl": [1.0],
+        }
+    ).to_parquet(master, index=False)
+
     before = sha256(master)
-    build(tmp_path, finding("unregistered_master_consumer"))
+
+    report = build(
+        tmp_path,
+        finding("unregistered_master_consumer"),
+    )
+
+    assert report["remediation_applied"] is False
+    assert report["branches_created"] is False
+    assert report["policy_updated"] is False
     assert sha256(master) == before
