@@ -12,7 +12,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from smartcrypto.data.trades_importer import read_trade_file
+from smartcrypto.data.trade_file_readonly import read_trade_file
 
 from .authoritative_sqlite import read_authoritative_closed_trades
 from .fingerprint_spec import (
