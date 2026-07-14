@@ -13,6 +13,13 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 from smartcrypto.research.reporting import build_executive_summary, render_executive_markdown
 
 
@@ -178,12 +185,12 @@ def resolve_paths(
     master = (
         Path(master_path).expanduser().resolve()
         if master_path
-        else root / "data" / "trades" / "trades_master.xlsx"
+        else root / DEFAULT_MASTER
     )
     projection_candidates = (
         [Path(master_projection_path).expanduser().resolve()]
         if master_projection_path
-        else [root / "data" / "trades" / "trades_master.parquet"]
+        else []
     )
     candle_candidates = (
         [Path(candles_path).expanduser().resolve()]
@@ -488,7 +495,7 @@ def _exact_index(timestamps_ns: np.ndarray, timestamp: pd.Timestamp) -> int | No
 
 
 def _feature_index(timestamps_ns: np.ndarray, open_time: pd.Timestamp) -> int | None:
-    available_ns = timestamps_ns + ONE_MINUTE_NS
+    available_ns: np.ndarray = timestamps_ns + ONE_MINUTE_NS
     index = int(np.searchsorted(available_ns, _timestamp_ns(open_time), side="right") - 1)
     return index if index >= 0 else None
 
@@ -793,16 +800,28 @@ def build_from_paths(
     analysis_date_utc: str | None = None,
 ) -> ResearchBuildResult:
     report = base_report(paths, write)
-    if not paths.master_xlsx.exists():
-        report.update(reason="missing_master", validation_errors=["source_master_not_found"])
-        return ResearchBuildResult(pd.DataFrame(columns=OUTPUT_COLUMNS), report)
     if paths.candles_path is None or not paths.candles_path.exists():
         report.update(reason="missing_candles", validation_errors=["candles_source_not_found"])
         return ResearchBuildResult(pd.DataFrame(columns=OUTPUT_COLUMNS), report)
+    legacy_bundle = read_trader_master_readonly(
+        project_root=paths.project_root,
+        trader_master_path=paths.master_xlsx,
+    )
+    if legacy_bundle.report.get("status") != "ok":
+        report.update(
+            reason="legacy_master_read_blocked",
+            validation_errors=[
+                f"legacy_master_read_blocked:{legacy_bundle.report.get('reason', 'unknown')}"
+            ],
+            legacy_master_readonly=legacy_bundle.report,
+        )
+        return ResearchBuildResult(pd.DataFrame(columns=OUTPUT_COLUMNS), report)
     try:
-        authority = read_table(paths.master_xlsx)
+        authority = pd.DataFrame.from_records(legacy_bundle.source_rows)
         projection = (
-            read_table(paths.master_projection)
+            authority.copy()
+            if paths.master_projection == paths.master_xlsx
+            else read_table(paths.master_projection)
             if paths.master_projection and paths.master_projection.exists()
             else None
         )
@@ -818,7 +837,7 @@ def build_from_paths(
         )
         return ResearchBuildResult(pd.DataFrame(columns=OUTPUT_COLUMNS), report)
 
-    master_sha = sha256_file(paths.master_xlsx)
+    master_sha = str(legacy_bundle.report["trader_master_sha256_before"])
     master_matches = master_sha.casefold() == EXPECTED_MASTER_SHA256.casefold()
     if not master_matches:
         report["warnings"].append("master_sha256_differs_from_ocr_v11_production_authority")
@@ -847,6 +866,7 @@ def build_from_paths(
         sides=sorted(dataset["side"].dropna().astype(str).unique().tolist()),
         min_open_time=json_safe(dataset["open_time"].min()),
         max_close_time=json_safe(dataset["close_time"].max()),
+        legacy_master_readonly=legacy_bundle.report,
     )
     if write:
         atomic_write_parquet(paths.output_path, dataset)

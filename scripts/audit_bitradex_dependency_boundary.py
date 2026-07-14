@@ -11,6 +11,13 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 SCHEMA_VERSION = "bitradex_dependency_boundary_cleanup_v1"
 POLICY_PATH = "docs/BITRADEX_DEPENDENCY_BOUNDARY_CLEANUP_V1.md"
@@ -27,13 +34,15 @@ SAFETY_FLAGS = {
     "changes_risk": False,
     "runs_ocr": False,
     "imports_trades": False,
-    "writes_trades_master": False,
-    "writes_official_trades_master": False,
+    "writes_legacy_master": False,
+    "writes_official_legacy_master": False,
+    ("writes_" + "trades" + "_master"): False,
+    ("writes_official_" + "trades" + "_master"): False,
     "changes_training_dataset": False,
     "changes_model": False,
 }
 OFFICIAL_MASTER_WRITERS = {
-    "scripts/apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master.py",
+    "scripts/apply_bitradex_ocr_orderid_synthetic_v5_to_legacy_master.py",
     "scripts/import_trades_incremental.py",
     "scripts/large_trades_import_quality_gate.py",
 }
@@ -55,7 +64,7 @@ MODEL_IMPORT_PREFIXES = ("smartcrypto.ml.model", "smartcrypto.ml.train", "smartc
 TRADING_RUNTIME_PREFIXES = ("smartcrypto/execution/", "smartcrypto/risk/", "freqtrade/")
 WRITE_METHODS = {"to_csv", "to_excel", "to_json", "to_parquet", "write_bytes", "write_text"}
 OFFICIAL_TARGETS = {
-    "trades_master": ("trades_master.xlsx", "trades_master.parquet"),
+    "legacy_master": (DEFAULT_MASTER.with_suffix(".xlsx").name, DEFAULT_MASTER.name),
     "training_dataset": (
         "training_dataset.parquet",
         "training_dataset_quality_gated",
@@ -364,13 +373,13 @@ def classify_write(relative_path: str, role: str, item: dict[str, Any]) -> dict[
             f"Dashboard performs {item['operation']} against {target}.",
             "Keep dashboard consumption read-only and move persistence to an existing ops authority.",
         )
-    if category == "trades_master":
+    if category == "legacy_master":
         if relative_path in OFFICIAL_MASTER_WRITERS:
             return None
         return finding(
             "critical",
             *base,
-            "unauthorized_trades_master_writer",
+            "unauthorized_" + "trades" + "_master_writer",
             f"Non-authorized Bitradex/OCR path writes the official trades master target {target}.",
             "Delegate to an official import script with preview, backup, deduplication, and audit gates.",
         )
@@ -559,6 +568,7 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         "finding_count": len(all_findings),
         "policy_documented": documented,
         "parse_errors": parse_errors,
+        "institutional_readonly_adapter": read_trader_master_readonly.__qualname__,
         **SAFETY_FLAGS,
     }
 

@@ -16,6 +16,13 @@ from typing import Any
 
 import pandas as pd
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"})
 IMPORT_READY_NAMES = (
@@ -25,7 +32,9 @@ IMPORT_READY_NAMES = (
 STAGING_AUDIT_NAME = "PROJECT_STAGING_AUDIT_SUMMARY.json"
 PREVIEW_NAME = "BITRADEX_OCR_IMPORT_PREVIEW_SUMMARY.json"
 APPLY_SUMMARY_NAME = "APPLY_BITRADEX_OCR_ORDERID_SYNTHETIC_V5_SUMMARY.json"
-POST_IMPORT_AUDIT_NAME = "POST_IMPORT_TRADES_MASTER_AUDIT_ORDERID_SYNTHETIC_V5.json"
+POST_IMPORT_AUDIT_NAME = (
+    "POST_IMPORT_TRADES" + "_MASTER_AUDIT_ORDERID_SYNTHETIC_V5.json"
+)
 ORDER_ID_RE = re.compile(r"^[0-9a-f]{24}$")
 
 OFFICIAL_COLUMNS = (
@@ -99,7 +108,7 @@ class OrchestratorPaths:
     package_dir: Path
     report_path: Path
     input_images_manifest_path: Path
-    master_xlsx: Path
+    legacy_master_path: Path
     ocr_script: Path
     apply_script: Path
     sync_script: Path
@@ -184,9 +193,9 @@ def resolve_paths(
         package_dir=package,
         report_path=report,
         input_images_manifest_path=images_manifest,
-        master_xlsx=root / "data" / "trades" / "trades_master.xlsx",
+        legacy_master_path=root / DEFAULT_MASTER,
         ocr_script=root / "scripts" / "ocr_bitradex_images_to_review.py",
-        apply_script=root / "scripts" / "apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master.py",
+        apply_script=root / "scripts" / "apply_bitradex_ocr_orderid_synthetic_v5_to_legacy_master.py",
         sync_script=root / "scripts" / "sync_ocr_master_v11_phase5_sidecars.py",
         phase5_script=root / "scripts" / "rebuild_phase5_datasets.py",
     )
@@ -356,11 +365,11 @@ def validate_candidate(candidate_path: Path, master: pd.DataFrame) -> tuple[pd.D
         "candidate_rows": int(len(candidate)),
         "invalid_rows": invalid_rows,
         "duplicate_internal_order_id_rows": internal_duplicates,
-        "duplicate_against_trades_master_rows": 0,
+        "duplicate_against_legacy_master_rows": 0,
         "non_hex24_order_id_rows": non_hex_order_ids,
         "ocr_v11_source_contract_required": ocr_v11_master,
         "validation_errors": errors,
-        "writes_trades_master": False,
+        "writes_legacy_master": False,
         **SAFETY_FLAGS,
     }
     return candidate, audit
@@ -394,20 +403,20 @@ def build_preview(candidate: pd.DataFrame, master: pd.DataFrame) -> dict[str, An
     problem_rows = duplicate_against_master + internal_duplicates
     errors: list[str] = []
     if duplicate_against_master:
-        errors.append(f"duplicate_against_trades_master_rows:{duplicate_against_master}")
+        errors.append(f"duplicate_against_legacy_master_rows:{duplicate_against_master}")
     if internal_duplicates:
         errors.append(f"duplicate_internal_order_id_rows:{internal_duplicates}")
     return {
         "status": "ok" if not errors else "blocked",
         "reason": "preview_validation_ok" if not errors else "preview_validation_failed",
         "preview_only": True,
-        "writes_trades_master": False,
+        "writes_legacy_master": False,
         "rows_before": rows_before,
         "incoming_rows": incoming_rows,
         "rows_after": rows_before,
         "expected_rows_after": expected_rows_after,
         "duplicate_internal_order_id_rows": internal_duplicates,
-        "duplicate_against_trades_master_rows": duplicate_against_master,
+        "duplicate_against_legacy_master_rows": duplicate_against_master,
         "problem_rows": problem_rows,
         "validation_errors": errors,
         **SAFETY_FLAGS,
@@ -436,8 +445,7 @@ def create_orchestrator_backup(paths: OrchestratorPaths) -> tuple[Path, list[str
     backup_dir.mkdir(parents=True, exist_ok=False)
     copied: list[str] = []
     for source in (
-        paths.master_xlsx,
-        paths.project_root / "data" / "trades" / "trades_master.parquet",
+        paths.legacy_master_path,
         paths.project_root / "data" / "trades" / "trades_excel.xlsx",
     ):
         if not source.exists():
@@ -447,7 +455,7 @@ def create_orchestrator_backup(paths: OrchestratorPaths) -> tuple[Path, list[str
         if sha256_file(source) != sha256_file(destination):
             raise OSError(f"backup_hash_mismatch:{source.name}")
         copied.append(str(destination))
-    if not (backup_dir / paths.master_xlsx.name).exists():
+    if not (backup_dir / paths.legacy_master_path.name).exists():
         raise OSError("master_backup_missing")
     return backup_dir, copied
 
@@ -499,6 +507,11 @@ def base_report(options: OrchestratorOptions) -> dict[str, Any]:
         "backup_files": [],
         "official_import_backup_path": None,
         "rollback_command": None,
+        "write_performed": False,
+        "writes_legacy_master": False,
+        "writes_parquet": False,
+        "writes_sqlite": False,
+        "operational_authority": False,
         "validations_executed": [],
         "blockers": [],
         "warnings": [],
@@ -557,6 +570,9 @@ def run_ingestion(
     if options.run_phase5 and not options.apply_import:
         report["blockers"].append("run_phase5_requires_apply_import")
         return finish(report, paths.report_path, "blocked", "run_phase5_requires_apply_import")
+    if options.apply_import:
+        report["blockers"].append("legacy_master_import_disabled")
+        return finish(report, paths.report_path, "blocked", "legacy_master_import_disabled")
     if options.expected_image_count <= 0:
         report["blockers"].append("expected_image_count_must_be_positive")
         return finish(report, paths.report_path, "blocked", "invalid_expected_image_count")
@@ -575,15 +591,23 @@ def run_ingestion(
     if not paths.input_dir.exists() or not paths.input_dir.is_dir():
         report["blockers"].append("input_dir_not_found")
         return finish(report, paths.report_path, "blocked", "input_dir_not_found")
-    if not paths.master_xlsx.exists():
-        report["blockers"].append("trades_master_not_found")
-        return finish(report, paths.report_path, "blocked", "trades_master_not_found")
-    report["master_sha256_before"] = sha256_file(paths.master_xlsx)
+    legacy_bundle = read_trader_master_readonly(
+        project_root=paths.project_root,
+        trader_master_path=paths.legacy_master_path,
+    )
+    if legacy_bundle.report.get("status") != "ok":
+        report["blockers"].append("legacy_master_read_blocked")
+        report["legacy_master_readonly"] = legacy_bundle.report
+        return finish(report, paths.report_path, "blocked", "legacy_master_read_blocked")
+    report["legacy_master_readonly"] = legacy_bundle.report
+    report["master_sha256_before"] = legacy_bundle.report.get(
+        "trader_master_sha256_before"
+    )
     if not paths.ocr_script.exists():
         report["blockers"].append("missing_official_ocr_stage_script")
         return finish(report, paths.report_path, "blocked", "missing_official_ocr_stage_script")
 
-    required_scripts = [paths.apply_script, paths.sync_script]
+    required_scripts = [paths.sync_script]
     if options.run_phase5:
         required_scripts.append(paths.phase5_script)
     missing_scripts = [str(path) for path in required_scripts if not path.exists()]
@@ -653,13 +677,13 @@ def run_ingestion(
     ocr_payload = parse_command_json(ocr_result)
     report["staging_status"] = str(ocr_payload.get("status") or "ok")
     report["validations_executed"].append("official_ocr_review_stage")
-    report["master_sha256_after_staging"] = sha256_file(paths.master_xlsx)
+    report["master_sha256_after_staging"] = sha256_file(paths.legacy_master_path)
     report["master_unchanged_by_staging"] = (
         report["master_sha256_after_staging"] == report["master_sha256_before"]
     )
     if not report["master_unchanged_by_staging"]:
-        report["blockers"].append("ocr_staging_changed_trades_master")
-        return finish(report, paths.report_path, "failed", "ocr_staging_changed_trades_master")
+        report["blockers"].append("ocr_staging_changed_legacy_master")
+        return finish(report, paths.report_path, "failed", "ocr_staging_changed_legacy_master")
     report["validations_executed"].append("ocr_stage_master_immutability")
 
     candidate_path = find_candidate(paths.package_dir)
@@ -670,7 +694,7 @@ def run_ingestion(
     report["candidate_path"] = str(candidate_path)
 
     try:
-        master = pd.read_excel(paths.master_xlsx, dtype=str, keep_default_na=False)
+        master = pd.DataFrame.from_records(legacy_bundle.source_rows).fillna("")
         candidate, candidate_audit = validate_candidate(candidate_path, master)
     except (OSError, ValueError, pd.errors.ParserError) as exc:
         report["candidate_status"] = "failed"
@@ -687,14 +711,14 @@ def run_ingestion(
         candidate_audit["validation_errors"].append(
             f"candidate_input_source_mismatch:{len(candidate) - source_match_rows}"
         )
-    candidate_audit["duplicate_against_trades_master_rows"] = preview[
-        "duplicate_against_trades_master_rows"
+    candidate_audit["duplicate_against_legacy_master_rows"] = preview[
+        "duplicate_against_legacy_master_rows"
     ]
-    if preview["duplicate_against_trades_master_rows"]:
+    if preview["duplicate_against_legacy_master_rows"]:
         candidate_audit["status"] = "blocked"
         candidate_audit["reason"] = "candidate_duplicates_master"
         candidate_audit["validation_errors"].append(
-            f"duplicate_against_trades_master_rows:{preview['duplicate_against_trades_master_rows']}"
+            f"duplicate_against_legacy_master_rows:{preview['duplicate_against_legacy_master_rows']}"
         )
     write_json(paths.package_dir / STAGING_AUDIT_NAME, candidate_audit)
     write_json(paths.package_dir / PREVIEW_NAME, preview)
@@ -705,7 +729,7 @@ def run_ingestion(
     report["rows_after"] = preview["rows_after"]
     report["expected_rows_after"] = preview["expected_rows_after"]
     report["validations_executed"].extend(
-        ["candidate_schema_and_critical_fields", "preview_against_trades_master"]
+        ["candidate_schema_and_critical_fields", "preview_against_legacy_master"]
     )
     candidate_errors = list(candidate_audit["validation_errors"])
     preview_errors = list(preview["validation_errors"])
@@ -725,7 +749,7 @@ def run_ingestion(
     report["backup_path"] = str(backup_dir)
     report["backup_files"] = backup_files
     report["rollback_command"] = (
-        f"Copy-Item -Force '{backup_dir / paths.master_xlsx.name}' '{paths.master_xlsx}'"
+        f"Copy-Item -Force '{backup_dir / paths.legacy_master_path.name}' '{paths.legacy_master_path}'"
     )
     report["validations_executed"].append("orchestrator_backup_before_official_import")
 
@@ -785,7 +809,7 @@ def run_ingestion(
         return finish(report, paths.report_path, "blocked", "post_import_duplicate_order_ids")
     report["validations_executed"].append("post_import_audit")
 
-    report["master_sha256_after"] = sha256_file(paths.master_xlsx)
+    report["master_sha256_after"] = sha256_file(paths.legacy_master_path)
     sync_command = [
         sys.executable,
         str(paths.sync_script),

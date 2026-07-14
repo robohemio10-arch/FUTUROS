@@ -22,6 +22,9 @@ from smartcrypto.data.trade_file_readonly import (  # noqa: E402
     normalize_columns,
     read_trade_file,
 )
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (  # noqa: E402
+    DEFAULT_MASTER,
+)
 from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (  # noqa: E402
     read_trader_master_readonly,
 )
@@ -61,8 +64,8 @@ def parse_args() -> argparse.Namespace:
         description="Preflight/dry-run quality gate para importar lote grande de trades.",
     )
     parser.add_argument("--source-file", required=True)
-    parser.add_argument("--master-xlsx", default="data/trades/trades_master.xlsx")
-    parser.add_argument("--master-parquet", default="data/trades/trades_master.parquet")
+    parser.add_argument("--master-xlsx", default=str(DEFAULT_MASTER.with_suffix(".xlsx")))
+    parser.add_argument("--master-parquet", default=str(DEFAULT_MASTER))
     parser.add_argument("--compatibility-xlsx", default="data/trades/trades_excel.xlsx")
     parser.add_argument("--report", default=str(REPORT_PATH))
     parser.add_argument("--backup-dir", default="data/backups/large_trades_import")

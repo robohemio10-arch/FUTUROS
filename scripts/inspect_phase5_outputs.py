@@ -6,6 +6,13 @@ from pathlib import Path
 
 import pandas as pd
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 def inspect_table(path: Path) -> dict:
     if not path.exists():
@@ -55,9 +62,12 @@ def inspect_sqlite(path: Path) -> dict:
 
 
 def main() -> None:
+    legacy_bundle = read_trader_master_readonly(
+        project_root=Path.cwd(),
+        trader_master_path=DEFAULT_MASTER,
+    )
     summary = {
-        "trades_master_xlsx": inspect_table(Path("data/trades/trades_master.xlsx")),
-        "trades_master_parquet": inspect_table(Path("data/trades/trades_master.parquet")),
+        "legacy_master_readonly": legacy_bundle.report,
         "trades_excel_compatibility": inspect_table(Path("data/trades/trades_excel.xlsx")),
         "trade_enriched": inspect_table(Path("data/features/trade_enriched.parquet")),
         "training_dataset": inspect_table(Path("data/features/training_dataset.parquet")),
@@ -69,7 +79,7 @@ def main() -> None:
         },
         "phase5_status": {
             "status": "ok",
-            "has_master": Path("data/trades/trades_master.parquet").exists() or Path("data/trades/trades_master.xlsx").exists(),
+            "has_legacy_master": legacy_bundle.report.get("status") == "ok",
             "has_training_dataset": Path("data/features/training_dataset.parquet").exists(),
         },
     }

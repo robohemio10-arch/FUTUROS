@@ -18,6 +18,13 @@ from typing import Any, Iterable
 import numpy as np
 import pandas as pd
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 from smartcrypto.research.execution_costs import CostModel, apply_execution_costs
 from smartcrypto.research.monte_carlo_risk import MonteCarloConfig, run_monte_carlo
 from smartcrypto.research.walkforward_validation import WalkForwardConfig, run_walkforward_validation
@@ -451,24 +458,33 @@ def discover_trade_source(project_root: Path) -> Path | None:
     candidates = [
         project_root / "data" / "features" / "trade_enriched.parquet",
         project_root / "data" / "features" / "trade_enriched.csv",
-        project_root / "data" / "trades" / "trades_master.parquet",
         project_root / "data" / "features" / "training_dataset_quality_gated_binance_1m.parquet",
         project_root / "data" / "features" / "training_dataset_quality_gated_binance_1m_plus_15s_shadow.parquet",
         project_root / "data" / "features" / "training_dataset.parquet",
-        project_root / "data" / "trades" / "trades_master.xlsx",
-        project_root / "data" / "trades" / "trades_master.csv",
     ]
     return next((path for path in candidates if path.exists()), None)
 
 
 def load_trade_frame(project_root: Path) -> tuple[pd.DataFrame | None, Path | None, str | None]:
     source = discover_trade_source(project_root)
-    if source is None:
-        return None, None, "trade_source_not_found"
-    try:
-        return read_table(source), source, None
-    except READ_EXCEPTIONS as exc:
-        return None, source, f"trade_source_not_readable:{type(exc).__name__}:{exc}"
+    if source is not None:
+        try:
+            return read_table(source), source, None
+        except READ_EXCEPTIONS as exc:
+            return None, source, f"trade_source_not_readable:{type(exc).__name__}:{exc}"
+
+    bundle = read_trader_master_readonly(
+        project_root=project_root,
+        trader_master_path=DEFAULT_MASTER,
+    )
+    legacy_source = project_root / DEFAULT_MASTER
+    if bundle.report.get("status") != "ok":
+        return (
+            None,
+            legacy_source,
+            f"legacy_master_read_blocked:{bundle.report.get('reason', 'unknown')}",
+        )
+    return pd.DataFrame.from_records(bundle.source_rows), legacy_source, None
 
 
 def audit_trade_base(frame: pd.DataFrame | None, source: Path | None, *, min_trades: int) -> dict[str, Any]:

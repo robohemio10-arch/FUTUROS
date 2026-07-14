@@ -24,6 +24,9 @@ from scripts.sync_ocr_master_v11_phase5_sidecars import (
     build_phase5_compatibility_frame,
     sync_ocr_master_v11_phase5_sidecars,
 )
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,12 +68,13 @@ def prepare_project(tmp_path: Path, rows: int = 3) -> tuple[Path, str, bytes]:
     trades.mkdir(parents=True)
     master_path = trades / "trades_master.xlsx"
     ocr_master(rows).to_excel(master_path, index=False)
-    master_bytes = master_path.read_bytes()
-    expected_hash = hashlib.sha256(master_bytes).hexdigest()
+    protected_path = trades / "trades_master.parquet"
+    ocr_master(rows).to_parquet(protected_path, index=False)
+    protected_bytes = protected_path.read_bytes()
+    expected_hash = hashlib.sha256(protected_bytes).hexdigest()
     stale = pd.DataFrame({column: ["stale"] * (rows + 1) for column in PHASE5_COLUMNS})
     stale.to_excel(trades / "trades_excel.xlsx", index=False)
-    stale.to_parquet(trades / "trades_master.parquet", index=False)
-    return master_path, expected_hash, master_bytes
+    return protected_path, expected_hash, protected_bytes
 
 
 def test_conversion_maps_ocr_master_to_exact_phase5_schema() -> None:
@@ -105,11 +109,10 @@ def test_no_write_validates_without_sidecar_or_backup_changes(tmp_path: Path) ->
         now_utc=NOW,
     )
 
-    assert report["status"] == "ok"
-    assert report["reason"] == "dry_run_validation_ok"
-    assert report["would_write"] is True
+    assert report["status"] == "blocked"
+    assert report["reason"] == "legacy_master_sidecar_sync_retired"
+    assert report["would_write"] is False
     assert report["write_performed"] is False
-    assert report["backup_created"] is False
     assert master_path.read_bytes() == master_bytes
     assert compatibility.read_bytes() == compatibility_before
     assert parquet.read_bytes() == parquet_before
@@ -131,13 +134,13 @@ def test_hash_comparison_accepts_lowercase_and_uppercase(
         now_utc=NOW,
     )
 
-    assert report["status"] == "ok"
+    assert report["status"] == "blocked"
     assert report["master_sha256_expected"] == hash_transform(expected_hash)
     assert report["master_sha256_actual"] == expected_hash
     assert "master_sha256_mismatch" not in report["validation_errors"]
 
 
-def test_write_creates_backup_and_aligned_sidecars_without_changing_master(
+def test_write_is_blocked_without_changing_master_or_sidecars(
     tmp_path: Path,
 ) -> None:
     master_path, expected_hash, master_bytes = prepare_project(tmp_path)
@@ -150,20 +153,13 @@ def test_write_creates_backup_and_aligned_sidecars_without_changing_master(
         now_utc=NOW,
     )
 
-    assert report["status"] == "ok"
-    assert report["backup_created"] is True
-    assert report["write_performed"] is True
-    assert report["validation_errors"] == []
-    assert len(report["backup_files"]) == 2
+    assert report["status"] == "blocked"
+    assert report["write_performed"] is False
+    assert "legacy_master_sidecar_write_forbidden" in report["validation_errors"]
     assert master_path.read_bytes() == master_bytes
-    compatibility = pd.read_excel(tmp_path / "data/trades/trades_excel.xlsx")
-    parquet = pd.read_parquet(tmp_path / "data/trades/trades_master.parquet")
-    assert len(compatibility) == len(parquet) == 3
-    assert list(compatibility.columns) == list(parquet.columns) == list(PHASE5_COLUMNS)
-    assert compatibility["_dedup_key"].nunique() == 3
 
 
-def test_write_is_noop_when_sidecars_are_already_aligned(tmp_path: Path) -> None:
+def test_repeated_write_request_remains_blocked(tmp_path: Path) -> None:
     master_path, expected_hash, master_bytes = prepare_project(tmp_path)
     first = sync_ocr_master_v11_phase5_sidecars(
         tmp_path,
@@ -172,7 +168,7 @@ def test_write_is_noop_when_sidecars_are_already_aligned(tmp_path: Path) -> None
         no_write=False,
         now_utc=NOW,
     )
-    assert first["write_performed"] is True
+    assert first["write_performed"] is False
 
     report = sync_ocr_master_v11_phase5_sidecars(
         tmp_path,
@@ -182,10 +178,9 @@ def test_write_is_noop_when_sidecars_are_already_aligned(tmp_path: Path) -> None
         now_utc=NOW,
     )
 
-    assert report["status"] == "ok"
-    assert report["reason"] == "phase5_sidecars_already_aligned"
+    assert report["status"] == "blocked"
+    assert report["reason"] == "legacy_master_sidecar_sync_blocked"
     assert report["write_performed"] is False
-    assert report["backup_created"] is False
     assert master_path.read_bytes() == master_bytes
 
 
@@ -224,10 +219,13 @@ def test_hash_or_row_mismatch_blocks_without_backup(tmp_path: Path) -> None:
 
 def test_phase5_gate_blocks_sidecar_row_divergence(tmp_path: Path) -> None:
     master_path, _, _ = prepare_project(tmp_path)
+    bundle = read_trader_master_readonly(
+        project_root=tmp_path,
+        trader_master_path=master_path,
+    )
     result = validate_phase5_source_alignment(
-        master_path,
         tmp_path / "data/trades/trades_excel.xlsx",
-        tmp_path / "data/trades/trades_master.parquet",
+        bundle,
     )
 
     assert result["status"] == "blocked"
@@ -235,26 +233,26 @@ def test_phase5_gate_blocks_sidecar_row_divergence(tmp_path: Path) -> None:
 
 
 def test_phase5_gate_accepts_aligned_sidecars(tmp_path: Path) -> None:
-    master_path, expected_hash, _ = prepare_project(tmp_path)
-    sync_ocr_master_v11_phase5_sidecars(
-        tmp_path,
-        expected_hash,
-        3,
-        no_write=False,
-        now_utc=NOW,
+    master_path, _, _ = prepare_project(tmp_path)
+    aligned = build_phase5_compatibility_frame(
+        ocr_master(),
+        "2026-06-22T12:30:00Z",
+    )
+    aligned.to_excel(tmp_path / "data/trades/trades_excel.xlsx", index=False)
+    bundle = read_trader_master_readonly(
+        project_root=tmp_path,
+        trader_master_path=master_path,
     )
 
     result = validate_phase5_source_alignment(
-        master_path,
         tmp_path / "data/trades/trades_excel.xlsx",
-        tmp_path / "data/trades/trades_master.parquet",
+        bundle,
     )
 
     assert result["status"] == "ok"
     assert result["rows"] == {
-        "master_xlsx": 3,
         "compatibility_xlsx": 3,
-        "master_parquet": 3,
+        "legacy_master": 3,
     }
 
 
@@ -378,9 +376,9 @@ def test_cli_no_write_returns_controlled_json(tmp_path: Path) -> None:
         check=False,
     )
 
-    assert completed.returncode == 0, completed.stderr
+    assert completed.returncode == 2, completed.stderr
     payload = json.loads(completed.stdout)
-    assert payload["status"] == "ok"
+    assert payload["status"] == "blocked"
     assert payload["write_performed"] is False
 
 
@@ -395,8 +393,8 @@ def test_report_preserves_paper_safe_authority_flags(tmp_path: Path) -> None:
     )
 
     assert report["writes_master_xlsx"] is False
-    assert report["writes_master_parquet"] is True
-    assert report["writes_compatibility_xlsx"] is True
+    assert report["writes_master_parquet"] is False
+    assert report["writes_compatibility_xlsx"] is False
     assert report["changes_training_dataset"] is False
     assert report["changes_model"] is False
     assert report["sends_orders"] is False

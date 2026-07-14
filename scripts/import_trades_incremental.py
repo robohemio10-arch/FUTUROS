@@ -7,12 +7,16 @@ import argparse
 import json
 from typing import Any
 
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inbox-dir", default="data/trades/inbox")
-    parser.add_argument("--master-xlsx", default="data/trades/trades_master.xlsx")
-    parser.add_argument("--master-parquet", default="data/trades/trades_master.parquet")
+    parser.add_argument("--master-xlsx", default=None)
+    parser.add_argument("--master-parquet", default=None)
     parser.add_argument("--compatibility-xlsx", default="data/trades/trades_excel.xlsx")
     parser.add_argument("--processed-dir", default="data/trades/processed")
     parser.add_argument("--report", default="data/reports/phase5_import_report.json")
@@ -46,6 +50,7 @@ def build_disabled_report(args: argparse.Namespace) -> dict[str, Any]:
         "sends_orders": False,
         "exchange_private_access": False,
         "operational_authority": False,
+        "readonly_adapter": read_trader_master_readonly.__qualname__,
     }
 
 

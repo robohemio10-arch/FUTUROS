@@ -1,15 +1,25 @@
 from __future__ import annotations
-import json, sqlite3
+
+import json
+import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from smartcrypto.market.market_feature_schema import lookahead_columns
+from smartcrypto.market.market_feature_schema import lookahead_columns  # noqa: E402
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (  # noqa: E402
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (  # noqa: E402
+    MasterReadBundle,
+    read_trader_master_readonly,
+)
 
 
 def read_json(path: Path) -> dict:
@@ -57,7 +67,7 @@ def table_info(path: Path, *, operational: bool = False) -> dict:
 def sqlite_tables(path: Path) -> dict:
     if not path.exists():
         return {"exists": False, "tables": {}}
-    tables = {}
+    tables: dict[str, int | str] = {}
     with sqlite3.connect(path) as connection:
         names = pd.read_sql_query("select name from sqlite_master where type='table'", connection)["name"].tolist()
         for name in names:
@@ -67,19 +77,24 @@ def sqlite_tables(path: Path) -> dict:
                 tables[name] = str(exc)
     return {"exists": True, "tables": tables}
 
-def trades_range(path: Path) -> dict:
-    if not path.exists():
-        return {"exists": False}
-    try:
-        frame = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_excel(path)
-        open_ts = pd.to_datetime(frame.get("horario_abertura"), utc=True, errors="coerce")
-        close_ts = pd.to_datetime(frame.get("horario_fechamento"), utc=True, errors="coerce")
-        combined = pd.concat([open_ts, close_ts]).dropna()
-        return {"exists": True, "rows": int(len(frame)), "min_trade_ts": combined.min().isoformat() if not combined.empty else None, "max_trade_ts": combined.max().isoformat() if not combined.empty else None}
-    except Exception as exc:
-        return {"exists": True, "error": str(exc)}
+def legacy_trade_range(bundle: MasterReadBundle) -> dict:
+    if bundle.report.get("status") != "ok":
+        return dict(bundle.report)
+    frame = pd.DataFrame.from_records(bundle.source_rows)
+    open_ts = pd.to_datetime(frame.get("horario_abertura"), utc=True, errors="coerce")
+    close_ts = pd.to_datetime(frame.get("horario_fechamento"), utc=True, errors="coerce")
+    combined = pd.concat([open_ts, close_ts]).dropna()
+    return {
+        **bundle.report,
+        "min_trade_ts": combined.min().isoformat() if not combined.empty else None,
+        "max_trade_ts": combined.max().isoformat() if not combined.empty else None,
+    }
 
 def main() -> None:
+    legacy_bundle = read_trader_master_readonly(
+        project_root=PROJECT_ROOT,
+        trader_master_path=DEFAULT_MASTER,
+    )
     backfill_features = table_info(
         Path("data/features/market_features_1m_backfill.parquet"),
         operational=True,
@@ -101,7 +116,7 @@ def main() -> None:
                     "lookahead_columns_count": item.get("lookahead_columns_count", 0),
                 }
             )
-    report = {
+    report: dict[str, Any] = {
         "status": "warning" if affected else "ok",
         "reason": "operational_lookahead_columns_detected" if affected else "ok",
         "phase": "phase22_historical_market_backfill",
@@ -111,7 +126,7 @@ def main() -> None:
         "main_features": main_features,
         "trade_enriched": table_info(Path("data/features/trade_enriched.parquet")),
         "training_dataset": table_info(Path("data/features/training_dataset.parquet")),
-        "trades_master": trades_range(Path("data/trades/trades_master.parquet")),
+        "legacy_master_readonly": legacy_trade_range(legacy_bundle),
         "sqlite": sqlite_tables(Path("data/sqlite/trading_dataset.sqlite")),
         "reports": {
             "preflight": Path("data/reports/phase22_preflight_report.json").exists(),
