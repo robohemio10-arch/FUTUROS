@@ -16,7 +16,7 @@ import math
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, cast
 
 try:
     import pandas as pd
@@ -254,7 +254,7 @@ def _normalize_trades(raw: Any) -> Any:
 
 def _schema_status(columns: Sequence[str], source_type: str) -> str:
     lower = {str(col).lower() for col in columns}
-    if source_type == "trades_master":
+    if source_type == "legacy_trade_dataset":
         has_symbol = bool(lower & {"symbol", "pair", "11_moeda", "moeda"})
         has_time = bool(lower & {"open_time_utc", "open_time", "open_date", "entry_time", "datetime", "timestamp", "date", "7_horario_de_abertura"})
         has_close_time = bool(lower & {"close_time_utc", "close_time", "close_date", "exit_time", "8_horario_de_fechamento"})
@@ -588,7 +588,7 @@ def _gate_matrix(report: Mapping[str, Any]) -> list[dict[str, Any]]:
     return [
         {"gate_id": "research_only_contract", "gate_name": "Research-only contract preserved", "severity": "critical", "passed": bool(report.get("research_only") and not report.get("operational_authority")), "evidence": f"research_only={report.get('research_only')}; operational_authority={report.get('operational_authority')}"},
         {"gate_id": "runtime_read_explicit", "gate_name": "Runtime/data reads are explicit", "severity": "critical", "passed": bool(report.get("allow_runtime_read") or report.get("input_mode") == "no_runtime_rows_loaded"), "evidence": f"allow_runtime_read={report.get('allow_runtime_read')}; input_mode={report.get('input_mode')}"},
-        {"gate_id": "trades_master_status_explicit", "gate_name": "Trades master loading status is explicit", "severity": "high", "passed": "trades_master_loaded" in report, "evidence": f"trades_master_loaded={report.get('trades_master_loaded')}; rows={report.get('trades_master_rows')}"},
+        {"gate_id": "legacy_dataset_status_explicit", "gate_name": "Legacy dataset loading status is explicit", "severity": "high", "passed": "legacy_trade_dataset_loaded" in report, "evidence": f"legacy_trade_dataset_loaded={report.get('legacy_trade_dataset_loaded')}; rows={report.get('legacy_trade_dataset_rows')}"},
         {"gate_id": "candle_source_status_explicit", "gate_name": "Candle source status is explicit", "severity": "high", "passed": "candle_sources_loaded" in report, "evidence": f"candle_sources_loaded={report.get('candle_sources_loaded')}; candle_rows={report.get('candle_rows')}"},
         {"gate_id": "oos_required_not_bypassed", "gate_name": "OOS validation remains mandatory", "severity": "critical", "passed": bool(report.get("oos_validation_required") and not report.get("oos_validated")), "evidence": f"oos_validation_required={report.get('oos_validation_required')}; oos_validated={report.get('oos_validated')}"},
         {"gate_id": "promotion_blocked", "gate_name": "Rule and model promotion blocked", "severity": "critical", "passed": not bool(report.get("can_promote_rules") or report.get("can_promote_model")), "evidence": f"can_promote_rules={report.get('can_promote_rules')}; can_promote_model={report.get('can_promote_model')}"},
@@ -630,12 +630,12 @@ def _base(root: Path, allow_runtime_read: bool, write_requested: bool) -> dict[s
         "oos_slice_dimensions": SLICE_DIMENSIONS,
         "candidate_shadow_rule": CANDIDATE_RULE,
         "forbidden_actions": FORBIDDEN_ACTIONS,
-        "trades_master_loaded": False,
-        "trades_master_path": None,
-        "trades_master_rows": 0,
+        "legacy_trade_dataset_loaded": False,
+        "legacy_trade_dataset_path": None,
+        "legacy_trade_dataset_rows": 0,
         "normalized_trade_rows": 0,
-        "trades_master_sha256": None,
-        "trades_master_schema_status": None,
+        "legacy_trade_dataset_sha256": None,
+        "legacy_trade_dataset_schema_status": None,
         "candle_sources_loaded": False,
         "candle_source_count": 0,
         "candle_rows": 0,
@@ -661,7 +661,9 @@ def _base(root: Path, allow_runtime_read: bool, write_requested: bool) -> dict[s
     }
     report.update(SAFETY_FALSE)
     report["gate_matrix"] = _gate_matrix(report)
-    report["gate_summary"] = _gate_summary(report["gate_matrix"])
+    report["gate_summary"] = _gate_summary(
+        cast(Sequence[Mapping[str, Any]], report["gate_matrix"])
+    )
     return report
 
 
@@ -669,7 +671,7 @@ def build_ocr_master_candle_aligned_oos_research_report(
     *,
     project_root: str | Path,
     allow_runtime_read: bool = False,
-    trades_master: str | Path | None = None,
+    legacy_trade_dataset: str | Path | None = None,
     candle_roots: Sequence[str | Path] | None = None,
     output_path: str | Path | None = None,
     write: bool = False,
@@ -681,32 +683,32 @@ def build_ocr_master_candle_aligned_oos_research_report(
 
     report["input_mode"] = "runtime_read_only"
     warnings: list[str] = []
-    trades = pd.DataFrame() if pd is not None else []
+    trades: Any = pd.DataFrame() if pd is not None else []
 
-    if trades_master is None:
-        warnings.append("trades_master_not_supplied")
+    if legacy_trade_dataset is None:
+        warnings.append("legacy_trade_dataset_not_supplied")
     else:
-        master_path = Path(trades_master)
+        master_path = Path(legacy_trade_dataset)
         if not master_path.is_absolute():
             master_path = root / master_path
-        report["trades_master_path"] = _rel(master_path, root)
+        report["legacy_trade_dataset_path"] = _rel(master_path, root)
         if not master_path.exists():
-            warnings.append("trades_master_missing")
+            warnings.append("legacy_trade_dataset_missing")
         else:
             try:
                 raw_master = _read_table(master_path)
                 trades = _normalize_trades(raw_master)
                 report.update({
-                    "trades_master_loaded": True,
-                    "trades_master_rows": int(len(raw_master)),
+                    "legacy_trade_dataset_loaded": True,
+                    "legacy_trade_dataset_rows": int(len(raw_master)),
                     "normalized_trade_rows": int(len(trades)),
-                    "trades_master_sha256": _sha256(master_path),
-                    "trades_master_schema_status": _schema_status(list(raw_master.columns), "trades_master"),
+                    "legacy_trade_dataset_sha256": _sha256(master_path),
+                    "legacy_trade_dataset_schema_status": _schema_status(list(raw_master.columns), "legacy_trade_dataset"),
                 })
                 if int(len(trades)) == 0:
                     warnings.append("normalized_trades_empty")
             except Exception as exc:
-                warnings.append(f"trades_master_load_error:{exc.__class__.__name__}")
+                warnings.append(f"legacy_trade_dataset_load_error:{exc.__class__.__name__}")
 
     candles, audits, candle_warnings = _load_candles(root, list(candle_roots or []))
     warnings.extend(candle_warnings)
@@ -765,7 +767,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build OCR Master + candle aligned OOS research report.")
     parser.add_argument("--project-root", required=True)
     parser.add_argument("--allow-runtime-read", action="store_true")
-    parser.add_argument("--trades-master")
+    parser.add_argument("--legacy-trade-dataset")
     parser.add_argument("--candle-root", action="append", default=[])
     parser.add_argument("--output-path")
     parser.add_argument("--write", action="store_true")
@@ -779,7 +781,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     report = build_ocr_master_candle_aligned_oos_research_report(
         project_root=args.project_root,
         allow_runtime_read=args.allow_runtime_read,
-        trades_master=args.trades_master,
+        legacy_trade_dataset=args.legacy_trade_dataset,
         candle_roots=args.candle_root,
         output_path=args.output_path,
         write=bool(args.write and not args.no_write),

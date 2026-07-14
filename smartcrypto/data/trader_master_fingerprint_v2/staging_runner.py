@@ -39,10 +39,10 @@ REPOSITORY_INVENTORY = {
         "smartcrypto.research.paper_closed_trades_readonly_source_contract._row_fingerprint",
         "smartcrypto.learning.paper_autolearning.feedback_store.row_fingerprint_for",
     ],
-    "trader_master_writers": [
+    "quarantined_legacy_writers": [
         "smartcrypto.data.trades_importer.write_master",
         "smartcrypto.learning.paper_autolearning.master_consolidation",
-        "scripts.apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master",
+        "scripts.retired_bitradex_ocr_apply_compatibility_cli",
         "scripts.sync_ocr_master_v11_phase5_sidecars",
     ],
     "v2_integration_decision": "isolated_read_only_validator_no_writer_replacement",

@@ -52,9 +52,9 @@ def validate_phase5_source_alignment(
 ) -> dict:
     errors: list[str] = []
     for label, path in (
-        ("trades_master_xlsx", master_xlsx),
+        ("legacy_dataset_xlsx", master_xlsx),
         ("trades_excel_xlsx", compatibility_xlsx),
-        ("trades_master_parquet", master_parquet),
+        ("legacy_dataset_parquet", master_parquet),
     ):
         if not path.exists():
             errors.append(f"{label}_not_found")
@@ -84,7 +84,7 @@ def validate_phase5_source_alignment(
             )
         if rows["master_parquet"] != rows["master_xlsx"]:
             errors.append(
-                "trades_master_parquet_rows_mismatch:"
+                "legacy_dataset_parquet_rows_mismatch:"
                 f"{rows['master_parquet']}!={rows['master_xlsx']}"
             )
     if master_sha256 == OCR_MASTER_V11_SHA256 and rows["master_xlsx"] != OCR_MASTER_V11_ROWS:

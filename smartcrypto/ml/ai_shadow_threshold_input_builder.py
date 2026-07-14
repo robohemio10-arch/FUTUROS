@@ -613,7 +613,7 @@ def safety_payload(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         "changes_risk": False,
         "freqtrade_db_touched": False,
         "training_dataset_touched": False,
-        "trades_master_touched": False,
+        "legacy_trade_dataset_touched": False,
         "registry_updated": False,
         "model_promoted": False,
         "signal_producer_updated": False,

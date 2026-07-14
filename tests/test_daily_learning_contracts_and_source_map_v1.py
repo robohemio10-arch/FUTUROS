@@ -52,8 +52,8 @@ def test_required_sources_exist_in_source_map() -> None:
     assert sources["freqtrade_paper_trades_db"]["expected_path"] == (
         "freqtrade/user_data/tradesv3.dryrun.sqlite"
     )
-    assert sources["trades_master_xlsx"]["expected_path"] == (
-        "data/processed/trades_master.xlsx"
+    assert sources["legacy_trade_dataset_xlsx"]["expected_path"] == (
+        "data/processed/legacy_trade_dataset.xlsx"
     )
     assert sources["btc_15s_candles"]["expected_path"] == (
         "data/raw/binance_futures_klines_15s/BTCUSDT"
@@ -134,10 +134,10 @@ def test_validation_fails_if_required_source_is_removed() -> None:
     source_map["sources"] = [
         source
         for source in source_map["sources"]
-        if source["source_id"] != "trades_master_xlsx"
+        if source["source_id"] != "legacy_trade_dataset_xlsx"
     ]
     errors = validate_daily_learning_source_map(source_map)
-    assert "missing_required_source:trades_master_xlsx" in errors
+    assert "missing_required_source:legacy_trade_dataset_xlsx" in errors
 
 
 def test_contract_scope_and_readiness_policy_are_fail_closed() -> None:

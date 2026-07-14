@@ -30,7 +30,7 @@ SAFETY_FLAGS: dict[str, Any] = {
     "changes_risk": False,
     "changes_model": False,
     "changes_training_dataset": False,
-    "writes_trades_master": False,
+    "writes_legacy_trade_dataset": False,
 }
 
 CONTEXT_COLUMNS = {
@@ -159,7 +159,7 @@ class FeatureValidationResult:
     changes_risk: bool = False
     changes_model: bool = False
     changes_training_dataset: bool = False
-    writes_trades_master: bool = False
+    writes_legacy_trade_dataset: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -192,7 +192,7 @@ class UnifiedFeatureContract:
     changes_risk: bool = False
     changes_model: bool = False
     changes_training_dataset: bool = False
-    writes_trades_master: bool = False
+    writes_legacy_trade_dataset: bool = False
 
     @property
     def feature_columns(self) -> tuple[str, ...]:
@@ -237,7 +237,7 @@ class UnifiedFeatureContract:
             "changes_risk": self.changes_risk,
             "changes_model": self.changes_model,
             "changes_training_dataset": self.changes_training_dataset,
-            "writes_trades_master": self.writes_trades_master,
+            "writes_legacy_trade_dataset": self.writes_legacy_trade_dataset,
         }
 
     def validate_self(self) -> "UnifiedFeatureContract":
@@ -272,7 +272,6 @@ class UnifiedFeatureContract:
         if duplicate_columns := duplicated_columns(frame):
             errors.append(f"duplicate_columns:{duplicate_columns}")
 
-        all_columns = tuple(str(column) for column in frame.columns)
         observed_features = tuple(select_feature_columns(frame, include_non_numeric=True))
         expected = self.feature_columns
 
@@ -399,7 +398,9 @@ class UnifiedFeatureContract:
             changes_risk=bool(payload.get("changes_risk", False)),
             changes_model=bool(payload.get("changes_model", False)),
             changes_training_dataset=bool(payload.get("changes_training_dataset", False)),
-            writes_trades_master=bool(payload.get("writes_trades_master", False)),
+            writes_legacy_trade_dataset=bool(
+                payload.get("writes_legacy_trade_dataset", False)
+            ),
         ).validate_self()
 
 
@@ -689,7 +690,7 @@ def unsafe_safety_flags(flags: dict[str, Any]) -> list[str]:
         "changes_risk",
         "changes_model",
         "changes_training_dataset",
-        "writes_trades_master",
+        "writes_legacy_trade_dataset",
     ):
         if flags.get(key) is True:
             unsafe.append(key)

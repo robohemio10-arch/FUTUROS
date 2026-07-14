@@ -27,7 +27,7 @@ def test_payload_has_canonical_schema_status_and_decision() -> None:
     assert payload["project_name"] == "SMART FUTUROS"
     assert payload["status"] == "blocked"
     assert payload["decision"] == "MANTER_EM_RESEARCH"
-    assert payload["reason"] == "paper_does_not_replicate_trades_master_edge"
+    assert payload["reason"] == "paper_does_not_replicate_legacy_dataset_edge"
     assert payload["research_only"] is True
     assert payload["operational_authority"] is False
 

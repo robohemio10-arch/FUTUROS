@@ -221,7 +221,7 @@ def _source_info(path: Path, project_root: Path, source_type: str, schema_status
     )
 
 
-def normalize_trades_master(raw: pd.DataFrame) -> pd.DataFrame:
+def normalize_legacy_trade_dataset(raw: pd.DataFrame) -> pd.DataFrame:
     """Normalize OCR/Bitradex master or already-normalized trade frames."""
 
     symbol_col = _first_existing_column(raw.columns, ["symbol_norm", "symbol", "pair", "11_moeda"])
@@ -302,11 +302,11 @@ def discover_canonical_candle_paths(project_root: Path, candle_roots: Sequence[P
     return sorted(unique.values(), key=lambda item: item.name)
 
 
-def load_trades_master(path: Path, project_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, SourceInfo]:
+def load_legacy_trade_dataset(path: Path, project_root: Path) -> tuple[pd.DataFrame, pd.DataFrame, SourceInfo]:
     raw = _read_table(path)
-    normalized = normalize_trades_master(raw)
+    normalized = normalize_legacy_trade_dataset(raw)
     schema_status = "candidate_trade_schema" if not normalized.empty else "invalid_trade_schema"
-    return raw, normalized, _source_info(path, project_root, "trades_master", schema_status, len(raw), raw.columns)
+    return raw, normalized, _source_info(path, project_root, "legacy_trade_dataset", schema_status, len(raw), raw.columns)
 
 
 def load_candles(project_root: Path, candle_roots: Sequence[Path]) -> tuple[pd.DataFrame, list[SourceInfo]]:
@@ -679,7 +679,7 @@ def build_positive_ev_slice_mining_report(
     *,
     project_root: str | Path,
     allow_runtime_read: bool = False,
-    trades_master: str | Path | None = None,
+    legacy_trade_dataset: str | Path | None = None,
     candle_roots: Sequence[str | Path] | None = None,
     min_trade_count: int = DEFAULT_MIN_TRADE_COUNT,
     max_day_concentration: float = DEFAULT_MAX_DAY_CONCENTRATION,
@@ -700,14 +700,17 @@ def build_positive_ev_slice_mining_report(
     critical_warnings: list[str] = []
 
     if allow_runtime_read:
-        master_path = Path(trades_master) if trades_master else root / "data" / "trades" / "trades_master.xlsx"
-        if not master_path.is_absolute():
-            master_path = root / master_path
-        if master_path.exists():
-            raw_trades, normalized_trades, trades_source = load_trades_master(master_path, root)
-            raw_trade_rows = len(raw_trades)
+        if legacy_trade_dataset is not None:
+            master_path = Path(legacy_trade_dataset)
+            if not master_path.is_absolute():
+                master_path = root / master_path
+            if master_path.exists():
+                raw_trades, normalized_trades, trades_source = load_legacy_trade_dataset(master_path, root)
+                raw_trade_rows = len(raw_trades)
+            else:
+                critical_warnings.append(f"legacy_trade_dataset_missing:{master_path}")
         else:
-            critical_warnings.append(f"trades_master_missing:{master_path}")
+            critical_warnings.append("legacy_trade_dataset_not_supplied")
 
         roots = [Path(item) for item in (candle_roots or [Path("data")])]
         candles, candle_sources = load_candles(root, roots)
@@ -758,10 +761,10 @@ def build_positive_ev_slice_mining_report(
         "historical_rejected_candidate_rule": CANDIDATE_RULE_HISTORICAL,
         "forbidden_actions": FORBIDDEN_ACTIONS,
         "critical_warnings": critical_warnings,
-        "trades_master_loaded": trades_source is not None,
-        "trades_master_rows": raw_trade_rows,
-        "trades_master_normalized_rows": len(normalized_trades),
-        "trades_master_source": trades_source.to_dict() if trades_source else None,
+        "legacy_trade_dataset_loaded": trades_source is not None,
+        "legacy_trade_dataset_rows": raw_trade_rows,
+        "legacy_trade_dataset_normalized_rows": len(normalized_trades),
+        "legacy_trade_dataset_source": trades_source.to_dict() if trades_source else None,
         "candle_sources_loaded": bool(candle_sources and not candles.empty),
         "candle_source_count": len(candle_sources),
         "candle_rows": len(candles),
@@ -817,5 +820,5 @@ __all__ = [
     "compute_metrics",
     "mine_positive_ev_slices",
     "normalize_candles",
-    "normalize_trades_master",
+    "normalize_legacy_trade_dataset",
 ]
