@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "179d14e99c243ca294673feae341e7f3498da510710dd6eb28ad1c26cea44e8e",
+  "aggregate_sha256": "246457e365fc7f613cf4ca421b15f2ea3423dd455c5a739ee22476f12924fee7",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 266,
-    "manifested_files_total": 1502,
-    "python_files": 1138,
+    "docs_files": 267,
+    "manifested_files_total": 1507,
+    "python_files": 1141,
     "runtime_excluded_files_total": 0,
-    "test_files": 320,
-    "tracked_files_total": 1503,
+    "test_files": 321,
+    "tracked_files_total": 1508,
     "workflows": 1
   },
   "deterministic": true,
@@ -446,6 +446,12 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
+      "bytes": 2036,
+      "hash_mode": "text_lf",
+      "path": "config/qlib_integration_mode_v1.json",
+      "sha256": "1d8fbce765125336ea6ebc2d7093b9963278c8f75d8e76aa97c3c44ba34c44f1"
+    },
+    {
       "bytes": 790,
       "hash_mode": "text_lf",
       "path": "config/qlib_market_workflow.yml",
@@ -576,6 +582,12 @@
       "hash_mode": "text_lf",
       "path": "docker/smartcrypto/Dockerfile",
       "sha256": "faf82418f29e7890f2a6b56dc919c7264d3164fce66ec358af7955468f7edb18"
+    },
+    {
+      "bytes": 11015,
+      "hash_mode": "text_lf",
+      "path": "docs/ADR_001_QLIB_24X7_INTEGRATION_MODE_V1.md",
+      "sha256": "2b181c43aa52483d271283c9f66d49256381ed221ab8a6df9067e5842efc0183"
     },
     {
       "bytes": 4419,
@@ -2478,6 +2490,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_project_ai_operating_instructions.py",
       "sha256": "3520ea21b428e5316a2adc4696d3bc1b926ffba8e221e7aba30809522c4d28d2"
+    },
+    {
+      "bytes": 1416,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_qlib_24x7_integration_mode_v1.py",
+      "sha256": "01ebd2f55476c41885441059e19afeec379e2edda34e173ac624b6d05ad10543"
     },
     {
       "bytes": 1601,
@@ -5492,16 +5510,22 @@
       "sha256": "69fd3ff9febce62d45bef9934d3db992057d0ee3d9a4898c5e1fa4283ef6c786"
     },
     {
-      "bytes": 168,
+      "bytes": 477,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_environment_lock/__init__.py",
-      "sha256": "f46e6638b9c83741b8d3b72b236d4f8628154be73c296d31b776e67f221236b5"
+      "sha256": "d9149d6f3cedc7d8aa0fba1526a4e8fa44760b3a2da5447e66f3b100ac3e1f24"
     },
     {
       "bytes": 14933,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_environment_lock/environment_lock.py",
       "sha256": "cdacbb81618ecfce5c39d738d2739707167d6983150951d83ba7f8310e24a4f1"
+    },
+    {
+      "bytes": 10918,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_backend_environment_lock/integration_mode.py",
+      "sha256": "50b0f5a3b8764f8c645361d4d00e2938500e4a76237b12ec0367da72ea3a01ea"
     },
     {
       "bytes": 182,
@@ -8664,6 +8688,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_project_ai_operating_instructions.py",
       "sha256": "19119abcb5dc80e2d1e04177741cd0499a024024aa873b1aab6c0ed5c8849e3b"
+    },
+    {
+      "bytes": 9025,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_24x7_integration_mode_v1.py",
+      "sha256": "b3fa308efbd31c8d6e3e45133279faf1c9a46544b4e356f8d1dafe9f7189068a"
     },
     {
       "bytes": 7567,
