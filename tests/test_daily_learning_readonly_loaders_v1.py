@@ -87,7 +87,7 @@ def test_missing_required_and_optional_sources_are_classified(tmp_path: Path) ->
     report = build_daily_learning_readonly_loader_report(tmp_path)
     statuses = {source["source_id"]: source["status"] for source in report["sources"]}
     assert statuses["freqtrade_paper_trades_db"] == "missing_required"
-    assert statuses["trades_master_xlsx"] == "missing_required"
+    assert statuses["legacy_trade_dataset_xlsx"] == "missing_required"
     assert statuses["ai_shadow_decision_logger_report"] == "missing_optional"
     assert "freqtrade_paper_trades_db" in report["missing_required_source_ids"]
     assert "ai_shadow_decision_logger_report" in report["optional_missing_source_ids"]
@@ -113,8 +113,12 @@ def test_existing_paths_are_metadata_only_without_row_loading(tmp_path: Path) ->
     )
     assert sources["btc_15s_candles"]["status"] == "metadata_only"
     assert sources["market_data_health_audit_report"]["status"] == "metadata_only"
-    assert sources["btc_15s_candles"]["metadata"]["file_count"] == 1
-    assert sources["market_data_health_audit_report"]["metadata"]["size_bytes"] > 0
+    btc_metadata = sources["btc_15s_candles"]["metadata"]
+    health_metadata = sources["market_data_health_audit_report"]["metadata"]
+    assert isinstance(btc_metadata, dict)
+    assert isinstance(health_metadata, dict)
+    assert btc_metadata["file_count"] == 1
+    assert health_metadata["size_bytes"] > 0
     for source in report["sources"]:
         assert source["read_attempted"] is False
         assert source["write_attempted"] is False

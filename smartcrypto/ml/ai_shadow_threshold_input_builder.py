@@ -115,6 +115,7 @@ def build_ai_shadow_threshold_evaluation_input(
         write_json(payload, report_path)
         return payload
 
+    assert decision_column is not None
     normalized_decisions = normalize_decisions(decisions_frame, decision_column=decision_column)
     missing_probability_rows = int(normalized_decisions["probability_or_confidence"].isna().sum())
     missing_decision_rows = int(normalized_decisions["decision"].eq("").sum())

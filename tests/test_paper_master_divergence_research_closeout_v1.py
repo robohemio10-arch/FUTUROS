@@ -4,7 +4,6 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from smartcrypto.research.paper_master_divergence_research_closeout import (
     SAFETY_FLAGS,

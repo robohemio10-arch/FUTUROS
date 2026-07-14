@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a71d2e2b1c3fda1ddad801e86ee4e5b7518ab89ec3117ebccaa3b9fc0bae2f41",
+  "aggregate_sha256": "3737989354e5def411e6c7d14204c9051918f4b4822d05ab0c2f3e35d8cf4f04",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 265,
-    "manifested_files_total": 1495,
-    "python_files": 1132,
+    "docs_files": 266,
+    "manifested_files_total": 1502,
+    "python_files": 1138,
     "runtime_excluded_files_total": 0,
-    "test_files": 315,
-    "tracked_files_total": 1496,
+    "test_files": 320,
+    "tracked_files_total": 1503,
     "workflows": 1
   },
   "deterministic": true,
@@ -398,10 +398,10 @@
       "sha256": "4ad211d7d483b230c7e67dba1b0aca404ef9faa6d36217e9e6a53ac7974ac652"
     },
     {
-      "bytes": 867,
+      "bytes": 816,
       "hash_mode": "text_lf",
       "path": "config/paper_dashboard.yml",
-      "sha256": "76e6b0bffc3e647c920cfcd05fad3bc21f172df46bb06d300f1daff0f735de72"
+      "sha256": "89cb82bebf9418f2c21ac437e4e39001ec82932e870c89c9057436a750c35bf1"
     },
     {
       "bytes": 722,
@@ -428,10 +428,10 @@
       "sha256": "b5480a9912a20b382df37ca08320951aec91291062df4a15cdb3d45e73667470"
     },
     {
-      "bytes": 1453,
+      "bytes": 1403,
       "hash_mode": "text_lf",
       "path": "config/paper_session.yml",
-      "sha256": "f7a7ff0b0ce5176c05e44f6262c9678cfe04186e2b0fffbfa7b7227bef15b55e"
+      "sha256": "8eba222e82fd18cee8b23eb3b9bb71c16fabc832df1c1cc16a167f4ab245cdff"
     },
     {
       "bytes": 607,
@@ -2018,6 +2018,12 @@
       "sha256": "7c7afab1ca4a6efe03a2f8a54eaf1898b768262e1265544ff0b27c80cb58dbe6"
     },
     {
+      "bytes": 3663,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_BOUNDARY_FULL_REMEDIATION_CLOSEOUT_V1.md",
+      "sha256": "fed6f0b1e571031b5b1fa08e6da413fddb204282f34534fb1f157ba18fc80ddf"
+    },
+    {
       "bytes": 5868,
       "hash_mode": "text_lf",
       "path": "docs/TRADER_MASTER_FINGERPRINT_SPEC_V2_STAGING_VALIDATOR.md",
@@ -2252,10 +2258,10 @@
       "sha256": "3f8de125ee7f2e9d71de0919cfbbb573e445d526de4a2f9914aa439f6e7a3656"
     },
     {
-      "bytes": 20677,
+      "bytes": 1688,
       "hash_mode": "text_lf",
       "path": "scripts/apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master.py",
-      "sha256": "42318a33e0de4afa9263b8c55819206d7b5517e315cf64827e760ab39c8bc06a"
+      "sha256": "dbfc38151fa0dd5152f6c2c49961a7905ab23640e2db55204abe51336b0e26b1"
     },
     {
       "bytes": 1401,
@@ -2288,10 +2294,10 @@
       "sha256": "0c4de623d3c4e6b54f86ce9e3d09acbb400aa708f6b5066bd3bc5555fe6d568c"
     },
     {
-      "bytes": 12769,
+      "bytes": 12768,
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_unified_feature_contract.py",
-      "sha256": "770ba4f86b8810f1c956246f2c9e56efd12babc8dfeaa024e7fa93acb9e98c72"
+      "sha256": "ab4ce3dcf211138da1a31242a169b850326c6dad5ea34b4d939fe1170a20d88d"
     },
     {
       "bytes": 531,
@@ -2312,10 +2318,10 @@
       "sha256": "77acc116f20ac658ac8a700b80a2fdedf8ba8e3b7fc594c1954c5b595c217a6e"
     },
     {
-      "bytes": 23187,
+      "bytes": 23618,
       "hash_mode": "text_lf",
       "path": "scripts/audit_bitradex_dependency_boundary.py",
-      "sha256": "c072cb358f6412deb3994613feb4d22cb0e881b7c2d29e02bbb04ce5478a0f88"
+      "sha256": "bc423f017a17c8eb3cec11ab65b32f17646eb488a92760eb2b8000c56765557d"
     },
     {
       "bytes": 22121,
@@ -2846,16 +2852,16 @@
       "sha256": "6c5a1cd85f343e5074668dc75125cc493089c31d8057db290c41f8b8eb5cdc51"
     },
     {
-      "bytes": 2599,
+      "bytes": 2565,
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_positive_ev_slice_mining_v1.py",
-      "sha256": "1eb3290e11bea8e437f2801bc0a5553b7eaed163fbb2bfd5cf10946aea39dc8e"
+      "sha256": "63eebcfb9a0989000621a5738003ce4e3d3ccee0b4a051f1df3a8a4594538780"
     },
     {
-      "bytes": 3153,
+      "bytes": 3119,
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_positive_rule_oos_validation_v1.py",
-      "sha256": "fb98027b0d308f86087416b466ccf22455622859030a5cc0f7af47862fddbbec"
+      "sha256": "e32dd69a59554dbec1ebfd0b8785ff1efff56ac4816192d9b26955f8c0584a79"
     },
     {
       "bytes": 1971,
@@ -2864,10 +2870,10 @@
       "sha256": "a9a24de428259127b0e69b39337ff88a1c2ff137cdc9fc52745fd00fe1b0247d"
     },
     {
-      "bytes": 2477,
+      "bytes": 2544,
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_master_candle_shadow_observation_replay_v1.py",
-      "sha256": "68b9e28d8aed22ef36509b1bd199844597eb11c8a5ab1e669c4f9e638c2d0d8b"
+      "sha256": "899c4a1db9f92f919b4534d73a64557f14cb8e31b2f5d51be0b7af2a7c37bec6"
     },
     {
       "bytes": 3328,
@@ -3266,10 +3272,10 @@
       "sha256": "24c28f78cadd3117bb09d1cba71e3d1ae2a2a89fcec2150bdfce0570f14401ae"
     },
     {
-      "bytes": 1607,
+      "bytes": 1844,
       "hash_mode": "text_lf",
       "path": "scripts/collect_phase5_summary.py",
-      "sha256": "7ae8190266d61a2a7e809f43b8b2d64aeaea16132b189d161cde8237ccedba30"
+      "sha256": "f4d1a90f4f127229556f651f78c7a6a21526bb829d3a04d4e95a38cb9752cd45"
     },
     {
       "bytes": 1100,
@@ -3446,10 +3452,10 @@
       "sha256": "e51972418677737d5bad5ff40febf7da9a713fd6b46d03f229b9df8c6f86bc14"
     },
     {
-      "bytes": 1420,
+      "bytes": 2279,
       "hash_mode": "text_lf",
       "path": "scripts/import_trades_incremental.py",
-      "sha256": "86ddb4f4cab043598936e4ab7be4391dd71236b5ea3ad42504ceec899567bd59"
+      "sha256": "90d5aeb85cf0e68721e6c2e5d3e05de9dd5104c0fedc5d2126babe026df2992d"
     },
     {
       "bytes": 3751,
@@ -3524,10 +3530,10 @@
       "sha256": "e3c286c0800dc3b522f7506035f2c83e65699ff485030039b38c2843121871db"
     },
     {
-      "bytes": 6228,
+      "bytes": 6605,
       "hash_mode": "text_lf",
       "path": "scripts/inspect_phase22_outputs.py",
-      "sha256": "183566ad5e60c046e0c649454bfd14e9ab112bec7d545bf15b67aad2836d86ec"
+      "sha256": "42f0aac61f02e7f7ce68a10199869b245fac6c8050c2939100e0da71f6c1a13e"
     },
     {
       "bytes": 2498,
@@ -3542,10 +3548,10 @@
       "sha256": "1ad660dac8fefee99ea9225e823954271685c8ee329aac023c7c547d9c80f7b4"
     },
     {
-      "bytes": 3001,
+      "bytes": 3178,
       "hash_mode": "text_lf",
       "path": "scripts/inspect_phase5_outputs.py",
-      "sha256": "2f90881136923d1bdb327e0dfaa0615e98a743c68be6b0cfab4f4913b6338127"
+      "sha256": "402ffe55b9a4b8795dfc5055ec1b33406a7f9de5562cf02f88226925f0d14d8a"
     },
     {
       "bytes": 2156,
@@ -3596,10 +3602,10 @@
       "sha256": "ace3e4a1365036abf11b89050248d1501ace08522b9696de18942cfc2d25a8b3"
     },
     {
-      "bytes": 20188,
+      "bytes": 20208,
       "hash_mode": "text_lf",
       "path": "scripts/large_trades_import_quality_gate.py",
-      "sha256": "4ba34cf220a4d3beb3d93ffa98b69bbbcb650e626b336ef61b8a2a66130655cd"
+      "sha256": "ebf95a474626de98b6a55e93d3f1a702a6906e6aa6f9b9578838baee85727fab"
     },
     {
       "bytes": 1622,
@@ -3668,10 +3674,10 @@
       "sha256": "9b0e6e2ddb814c46441b772514bdec1659bcf9765de78291536562e11e4bc57a"
     },
     {
-      "bytes": 1672,
+      "bytes": 2230,
       "hash_mode": "text_lf",
       "path": "scripts/phase17_preflight.py",
-      "sha256": "fb9dfc7ac22cb140971642fca93e54071d7548cde7b706f3b974bf237ac8dcf0"
+      "sha256": "0395acc0d61a8e9d60788a14c1b0f7442e0b3328a7a9be88e945e9b4f565e488"
     },
     {
       "bytes": 1455,
@@ -3710,10 +3716,10 @@
       "sha256": "a33f370b76ff37163c9aed69f83504a6d6f95c535c237ff35a1721ac4c2c3c93"
     },
     {
-      "bytes": 2014,
+      "bytes": 2361,
       "hash_mode": "text_lf",
       "path": "scripts/phase5_preflight.py",
-      "sha256": "71bc77577eaf78330f1edd45466d1933c9724bf3eff9b6ae7ed67b0741f2d5cd"
+      "sha256": "02143473c5d20c3aefada84a20a6514fa7de162cd7e08f52c0d171ac77689ffb"
     },
     {
       "bytes": 1689,
@@ -3764,10 +3770,10 @@
       "sha256": "0c7c6a61c77edc725f0e29a14368ef4cf668fcf865e38d14abd05d2ed7b2db48"
     },
     {
-      "bytes": 6750,
+      "bytes": 6488,
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
-      "sha256": "ad545d94b49e9e70d5dedc14c21d9b9bd05b69ded63da6e0d8b6006e4bae9e60"
+      "sha256": "2300537f5cdaa5722f70b4e99d4caf701c9bfc029e2197556e4bdd6b4c1ad60e"
     },
     {
       "bytes": 2275,
@@ -3866,10 +3872,10 @@
       "sha256": "c559f3d062e3e0e2d76ab3a8248182fbf0ffa9fb8a2aa46c314b3a361c5b8380"
     },
     {
-      "bytes": 35413,
+      "bytes": 36274,
       "hash_mode": "text_lf",
       "path": "scripts/run_bitradex_ocr_v11_single_command_ingestion.py",
-      "sha256": "d3bd642ecc37f75f949d2c1fa20d599307ccc0b04c4bdbfe22bf5ab7ace9e1a6"
+      "sha256": "1aec7cad27c992f7bd09c7aa94f8fad19bee1bdf935dc5b854d179c45c1f46b9"
     },
     {
       "bytes": 1758,
@@ -3968,10 +3974,10 @@
       "sha256": "2f7a07caa012458bb9ecb7cf2be458df4b3716b5dfa55766cf2a805858f33f95"
     },
     {
-      "bytes": 2448,
+      "bytes": 2628,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_feedback_master_consolidation_v1.py",
-      "sha256": "52497459ce0b947836ae95d6ae8444011dcc23d1cca9b320f6d0d0b40701d5fe"
+      "sha256": "e10f7e17684e109130b46e4eaf0eae64c44ef61fab2941937ea350d579a49dc9"
     },
     {
       "bytes": 2633,
@@ -4160,10 +4166,10 @@
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
     },
     {
-      "bytes": 15330,
+      "bytes": 7829,
       "hash_mode": "text_lf",
       "path": "scripts/sync_ocr_master_v11_phase5_sidecars.py",
-      "sha256": "9d007a68530eb4615b851fbb7fdff6565972f1a8ccbc40aad7f01c7d3c617b69"
+      "sha256": "8b9aba84036ef728e5b77b0c162e8dc5d24a7680a0f3ca9433f040ad2e778b4f"
     },
     {
       "bytes": 1661,
@@ -4268,10 +4274,10 @@
       "sha256": "2f429ad0a0be8aec9f769d74cfa0ca4048ff2c3bee344f8d279d2e1e0c07c418"
     },
     {
-      "bytes": 5497,
+      "bytes": 2272,
       "hash_mode": "text_lf",
       "path": "scripts/vital_bitradex_ocr_canonical_contract_v1.py",
-      "sha256": "ae23dcbf3261390a53bd257c3cdebb6b40517cbd86b5c3b52a232324a5d4ca90"
+      "sha256": "4a0d4543901aa9a4b81f49615caf33bcef29c03199d7d997dd0829ec62c6d04e"
     },
     {
       "bytes": 0,
@@ -4826,6 +4832,12 @@
       "sha256": "7aee261b1f359896e7094967341bbe158e265369c395ea17e33796c14a85a3ca"
     },
     {
+      "bytes": 7276,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trade_file_readonly.py",
+      "sha256": "7ce2ddc385fff512c9696a3b6bd0e1ae9d7a3be53127586e594e88d2f24e1b21"
+    },
+    {
       "bytes": 3092,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trade_schema.py",
@@ -4856,10 +4868,10 @@
       "sha256": "7efee2c2ac682242796ac9954ddea525cd34c4a69ab985cdefcdb4e5fe223147"
     },
     {
-      "bytes": 42080,
+      "bytes": 42084,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/freqtrade_adapter.py",
-      "sha256": "b9e557d6c0d72dad9b8e2c70a6031910e42caf054de4804180c13e5950ed0c8f"
+      "sha256": "7030d1104eb6f75f10dd12999fa93c18519a2423b1c29faa30c5821097be98e9"
     },
     {
       "bytes": 50432,
@@ -4880,10 +4892,10 @@
       "sha256": "e66a652cd8ac11f2290a8a08823829abc8e95b87270839cb2b1498d40bfdc46e"
     },
     {
-      "bytes": 12510,
+      "bytes": 12792,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
-      "sha256": "c413781e99773513b1111c718d6f4fb672a5bb8a02f7a43134295a4d082be0ee"
+      "sha256": "a38803ecb5a79d79435392ebbe83c3a59487ebb1cf61f4bfbe4ad02bde7a30cb"
     },
     {
       "bytes": 28632,
@@ -4910,10 +4922,10 @@
       "sha256": "82579775796ddec911f764975471cfd53cfdd2e3572a553e5a8f979c1919ff02"
     },
     {
-      "bytes": 12798,
+      "bytes": 12803,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/staging_runner.py",
-      "sha256": "3d5bf61078b65731ef334d9f7dadd933e0bb63bcee8d4cec4292ec3a74a126c5"
+      "sha256": "ed818d0c609db91ff6f83821b747cb3ae66126338dd28683bda6a9d37cd96539"
     },
     {
       "bytes": 17240,
@@ -4922,10 +4934,10 @@
       "sha256": "9b01afa8608623fcdb251c21d2d034abe2e188f35fd3f227400a41fc5db61125"
     },
     {
-      "bytes": 13505,
+      "bytes": 3003,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trades_importer.py",
-      "sha256": "23d59d86a81a77628f53785caf7a68c506a2de17da497b948eb444361580e567"
+      "sha256": "2162e0f96d22a1b03410ac8c9057488b64ff6b7762a0c8b5ea2a0b1f122c12d1"
     },
     {
       "bytes": 395,
@@ -4976,10 +4988,10 @@
       "sha256": "c7bf7349c2b7b435465a5613bec176a5e1d6cc1ec8c1c2fc7242135bd902d9fa"
     },
     {
-      "bytes": 11360,
+      "bytes": 11215,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/paper_cycle_reset.py",
-      "sha256": "6bd59c5a164af5e0ee8df3ab7c21cb2ceef41c7d1d9db5f3a02ac9e9ed9536e5"
+      "sha256": "a17065deac40816e63f36d805a7fc0b5bd9b8e3309de71dca722fa2615fc7623"
     },
     {
       "bytes": 4460,
@@ -5126,10 +5138,10 @@
       "sha256": "a5bcc699a9c5b6a6f4fb9c6f0138090ec87104bedc638b3c84825112228400df"
     },
     {
-      "bytes": 12146,
+      "bytes": 11986,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/feature_contracts/contract_builder.py",
-      "sha256": "98ef096069015eec78c2cc9a31c327daa5c1b4a963886f12d5bb8bacb8abad09"
+      "sha256": "cbabe2201fd46e8b7516cc825f861d66fde94b42a4a0f533ea24aa5ba20c5dbc"
     },
     {
       "bytes": 7640,
@@ -5228,10 +5240,10 @@
       "sha256": "c4aac3cd42918fcc7b5551d2ff8285cca63cf7f083ff0147a74a3a060fc7b9a7"
     },
     {
-      "bytes": 10423,
+      "bytes": 10425,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/daily_foundation_runner.py",
-      "sha256": "e039e24c658353cb65eac46a824a95c45f51f136cc80369c5ca7f97d54af6c95"
+      "sha256": "73adbca030cf081712011196007e2b340870a41baaa3c59b123aceef610d9ecb"
     },
     {
       "bytes": 20522,
@@ -5240,10 +5252,10 @@
       "sha256": "95367cfbf519043f3dcac13a59734c3f78b818040d9b921b60373d23f1e0741b"
     },
     {
-      "bytes": 26339,
+      "bytes": 2501,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/master_consolidation.py",
-      "sha256": "706c68f3c7863fa8f72b09f709e7cf143aacddeb056bae8d601e98193c784370"
+      "sha256": "078605d00baf8c7d182523eb0e023af4a330dae324f766884b0f24e28f767b52"
     },
     {
       "bytes": 3856,
@@ -5684,10 +5696,10 @@
       "sha256": "c7ee2cabd4285ad37cb8ef470dd4484b53ccf475f03699d34f263dd228ed4b46"
     },
     {
-      "bytes": 27968,
+      "bytes": 28014,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/ai_shadow_threshold_input_builder.py",
-      "sha256": "24b51cf39d2cd12eb38b2b4764a536afcb3d59042166c6f8d5af4f6ce3a0bbdb"
+      "sha256": "859a46860916384b3465fa7cd8e0fe2fd02da0cae76bcd726b0cc3395dd9c420"
     },
     {
       "bytes": 5792,
@@ -5708,10 +5720,10 @@
       "sha256": "307a9d3705e44e9281abd5b3a77c23567a6a2f8e596c287c6b5568d082e35796"
     },
     {
-      "bytes": 9486,
+      "bytes": 9474,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/dataset_manifest.py",
-      "sha256": "149aace575b1667da1410f41828e6dbd84e11d2bcfa76d943180896ee4da5c34"
+      "sha256": "7911fbdbbe5af2a9df9dd610d53b6802b8b805aa4cd8ebd07628f46392dcda9e"
     },
     {
       "bytes": 22014,
@@ -5882,10 +5894,10 @@
       "sha256": "623ed35ebf085636f144759b1cc2cd11448ec1ff3ef3fa6cf50057704b771341"
     },
     {
-      "bytes": 26920,
+      "bytes": 26937,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/unified_feature_contract.py",
-      "sha256": "5ff592051ead7a4747a0ade39da8d8166abd864ca7dbecadbf0fa3882aac21f0"
+      "sha256": "609f305cf4af477ca2356572cc448cfe541d23fd2d775efef16b3d48f8800d90"
     },
     {
       "bytes": 5867,
@@ -6248,10 +6260,10 @@
       "sha256": "81fe7ba36a7ee29bdcabdf87378f1b67e0f4fc0730af5fe4b5c6f852eb9867ee"
     },
     {
-      "bytes": 8702,
+      "bytes": 9002,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/paper_session.py",
-      "sha256": "fa723027daf162944dfa9c79b6e88bbfe06ad5235d846bf408c6453e95272239"
+      "sha256": "2c660153c6218600d5d3c3ca61bf5741716759523db1a2675b6a77bac0acae09"
     },
     {
       "bytes": 723,
@@ -6482,10 +6494,10 @@
       "sha256": "dc004207f2272c934bb7b3b9e9b06cc0f98fddda166a96b9ad2b70e88fa61ecb"
     },
     {
-      "bytes": 16021,
+      "bytes": 16043,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_learning_contracts.py",
-      "sha256": "615a3840973a52282477d656e395d2c8452ddf05db80478f09a361222254efd1"
+      "sha256": "1f24bce1c0a4e2776d8a468de005025bdf35e501cd37cd17551504069874bd7b"
     },
     {
       "bytes": 36078,
@@ -6566,10 +6578,10 @@
       "sha256": "23275ad9e5bf64e99ab5cbb2d926f2fa672c10678c526522e206eca575cdd829"
     },
     {
-      "bytes": 27232,
+      "bytes": 27676,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/historical_validation_15s.py",
-      "sha256": "15bd3c05e8a69e7140ba7c422c99337e809941140436056ae4a2796892e76931"
+      "sha256": "39f0f3d4a4048f1ade34fadd769402230743126307a8d5fc4b121aa3d36ac924"
     },
     {
       "bytes": 7766,
@@ -6584,10 +6596,10 @@
       "sha256": "751d5d9d4834d94e227e7333379b518ab996cf3619065e1aa7d9b6a8fa0df5fd"
     },
     {
-      "bytes": 34918,
+      "bytes": 35155,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_master_candle_aligned_oos_research/master_candle_oos_research.py",
-      "sha256": "e1841047860e720a6d9e8066195ecaa250c04c74eeaa2fb5557776e6c5e4f8f5"
+      "sha256": "41d7b6330faa022890e1e1eff87ec568b6046e451bbbddf5bd5f168c367f8426"
     },
     {
       "bytes": 189,
@@ -6596,10 +6608,10 @@
       "sha256": "ce207e888beb1098a81d6298f8cfe424549d5c019993e61d8cfcf567be1fc1e7"
     },
     {
-      "bytes": 32995,
+      "bytes": 33181,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_master_candle_positive_ev_slice_mining/slice_mining.py",
-      "sha256": "66e366a1db87ad05a775d156c558f67bdba699b714e4ebccc1c6c671245f2404"
+      "sha256": "6c7fa3dac9f2132b90be55802a0a778d42e3431d9a906fa62f427aa5e14a3ddf"
     },
     {
       "bytes": 187,
@@ -6608,10 +6620,10 @@
       "sha256": "a6bf5dfaf25fa686a9db31bfe7b70cd0ffa0462425deb0ef3d7fb640e66801c0"
     },
     {
-      "bytes": 29167,
+      "bytes": 29334,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_master_candle_positive_rule_oos_validation/oos_validation.py",
-      "sha256": "e55e4db90e0d8d8eadbe86aa7e205bd4c58cecf6cfc5603f09d7709e964e6fee"
+      "sha256": "edd9e9b5764018a1fcf86ae3ac2efa63d398f2266895c33c5dc3434ec45ace69"
     },
     {
       "bytes": 467,
@@ -6632,10 +6644,10 @@
       "sha256": "faa04fe0e1854f73e6e38befb5f45e5ff2a87546da055c5e28863b2c69856e8b"
     },
     {
-      "bytes": 28700,
+      "bytes": 28768,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_master_candle_shadow_observation_replay/replay.py",
-      "sha256": "229d15e1fe33ad000fd22856d247db9b9f035d00ac0174bf2e392a57374807e2"
+      "sha256": "d3b5c121ef52a26662eec44b67522af26eb794cdca370059dac9fd5d43eaa6ea"
     },
     {
       "bytes": 615,
@@ -6674,10 +6686,10 @@
       "sha256": "1a1a98a5c269534115fc48a2dfef61753762edb23dfe597375c57e63f01105c1"
     },
     {
-      "bytes": 32888,
+      "bytes": 33578,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/ocr_v11_dataset.py",
-      "sha256": "f068c56d348c6f5d9fb20c13ba51e8b2cbf40f7f0d7d4072f0f7f3d92ce07061"
+      "sha256": "87d4f43d8846d50c36efea805c52a54dae2b573ef5a309c1685ef8605edd3a4c"
     },
     {
       "bytes": 668,
@@ -6722,10 +6734,10 @@
       "sha256": "62ebb8325dfe8ec2a4eb0ea67319eccd0bc8c2109f4ce5eded5463248c1cb4dd"
     },
     {
-      "bytes": 29786,
+      "bytes": 29734,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_oos_real_slice_computation/real_slice_computation.py",
-      "sha256": "54fe3b565bf48782fcfef83801e8d1feaeb51934cb74da937b445040998ca713"
+      "sha256": "69982957d927c1e56c7cffe0de349e9c6b364bfa809119feb2a2c527b7fb9093"
     },
     {
       "bytes": 596,
@@ -6776,10 +6788,10 @@
       "sha256": "b13e63160001416ebb8fae032396e3cd4c40ec6db63df540bc55e21a5617be59"
     },
     {
-      "bytes": 9572,
+      "bytes": 9585,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_research_closeout.py",
-      "sha256": "0094ed7ebcbdf3d802ace841a5282e1989274741a83a4333e6d098c8d26f4c33"
+      "sha256": "76faec76c2b793b0cd3f9e57e97f90e4fa94b939e3bf223912a90effb3259acf"
     },
     {
       "bytes": 689,
@@ -7274,10 +7286,10 @@
       "sha256": "188b283884245c120e3c486acf3fda31c3b77d29ce1fd7da602c8c8fee278145"
     },
     {
-      "bytes": 10683,
+      "bytes": 3821,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_official_apply_script.py",
-      "sha256": "d1b910b61240e55f56e6208b8bbc2fab44504063eb612a86885443c2dd5a97a1"
+      "sha256": "96474e8b203c6d9fe009d1b4e778215102f9c8e164f56fe3751d1db4f03e2d84"
     },
     {
       "bytes": 5003,
@@ -7286,10 +7298,10 @@
       "sha256": "9caa28f78492d370f1a7b4a65676c2628de954a3494f5d4c9a6eaa219d5b9941"
     },
     {
-      "bytes": 25672,
+      "bytes": 25745,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_v11_single_command_ingestion_orchestrator.py",
-      "sha256": "003a94d8d0944d4b1ae74ea5a779571455dd67a70d9559f92933f3c39d38e55d"
+      "sha256": "d56ae5a53211d7ebfab7045bc1d97bcb1fa123a87210a73a0dc24f102e7a70c5"
     },
     {
       "bytes": 3730,
@@ -7370,10 +7382,10 @@
       "sha256": "99938615595ecb82cb7c299fa379bd034955b3b5bf5b531b86f9f770a8f982dc"
     },
     {
-      "bytes": 10901,
+      "bytes": 10929,
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_contracts_and_source_map_v1.py",
-      "sha256": "b2438cdca9947f6e70ea0ade029d6d749ec1f4a830a0926c146c4b4849a377f5"
+      "sha256": "1b9e32da8ec5766b15da0ee2b601684a4fc6caec2e5ae7520c31e1ab08370c37"
     },
     {
       "bytes": 11851,
@@ -7394,10 +7406,10 @@
       "sha256": "1864014cd6069c71e4479ffd7e287086d6127cf5cf4d0d16ac645e79b5b61e18"
     },
     {
-      "bytes": 11801,
+      "bytes": 11965,
       "hash_mode": "text_lf",
       "path": "tests/test_daily_learning_readonly_loaders_v1.py",
-      "sha256": "78b13ca8452667fbd0a58200b9ece29042e51cc1ae6a29a1189ecdf57da782df"
+      "sha256": "d67be92392bb6d744a263d39339840402af37a6e012c7bfb80cd95af1397dcec"
     },
     {
       "bytes": 8957,
@@ -7964,10 +7976,10 @@
       "sha256": "5d0fc4a8e6493eb67f3a7974af2539f2ca2666093689cdeb9c030a44fef99abd"
     },
     {
-      "bytes": 10832,
+      "bytes": 11063,
       "hash_mode": "text_lf",
       "path": "tests/test_large_trades_import_quality_gate.py",
-      "sha256": "44022c224d845186d233f72cd75b7976ab0d1dbd7814fe49f8077843bb76905c"
+      "sha256": "cf609171a16c4bf1a16f89136f5d46b24b612b893d2415fa69ea0c51fecbc6c3"
     },
     {
       "bytes": 8481,
@@ -8108,16 +8120,16 @@
       "sha256": "ca068221043bc8855a8ebd669edf0e3f38c05efa4a590963450a1c3042f1bb11"
     },
     {
-      "bytes": 10689,
+      "bytes": 10787,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_aligned_oos_research_v1.py",
-      "sha256": "055b9e21586ab1443ca2a58c5e1ffd375ebd94d60f2725b68e9b8a99b5b49e52"
+      "sha256": "cbf24a88728505dbc3550abbe4a1a0cc18eab39ae508b2ed0849833f82388267"
     },
     {
-      "bytes": 8302,
+      "bytes": 8358,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_positive_ev_slice_mining_v1.py",
-      "sha256": "05431995025043dc65215925d6ee4f69a39ed76820279c4303445eeb41cf8ca8"
+      "sha256": "373f41d8d3bc9fca30c5af161edc58393a46d62f6483afa990309452e5e2ee02"
     },
     {
       "bytes": 6222,
@@ -8132,16 +8144,16 @@
       "sha256": "957466fea263ad630faf246739a8b102cced90df69be053ec2a52ae67ccccb7c"
     },
     {
-      "bytes": 7359,
+      "bytes": 7366,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_candle_shadow_observation_replay_v1.py",
-      "sha256": "4bde89a5c9a40aca6a3dc0e05812f96e16607351aed2b11818fe5884b3eee84c"
+      "sha256": "68ae6f65f4c2b92fd27506fb9a75421e368692a9b3215ca0da3368e8e99fdb26"
     },
     {
-      "bytes": 13867,
+      "bytes": 13692,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
-      "sha256": "4671e6d4356dd95c621011db69375e71f78dc69502daa138383f2ce79a47ed11"
+      "sha256": "5fcfce64dbd15dad8bbb8fc08ac1f2798e618657b561385ac24941ddf2fa3c4f"
     },
     {
       "bytes": 15449,
@@ -8162,10 +8174,10 @@
       "sha256": "2f562a684ace3161a93b14257b9a126523e85b37beaaf70e2b59751fc9dc66a6"
     },
     {
-      "bytes": 13241,
+      "bytes": 13246,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_v11_research_dataset.py",
-      "sha256": "2cca4b38f335f1388f97efa8494d156fe5f182916e9a44a97e280cce0c632b75"
+      "sha256": "d466dab442b6505f2a6c348556641e63e1d02e8755780b9a0f879570d0c80549"
     },
     {
       "bytes": 14346,
@@ -8384,10 +8396,10 @@
       "sha256": "efe4f9434905d604d9508b4ab02e582bb8e65e57444d551a880d64644413a20d"
     },
     {
-      "bytes": 10172,
+      "bytes": 3258,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_feedback_master_consolidation_v1.py",
-      "sha256": "ac014390098f7084375d05ee321b1d75e66d926ae8b75de5257447e01b5dd89f"
+      "sha256": "edec08b3bda9e51764d871f2ada829d5bd40e5a3c40c0aa1c2d42bceace2f81b"
     },
     {
       "bytes": 6173,
@@ -8432,10 +8444,10 @@
       "sha256": "28392144cc501d7aeaf3e285e4b504e01d4005d03553c2d91e764b5178ad1492"
     },
     {
-      "bytes": 10134,
+      "bytes": 10112,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_master_divergence_research_closeout_v1.py",
-      "sha256": "1aa90f3f9f0fd8307fdccb00dd389a4e64b90171b49b2b4e866b0ce929cc9a45"
+      "sha256": "1369c02fcab00e791732e69bdee1faff312ff2aeb6c43db7f0c205dd51707d87"
     },
     {
       "bytes": 9663,
@@ -8922,6 +8934,36 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_authoritative_evidence_inventory_v2.py",
       "sha256": "af86efbcc9cde7aba0843b18d0841216f36f94bb25dc158484e563489709bdc8"
+    },
+    {
+      "bytes": 2951,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_boundary_dynamic_reference_resolution_v1.py",
+      "sha256": "f46858738dcfa020b98fe06e79b1e4f90eb241e77e56ce04a595cca53cb70d71"
+    },
+    {
+      "bytes": 3702,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_boundary_operational_reference_isolation_v1.py",
+      "sha256": "e564fb134715b52b053c5e2db15094b2bce27a0f5461755a157d16f2b664db5b"
+    },
+    {
+      "bytes": 3667,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_boundary_readonly_adapter_migration_v1.py",
+      "sha256": "62a0639e56da2bd0660ef3e2fa8e49d4135653f76846cc6717bb6e5d5e00ac3e"
+    },
+    {
+      "bytes": 3289,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_boundary_reverification_closeout_v1.py",
+      "sha256": "385856b3cf4f20867b23fe514ad6bb43910027028cf4111cebbc0ce49c75d55d"
+    },
+    {
+      "bytes": 6081,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_boundary_writer_callsite_removal_v1.py",
+      "sha256": "b394ced4824ac61c735e06e98e2200eaf2cb059cf84b83aedcaa06b1166dc7b0"
     },
     {
       "bytes": 13692,
