@@ -137,7 +137,7 @@ def test_default_is_blocked_without_runtime_read(tmp_path: Path) -> None:
     assert report["status"] == "blocked"
     assert report["decision"] == "MANTER_EM_RESEARCH"
     assert report["allow_runtime_read"] is False
-    assert report["trades_master_loaded"] is False
+    assert report["legacy_trade_dataset_loaded"] is False
     assert report["master_candle_alignment_computed"] is False
     assert report["operational_authority"] is False
     assert report["can_promote_rules"] is False
@@ -150,13 +150,13 @@ def test_runtime_read_loads_master_and_candles_read_only(tmp_path: Path) -> None
     report = build_ocr_master_candle_aligned_oos_research_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=master,
+        legacy_trade_dataset=master,
         candle_roots=[candle_root],
     )
     assert report["status"] == "blocked"
     assert report["input_mode"] == "runtime_read_only"
-    assert report["trades_master_loaded"] is True
-    assert report["trades_master_rows"] == 2
+    assert report["legacy_trade_dataset_loaded"] is True
+    assert report["legacy_trade_dataset_rows"] == 2
     assert report["candle_sources_loaded"] is True
     assert report["candle_rows"] > 0
     assert report["master_candle_alignment_computed"] is True
@@ -174,13 +174,13 @@ def test_ocr_bitradex_master_schema_aligns_to_canonical_candles(tmp_path: Path) 
     report = build_ocr_master_candle_aligned_oos_research_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=master,
+        legacy_trade_dataset=master,
         candle_roots=[candle_root],
     )
-    assert report["trades_master_loaded"] is True
-    assert report["trades_master_rows"] == 3
+    assert report["legacy_trade_dataset_loaded"] is True
+    assert report["legacy_trade_dataset_rows"] == 3
     assert report["normalized_trade_rows"] == 2
-    assert report["trades_master_schema_status"] == "candidate_trade_schema"
+    assert report["legacy_trade_dataset_schema_status"] == "candidate_trade_schema"
     assert report["candle_sources_loaded"] is True
     assert report["candle_source_count"] == 2
     assert report["master_candle_alignment_computed"] is True
@@ -198,7 +198,7 @@ def test_write_requires_explicit_write_and_path(tmp_path: Path) -> None:
     report = build_ocr_master_candle_aligned_oos_research_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=master,
+        legacy_trade_dataset=master,
         candle_roots=[candle_root],
         output_path=output,
         write=True,
@@ -234,7 +234,7 @@ def test_cli_runtime_json(tmp_path: Path) -> None:
             "--project-root",
             str(tmp_path),
             "--allow-runtime-read",
-            "--trades-master",
+            "--legacy-trade-dataset",
             str(master),
             "--candle-root",
             str(candle_root),
@@ -246,7 +246,7 @@ def test_cli_runtime_json(tmp_path: Path) -> None:
         text=True,
     )
     report = json.loads(completed.stdout)
-    assert report["trades_master_loaded"] is True
+    assert report["legacy_trade_dataset_loaded"] is True
     assert report["candle_sources_loaded"] is True
     assert report["master_candle_alignment_computed"] is True
     assert report["feature_rows"] == 2
@@ -257,11 +257,11 @@ def test_missing_sources_remain_blocked(tmp_path: Path) -> None:
     report = build_ocr_master_candle_aligned_oos_research_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=tmp_path / "missing.xlsx",
+        legacy_trade_dataset=tmp_path / "missing.xlsx",
         candle_roots=[tmp_path / "missing_candles"],
     )
     assert report["status"] == "blocked"
-    assert report["trades_master_loaded"] is False
+    assert report["legacy_trade_dataset_loaded"] is False
     assert report["candle_sources_loaded"] is False
     assert report["master_candle_alignment_computed"] is False
-    assert "trades_master_missing" in report["critical_warnings"]
+    assert "legacy_trade_dataset_missing" in report["critical_warnings"]

@@ -23,7 +23,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--allow-runtime-read", action="store_true", help="Allow explicit read-only replay inputs.")
     parser.add_argument("--observation-design-report", default=None, help="Path to shadow observation design report.")
     parser.add_argument("--oos-report", default=None, help="Path to OOS survivor report.")
-    parser.add_argument("--trades-master", default=None, help="Path to closed-trades JSON or CSV source.")
+    parser.add_argument(
+        "--legacy-trade-dataset",
+        default=None,
+        help="Explicit research-only closed-trades JSON or CSV source.",
+    )
     parser.add_argument(
         "--closed-trades-source-contract",
         default=None,
@@ -43,7 +47,7 @@ def main() -> int:
         allow_runtime_read=args.allow_runtime_read,
         observation_design_report=args.observation_design_report,
         oos_report=args.oos_report,
-        trades_master=args.trades_master,
+        legacy_trade_dataset=args.legacy_trade_dataset,
         closed_trades_source_contract=args.closed_trades_source_contract,
         output_report=args.output_report,
         write=args.write,

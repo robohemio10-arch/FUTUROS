@@ -11,7 +11,7 @@ from smartcrypto.research.ocr_master_candle_positive_ev_slice_mining.slice_minin
     build_positive_ev_slice_mining_report,
     mine_positive_ev_slices,
     normalize_candles,
-    normalize_trades_master,
+    normalize_legacy_trade_dataset,
 )
 
 
@@ -73,7 +73,7 @@ def test_default_no_runtime_read_is_blocked_and_safe(tmp_path: Path) -> None:
     assert report["status"] == "blocked"
     assert report["decision"] == "MANTER_EM_RESEARCH"
     assert report["input_mode"] == "no_runtime_rows_loaded"
-    assert report["trades_master_loaded"] is False
+    assert report["legacy_trade_dataset_loaded"] is False
     assert report["aligned_rows"] == 0
     assert report["research_only"] is True
     assert report["operational_authority"] is False
@@ -96,7 +96,7 @@ def test_normalize_ocr_master_schema() -> None:
         ]
     )
 
-    normalized = normalize_trades_master(raw)
+    normalized = normalize_legacy_trade_dataset(raw)
 
     assert len(normalized) == 1
     assert normalized.iloc[0]["symbol_norm"] == "BTCUSDT"
@@ -132,14 +132,14 @@ def test_runtime_read_mines_positive_candidates(tmp_path: Path) -> None:
     report = build_positive_ev_slice_mining_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=trades_path,
+        legacy_trade_dataset=trades_path,
         candle_roots=[candle_root],
         min_trade_count=10,
         max_day_concentration=1.0,
         no_write=True,
     )
 
-    assert report["trades_master_loaded"] is True
+    assert report["legacy_trade_dataset_loaded"] is True
     assert report["candle_sources_loaded"] is True
     assert report["master_candle_alignment_computed"] is True
     assert report["aligned_rows"] == 80
@@ -156,7 +156,7 @@ def test_positive_candidates_remain_research_only(tmp_path: Path) -> None:
     report = build_positive_ev_slice_mining_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=trades_path,
+        legacy_trade_dataset=trades_path,
         candle_roots=[candle_root],
         min_trade_count=10,
         max_day_concentration=1.0,
@@ -180,7 +180,7 @@ def test_candidate_rejected_when_concentrated(tmp_path: Path) -> None:
     report = build_positive_ev_slice_mining_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=trades_path,
+        legacy_trade_dataset=trades_path,
         candle_roots=[candle_root],
         min_trade_count=10,
         max_day_concentration=0.01,
@@ -205,7 +205,7 @@ def test_no_write_does_not_create_report(tmp_path: Path) -> None:
     report = build_positive_ev_slice_mining_report(
         project_root=tmp_path,
         allow_runtime_read=True,
-        trades_master=trades_path,
+        legacy_trade_dataset=trades_path,
         candle_roots=[candle_root],
         write=True,
         no_write=True,

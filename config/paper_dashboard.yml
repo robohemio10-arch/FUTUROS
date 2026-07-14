@@ -10,7 +10,6 @@ paths:
   primary_signals: data/freqtrade_signals.json
   pinned_signals: data/runtime/active_freqtrade_signals.json
   decision_log: data/runtime/freqtrade_signal_decisions.jsonl
-  trades_master: data/trades/trades_master.parquet
   training_dataset: data/features/training_dataset.parquet
   market_features: data/features/market_features_60d.parquet
   kill_switch: data/runtime/kill_switch.json

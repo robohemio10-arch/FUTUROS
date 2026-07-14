@@ -17,7 +17,6 @@ from smartcrypto.ml.dataset_manifest import (  # noqa: E402
 from smartcrypto.ml.unified_feature_contract import (  # noqa: E402
     CONTRACT_ID,
     CONTRACT_VERSION,
-    FeatureValidationResult,
     UnifiedFeatureContract,
     UnifiedFeatureContractError,
     always_blocked_columns,
@@ -121,7 +120,7 @@ def build_feature_contract_report(
             "changes_risk": False,
             "changes_model": False,
             "changes_training_dataset": False,
-            "writes_trades_master": False,
+            "writes_legacy_trade_dataset": False,
         }
         if report_path is not None:
             report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,7 +173,7 @@ def build_unified_contract_report(
                 "changes_risk": False,
                 "changes_model": False,
                 "changes_training_dataset": False,
-                "writes_trades_master": False,
+                "writes_legacy_trade_dataset": False,
             }
         ).with_hashes()
         unified_contract = unified.to_dict()
@@ -202,7 +201,7 @@ def build_unified_contract_report(
         "changes_risk": False,
         "changes_model": False,
         "changes_training_dataset": False,
-        "writes_trades_master": False,
+        "writes_legacy_trade_dataset": False,
     }
     if report_path is not None:
         report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -294,7 +293,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "changes_risk": False,
         "changes_model": False,
         "changes_training_dataset": False,
-        "writes_trades_master": False,
+        "writes_legacy_trade_dataset": False,
         "trains_model": False,
         "runs_inference": False,
         "changes_active_signals": False,

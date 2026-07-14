@@ -49,7 +49,7 @@ SAFETY_FLAGS: dict[str, bool] = {
 
 REQUIRED_SOURCE_IDS = (
     "freqtrade_paper_trades_db",
-    "trades_master_xlsx",
+    "legacy_trade_dataset_xlsx",
     "btc_15s_candles",
     "eth_15s_candles",
     "paper_master_divergence_research_closeout",
@@ -86,7 +86,7 @@ REQUIRED_FUTURE_BRANCHES = [
 ALLOWED_NEXT_STEPS = [
     "implementar loaders read-only em branch futura",
     "materializar KPI pack diario em branch futura",
-    "comparar Paper vs trades_master com fontes carregadas em branch futura",
+    "comparar Paper vs dataset legado com fontes carregadas em branch futura",
     "validar coverage de candles e entry features em branch futura",
     "catalogar mistakes e winners em research-only",
     "minerar padroes somente como pesquisa",
@@ -138,9 +138,9 @@ def build_daily_learning_source_map(
                 "Paper execution DB path for future read-only loader contracts.",
             ),
             _source(
-                "trades_master_xlsx",
+                "legacy_trade_dataset_xlsx",
                 "master_reference",
-                "data/processed/trades_master.xlsx",
+                "data/processed/legacy_trade_dataset.xlsx",
                 True,
                 "daily_or_on_new_ocr_batch",
                 True,

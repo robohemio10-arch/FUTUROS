@@ -131,8 +131,6 @@ def discover_sources(root: Path) -> list[dict[str, Any]]:
             ("paper_closed_trades_incremental", root / "data/feedback/paper_closed_trades_incremental.parquet"),
             ("paper_autolearning_foundation_summary", root / "data/reports/paper_autolearning_foundation_summary.json"),
             ("paper_feedback_master_consolidation_preview", root / "data/reports/paper_feedback_master_consolidation_preview_v1.json"),
-            ("trades_master_parquet", root / "data/trades/trades_master.parquet"),
-            ("trades_master_xlsx", root / "data/trades/trades_master.xlsx"),
         ]
     )
     sources: list[dict[str, Any]] = []

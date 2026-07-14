@@ -111,11 +111,11 @@ def build_dataset(
 
 def write_fixture_project(tmp_path: Path) -> tuple[Path, Path, Path]:
     project = tmp_path / "project"
-    master = project / "data" / "trades" / "trades_master.xlsx"
+    master = project / "data" / "trades" / "trades_master.parquet"
     candles = project / "data" / "features" / "market_features_60d.parquet"
     master.parent.mkdir(parents=True)
     candles.parent.mkdir(parents=True)
-    pd.DataFrame([trade_row()]).to_excel(master, index=False)
+    pd.DataFrame([trade_row()]).to_parquet(master, index=False)
     candle_frame().to_parquet(candles, index=False)
     return project, master, candles
 

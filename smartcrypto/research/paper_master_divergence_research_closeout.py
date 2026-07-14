@@ -1,7 +1,7 @@
-"""Research-only closeout for Paper vs trades_master divergence.
+"""Research-only closeout for Paper vs legacy trade-dataset divergence.
 
 This module is intentionally deterministic and side-effect free. It records the
-canonical evidence already collected during the Paper vs trades_master research
+canonical evidence already collected during the Paper vs legacy-dataset research
 investigation, without reading runtime data or granting operational authority.
 """
 
@@ -82,20 +82,20 @@ def build_paper_master_divergence_research_closeout() -> dict[str, Any]:
         "project_name": "SMART FUTUROS",
         "status": "blocked",
         "decision": "MANTER_EM_RESEARCH",
-        "reason": "paper_does_not_replicate_trades_master_edge",
+        "reason": "paper_does_not_replicate_legacy_dataset_edge",
         **SAFETY_FLAGS,
         "executive_summary": {
-            "title": "Paper vs trades_master divergence research closeout",
+            "title": "Paper vs legacy dataset divergence research closeout",
             "conclusion": "paper_freqtrade_does_not_replicate_master_edge",
             "operator_message": (
-                "A janela Paper 19D ficou negativa enquanto o trades_master na "
+                "A janela Paper 19D ficou negativa enquanto o dataset legado na "
                 "mesma janela permaneceu positivo. A evidência bloqueia mudança "
                 "operacional e mantém a investigação em research-only."
             ),
         },
         "paper_window": {
             "label": "Paper 19D",
-            "scope": "paper_vs_trades_master_same_window",
+            "scope": "paper_vs_legacy_dataset_same_window",
         },
         "paper_vs_master_metrics": {
             "paper_trade_count": 239,
@@ -197,7 +197,7 @@ def validate_paper_master_divergence_research_closeout(
         "project_name": "SMART FUTUROS",
         "status": "blocked",
         "decision": "MANTER_EM_RESEARCH",
-        "reason": "paper_does_not_replicate_trades_master_edge",
+        "reason": "paper_does_not_replicate_legacy_dataset_edge",
     }
     for key, expected in expected_top_level.items():
         if payload.get(key) != expected:

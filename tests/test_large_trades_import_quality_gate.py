@@ -218,11 +218,13 @@ def test_apply_blocks_without_successful_dry_run(tmp_path: Path) -> None:
     report = run_gate(tmp_path, source, apply=True)
 
     assert report["status"] == "blocked"
-    assert report["reason"] == "dry_run_required_before_apply"
+    assert report["reason"] == "legacy_master_apply_forbidden"
+    assert report["write_performed"] is False
+    assert report["backup_created"] is False
     assert len(pd.read_parquet(master)) == 1
 
 
-def test_apply_after_ok_dry_run_creates_backup_before_write(tmp_path: Path) -> None:
+def test_apply_after_ok_dry_run_remains_permanently_blocked(tmp_path: Path) -> None:
     source = tmp_path / "incoming.parquet"
     master = tmp_path / "trades" / "trades_master.parquet"
     write_master(master, [trade_row("old-1")])
@@ -232,11 +234,12 @@ def test_apply_after_ok_dry_run_creates_backup_before_write(tmp_path: Path) -> N
     applied = run_gate(tmp_path, source, apply=True)
 
     assert dry_run["status"] == "ok"
-    assert applied["status"] == "ok"
-    assert applied["write_performed"] is True
-    assert applied["backup_created"] is True
-    assert applied["backup_paths"]
-    assert len(pd.read_parquet(master)) == 2
+    assert applied["status"] == "blocked"
+    assert applied["reason"] == "legacy_master_apply_forbidden"
+    assert applied["write_performed"] is False
+    assert applied["backup_created"] is False
+    assert applied["backup_paths"] == []
+    assert len(pd.read_parquet(master)) == 1
 
 
 def test_apply_blocks_when_preflight_has_zero_new_rows(tmp_path: Path) -> None:
@@ -251,9 +254,9 @@ def test_apply_blocks_when_preflight_has_zero_new_rows(tmp_path: Path) -> None:
     assert dry_run["status"] == "ok"
     assert dry_run["candidate_new_rows"] == 0
     assert applied["status"] == "blocked"
-    assert applied["reason"] == "no_candidate_new_rows"
+    assert applied["reason"] == "legacy_master_apply_forbidden"
     assert applied["write_performed"] is False
-    assert "no_candidate_new_rows" in applied["blocking_errors"]
+    assert "legacy_master_apply_forbidden" in applied["blocking_errors"]
     assert len(pd.read_parquet(master)) == 1
 
 
@@ -267,7 +270,8 @@ def test_apply_blocks_when_preflight_failed(tmp_path: Path) -> None:
 
     assert dry_run["status"] == "blocked"
     assert applied["status"] == "blocked"
-    assert applied["reason"] == "dry_run_required_before_apply"
+    assert applied["reason"] == "legacy_master_apply_forbidden"
+    assert applied["write_performed"] is False
     assert not (tmp_path / "trades" / "trades_master.parquet").exists()
 
 

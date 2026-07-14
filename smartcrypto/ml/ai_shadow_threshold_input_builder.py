@@ -115,6 +115,7 @@ def build_ai_shadow_threshold_evaluation_input(
         write_json(payload, report_path)
         return payload
 
+    assert decision_column is not None
     normalized_decisions = normalize_decisions(decisions_frame, decision_column=decision_column)
     missing_probability_rows = int(normalized_decisions["probability_or_confidence"].isna().sum())
     missing_decision_rows = int(normalized_decisions["decision"].eq("").sum())
@@ -613,7 +614,7 @@ def safety_payload(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         "changes_risk": False,
         "freqtrade_db_touched": False,
         "training_dataset_touched": False,
-        "trades_master_touched": False,
+        "legacy_trade_dataset_touched": False,
         "registry_updated": False,
         "model_promoted": False,
         "signal_producer_updated": False,

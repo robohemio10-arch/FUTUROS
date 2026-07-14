@@ -107,6 +107,14 @@ def read_trader_master_readonly(
     source = requested if requested.is_absolute() else root / requested
     display = _display_path(source, root)
     base = {
+        "operational_authority": False,
+        "import_authorized": False,
+        "write_authorized": False,
+        "write_performed": False,
+        "writes_trader_master": False,
+        "writes_runtime": False,
+        "writes_sqlite": False,
+        "writes_parquet": False,
         "trader_master_path": display,
         "trader_master_temp_copy_used": False,
         "trader_master_sha256_before": None,

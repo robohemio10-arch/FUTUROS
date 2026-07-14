@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", default=".", help="Project root. Defaults to current directory.")
     parser.add_argument("--allow-runtime-read", action="store_true", help="Explicitly allow read-only runtime/data source reads.")
-    parser.add_argument("--trades-master", default=None, help="Path to trades_master source. Defaults to data/trades/trades_master.xlsx when runtime reads are allowed.")
+    parser.add_argument("--legacy-trade-dataset", default=None, help="Explicit research-only legacy trade dataset path.")
     parser.add_argument("--candle-root", action="append", default=[], help="Root(s) used to discover canonical BTC/ETH candle files.")
     parser.add_argument("--min-trade-count", type=int, default=30, help="Minimum in-sample trades required for a candidate slice.")
     parser.add_argument("--max-day-concentration", type=float, default=0.35, help="Maximum single-day concentration allowed.")
@@ -40,7 +40,7 @@ def main() -> int:
     report = build_positive_rule_oos_validation_report(
         project_root=args.project_root,
         allow_runtime_read=args.allow_runtime_read,
-        trades_master=args.trades_master,
+        legacy_trade_dataset=args.legacy_trade_dataset,
         candle_roots=args.candle_root or None,
         min_trade_count=args.min_trade_count,
         max_day_concentration=args.max_day_concentration,

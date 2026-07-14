@@ -85,9 +85,11 @@ def prepare_project(
     ):
         (scripts / name).write_text("# fixture\n", encoding="utf-8")
 
-    write_xlsx(
-        project / "data" / "trades" / "trades_master.xlsx",
-        [trade_row("aaaaaaaaaaaaaaaaaaaaaaaa", "master.png")],
+    master_rows = [trade_row("aaaaaaaaaaaaaaaaaaaaaaaa", "master.png")]
+    write_xlsx(project / "data" / "trades" / "trades_master.xlsx", master_rows)
+    pd.DataFrame(master_rows).to_parquet(
+        project / "data" / "trades" / "trades_master.parquet",
+        index=False,
     )
     if candidate:
         write_xlsx(
@@ -142,7 +144,7 @@ class FakeExecutor:
             return CommandResult(command, 0, " M tracked.py" if self.git_dirty else "", "")
         if stage == "ocr":
             if self.mutate_master_on_ocr:
-                master = cwd / "data" / "trades" / "trades_master.xlsx"
+                master = cwd / "data" / "trades" / "trades_master.parquet"
                 master.write_bytes(master.read_bytes() + b"unexpected mutation")
             return CommandResult(command, 0, json.dumps({"status": "ok"}), "")
         if stage == "apply":
@@ -315,7 +317,7 @@ def test_allow_image_count_mismatch_is_rejected_for_apply(tmp_path: Path) -> Non
         executor=executor,
     )
     assert report["status"] == "blocked"
-    assert report["reason"] == "allow_image_count_mismatch_is_dry_run_only"
+    assert report["reason"] == "legacy_master_import_disabled"
     assert executor.commands == []
 
 
@@ -363,8 +365,8 @@ def test_apply_import_requires_clean_worktree(tmp_path: Path) -> None:
     )
 
     assert report["status"] == "blocked"
-    assert report["reason"] == "dirty_git_worktree"
-    assert command_stages(executor) == ["git"]
+    assert report["reason"] == "legacy_master_import_disabled"
+    assert command_stages(executor) == []
 
 
 def test_missing_official_ocr_stage_script_blocks(tmp_path: Path) -> None:
@@ -421,7 +423,7 @@ def test_mismatch_never_calls_import_or_phase5_and_preserves_safety(tmp_path: Pa
     )
 
     assert report["status"] == "blocked"
-    assert report["reason"] == "input_image_count_mismatch"
+    assert report["reason"] == "legacy_master_import_disabled"
     assert "apply" not in command_stages(executor)
     assert "phase5" not in command_stages(executor)
     assert report["paper_only"] is True
@@ -440,8 +442,8 @@ def test_official_import_blocks_if_mandatory_backup_is_missing(tmp_path: Path) -
     )
 
     assert report["status"] == "blocked"
-    assert report["reason"] == "mandatory_backup_missing"
-    assert "mandatory_backup_missing_after_import" in report["blockers"]
+    assert report["reason"] == "legacy_master_import_disabled"
+    assert executor.commands == []
 
 
 def test_orchestrator_backup_exists_before_official_import(tmp_path: Path) -> None:
@@ -453,12 +455,10 @@ def test_orchestrator_backup_exists_before_official_import(tmp_path: Path) -> No
         executor=executor,
     )
 
-    assert report["status"] == "ok"
-    backup = Path(report["backup_path"])
-    assert backup.is_dir()
-    assert (backup / "trades_master.xlsx").exists()
-    assert report["official_import_backup_path"]
-    assert command_stages(executor).index("apply") < command_stages(executor).index("sync")
+    assert report["status"] == "blocked"
+    assert report["reason"] == "legacy_master_import_disabled"
+    assert report["write_performed"] is False
+    assert executor.commands == []
 
 
 def test_run_phase5_is_opt_in(tmp_path: Path) -> None:
@@ -468,8 +468,8 @@ def test_run_phase5_is_opt_in(tmp_path: Path) -> None:
         options(project, input_dir, package, apply_import=True),
         executor=without_phase5,
     )
-    assert report["status"] == "ok"
-    assert report["phase5_status"] == "not_requested"
+    assert report["status"] == "blocked"
+    assert report["reason"] == "legacy_master_import_disabled"
     assert "phase5" not in command_stages(without_phase5)
 
     project2, input_dir2, package2 = prepare_project(tmp_path / "second")
@@ -478,11 +478,9 @@ def test_run_phase5_is_opt_in(tmp_path: Path) -> None:
         options(project2, input_dir2, package2, apply_import=True, run_phase5=True),
         executor=with_phase5,
     )
-    assert report2["status"] == "ok"
-    assert report2["phase5_status"] == "ok"
-    assert report2["trade_enriched_rows"] == 2
-    assert report2["training_dataset_rows"] == 2
-    assert "phase5" in command_stages(with_phase5)
+    assert report2["status"] == "blocked"
+    assert report2["reason"] == "legacy_master_import_disabled"
+    assert "phase5" not in command_stages(with_phase5)
 
 
 def test_run_phase5_without_apply_import_is_blocked(tmp_path: Path) -> None:
@@ -583,7 +581,7 @@ def test_ocr_stage_is_blocked_if_it_changes_master(tmp_path: Path) -> None:
         executor=FakeExecutor(mutate_master_on_ocr=True),
     )
     assert report["status"] == "failed"
-    assert report["reason"] == "ocr_staging_changed_trades_master"
+    assert report["reason"] == "ocr_staging_changed_legacy_master"
     assert report["master_unchanged_by_staging"] is False
     assert "apply" not in report["validations_executed"]
 
@@ -615,6 +613,10 @@ def test_ocr_v11_master_requires_source_columns_in_candidate(tmp_path: Path) -> 
         )
     }
     write_xlsx(project / "data" / "trades" / "trades_master.xlsx", [raw_master])
+    pd.DataFrame([raw_master]).to_parquet(
+        project / "data" / "trades" / "trades_master.parquet",
+        index=False,
+    )
 
     report = run_ingestion(options(project, input_dir, package), executor=FakeExecutor())
 

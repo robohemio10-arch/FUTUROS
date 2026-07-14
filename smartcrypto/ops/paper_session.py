@@ -11,6 +11,13 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -150,6 +157,10 @@ def decision_log_summary(path: str | Path, tail: int = 200) -> dict[str, Any]:
 def build_session_state(config_path: str | Path = "config/paper_session.yml") -> dict[str, Any]:
     config = load_yaml(config_path)
     paths = config.get("paths", {})
+    legacy_bundle = read_trader_master_readonly(
+        project_root=Path.cwd(),
+        trader_master_path=DEFAULT_MASTER,
+    )
     state = {
         "created_at": iso_now(),
         "runtime_mode": os.getenv("SMARTCRYPTO_RUNTIME_MODE", "paper"),
@@ -160,7 +171,7 @@ def build_session_state(config_path: str | Path = "config/paper_session.yml") ->
         "decision_log": decision_log_summary(paths.get("decision_log", "data/runtime/freqtrade_signal_decisions.jsonl")),
         "freqtrade_db": inspect_freqtrade_db(paths.get("freqtrade_sqlite_candidates", [])),
         "datasets": {
-            "trades_master": count_parquet(paths.get("trades_master", "data/trades/trades_master.parquet")),
+            "legacy_master_readonly": legacy_bundle.report,
             "training_dataset": count_parquet(paths.get("training_dataset", "data/features/training_dataset.parquet")),
             "qlib_predictions": count_parquet(paths.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")),
         },

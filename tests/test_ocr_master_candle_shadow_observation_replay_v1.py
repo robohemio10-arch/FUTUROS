@@ -164,7 +164,7 @@ def test_missing_sources_return_structured_blocked(tmp_path: Path) -> None:
         project_root=tmp_path,
         allow_runtime_read=True,
         observation_design_report=missing,
-        trades_master=missing,
+        legacy_trade_dataset=missing,
     )
 
     assert report["status"] == "blocked"

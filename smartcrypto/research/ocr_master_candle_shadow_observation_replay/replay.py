@@ -139,7 +139,7 @@ def _safe_float(value: object, *, default: float = 0.0) -> float:
     if value is None:
         return default
     try:
-        numeric = float(value)
+        numeric = float(str(value))
     except (TypeError, ValueError):
         return default
     if math.isnan(numeric) or math.isinf(numeric):
@@ -406,7 +406,7 @@ def load_replay_inputs(
     allow_runtime_read: bool = False,
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
-    trades_master: str | Path | None = None,
+    legacy_trade_dataset: str | Path | None = None,
     closed_trades_source_contract: str | Path | None = None,
     survivor_records: Sequence[Mapping[str, Any]] | None = None,
     closed_trades: Sequence[Mapping[str, Any]] | None = None,
@@ -432,7 +432,9 @@ def load_replay_inputs(
         )
 
     survivor_path_raw = observation_design_report or oos_report
-    if survivor_path_raw is None or (trades_master is None and closed_trades_source_contract is None):
+    if survivor_path_raw is None or (
+        legacy_trade_dataset is None and closed_trades_source_contract is None
+    ):
         return LoadedReplayInputs(
             survivors=[],
             trades=[],
@@ -442,7 +444,7 @@ def load_replay_inputs(
         )
 
     survivor_path = Path(survivor_path_raw)
-    trade_path = Path(trades_master) if trades_master is not None else None
+    trade_path = Path(legacy_trade_dataset) if legacy_trade_dataset is not None else None
     contract_path = Path(closed_trades_source_contract) if closed_trades_source_contract is not None else None
     if not survivor_path.is_absolute():
         survivor_path = root / survivor_path
@@ -539,7 +541,7 @@ def build_shadow_observation_replay_report(
     allow_runtime_read: bool = False,
     observation_design_report: str | Path | None = None,
     oos_report: str | Path | None = None,
-    trades_master: str | Path | None = None,
+    legacy_trade_dataset: str | Path | None = None,
     closed_trades_source_contract: str | Path | None = None,
     survivor_records: Sequence[Mapping[str, Any]] | None = None,
     closed_trades: Sequence[Mapping[str, Any]] | None = None,
@@ -555,7 +557,7 @@ def build_shadow_observation_replay_report(
         allow_runtime_read=allow_runtime_read,
         observation_design_report=observation_design_report,
         oos_report=oos_report,
-        trades_master=trades_master,
+        legacy_trade_dataset=legacy_trade_dataset,
         closed_trades_source_contract=closed_trades_source_contract,
         survivor_records=survivor_records,
         closed_trades=closed_trades,

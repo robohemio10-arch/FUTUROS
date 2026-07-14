@@ -23,7 +23,6 @@ paths:
   kill_switch: data/runtime/kill_switch.json
   kill_switch_state: data/runtime/kill_switch.json
   paper_exit_control: data/runtime/paper_exit_control.json
-  trades_master: data/trades/trades_master.parquet
   training_dataset: data/features/training_dataset.parquet
   sqlite: data/sqlite/trading_dataset.sqlite
   freqtrade_sqlite_candidates:

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from smartcrypto.data.trades_importer import read_trade_file
+from smartcrypto.data.trade_file_readonly import read_trade_file
 
 from .fingerprint_spec import (
     CASEFOLDED_FIELDS,
@@ -29,20 +29,20 @@ DEFAULT_KILL_SWITCH = Path("data/KILL_SWITCH")
 ALLOWED_REPORT_ROOT = Path("data/reports")
 
 REUSED_CONTRACTS = {
-    "tabular_loader": "smartcrypto.data.trades_importer.read_trade_file",
+    "tabular_loader": "smartcrypto.data.trade_file_readonly.read_trade_file",
     "supported_extensions": [".csv", ".parquet", ".xls", ".xlsx"],
 }
 
 REPOSITORY_INVENTORY = {
     "legacy_identity_contracts": [
-        "smartcrypto.data.trades_importer.build_dedup_key",
+        "smartcrypto.data.trade_file_readonly.build_dedup_key",
         "smartcrypto.research.paper_closed_trades_readonly_source_contract._row_fingerprint",
         "smartcrypto.learning.paper_autolearning.feedback_store.row_fingerprint_for",
     ],
-    "trader_master_writers": [
+    "quarantined_legacy_writers": [
         "smartcrypto.data.trades_importer.write_master",
         "smartcrypto.learning.paper_autolearning.master_consolidation",
-        "scripts.apply_bitradex_ocr_orderid_synthetic_v5_to_trades_master",
+        "scripts.retired_bitradex_ocr_apply_compatibility_cli",
         "scripts.sync_ocr_master_v11_phase5_sidecars",
     ],
     "v2_integration_decision": "isolated_read_only_validator_no_writer_replacement",

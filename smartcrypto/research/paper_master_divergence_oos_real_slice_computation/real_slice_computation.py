@@ -24,7 +24,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = "paper_master_divergence_oos_real_slice_computation_v1"
@@ -130,7 +130,6 @@ DEFAULT_SOURCE_CANDIDATES: dict[str, tuple[str, ...]] = {
         "data/reports/dashboard_real_paper_sources_v1.json",
     ),
     "master": (
-        "data/trades/trades_master.xlsx",
         "data/reports/ocr_v11_research_dataset.json",
         "data/reports/daily_paper_master_kpi_pack_v1.json",
     ),

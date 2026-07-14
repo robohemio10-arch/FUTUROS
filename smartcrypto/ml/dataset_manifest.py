@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-import numpy as np
 import pandas as pd
 
 from smartcrypto.ml.unified_feature_contract import (
@@ -80,7 +79,7 @@ class UnifiedDatasetManifest:
     changes_risk: bool = False
     changes_model: bool = False
     changes_training_dataset: bool = False
-    writes_trades_master: bool = False
+    writes_legacy_trade_dataset: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)

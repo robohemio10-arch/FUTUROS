@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import json
 import re
-import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,15 +15,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from smartcrypto.data.trades_importer import (
-    CANONICAL_COLUMNS,
+from smartcrypto.data.trade_file_readonly import (  # noqa: E402
     REQUIRED_COLUMNS,
     build_dedup_key,
     clean_trade_frame,
     normalize_columns,
-    read_master,
     read_trade_file,
-    write_master,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (  # noqa: E402
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (  # noqa: E402
+    read_trader_master_readonly,
 )
 
 
@@ -36,13 +38,34 @@ TIME_COLUMNS = ["horario_abertura", "horario_fechamento"]
 DEDUP_POLICY = "order_id_first_then_fingerprint"
 
 
+def infer_master_project_root(master_parquet_path: Path) -> Path:
+    if not master_parquet_path.is_absolute():
+        return PROJECT_ROOT
+    source = master_parquet_path.resolve()
+    if source.parent.name == "trades" and source.parent.parent.name == "data":
+        return source.parent.parent.parent
+    return source.parent.parent
+
+
+def read_master_readonly(
+    master_parquet_path: Path,
+) -> tuple[pd.DataFrame | None, dict[str, Any]]:
+    bundle = read_trader_master_readonly(
+        project_root=infer_master_project_root(master_parquet_path),
+        trader_master_path=master_parquet_path,
+    )
+    if bundle.report.get("status") != "ok":
+        return None, dict(bundle.report)
+    return pd.DataFrame(bundle.source_rows), dict(bundle.report)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Preflight/dry-run quality gate para importar lote grande de trades.",
     )
     parser.add_argument("--source-file", required=True)
-    parser.add_argument("--master-xlsx", default="data/trades/trades_master.xlsx")
-    parser.add_argument("--master-parquet", default="data/trades/trades_master.parquet")
+    parser.add_argument("--master-xlsx", default=str(DEFAULT_MASTER.with_suffix(".xlsx")))
+    parser.add_argument("--master-parquet", default=str(DEFAULT_MASTER))
     parser.add_argument("--compatibility-xlsx", default="data/trades/trades_excel.xlsx")
     parser.add_argument("--report", default=str(REPORT_PATH))
     parser.add_argument("--backup-dir", default="data/backups/large_trades_import")
@@ -219,9 +242,6 @@ def build_preflight_report(
 ) -> tuple[dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
     raw, read_errors = read_source(source_file)
     source_hash = file_sha256(source_file) if source_file.exists() else None
-    master = read_master(master_parquet_path, master_xlsx_path)
-    previous_master_rows = int(len(master))
-
     if raw is None:
         report = base_report(
             status="blocked",
@@ -231,19 +251,54 @@ def build_preflight_report(
             report_path=report_path,
             apply=apply,
             read_rows=0,
-            previous_master_rows=previous_master_rows,
+            previous_master_rows=0,
             candidate_new_rows=0,
             duplicate_rows=0,
             duplicate_by_order_id_rows=0,
             duplicate_by_fingerprint_rows=0,
             missing_order_id_rows=0,
             invalid_rows=0,
-            final_expected_master_rows=previous_master_rows,
+            final_expected_master_rows=0,
             blocking_errors=read_errors,
         )
         return report, None, None
 
     valid_incoming, validation = validate_large_trade_source(raw, source_file)
+    master, master_read_report = read_master_readonly(master_parquet_path)
+    previous_master_rows = int(len(master)) if master is not None else 0
+    if master is None:
+        blocking_errors = [
+            *validation["blocking_errors"],
+            f"master_read_blocked:{master_read_report.get('reason', 'unknown')}",
+        ]
+        report = base_report(
+            status="blocked",
+            reason=("validation_failed" if validation["blocking_errors"] else "master_read_blocked"),
+            source_file=source_file,
+            source_hash=source_hash,
+            report_path=report_path,
+            apply=apply,
+            read_rows=int(len(raw)),
+            previous_master_rows=previous_master_rows,
+            candidate_new_rows=0,
+            duplicate_rows=0,
+            invalid_rows=int(validation["invalid_rows"]),
+            final_expected_master_rows=previous_master_rows,
+            min_trade_ts=validation["min_trade_ts"],
+            max_trade_ts=validation["max_trade_ts"],
+            symbols=validation["symbols"],
+            sides=validation["sides"],
+            blocking_errors=blocking_errors,
+            warnings=validation["warnings"],
+            backup_dir=backup_dir,
+            confirm_preflight_path=confirm_preflight_path,
+            master_xlsx_path=master_xlsx_path,
+            master_parquet_path=master_parquet_path,
+            compatibility_xlsx_path=compatibility_xlsx_path,
+        )
+        report["master_read_report"] = master_read_report
+        return report, None, None
+
     master = add_dedup_keys(master)
     incoming = add_dedup_keys(valid_incoming)
     missing_order_id_rows = int(incoming["_dedup_source"].eq("fingerprint").sum()) if len(incoming) else 0
@@ -296,6 +351,7 @@ def build_preflight_report(
         master_parquet_path=master_parquet_path,
         compatibility_xlsx_path=compatibility_xlsx_path,
     )
+    report["master_read_report"] = master_read_report
     return report, master, new_rows
 
 
@@ -359,85 +415,24 @@ def base_report(
         "compatibility_xlsx": str(compatibility_xlsx_path) if compatibility_xlsx_path is not None else None,
         "backup_created": False,
         "backup_paths": [],
+        "apply_requested": bool(apply),
         "write_performed": False,
+        "writes_trader_master": False,
+        "writes_parquet": False,
+        "writes_xlsx": False,
+        "writes_csv": False,
+        "writes_sqlite": False,
+        "writes_runtime": False,
         "runtime_mode": "paper",
         "shadow_only": True,
         "live_trading_enabled": False,
         "order_submission_enabled": False,
         "real_order_submission_enabled": False,
         "exchange_private_access": False,
+        "sends_orders": False,
+        "operational_authority": False,
         "created_at": utc_now(),
     }
-
-
-def validate_saved_preflight(report: dict[str, Any], preflight_path: Path) -> list[str]:
-    if not preflight_path.exists():
-        return [f"preflight_report_missing:{preflight_path}"]
-    try:
-        saved = json.loads(preflight_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return [f"preflight_report_unreadable:{preflight_path}:{exc}"]
-    errors = []
-    if saved.get("status") != "ok":
-        errors.append(f"preflight_status_not_ok:{saved.get('status')}")
-    if saved.get("dry_run") is not True:
-        errors.append("preflight_report_not_dry_run")
-    for key in ["source_file", "source_hash_sha256", "candidate_new_rows", "final_expected_master_rows"]:
-        if saved.get(key) != report.get(key):
-            errors.append(f"preflight_mismatch:{key}")
-    return errors
-
-
-def create_backups(paths: list[Path], backup_dir: Path) -> list[str]:
-    run_dir = backup_dir / datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    run_dir.mkdir(parents=True, exist_ok=True)
-    copied = []
-    for path in paths:
-        if path.exists():
-            destination = run_dir / path.name
-            shutil.copy2(path, destination)
-            copied.append(str(destination))
-    return copied
-
-
-def apply_import(
-    *,
-    report: dict[str, Any],
-    master: pd.DataFrame,
-    new_rows: pd.DataFrame,
-    master_xlsx_path: Path,
-    master_parquet_path: Path,
-    compatibility_xlsx_path: Path,
-    backup_dir: Path,
-) -> dict[str, Any]:
-    if report["status"] != "ok":
-        report["status"] = "blocked"
-        report["reason"] = "preflight_failed"
-        return report
-    if len(new_rows) == 0:
-        report["status"] = "blocked"
-        report["write_performed"] = False
-        report["reason"] = "no_candidate_new_rows"
-        report["blocking_errors"] = [*report["blocking_errors"], "no_candidate_new_rows"]
-        return report
-    backup_paths = create_backups(
-        [master_xlsx_path, master_parquet_path, compatibility_xlsx_path],
-        backup_dir,
-    )
-    if not backup_paths and (master_xlsx_path.exists() or master_parquet_path.exists() or compatibility_xlsx_path.exists()):
-        report["status"] = "blocked"
-        report["reason"] = "backup_required_before_write"
-        report["blocking_errors"] = [*report["blocking_errors"], "backup_required_before_write"]
-        return report
-    combined = pd.concat([master, new_rows], ignore_index=True, sort=False)
-    combined = combined.drop_duplicates(subset=["_dedup_key"], keep="last")
-    combined = combined.sort_values(["horario_abertura", "order_id"], na_position="last").reset_index(drop=True)
-    write_master(combined, master_xlsx_path, master_parquet_path, compatibility_xlsx_path)
-    report["backup_created"] = True
-    report["backup_paths"] = backup_paths
-    report["write_performed"] = True
-    report["final_master_rows"] = int(len(combined))
-    return report
 
 
 def write_report(path: Path, report: dict[str, Any]) -> None:
@@ -457,6 +452,29 @@ def run_quality_gate(
     confirm_preflight_path: Path | None = None,
 ) -> dict[str, Any]:
     confirm_preflight_path = confirm_preflight_path or report_path
+    if apply:
+        report = base_report(
+            status="blocked",
+            reason="legacy_master_apply_forbidden",
+            source_file=source_file,
+            source_hash=file_sha256(source_file) if source_file.exists() else None,
+            report_path=report_path,
+            apply=True,
+            read_rows=0,
+            previous_master_rows=0,
+            candidate_new_rows=0,
+            duplicate_rows=0,
+            invalid_rows=0,
+            final_expected_master_rows=0,
+            blocking_errors=["legacy_master_apply_forbidden"],
+            backup_dir=backup_dir,
+            confirm_preflight_path=confirm_preflight_path,
+            master_xlsx_path=master_xlsx_path,
+            master_parquet_path=master_parquet_path,
+            compatibility_xlsx_path=compatibility_xlsx_path,
+        )
+        write_report(report_path, report)
+        return report
     report, master, new_rows = build_preflight_report(
         source_file=source_file,
         master_xlsx_path=master_xlsx_path,
@@ -467,22 +485,7 @@ def run_quality_gate(
         backup_dir=backup_dir,
         confirm_preflight_path=confirm_preflight_path,
     )
-    if apply:
-        errors = validate_saved_preflight(report, confirm_preflight_path)
-        if errors:
-            report["status"] = "blocked"
-            report["reason"] = "dry_run_required_before_apply"
-            report["blocking_errors"] = [*report["blocking_errors"], *errors]
-        elif master is not None and new_rows is not None:
-            report = apply_import(
-                report=report,
-                master=master,
-                new_rows=new_rows,
-                master_xlsx_path=master_xlsx_path,
-                master_parquet_path=master_parquet_path,
-                compatibility_xlsx_path=compatibility_xlsx_path,
-                backup_dir=backup_dir,
-            )
+    del master, new_rows
     write_report(report_path, report)
     return report
 

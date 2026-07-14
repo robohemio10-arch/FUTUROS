@@ -4,6 +4,13 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 REPORTS = [
     "phase5_preflight_report.json",
@@ -24,6 +31,10 @@ def load_json(path: Path) -> dict:
 
 def main() -> None:
     reports_dir = Path("data/reports")
+    legacy_bundle = read_trader_master_readonly(
+        project_root=Path.cwd(),
+        trader_master_path=DEFAULT_MASTER,
+    )
     summary = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "reports": {
@@ -31,8 +42,7 @@ def main() -> None:
             for name in REPORTS
         },
         "files": {
-            "trades_master_xlsx": Path("data/trades/trades_master.xlsx").exists(),
-            "trades_master_parquet": Path("data/trades/trades_master.parquet").exists(),
+            "legacy_master_readonly": legacy_bundle.report,
             "trades_excel": Path("data/trades/trades_excel.xlsx").exists(),
             "trade_enriched": Path("data/features/trade_enriched.parquet").exists(),
             "training_dataset": Path("data/features/training_dataset.parquet").exists(),

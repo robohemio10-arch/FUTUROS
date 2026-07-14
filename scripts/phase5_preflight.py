@@ -4,6 +4,13 @@ import importlib.util
 import json
 from pathlib import Path
 
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    DEFAULT_MASTER,
+)
+from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
+    read_trader_master_readonly,
+)
+
 
 REQUIRED_MODULES = ["pandas", "pyarrow", "sqlalchemy", "numpy", "openpyxl"]
 REQUIRED_PATHS = [
@@ -32,14 +39,19 @@ def main() -> None:
 
     missing_modules = [name for name in REQUIRED_MODULES if module_missing(name)]
     missing_paths = [str(path) for path in REQUIRED_PATHS if not path.exists()]
+    legacy_bundle = read_trader_master_readonly(
+        project_root=Path.cwd(),
+        trader_master_path=DEFAULT_MASTER,
+    )
+    if legacy_bundle.report.get("status") != "ok":
+        missing_paths.append("legacy_master_readonly")
 
     report = {
         "status": "ok" if not missing_modules and not missing_paths else "error",
         "missing_modules": missing_modules,
         "missing_paths": missing_paths,
         "inbox_dir": "data/trades/inbox",
-        "master_xlsx_exists": Path("data/trades/trades_master.xlsx").exists(),
-        "master_parquet_exists": Path("data/trades/trades_master.parquet").exists(),
+        "legacy_master_readonly": legacy_bundle.report,
         "compatibility_xlsx_exists": Path("data/trades/trades_excel.xlsx").exists(),
         "inbox_files": [
             path.name
