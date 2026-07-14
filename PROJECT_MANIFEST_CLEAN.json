@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8782d8037d412963b0f511e5c1c9022321a9b32459508e98bc910dec5a0e82ac",
+  "aggregate_sha256": "a71d2e2b1c3fda1ddad801e86ee4e5b7518ab89ec3117ebccaa3b9fc0bae2f41",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 256,
-    "manifested_files_total": 1452,
-    "python_files": 1101,
+    "docs_files": 265,
+    "manifested_files_total": 1495,
+    "python_files": 1132,
     "runtime_excluded_files_total": 0,
-    "test_files": 306,
-    "tracked_files_total": 1453,
+    "test_files": 315,
+    "tracked_files_total": 1496,
     "workflows": 1
   },
   "deterministic": true,
@@ -38,10 +38,10 @@
       "sha256": "4f8417632f03233abad5c259c235081de5d620b22695ed670caa63980432ce52"
     },
     {
-      "bytes": 2194,
+      "bytes": 2294,
       "hash_mode": "text_lf",
       "path": ".gitignore",
-      "sha256": "4d3e8ba64361eebf146f92d1e99fd5dea850f243a087a3cc44613f9063a6ce18"
+      "sha256": "72adc44bae638b5e47aefe9236f979927da6d17066a45857553740bb938f1545"
     },
     {
       "bytes": 1230,
@@ -314,6 +314,12 @@
       "sha256": "1b985c2215cbc5be73e5ac84d1769c33b81562b1e7a4baaf351ad35047fbe577"
     },
     {
+      "bytes": 2916,
+      "hash_mode": "text_lf",
+      "path": "config/freqtrade_paper_closed_trades_source_profile_v2.json",
+      "sha256": "d5cd539d7c125798f47ab14f38d5bf9366c4ecee5cd3226a30951cd05e32368d"
+    },
+    {
       "bytes": 773,
       "hash_mode": "text_lf",
       "path": "config/kill_switch_guard.example.yml",
@@ -498,6 +504,18 @@
       "hash_mode": "text_lf",
       "path": "config/state_repository.example.yml",
       "sha256": "0a9c6923c9b05523c292b91e03cb269eebe278e043871165ffd7e12cc327aeec"
+    },
+    {
+      "bytes": 9636,
+      "hash_mode": "text_lf",
+      "path": "config/trader_master_legacy_boundary_remediation_taxonomy_v1.json",
+      "sha256": "f71b0d5f91368cfbf5f9c820cd0562b16178f7dd9e7e798b22e5c25280907e61"
+    },
+    {
+      "bytes": 8056,
+      "hash_mode": "text_lf",
+      "path": "config/trader_master_legacy_research_only_policy_v1.json",
+      "sha256": "b9d19a863132008c61221ade0fdf8726ef5c194f7d4ffb55552f33d26f3bd7b1"
     },
     {
       "bytes": 168,
@@ -1076,6 +1094,18 @@
       "sha256": "73643fc836c2558a687d9c5dbbe77fee6deb9398a5e9a04259546b4b94d392e7"
     },
     {
+      "bytes": 4856,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_AUTHORITATIVE_BATCH_CLOSEOUT_V2.md",
+      "sha256": "3a587e5bc2ae28fe30ee6ee7907cfee1c2e78bb78cb943957e816d8b4c33ec32"
+    },
+    {
+      "bytes": 6968,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_CLOSED_TRADES_SOURCE_PROFILE_ADAPTER_V2.md",
+      "sha256": "5d8dee50a12162b3841e022f2a3555d1cc7f7954157d373234b00be217db3a58"
+    },
+    {
       "bytes": 3842,
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_DB_AUTHORITY_AND_SOAK_RECALCULATION.md",
@@ -1086,6 +1116,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_DB_PERSISTENCE.md",
       "sha256": "ba6fc88cc1aaa9b69e087a4d19df4c23a296772317814af23531c215aee63d92"
+    },
+    {
+      "bytes": 4181,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_QUARANTINE_FORENSICS_V2.md",
+      "sha256": "8cd2f6e665c910a4378f658d834023da46e4e99b993ba82c2bc03dbd73f31124"
     },
     {
       "bytes": 2423,
@@ -1976,6 +2012,42 @@
       "sha256": "00f7ef5d8f2f95dd39f3a83b7c6180fa0ca5eb7f960d03c372290c8185535d9e"
     },
     {
+      "bytes": 7073,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_AUTHORITATIVE_EVIDENCE_INVENTORY_V2.md",
+      "sha256": "7c7afab1ca4a6efe03a2f8a54eaf1898b768262e1265544ff0b27c80cb58dbe6"
+    },
+    {
+      "bytes": 5868,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_FINGERPRINT_SPEC_V2_STAGING_VALIDATOR.md",
+      "sha256": "ab1191d3b28c349b283e8ac3a3b0340d2878445f4c29d86c660a62429480e575"
+    },
+    {
+      "bytes": 5522,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_LEGACY_BOUNDARY_REMEDIATION_PLAN_V1.md",
+      "sha256": "c126ea5d9879b5b059c76432367b43335199535d5f6d8f64e01752c3ea5b94df"
+    },
+    {
+      "bytes": 4916,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_LEGACY_LINEAGE_PROFILE_V2.md",
+      "sha256": "40766f7d020a6dc84387e9ee6dd485dff4f87977e3ad75d925eb86995b010d6d"
+    },
+    {
+      "bytes": 5138,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_LEGACY_RESEARCH_ONLY_BOUNDARY_V1.md",
+      "sha256": "3222e72dcefdfe2df249ac99bd1d75ed1690b3864d5cf76d2117958b883fc2d4"
+    },
+    {
+      "bytes": 3667,
+      "hash_mode": "text_lf",
+      "path": "docs/TRADER_MASTER_READONLY_RECONCILIATION_V2.md",
+      "sha256": "6e51ac4132334ec8ad0c6e00c018aff4d83fe2340a2d9c81f88fa8ca2a3528b3"
+    },
+    {
       "bytes": 4059,
       "hash_mode": "text_lf",
       "path": "docs/TRADE_FINANCIAL_INPUT_REPAIR.md",
@@ -2166,6 +2238,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/analyze_extratrees_050_fold_stability.py",
       "sha256": "d59f91386ec7be0b39030773ace4be301f070a77586e7ed205495f155201e18d"
+    },
+    {
+      "bytes": 1611,
+      "hash_mode": "text_lf",
+      "path": "scripts/analyze_freqtrade_paper_quarantine_forensics_v2.py",
+      "sha256": "6fc858af324c87975763aeeca6acade52c2adb0995bd58d56e5b5f33cc55222a"
     },
     {
       "bytes": 514,
@@ -2460,6 +2538,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_state_execution_ledger_boundary.py",
       "sha256": "cae0c0a346bb159655b05572cd6b1919f8a1c590353bdc6d683bf6b9c8664590"
+    },
+    {
+      "bytes": 1963,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_trader_master_legacy_research_only_boundary_v1.py",
+      "sha256": "d9ee9ec09fa0c1c0c81b3a3888e3174a48eb21be7c6dc2fc5a556e9cae3bba9c"
     },
     {
       "bytes": 541,
@@ -3494,6 +3578,12 @@
       "sha256": "b077c57ead0c2f9bfcfa9ae662fc9292c7fe2410a9457fdc5bcb9d2b21ec37bf"
     },
     {
+      "bytes": 2631,
+      "hash_mode": "text_lf",
+      "path": "scripts/inventory_trader_master_authoritative_evidence_v2.py",
+      "sha256": "495d7a6dea212d0a739bd5d0ad1eb85ff7113538a1f03812533a2f635f989475"
+    },
+    {
       "bytes": 16716,
       "hash_mode": "text_lf",
       "path": "scripts/join_training_dataset_with_15s_shadow_features.py",
@@ -3656,16 +3746,34 @@
       "sha256": "46685afcf496c57ee3728929a2bb05553568eed4df97e95745bd56d4f4b6479a"
     },
     {
+      "bytes": 2190,
+      "hash_mode": "text_lf",
+      "path": "scripts/plan_trader_master_legacy_boundary_remediation_v1.py",
+      "sha256": "676af3dc82d50769493a6c5b615223324775c82f7cfb57b500eda3d2419d5c8c"
+    },
+    {
       "bytes": 89,
       "hash_mode": "text_lf",
       "path": "scripts/preflight.py",
       "sha256": "77103264da4176b311429d490e9f1d2e80f70ce5dcf3a122ba8592c7d5e4d712"
     },
     {
+      "bytes": 2293,
+      "hash_mode": "text_lf",
+      "path": "scripts/profile_trader_master_legacy_lineage_v2.py",
+      "sha256": "0c7c6a61c77edc725f0e29a14368ef4cf668fcf865e38d14abd05d2ed7b2db48"
+    },
+    {
       "bytes": 6750,
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
       "sha256": "ad545d94b49e9e70d5dedc14c21d9b9bd05b69ded63da6e0d8b6006e4bae9e60"
+    },
+    {
+      "bytes": 2275,
+      "hash_mode": "text_lf",
+      "path": "scripts/reconcile_trader_master_preview_v2.py",
+      "sha256": "9dd0d9a41d5e181c4562021a269bb6f1e37cb9152729dfa922a55464c7bf2a15"
     },
     {
       "bytes": 22376,
@@ -4146,6 +4254,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/validate_runtime_safety_config.py",
       "sha256": "6bf5f094ea57bbb44b3c3f3e730ebda46cdb97ec4a62d070cf9fc3ce0a07a560"
+    },
+    {
+      "bytes": 4009,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_trader_master_staging_v2.py",
+      "sha256": "21b49fb15809e6a45804a9931938bec6be2fad0fdf5533ca48211c1b8a71260b"
     },
     {
       "bytes": 3091,
@@ -4716,6 +4830,96 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trade_schema.py",
       "sha256": "de937f10315a55c96fc61ed541536acbd1902a47e9593259de3a561428d609aa"
+    },
+    {
+      "bytes": 3952,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/__init__.py",
+      "sha256": "9a7729cb85285d0f617c371b3a79e0733b27d63b31f0ccfd9635a4191ce9df39"
+    },
+    {
+      "bytes": 58680,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_evidence_inventory.py",
+      "sha256": "bf582899af3d326d5c7a501430dde0f06044545c633e414282e0eff5bd0187ae"
+    },
+    {
+      "bytes": 17809,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_sqlite.py",
+      "sha256": "5abba1d579155eac93b1d9944fe66164692a690c45876a41604f10796c02efc6"
+    },
+    {
+      "bytes": 10169,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/fingerprint_spec.py",
+      "sha256": "7efee2c2ac682242796ac9954ddea525cd34c4a69ab985cdefcdb4e5fe223147"
+    },
+    {
+      "bytes": 42080,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/freqtrade_adapter.py",
+      "sha256": "b9e557d6c0d72dad9b8e2c70a6031910e42caf054de4804180c13e5950ed0c8f"
+    },
+    {
+      "bytes": 50432,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_lineage_profile.py",
+      "sha256": "def349e05fcc7b3a25eeb05703f8a5db40de31e99c5279a4320312afbfcc4ed7"
+    },
+    {
+      "bytes": 55649,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_governance.py",
+      "sha256": "8499d6f8591ea0241aca454769d34d7bdfae7ccae6ee8a9122f07fa24e27ab75"
+    },
+    {
+      "bytes": 55083,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_remediation_plan.py",
+      "sha256": "e66a652cd8ac11f2290a8a08823829abc8e95b87270839cb2b1498d40bfdc46e"
+    },
+    {
+      "bytes": 12510,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
+      "sha256": "c413781e99773513b1111c718d6f4fb672a5bb8a02f7a43134295a4d082be0ee"
+    },
+    {
+      "bytes": 28632,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/master_reconciliation.py",
+      "sha256": "28adbc0910c70927da7675990e32ba917dc35da657b6bd451bd54e4204613324"
+    },
+    {
+      "bytes": 22285,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/quarantine_forensics.py",
+      "sha256": "13075511d085f372cabc728f98b50fb6f0ef2acc9d7cc891809aafd1ae6a523c"
+    },
+    {
+      "bytes": 14770,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/quarantine_recovery.py",
+      "sha256": "2f5c79eebcff38850a895e25c0ee8c121304a129d3eb03c4e893d591a4486aaf"
+    },
+    {
+      "bytes": 10916,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/source_profile.py",
+      "sha256": "82579775796ddec911f764975471cfd53cfdd2e3572a553e5a8f979c1919ff02"
+    },
+    {
+      "bytes": 12798,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/staging_runner.py",
+      "sha256": "3d5bf61078b65731ef334d9f7dadd933e0bb63bcee8d4cec4292ec3a74a126c5"
+    },
+    {
+      "bytes": 17240,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/staging_validator.py",
+      "sha256": "9b01afa8608623fcdb251c21d2d034abe2e188f35fd3f227400a41fc5db61125"
     },
     {
       "bytes": 13505,
@@ -7688,6 +7892,18 @@
       "sha256": "2c7f7d90133e1a10244eee3a2aa1ca6d5849a1475ff99852c8826afe281a9249"
     },
     {
+      "bytes": 21719,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_authoritative_batch_closeout_v2.py",
+      "sha256": "a693f07df89f9c7344c197c494defe939d29b1e2b0ea559ea1f817b05ece05c0"
+    },
+    {
+      "bytes": 19737,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_closed_trades_adapter_v2.py",
+      "sha256": "e92aaba36bda24e2b4c7e0ee31c92f17a97ab17c23df18a8db6cbffe1bc00d1a"
+    },
+    {
       "bytes": 14241,
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_authority_and_soak_recalculation.py",
@@ -7698,6 +7914,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_linux_volume_persistence.py",
       "sha256": "dea050c5ab9837a78884d620f7fd5386eca5e431cf590dba2286ac4fe83a1679"
+    },
+    {
+      "bytes": 10682,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_quarantine_forensics_v2.py",
+      "sha256": "13d5507a0161fe9a9c3dfceaf8b247052f01e892c59ec253876339b0c468c5ee"
     },
     {
       "bytes": 9201,
@@ -8694,6 +8916,42 @@
       "hash_mode": "text_lf",
       "path": "tests/test_trade_financial_input_repair.py",
       "sha256": "d5f822b15c8df4f269cabf4189ee3a822cceed673283218047232fa4e6cbe8d1"
+    },
+    {
+      "bytes": 24989,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_authoritative_evidence_inventory_v2.py",
+      "sha256": "af86efbcc9cde7aba0843b18d0841216f36f94bb25dc158484e563489709bdc8"
+    },
+    {
+      "bytes": 13692,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_fingerprint_staging_validator_v2.py",
+      "sha256": "37aee2ed0d8ac33c83f54ddd92a4b2d067a58191e0cf689acc8e408f3c5e5db3"
+    },
+    {
+      "bytes": 28178,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_legacy_boundary_remediation_plan_v1.py",
+      "sha256": "12f3b3ccb440e703ad7cb6934bbb5ba99550e5842bd29d72cc76ed8b93f58a29"
+    },
+    {
+      "bytes": 18355,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_legacy_lineage_profile_v2.py",
+      "sha256": "0f27b70c5d47adb212f9baa13ad3198c759bc97c97a64a6702430cc30c0057de"
+    },
+    {
+      "bytes": 21951,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_legacy_research_only_boundary_v1.py",
+      "sha256": "71fbb16f8f33b0dc131cdb3fe7f8443b7232c1e638ecf6f17e3473daff4eeb02"
+    },
+    {
+      "bytes": 22863,
+      "hash_mode": "text_lf",
+      "path": "tests/test_trader_master_readonly_reconciliation_v2.py",
+      "sha256": "74559cd8e514ecacd76ab528fe70026417a950c3a6c586bd2c8e5e5005f98f18"
     },
     {
       "bytes": 8852,
