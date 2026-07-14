@@ -5,7 +5,6 @@ import json
 import os
 import shutil
 import sqlite3
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -236,7 +235,6 @@ def inspect_cycle_state(config_path: str | Path) -> dict[str, Any]:
     db = inspect_freqtrade_db()
     training = inspect_file_rows(Path("data/features/training_dataset.parquet"))
     trade_enriched = inspect_file_rows(Path("data/features/trade_enriched.parquet"))
-    master = inspect_file_rows(Path("data/trades/trades_master.parquet"))
 
     exit_payload = read_text_json(exit_control)
     status = "ok"
@@ -260,7 +258,6 @@ def inspect_cycle_state(config_path: str | Path) -> dict[str, Any]:
         "decision_log": inspect_decision_log(decision_log),
         "freqtrade_db": db,
         "datasets": {
-            "trades_master": master,
             "trade_enriched": trade_enriched,
             "training_dataset": training,
         },

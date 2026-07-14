@@ -179,7 +179,7 @@ def render_markdown_report(report: Mapping[str, Any]) -> str:
             f"- Master update performed: `{report.get('master_update_performed')}`",
             f"- Model promotion performed: `{report.get('model_promotion_performed')}`",
             "",
-            "This foundation loop is paper/shadow only. It does not update trades_master, train a production model, promote a champion, alter runtime, send orders or access private exchange APIs.",
+            "This foundation loop is paper/shadow only. It does not update legacy datasets, train a production model, promote a champion, alter runtime, send orders or access private exchange APIs.",
             "",
         ]
     )
