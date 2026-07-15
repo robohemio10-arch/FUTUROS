@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7aa24988743b5151170bd8cfd48b583976f5e1c4397e2ea5534a1f049ff286ed",
+  "aggregate_sha256": "3f9b9514039814fd86d978e2ed2453f4d791d5d65d77d57952c1feac7fd07167",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 269,
-    "manifested_files_total": 1517,
-    "python_files": 1148,
+    "docs_files": 270,
+    "manifested_files_total": 1530,
+    "python_files": 1160,
     "runtime_excluded_files_total": 0,
-    "test_files": 323,
-    "tracked_files_total": 1518,
+    "test_files": 324,
+    "tracked_files_total": 1531,
     "workflows": 1
   },
   "deterministic": true,
@@ -1772,6 +1772,12 @@
       "sha256": "6bb002c5d86326fee781b191c7c78accd4a386bb396890c4367182ae1b3b6d60"
     },
     {
+      "bytes": 2960,
+      "hash_mode": "text_lf",
+      "path": "docs/PROFIT_RESEARCH_DATASET_SNAPSHOT_CANDLE_ALIGNMENT_V1.md",
+      "sha256": "439a76be5a0bdd679ebd74576d0a4ddc0c647edbede43eeedfb260126fe94819"
+    },
+    {
       "bytes": 6791,
       "hash_mode": "text_lf",
       "path": "docs/PROFIT_RESEARCH_PAPER_ANALYSIS_V1.md",
@@ -3138,6 +3144,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_phase22_market_features.py",
       "sha256": "191403f950facae9969132eb00c1213d45f856195777ad458a18f21088fa2b60"
+    },
+    {
+      "bytes": 1977,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_profit_research_dataset_snapshot_v1.py",
+      "sha256": "99831573f37a2ee8b962b120592859208c1d9f9dc4ae945e1343b1325e063e1a"
     },
     {
       "bytes": 2610,
@@ -6920,6 +6932,66 @@
       "sha256": "dd7c83201fe95ffbc5b8c8f97c6b3c73b72a4d20c754755d5a11dcc194a16e59"
     },
     {
+      "bytes": 339,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/__init__.py",
+      "sha256": "8ac195240f431ac1bcb6c05964e676c88f4813db7d2847b0126687f97d72da45"
+    },
+    {
+      "bytes": 8837,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/candle_alignment.py",
+      "sha256": "7b22b44e48f6ec60aa4872f7c5d186fc31f309d3d0516e3c310a2700e1e11aca"
+    },
+    {
+      "bytes": 8353,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/contracts.py",
+      "sha256": "ab2941b1756846317637585d7d01ece24b7ab2c7181309ef87b62177e936396a"
+    },
+    {
+      "bytes": 13427,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/dataset_builder.py",
+      "sha256": "e479759e926847547c0f231ca61f83e6faf3726781659033976054c6256500b6"
+    },
+    {
+      "bytes": 10846,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/economic_segments.py",
+      "sha256": "e42f6c4b67c876c707656dde4cd6122e5e7be996c4d6da09b048a3a792cdb942"
+    },
+    {
+      "bytes": 7588,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/entry_features.py",
+      "sha256": "849f4e46abaa93517dbcb879c7e50d337bfdd4bb6b7af6fab23c479bfb762503"
+    },
+    {
+      "bytes": 6187,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/path_features.py",
+      "sha256": "348be47c7cb978784a4b8a7ba21f86d448c087b18958b078957244d4001efa53"
+    },
+    {
+      "bytes": 1865,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/report.py",
+      "sha256": "b4c8508f0747a2cbdf4478dc9c23c20a04cc65e79ce9539e42144cb5f577f75d"
+    },
+    {
+      "bytes": 4236,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/source_inventory.py",
+      "sha256": "b245e5c1fb2ff014208f20ca934ae5b70fcb591b20ee61764b34232553d681e4"
+    },
+    {
+      "bytes": 7060,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/profit_research_dataset/trade_snapshot.py",
+      "sha256": "57f8f20182aaf5ed8937c334f8eee841eb898f7c31cb0cb5b644ba3a3f38df3c"
+    },
+    {
       "bytes": 19697,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/qlib_ocr_v11_shadow_candidate_registry.py",
@@ -8736,6 +8808,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_price_scale_ocr_repair.py",
       "sha256": "9445048b7edf0045f5c6e1f30a3174a214362ed207271f5c584d1d04ce7154e2"
+    },
+    {
+      "bytes": 18494,
+      "hash_mode": "text_lf",
+      "path": "tests/test_profit_research_dataset_snapshot_v1.py",
+      "sha256": "494b0e96fb1dd607504c99b7acf7314b0aaa05f8f5368c0f109995b78ab82e14"
     },
     {
       "bytes": 11866,
