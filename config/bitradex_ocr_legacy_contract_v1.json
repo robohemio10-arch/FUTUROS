@@ -1,0 +1,87 @@
+{
+  "schema_version": "bitradex_ocr_legacy_contract_v1",
+  "contract_id": "bitradex_ocr_legacy_20260714_151816_v1",
+  "batch_id": "20260714_151816",
+  "contract_mode": "legacy_historical_append_compatibility",
+  "source_profile_path": "config/bitradex_ocr_locked_candidates_source_profile_v2.json",
+  "sources": {
+    "staging_package": "data/staging/bitradex_ocr/package_20260714_151816",
+    "preview_summary": "data/staging/bitradex_ocr/package_20260714_151816/BITRADEX_OCR_IMPORT_PREVIEW_V4_SUMMARY.json",
+    "preview_csv": "data/staging/bitradex_ocr/package_20260714_151816/BITRADEX_OCR_IMPORT_PREVIEW_V4.csv",
+    "master_xlsx": "data/trades/trades_master.xlsx",
+    "master_parquet": "data/trades/trades_master.parquet"
+  },
+  "expected_counts": {
+    "ocr_input_rows": 506,
+    "excluded_exact_duplicates": 2,
+    "retained_candidate_rows": 504,
+    "master_rows_before": 3058,
+    "master_rows_after_authorized_append": 3562,
+    "sidecar_auto_matched_rows": 3057,
+    "sidecar_residual_equivalence_rows": 1,
+    "legacy_novel_candidate_rows": 504,
+    "ambiguous_master_match_rows": 0,
+    "invalid_identity_rows": 0,
+    "internal_duplicate_excess_rows": 0,
+    "fallback_collision_rows": 0,
+    "source_image_conflict_rows": 0
+  },
+  "expected_master_hashes": {
+    "xlsx_sha256": "83e2d17db317cc84b2bd39e00a961bd8d568c4375c5a4a113f6a26df58972e90",
+    "parquet_sha256": "24e049b3ca7a72dbde071a056548035fed87651d48959cd0cf4c6c8b0dac7295"
+  },
+  "historical_master_schema": {
+    "schema_version": "trader_master_legacy_ocr_v1",
+    "columns": [
+      "moeda",
+      "fechar_side",
+      "leverage",
+      "order_id",
+      "pnl_fechado",
+      "taxa_lucros_perdas_fechados_pct",
+      "preco_abertura",
+      "preco_fechamento",
+      "volume_posicao",
+      "volume_fechado",
+      "horario_abertura",
+      "horario_fechamento",
+      "taxa_1",
+      "preco_transacao",
+      "volume_transacao",
+      "direcao_liquidez",
+      "taxa_2",
+      "horario_transacao",
+      "source_file",
+      "imported_at",
+      "_dedup_key",
+      "_relaxed_dedup_key",
+      "exchange_source",
+      "market_data_source",
+      "ocr_source"
+    ]
+  },
+  "funding_policy": {
+    "funding_required_for_legacy_contract": false,
+    "funding_fee_value": null,
+    "funding_status": "unknown_not_available_in_source",
+    "funding_assumed_zero": false,
+    "funding_derived_as_residual": false,
+    "funding_included_in_reported_net_pnl": "unknown",
+    "v2_financial_decomposition_eligible": false
+  },
+  "identity_policy": {
+    "synthetic_order_id_present": true,
+    "synthetic_order_id_authoritative": false,
+    "synthetic_order_id_role": "legacy_dedup_alias_evidence_only",
+    "native_exchange_order_identity_available": false,
+    "account_scope_required_for_legacy_contract": false,
+    "v2_primary_identity_eligible": false
+  },
+  "authority": {
+    "operational_authority": false,
+    "import_authorized": false,
+    "write_authorized": false,
+    "manual_authorization_required": true,
+    "official_import_allowed": false
+  }
+}
