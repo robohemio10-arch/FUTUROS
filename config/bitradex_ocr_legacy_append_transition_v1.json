@@ -1,0 +1,82 @@
+{
+  "schema_version": "trader_master_legacy_authorized_transition_v1",
+  "transition_id": "bitradex_ocr_legacy_append_20260714_151816_v1",
+  "transition_state": "planned_not_executed",
+  "source_contract": "config/bitradex_ocr_legacy_contract_v1.json",
+  "source_contract_id": "bitradex_ocr_legacy_20260714_151816_v1",
+  "batch_id": "20260714_151816",
+  "pre_state": {
+    "master_xlsx_path": "data/trades/trades_master.xlsx",
+    "master_parquet_path": "data/trades/trades_master.parquet",
+    "master_xlsx_sha256": "83e2d17db317cc84b2bd39e00a961bd8d568c4375c5a4a113f6a26df58972e90",
+    "master_parquet_sha256": "24e049b3ca7a72dbde071a056548035fed87651d48959cd0cf4c6c8b0dac7295",
+    "master_row_count": 3058,
+    "master_schema_column_count": 25
+  },
+  "append_state": {
+    "candidate_count": 504,
+    "expected_post_row_count": 3562,
+    "source_preview_summary": "data/staging/bitradex_ocr/package_20260714_151816/BITRADEX_OCR_IMPORT_PREVIEW_V4_SUMMARY.json",
+    "source_preview_csv": "data/staging/bitradex_ocr/package_20260714_151816/BITRADEX_OCR_IMPORT_PREVIEW_V4.csv",
+    "xlsx_sheet": "trades_master_candidate",
+    "preserve_existing_prefix": true,
+    "append_order": "preview_csv_source_order"
+  },
+  "funding_policy": {
+    "funding_fee_value": null,
+    "funding_assumed_zero": false,
+    "funding_derived_as_residual": false,
+    "v2_financial_decomposition_eligible": false
+  },
+  "identity_policy": {
+    "synthetic_order_id_authoritative": false,
+    "synthetic_order_id_role": "legacy_dedup_alias_evidence_only",
+    "use_synthetic_order_id_as_v2_identity": false,
+    "dedup_keys_are_collision_guards_only": true
+  },
+  "imported_at_policy": {
+    "semantic_role": "ingestion_provenance_metadata",
+    "source_type": "package_authoritative_metadata",
+    "source_relative_path": "data/staging/bitradex_ocr/package_20260714_151816/ORDERID_SYNTHETIC_V5_SUMMARY.json",
+    "source_json_path": "finalized_at_utc",
+    "source_file_sha256": "af516464f3af30bbad94fd406530c9912c016c8b124c42d80e0de75af800d4ce",
+    "value_utc": "2026-07-14T19:49:13.500939+00:00",
+    "applies_to_all_candidate_rows": true,
+    "is_trade_event_timestamp": false,
+    "derived_from_trade_fields": false,
+    "runtime_clock_allowed": false,
+    "filesystem_timestamp_allowed": false,
+    "batch_token_timestamp_allowed": false
+  },
+  "execution_policy": {
+    "default_mode": "plan",
+    "apply_requires_plan_sha256": true,
+    "apply_requires_authorization_phrase": true,
+    "authorization_phrase": "AUTHORIZE_BITRADEX_OCR_LEGACY_APPEND_20260714_151816_504",
+    "backup_required": true,
+    "rollback_required": true,
+    "cross_format_semantic_equality_required": true,
+    "post_apply_attestation_required": true,
+    "idempotent_reapply_forbidden": true
+  },
+  "allowed_write_roots": [
+    "data/trades",
+    "data/backups/bitradex_ocr_legacy_append",
+    "data/reports",
+    "data/locks"
+  ],
+  "authorized_source_sha256": {
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/__init__.py": "9077505dffad0ccf9bb66c40ca1018059ff29b6629042fea918cd789c4772216",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/contract.py": "7c286843f7176b183710f9dc2354f88397706bc9806a0037b88b6926cd0c5aa2",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/executor.py": "5fd225854c299af3384d5b2301c4d200486b0ec47b090275812108b8622a092a",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/planner.py": "5ce315a8cc33b0e73dfe5b0ce40d16e03aca2f32a0429453e24ab3b56f8cf184",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/transaction.py": "bc1ee68361014ad3bad63dd0c1c56594bc7ce760c968a2626136609352ce5c69",
+    "scripts/build_bitradex_ocr_legacy_authorized_append_v1.py": "4b9b686036533fd33674ce79da0a332699fe13c9c9f23b90e5cdb1796eff6fd7"
+  },
+  "safety": {
+    "operational_authority": false,
+    "sends_orders": false,
+    "changes_risk": false,
+    "exchange_private_access": false
+  }
+}
