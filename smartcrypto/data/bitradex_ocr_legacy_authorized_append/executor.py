@@ -49,6 +49,16 @@ def apply_authorized_append(
 
     root = Path(project_root).resolve()
     base = _apply_base()
+    try:
+        contract_path = _resolve(root, transition_contract_path)
+        contract = load_transition_contract(contract_path, project_root=root)
+    except TransitionContractError as exc:
+        return _blocked(base, "transition_contract_invalid", [str(exc)])
+    if contract.transition_state == "failed_pre_replace_superseded":
+        return _blocked(
+            base,
+            "transition_v1_superseded_after_xlsx_layout_mismatch",
+        )
     if authorization_phrase != AUTHORIZATION_PHRASE:
         return _blocked(base, "authorization_phrase_invalid")
     if not _is_sha256(expected_plan_sha256):
@@ -65,11 +75,6 @@ def apply_authorized_append(
     if plan.get("materialization_ready") is not True:
         return _blocked(base, "candidate_materialization_blocked", plan.get("materialization_blockers", []))
 
-    try:
-        contract_path = _resolve(root, transition_contract_path)
-        contract = load_transition_contract(contract_path, project_root=root)
-    except TransitionContractError as exc:
-        return _blocked(base, "transition_contract_invalid", [str(exc)])
     base.update(
         transition_id=contract.transition_id,
         plan_sha256=expected_plan_sha256,

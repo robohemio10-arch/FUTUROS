@@ -188,6 +188,7 @@ def template(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
     hashes = copy_authorized_sources(root)
     transition = json.loads(TRANSITION_CONFIG.read_text(encoding="utf-8"))
+    transition["transition_state"] = "planned_not_executed"
     transition["pre_state"]["master_xlsx_sha256"] = file_sha256(
         trades / "trades_master.xlsx"
     )
@@ -877,7 +878,7 @@ def test_boundary_high_baseline_is_exactly_pinned() -> None:
         "config/bitradex_ocr_legacy_contract_v1.json"
     ]
     assert new_high_finding_paths == []
-    assert len(authorized_transition_paths) == 6
+    assert len(authorized_transition_paths) == 13
 
 
 def test_new_high_finding_is_not_absorbed_by_baseline(

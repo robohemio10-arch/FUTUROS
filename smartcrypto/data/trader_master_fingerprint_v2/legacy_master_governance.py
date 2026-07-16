@@ -6,13 +6,15 @@ import ast
 import hashlib
 import io
 import json
+import math
 import os
 import subprocess  # nosec B404 - fixed local Git command, shell disabled, bounded timeout
 import tokenize
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -29,6 +31,9 @@ DEFAULT_MASTER = Path("data/trades/trades_master.parquet")
 DEFAULT_JSON_REPORT = Path("data/reports/trader_master_legacy_research_only_boundary_v1.json")
 DEFAULT_MARKDOWN_REPORT = Path("data/reports/trader_master_legacy_research_only_boundary_v1.md")
 DEFAULT_GUARDED_TRANSITION = Path("config/bitradex_ocr_legacy_append_transition_v1.json")
+CANONICAL_XLSX_TRANSITION_V2 = Path(
+    "config/bitradex_ocr_legacy_canonical_xlsx_transition_v2.json"
+)
 GUARDED_TRANSITION_BASELINE_HIGH_PATHS = (
     "config/bitradex_ocr_legacy_contract_v1.json",
 )
@@ -683,9 +688,36 @@ def audit_legacy_master_consumers(
         transition_contract_path=transition_contract_path,
         tracked_paths=inventory.paths,
     )
-    authorized_transition_paths = frozenset(transition["authorized_source_paths"])
+    canonical_transition = (
+        transition
+        if _normalize_path(str(transition_contract_path))
+        == _normalize_path(str(CANONICAL_XLSX_TRANSITION_V2))
+        else _guarded_transition_evidence(
+            root,
+            transition_contract_path=CANONICAL_XLSX_TRANSITION_V2,
+            tracked_paths=inventory.paths,
+        )
+    )
+    authorized_transition_paths = frozenset(
+        [
+            *(
+                transition["authorized_source_paths"]
+                if transition["guarded_transition_source_hashes_valid"]
+                else []
+            ),
+            *(
+                canonical_transition["authorized_source_paths"]
+                if canonical_transition[
+                    "guarded_transition_source_hashes_valid"
+                ]
+                else []
+            ),
+        ]
+    )
     if transition["guarded_transition_source_hashes_valid"]:
         ignored.add(_normalize_path(str(transition_contract_path)))
+    if canonical_transition["guarded_transition_source_hashes_valid"]:
+        ignored.add(_normalize_path(str(CANONICAL_XLSX_TRANSITION_V2)))
     for relative in inventory.paths:
         path = root / relative
         suffix = path.suffix.casefold()
@@ -714,7 +746,6 @@ def audit_legacy_master_consumers(
             )
             if (
                 relative in authorized_transition_paths
-                and transition["guarded_transition_source_hashes_valid"]
             ):
                 findings.append(
                     _finding(
@@ -777,6 +808,27 @@ def audit_legacy_master_consumers(
         "scanned_configuration_file_count": configuration_count,
         "tracked_file_discovery_complete": inventory.complete,
         **transition,
+        "canonical_xlsx_transition_v2_present": canonical_transition[
+            "guarded_transition_present"
+        ],
+        "canonical_xlsx_transition_v2_id": canonical_transition[
+            "guarded_transition_id"
+        ],
+        "canonical_xlsx_transition_v2_state": canonical_transition[
+            "guarded_transition_state"
+        ],
+        "canonical_xlsx_transition_v2_source_hashes_valid": (
+            canonical_transition["guarded_transition_source_hashes_valid"]
+        ),
+        "canonical_xlsx_transition_v2_pre_policy_valid": (
+            canonical_transition["pre_transition_policy_valid"]
+        ),
+        "canonical_xlsx_transition_v2_post_target_policy_valid": (
+            canonical_transition["post_transition_target_policy_valid"]
+        ),
+        "canonical_xlsx_transition_v2_validation_errors": canonical_transition[
+            "guarded_transition_validation_errors"
+        ],
     }
     return deduplicated, metadata
 
@@ -839,9 +891,18 @@ def build_legacy_master_boundary_report(
         trader_master_path=trader_master_path,
     )
     report.update(_dataset_report_fields(evidence))
+    transition_target = _authorized_transition_target_artifact_evidence(
+        root,
+        trader_master_path=trader_master_path,
+        transition_contract_path=CANONICAL_XLSX_TRANSITION_V2,
+    )
+    report.update(transition_target)
     if evidence.status == "blocked":
         return _blocked(report, evidence.reason, evidence.validation_errors)
-    if not evidence.artifact_contract_matches:
+    if (
+        not evidence.artifact_contract_matches
+        and not transition_target["post_transition_artifact_matches"]
+    ):
         report.update(
             status="ok",
             reason="legacy_master_artifact_drift_detected",
@@ -850,6 +911,12 @@ def build_legacy_master_boundary_report(
             blockers=list(evidence.validation_errors),
         )
         return _maybe_write(report, write_report, json_path, markdown_path)
+    if transition_target["post_transition_artifact_matches"]:
+        report.update(
+            artifact_contract_matches=True,
+            artifact_contract_match_mode="authorized_transition_post_state",
+            dataset_id="trader_master_legacy_3562_transition_v2",
+        )
     try:
         findings, discovery = audit_legacy_master_consumers(
             project_root=root,
@@ -1076,12 +1143,12 @@ def _classify_signal(
     elif signal.operation == "fingerprint_use":
         classification = FindingClassification.FINGERPRINT_V2_MISCLASSIFICATION
         severity = Severity.CRITICAL
-    elif signal.operation == "dynamic_reference":
-        classification = FindingClassification.DYNAMIC_REFERENCE_UNRESOLVED
-        severity = Severity.MEDIUM
     elif _is_operational_path(relative_path):
         classification = FindingClassification.PROHIBITED_OPERATIONAL_CONSUMER
         severity = Severity.CRITICAL
+    elif signal.operation == "dynamic_reference":
+        classification = FindingClassification.DYNAMIC_REFERENCE_UNRESOLVED
+        severity = Severity.MEDIUM
     elif relative_path in registered_paths:
         classification = FindingClassification.REGISTERED_READONLY_CONSUMER
         severity = Severity.INFO
@@ -1327,6 +1394,8 @@ def _guarded_transition_evidence(
         "guarded_transition_source_hashes_valid": False,
         "guarded_transition_default_no_write": False,
         "guarded_transition_apply_executed": False,
+        "pre_transition_policy_valid": False,
+        "post_transition_target_policy_valid": False,
         "authorized_source_paths": [],
         "guarded_transition_validation_errors": [],
     }
@@ -1345,6 +1414,7 @@ def _guarded_transition_evidence(
         return base
     transition_id = payload.get("transition_id")
     transition_state = payload.get("transition_state")
+    schema_version = payload.get("schema_version")
     hashes = payload.get("authorized_source_sha256")
     execution = payload.get("execution_policy")
     safety = payload.get("safety")
@@ -1352,9 +1422,19 @@ def _guarded_transition_evidence(
         guarded_transition_id=transition_id,
         guarded_transition_state=transition_state,
     )
-    if payload.get("schema_version") != "trader_master_legacy_authorized_transition_v1":
+    valid_v1 = (
+        schema_version == "trader_master_legacy_authorized_transition_v1"
+        and transition_state
+        in {"planned_not_executed", "failed_pre_replace_superseded"}
+    )
+    valid_v2 = (
+        schema_version
+        == "trader_master_legacy_canonical_xlsx_transition_v2"
+        and transition_state == "planned_not_executed"
+    )
+    if not (valid_v1 or valid_v2):
         errors.append("guarded_transition_schema_invalid")
-    if transition_state != "planned_not_executed":
+    if not (valid_v1 or valid_v2):
         errors.append("guarded_transition_state_invalid")
     if not isinstance(hashes, Mapping) or not hashes:
         errors.append("guarded_transition_hashes_missing")
@@ -1417,10 +1497,70 @@ def _guarded_transition_evidence(
             if any(token in lowered for token in prohibited):
                 errors.append(f"guarded_transition_prohibited_capability:{relative}")
 
-    expected_prefix = "smartcrypto/data/bitradex_ocr_legacy_authorized_append/"
-    expected_cli = "scripts/build_bitradex_ocr_legacy_authorized_append_v1.py"
+    if valid_v2:
+        expected_prefix = (
+            "smartcrypto/data/"
+            "bitradex_ocr_legacy_canonical_xlsx_transition_v2/"
+        )
+        expected_cli = (
+            "scripts/"
+            "build_bitradex_ocr_legacy_canonical_xlsx_transition_v2.py"
+        )
+        pre = payload.get("pre_state")
+        target = payload.get("target_state")
+        base["pre_transition_policy_valid"] = bool(
+            isinstance(pre, Mapping)
+            and pre.get("master_row_count") == 3058
+            and pre.get("canonical_schema_column_count") == 25
+            and pre.get("xlsx_classification")
+            == "legacy_ocr_evidence_workbook"
+            and isinstance(pre.get("master_parquet_sha256"), str)
+            and HEX_SHA256.fullmatch(
+                str(pre.get("master_parquet_sha256"))
+            )
+            is not None
+        )
+        base["post_transition_target_policy_valid"] = bool(
+            isinstance(target, Mapping)
+            and target.get("expected_row_count") == 3562
+            and target.get("canonical_schema_column_count") == 25
+            and target.get("dataset_classification")
+            == "research_only_legacy_non_v2"
+            and isinstance(
+                target.get("expected_target_semantic_sha256"), str
+            )
+            and HEX_SHA256.fullmatch(
+                str(target.get("expected_target_semantic_sha256"))
+            )
+            is not None
+        )
+        if not base["pre_transition_policy_valid"]:
+            errors.append("guarded_transition_pre_policy_invalid")
+        if not base["post_transition_target_policy_valid"]:
+            errors.append("guarded_transition_post_target_policy_invalid")
+    else:
+        expected_prefix = (
+            "smartcrypto/data/bitradex_ocr_legacy_authorized_append/"
+        )
+        expected_cli = (
+            "scripts/build_bitradex_ocr_legacy_authorized_append_v1.py"
+        )
+        base["pre_transition_policy_valid"] = True
+        base["post_transition_target_policy_valid"] = False
     if not allowed_paths or any(
-        not (relative.startswith(expected_prefix) or relative == expected_cli)
+        not (
+            relative.startswith(expected_prefix)
+            or relative == expected_cli
+            or (
+                valid_v2
+                and relative
+                == (
+                    "smartcrypto/data/"
+                    "bitradex_ocr_legacy_compatibility/"
+                    "compatibility_audit.py"
+                )
+            )
+        )
         for relative in allowed_paths
     ):
         errors.append("guarded_transition_allowlist_scope_invalid")
@@ -1428,6 +1568,148 @@ def _guarded_transition_evidence(
     base["guarded_transition_validation_errors"] = sorted(set(errors))
     base["guarded_transition_source_hashes_valid"] = not errors
     return base
+
+
+def _authorized_transition_target_artifact_evidence(
+    root: Path,
+    *,
+    trader_master_path: str | Path,
+    transition_contract_path: str | Path,
+) -> dict[str, Any]:
+    """Recognize only the pinned research-only V2 post-transition semantics."""
+
+    base: dict[str, Any] = {
+        "post_transition_artifact_matches": False,
+        "post_transition_artifact_semantic_sha256": None,
+        "post_transition_artifact_validation_errors": [],
+        "artifact_contract_match_mode": "pinned_pre_transition_policy",
+    }
+    contract_path = _resolve(root, transition_contract_path)
+    try:
+        payload = json.loads(contract_path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return base
+    if not isinstance(payload, Mapping):
+        return base
+    target = payload.get("target_state")
+    safety = payload.get("safety")
+    source_contract_value = payload.get("source_contract")
+    if (
+        payload.get("schema_version")
+        != "trader_master_legacy_canonical_xlsx_transition_v2"
+        or payload.get("transition_state") != "planned_not_executed"
+        or not isinstance(target, Mapping)
+        or not isinstance(safety, Mapping)
+        or any(
+            safety.get(field) is not False
+            for field in (
+                "operational_authority",
+                "sends_orders",
+                "changes_risk",
+                "exchange_private_access",
+            )
+        )
+        or not isinstance(source_contract_value, str)
+    ):
+        base["post_transition_artifact_validation_errors"] = [
+            "post_transition_contract_invalid"
+        ]
+        return base
+    expected_hash = target.get("expected_target_semantic_sha256")
+    expected_rows = target.get("expected_row_count")
+    expected_column_count = target.get("canonical_schema_column_count")
+    if (
+        not isinstance(expected_hash, str)
+        or HEX_SHA256.fullmatch(expected_hash) is None
+        or expected_rows != 3562
+        or expected_column_count != 25
+        or target.get("dataset_classification")
+        != "research_only_legacy_non_v2"
+    ):
+        base["post_transition_artifact_validation_errors"] = [
+            "post_transition_target_policy_invalid"
+        ]
+        return base
+    try:
+        source_contract = json.loads(
+            _resolve(root, source_contract_value).read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        columns = tuple(
+            str(item)
+            for item in source_contract["historical_master_schema"][
+                "columns"
+            ]
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError, KeyError, TypeError):
+        base["post_transition_artifact_validation_errors"] = [
+            "post_transition_source_contract_invalid"
+        ]
+        return base
+    bundle = read_trader_master_readonly(
+        project_root=root,
+        trader_master_path=trader_master_path,
+    )
+    if bundle.report.get("status") != "ok":
+        base["post_transition_artifact_validation_errors"] = [
+            str(bundle.report.get("reason", "post_transition_master_unreadable"))
+        ]
+        return base
+    observed_columns = tuple(
+        str(item)
+        for item in bundle.report.get("trader_master_schema_columns", [])
+    )
+    observed_rows = int(
+        bundle.report.get("trader_master_row_count", 0)
+    )
+    semantic_hash = _transition_semantic_rows_sha256(
+        bundle.source_rows, columns
+    )
+    errors: list[str] = []
+    if observed_rows != expected_rows:
+        errors.append("post_transition_row_count_mismatch")
+    if observed_columns != columns:
+        errors.append("post_transition_schema_mismatch")
+    if semantic_hash != expected_hash.casefold():
+        errors.append("post_transition_semantic_hash_mismatch")
+    base.update(
+        post_transition_artifact_matches=not errors,
+        post_transition_artifact_semantic_sha256=semantic_hash,
+        post_transition_artifact_validation_errors=errors,
+    )
+    return base
+
+
+def _transition_semantic_rows_sha256(
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[str],
+) -> str:
+    payload = [
+        [_transition_semantic_value(row.get(column)) for column in columns]
+        for row in rows
+    ]
+    encoded = json.dumps(
+        {"columns": list(columns), "rows": payload},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _transition_semantic_value(value: Any) -> str | None:
+    if value is None or (
+        isinstance(value, float) and math.isnan(value)
+    ):
+        return None
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).strip()
 
 
 def _base_report(
@@ -1466,6 +1748,10 @@ def _base_report(
         "observed_schema_columns": [],
         "temp_copy_used": False,
         "artifact_contract_matches": False,
+        "artifact_contract_match_mode": "pinned_pre_transition_policy",
+        "post_transition_artifact_matches": False,
+        "post_transition_artifact_semantic_sha256": None,
+        "post_transition_artifact_validation_errors": [],
         "tracked_file_discovery_mode": None,
         "tracked_file_count": 0,
         "scanned_python_file_count": 0,
@@ -1493,7 +1779,16 @@ def _base_report(
         "guarded_transition_source_hashes_valid": False,
         "guarded_transition_default_no_write": False,
         "guarded_transition_apply_executed": False,
+        "pre_transition_policy_valid": False,
+        "post_transition_target_policy_valid": False,
         "authorized_guarded_transition_implementation_count": 0,
+        "canonical_xlsx_transition_v2_present": False,
+        "canonical_xlsx_transition_v2_id": None,
+        "canonical_xlsx_transition_v2_state": None,
+        "canonical_xlsx_transition_v2_source_hashes_valid": False,
+        "canonical_xlsx_transition_v2_pre_policy_valid": False,
+        "canonical_xlsx_transition_v2_post_target_policy_valid": False,
+        "canonical_xlsx_transition_v2_validation_errors": [],
         "reassessment_allowed": True,
         "reassessment_triggers": [],
         "evidence_decision_scope": "safely_inspected_artifacts_only",
@@ -1624,6 +1919,7 @@ __all__ = [
     "AuditFinding",
     "ConsumerRegistration",
     "DEFAULT_GUARDED_TRANSITION",
+    "CANONICAL_XLSX_TRANSITION_V2",
     "DatasetEvidence",
     "FindingClassification",
     "GUARDED_TRANSITION_BASELINE_HIGH_PATHS",
