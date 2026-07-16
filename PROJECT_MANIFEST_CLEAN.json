@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "09b274f6126280b3205eb2aa9443a9dcabad9d0dc715b6f452bcc15831ffc0a9",
+  "aggregate_sha256": "4b51e6ab3434d5d8d9f8e7606ddaa37f3cf77b9460ef1629557ee0ef0a5f69da",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -7574,10 +7574,10 @@
       "sha256": "aaab041bddd7142dfea447ea4db1ff7b3103d15c2faf3a27163b56a37d376e82"
     },
     {
-      "bytes": 20782,
+      "bytes": 22472,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_legacy_canonical_xlsx_transition_v2.py",
-      "sha256": "61e701110bbdfde69298328a2130a5e3982973a516c8c5aafeea0a26af6134e6"
+      "sha256": "885eb59a8ef92ca7ddb8308bbc5e1156f6a43e7f94d3be98098c0d90f06c5139"
     },
     {
       "bytes": 16976,

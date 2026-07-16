@@ -13,8 +13,11 @@ import pandas as pd
 import pytest
 from openpyxl import Workbook, load_workbook
 
-from smartcrypto.data.bitradex_ocr_legacy_authorized_append.executor import (
-    apply_authorized_append,
+from smartcrypto.data.bitradex_ocr_legacy_authorized_append import (
+    executor as v1_executor,
+)
+from smartcrypto.data.bitradex_ocr_legacy_authorized_append.contract import (
+    parse_transition_contract as parse_v1_transition_contract,
 )
 from smartcrypto.data.bitradex_ocr_legacy_canonical_xlsx_transition_v2.contract import (
     AUTHORIZATION_PHRASE,
@@ -282,27 +285,76 @@ def plan(root: Path) -> dict[str, Any]:
     return build_canonical_xlsx_transition_plan(project_root=root)
 
 
-def test_v1_is_definitively_blocked_without_lock_or_backup() -> None:
-    before_backups = set(
-        (ROOT / "data/backups/bitradex_ocr_legacy_append").iterdir()
+def test_v1_is_definitively_blocked_without_lock_or_backup(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "project"
+    backup_directory = (
+        root
+        / "data"
+        / "backups"
+        / "bitradex_ocr_legacy_append"
     )
-    report = apply_authorized_append(
-        project_root=ROOT,
+    backup_directory.mkdir(parents=True)
+
+    versioned_payload = json.loads(
+        V1_CONFIG.read_text(encoding="utf-8")
+    )
+    contract = parse_v1_transition_contract(versioned_payload)
+    assert contract.transition_state == "failed_pre_replace_superseded"
+
+    monkeypatch.setattr(
+        v1_executor,
+        "load_transition_contract",
+        lambda *_args, **_kwargs: contract,
+    )
+
+    sentinel = backup_directory / "preexisting-backup-evidence.txt"
+    sentinel.write_text(
+        "preserve-existing-backup-evidence\n",
+        encoding="utf-8",
+    )
+
+    before_backups = {
+        path.relative_to(backup_directory).as_posix(): file_sha256(path)
+        for path in backup_directory.rglob("*")
+        if path.is_file()
+    }
+
+    report = v1_executor.apply_authorized_append(
+        project_root=root,
         transition_contract_path=V1_CONFIG,
         expected_plan_sha256=None,
         authorization_phrase=None,
     )
-    after_backups = set(
-        (ROOT / "data/backups/bitradex_ocr_legacy_append").iterdir()
-    )
+
+    after_backups = {
+        path.relative_to(backup_directory).as_posix(): file_sha256(path)
+        for path in backup_directory.rglob("*")
+        if path.is_file()
+    }
+
     assert report["status"] == "blocked"
     assert (
         report["reason"]
         == "transition_v1_superseded_after_xlsx_layout_mismatch"
     )
+    assert report["apply_executed"] is False
+    assert report["backup_created"] is False
+    assert report["write_performed"] is False
+    assert report["writes_trader_master"] is False
+
     assert before_backups == after_backups
+    assert before_backups == {
+        "preexisting-backup-evidence.txt": file_sha256(sentinel)
+    }
+
     assert not (
-        ROOT / "data/locks/bitradex_ocr_legacy_append_v1.lock"
+        root
+        / "data"
+        / "locks"
+        / "bitradex_ocr_legacy_append_v1.lock"
     ).exists()
 
 
@@ -594,24 +646,34 @@ def test_cli_plan_executes_without_apply(template: Path) -> None:
     assert payload["master_write_performed"] is False
 
 
-def test_real_masters_and_v1_backup_are_preserved() -> None:
-    assert file_sha256(ROOT / "data/trades/trades_master.xlsx") == (
+def test_transition_contract_pins_expected_pre_state() -> None:
+    payload = json.loads(V2_CONFIG.read_text(encoding="utf-8"))
+    pre_state = payload["pre_state"]
+    target_state = payload["target_state"]
+
+    assert payload["transition_state"] == "planned_not_executed"
+
+    assert pre_state["master_xlsx_sha256"] == (
         "83e2d17db317cc84b2bd39e00a961bd8d568c4375c5a4a113f6a26df58972e90"
     )
-    assert file_sha256(ROOT / "data/trades/trades_master.parquet") == (
+    assert pre_state["master_parquet_sha256"] == (
         "24e049b3ca7a72dbde071a056548035fed87651d48959cd0cf4c6c8b0dac7295"
     )
-    backup = (
-        ROOT
-        / "data/backups/bitradex_ocr_legacy_append/"
-        "20260716T133450.408970Z"
+
+    assert pre_state["master_row_count"] == 3058
+    assert pre_state["canonical_schema_column_count"] == 25
+    assert (
+        pre_state["xlsx_classification"]
+        == "legacy_ocr_evidence_workbook"
     )
-    assert file_sha256(backup / "trades_master.xlsx") == file_sha256(
-        ROOT / "data/trades/trades_master.xlsx"
+    assert (
+        pre_state["legacy_data_sheet"]
+        == "trades_master_candidate"
     )
-    assert file_sha256(backup / "trades_master.parquet") == file_sha256(
-        ROOT / "data/trades/trades_master.parquet"
-    )
+    assert pre_state["legacy_summary_sheet"] == "BUILD_SUMMARY"
+
+    assert target_state["expected_row_count"] == 3562
+    assert target_state["canonical_schema_column_count"] == 25
 
 
 def test_new_transition_uses_distinct_authority() -> None:
