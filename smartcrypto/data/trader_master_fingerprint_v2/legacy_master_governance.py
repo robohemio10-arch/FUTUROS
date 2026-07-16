@@ -28,6 +28,10 @@ DEFAULT_POLICY = Path("config/trader_master_legacy_research_only_policy_v1.json"
 DEFAULT_MASTER = Path("data/trades/trades_master.parquet")
 DEFAULT_JSON_REPORT = Path("data/reports/trader_master_legacy_research_only_boundary_v1.json")
 DEFAULT_MARKDOWN_REPORT = Path("data/reports/trader_master_legacy_research_only_boundary_v1.md")
+DEFAULT_GUARDED_TRANSITION = Path("config/bitradex_ocr_legacy_append_transition_v1.json")
+GUARDED_TRANSITION_BASELINE_HIGH_PATHS = (
+    "config/bitradex_ocr_legacy_contract_v1.json",
+)
 MASTER_REFERENCE = "data/trades/trades_master.parquet"
 
 REQUIRED_ALLOWED_PURPOSES = frozenset(
@@ -144,6 +148,9 @@ class FindingClassification(StrEnum):
     CONFIGURATION_REFERENCE = "configuration_reference"
     TEST_FIXTURE_REFERENCE = "test_fixture_reference"
     DOCUMENTATION_REFERENCE = "documentation_reference"
+    AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION = (
+        "authorized_guarded_transition_implementation"
+    )
 
 
 class Severity(StrEnum):
@@ -653,6 +660,7 @@ def audit_legacy_master_consumers(
     tracked_inventory: TrackedFileInventory | None = None,
     runner: Runner = subprocess.run,
     timeout_seconds: float = 15.0,
+    transition_contract_path: str | Path = DEFAULT_GUARDED_TRANSITION,
 ) -> tuple[tuple[AuditFinding, ...], dict[str, Any]]:
     root = Path(project_root).resolve()
     inventory = tracked_inventory or discover_tracked_files(
@@ -670,6 +678,14 @@ def audit_legacy_master_consumers(
     registered_paths = frozenset(
         _normalize_path(item.relative_path) for item in policy.registered_consumers
     )
+    transition = _guarded_transition_evidence(
+        root,
+        transition_contract_path=transition_contract_path,
+        tracked_paths=inventory.paths,
+    )
+    authorized_transition_paths = frozenset(transition["authorized_source_paths"])
+    if transition["guarded_transition_source_hashes_valid"]:
+        ignored.add(_normalize_path(str(transition_contract_path)))
     for relative in inventory.paths:
         path = root / relative
         suffix = path.suffix.casefold()
@@ -691,13 +707,27 @@ def audit_legacy_master_consumers(
                     )
                 )
                 continue
-            findings.extend(
-                analyze_python_source(
-                    relative,
-                    source,
-                    registered_paths=registered_paths,
-                )
+            source_findings = analyze_python_source(
+                relative,
+                source,
+                registered_paths=registered_paths,
             )
+            if (
+                relative in authorized_transition_paths
+                and transition["guarded_transition_source_hashes_valid"]
+            ):
+                findings.append(
+                    _finding(
+                        FindingClassification.AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION,
+                        Severity.INFO,
+                        relative,
+                        0,
+                        "guarded_transition_contract",
+                        "hash_pinned_planned_transition_no_operational_authority",
+                    )
+                )
+            else:
+                findings.extend(source_findings)
         elif suffix in CONFIG_EXTENSIONS:
             configuration_count += 1
             try:
@@ -746,6 +776,7 @@ def audit_legacy_master_consumers(
         "scanned_python_file_count": python_count,
         "scanned_configuration_file_count": configuration_count,
         "tracked_file_discovery_complete": inventory.complete,
+        **transition,
     }
     return deduplicated, metadata
 
@@ -761,6 +792,7 @@ def build_legacy_master_boundary_report(
     generated_at_utc: str | None = None,
     runner: Runner = subprocess.run,
     timeout_seconds: float = 15.0,
+    transition_contract_path: str | Path = DEFAULT_GUARDED_TRANSITION,
 ) -> dict[str, Any]:
     root = Path(project_root).resolve()
     json_path = _resolve(root, output_json)
@@ -824,6 +856,7 @@ def build_legacy_master_boundary_report(
             policy=policy,
             runner=runner,
             timeout_seconds=timeout_seconds,
+            transition_contract_path=transition_contract_path,
         )
     except TrackedFileDiscoveryError as exc:
         return _blocked(report, "tracked_file_discovery_failed", [str(exc)])
@@ -838,12 +871,23 @@ def build_legacy_master_boundary_report(
             FindingClassification.TEST_FIXTURE_REFERENCE,
             FindingClassification.DOCUMENTATION_REFERENCE,
             FindingClassification.LEGACY_WRITER_IMPLEMENTATION,
+            FindingClassification.AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION,
         }
     }
     consumer_inventory_complete = bool(discovery["tracked_file_discovery_complete"]) and not counts[
         FindingClassification.DYNAMIC_REFERENCE_UNRESOLVED.value
     ]
     high_or_critical = severities[Severity.HIGH.value] + severities[Severity.CRITICAL.value]
+    high_finding_paths = sorted(
+        {
+            item.relative_path
+            for item in findings
+            if item.severity == Severity.HIGH
+        }
+    )
+    new_high_finding_paths = sorted(
+        set(high_finding_paths) - set(GUARDED_TRANSITION_BASELINE_HIGH_PATHS)
+    )
     if high_or_critical:
         decision = "LEGACY_MASTER_BOUNDARY_VIOLATED"
     elif not consumer_inventory_complete:
@@ -878,9 +922,15 @@ def build_legacy_master_boundary_report(
         dynamic_reference_unresolved_count=counts[
             FindingClassification.DYNAMIC_REFERENCE_UNRESOLVED.value
         ],
+        authorized_guarded_transition_implementation_count=counts[
+            FindingClassification.AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION.value
+        ],
         consumer_inventory_complete=consumer_inventory_complete,
         findings=[item.to_dict() for item in findings],
         high_count=severities[Severity.HIGH.value],
+        high_finding_paths=high_finding_paths,
+        new_high_finding_count=len(new_high_finding_paths),
+        new_high_finding_paths=new_high_finding_paths,
         critical_count=severities[Severity.CRITICAL.value],
         segregation_enforced=decision == "LEGACY_MASTER_SEGREGATED_RESEARCH_ONLY",
         validation_errors=[],
@@ -906,8 +956,13 @@ def render_markdown(report: Mapping[str, Any]) -> str:
             f"- Operational consumers: `{report.get('operational_consumer_count')}`",
             f"- Legacy writer callsites: `{report.get('legacy_writer_callsite_count')}`",
             f"- High findings: `{report.get('high_count')}`",
+            f"- High finding paths: `{report.get('high_finding_paths')}`",
+            f"- New high findings: `{report.get('new_high_finding_count')}`",
             f"- Critical findings: `{report.get('critical_count')}`",
             f"- Segregation enforced: `{report.get('segregation_enforced')}`",
+            f"- Guarded transition present: `{report.get('guarded_transition_present')}`",
+            f"- Guarded transition state: `{report.get('guarded_transition_state')}`",
+            f"- Guarded transition hashes valid: `{report.get('guarded_transition_source_hashes_valid')}`",
             "",
             "## Boundary",
             "",
@@ -1255,6 +1310,126 @@ def _decision_reason(decision: str) -> str:
     }[decision]
 
 
+def _guarded_transition_evidence(
+    root: Path,
+    *,
+    transition_contract_path: str | Path,
+    tracked_paths: Sequence[str],
+) -> dict[str, Any]:
+    """Validate the narrow transition allowlist without granting operational authority."""
+
+    requested = Path(transition_contract_path)
+    path = requested if requested.is_absolute() else root / requested
+    base: dict[str, Any] = {
+        "guarded_transition_present": path.is_file() and not path.is_symlink(),
+        "guarded_transition_id": None,
+        "guarded_transition_state": None,
+        "guarded_transition_source_hashes_valid": False,
+        "guarded_transition_default_no_write": False,
+        "guarded_transition_apply_executed": False,
+        "authorized_source_paths": [],
+        "guarded_transition_validation_errors": [],
+    }
+    if not base["guarded_transition_present"]:
+        return base
+    errors: list[str] = []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        base["guarded_transition_validation_errors"] = [
+            f"guarded_transition_unreadable:{type(exc).__name__}"
+        ]
+        return base
+    if not isinstance(payload, Mapping):
+        base["guarded_transition_validation_errors"] = ["guarded_transition_root_invalid"]
+        return base
+    transition_id = payload.get("transition_id")
+    transition_state = payload.get("transition_state")
+    hashes = payload.get("authorized_source_sha256")
+    execution = payload.get("execution_policy")
+    safety = payload.get("safety")
+    base.update(
+        guarded_transition_id=transition_id,
+        guarded_transition_state=transition_state,
+    )
+    if payload.get("schema_version") != "trader_master_legacy_authorized_transition_v1":
+        errors.append("guarded_transition_schema_invalid")
+    if transition_state != "planned_not_executed":
+        errors.append("guarded_transition_state_invalid")
+    if not isinstance(hashes, Mapping) or not hashes:
+        errors.append("guarded_transition_hashes_missing")
+        hashes = {}
+    if not isinstance(execution, Mapping) or execution.get("default_mode") != "plan":
+        errors.append("guarded_transition_default_mode_invalid")
+    else:
+        base["guarded_transition_default_no_write"] = True
+    if not isinstance(safety, Mapping) or any(
+        safety.get(field) is not False
+        for field in (
+            "operational_authority",
+            "sends_orders",
+            "changes_risk",
+            "exchange_private_access",
+        )
+    ):
+        errors.append("guarded_transition_safety_invalid")
+
+    allowed_paths: list[str] = []
+    tracked = set(tracked_paths)
+    for raw_relative, expected in hashes.items():
+        relative = _normalize_path(str(raw_relative))
+        source = root / relative
+        allowed_paths.append(relative)
+        if (
+            Path(relative).is_absolute()
+            or ".." in Path(relative).parts
+            or _is_operational_path(relative)
+            or relative not in tracked
+            or source.is_symlink()
+            or not source.is_file()
+        ):
+            errors.append(f"guarded_transition_source_path_invalid:{relative}")
+            continue
+        if not isinstance(expected, str) or HEX_SHA256.fullmatch(expected) is None:
+            errors.append(f"guarded_transition_source_hash_invalid:{relative}")
+            continue
+        actual = hashlib.sha256(source.read_bytes()).hexdigest()
+        if actual != expected.casefold():
+            errors.append(f"guarded_transition_source_hash_mismatch:{relative}")
+        if source.suffix.casefold() == ".py":
+            try:
+                text = source.read_text(encoding="utf-8-sig")
+            except (OSError, UnicodeError):
+                errors.append(f"guarded_transition_source_unreadable:{relative}")
+                continue
+            prohibited = (
+                "trades_importer",
+                "import ccxt",
+                "from ccxt",
+                "import requests",
+                "import urllib",
+                "import socket",
+                "subprocess.run",
+                "riskmanager",
+                "send_order",
+            )
+            lowered = text.casefold()
+            if any(token in lowered for token in prohibited):
+                errors.append(f"guarded_transition_prohibited_capability:{relative}")
+
+    expected_prefix = "smartcrypto/data/bitradex_ocr_legacy_authorized_append/"
+    expected_cli = "scripts/build_bitradex_ocr_legacy_authorized_append_v1.py"
+    if not allowed_paths or any(
+        not (relative.startswith(expected_prefix) or relative == expected_cli)
+        for relative in allowed_paths
+    ):
+        errors.append("guarded_transition_allowlist_scope_invalid")
+    base["authorized_source_paths"] = sorted(allowed_paths)
+    base["guarded_transition_validation_errors"] = sorted(set(errors))
+    base["guarded_transition_source_hashes_valid"] = not errors
+    return base
+
+
 def _base_report(
     *,
     root: Path,
@@ -1307,8 +1482,18 @@ def _base_report(
         "consumer_inventory_complete": False,
         "findings": [],
         "high_count": 0,
+        "high_finding_paths": [],
+        "new_high_finding_count": 0,
+        "new_high_finding_paths": [],
         "critical_count": 0,
         "segregation_enforced": False,
+        "guarded_transition_present": False,
+        "guarded_transition_id": None,
+        "guarded_transition_state": None,
+        "guarded_transition_source_hashes_valid": False,
+        "guarded_transition_default_no_write": False,
+        "guarded_transition_apply_executed": False,
+        "authorized_guarded_transition_implementation_count": 0,
         "reassessment_allowed": True,
         "reassessment_triggers": [],
         "evidence_decision_scope": "safely_inspected_artifacts_only",
@@ -1438,8 +1623,10 @@ __all__ = [
     "AccessRequest",
     "AuditFinding",
     "ConsumerRegistration",
+    "DEFAULT_GUARDED_TRANSITION",
     "DatasetEvidence",
     "FindingClassification",
+    "GUARDED_TRANSITION_BASELINE_HIGH_PATHS",
     "LegacyMasterPolicy",
     "PolicyError",
     "Severity",

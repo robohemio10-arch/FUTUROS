@@ -15,6 +15,10 @@ from smartcrypto.data.trades_importer import (
     LegacyMasterImportDisabledError,
     import_trades_incrementally,
 )
+from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance import (
+    FindingClassification,
+    analyze_python_source,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +29,9 @@ FINGERPRINT_SPEC = (
     ROOT / "smartcrypto" / "data" / "trader_master_fingerprint_v2" / "fingerprint_spec.py"
 )
 POLICY = ROOT / "config" / "trader_master_legacy_research_only_policy_v1.json"
+GUARDED_EXECUTOR = (
+    ROOT / "smartcrypto/data/bitradex_ocr_legacy_authorized_append/executor.py"
+)
 
 
 def sha256(path: Path) -> str:
@@ -182,3 +189,25 @@ def test_protected_contract_files_are_unchanged() -> None:
     assert sha256(POLICY) == (
         "1d5f4ab5fc31726e8949e74cc8777eeef89fca69f0beba92b566e4018310b741"
     )
+
+
+def test_guarded_transition_is_not_a_generic_legacy_writer_exception() -> None:
+    source = GUARDED_EXECUTOR.read_text(encoding="utf-8")
+    findings = analyze_python_source(
+        "smartcrypto/data/bitradex_ocr_legacy_authorized_append/executor.py",
+        source,
+    )
+    assert all(
+        item.classification
+        != FindingClassification.AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION
+        for item in findings
+    )
+
+
+def test_uncontracted_writer_remains_blocking() -> None:
+    findings = analyze_python_source(
+        "smartcrypto/data/uncontracted_writer.py",
+        "from pathlib import Path\n"
+        "Path('data/trades/trades_master.parquet').write_bytes(b'unsafe')\n",
+    )
+    assert any(item.severity.value in {"critical", "high"} for item in findings)

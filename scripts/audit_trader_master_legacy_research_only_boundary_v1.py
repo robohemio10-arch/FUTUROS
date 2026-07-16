@@ -17,6 +17,7 @@ from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance impo
     DEFAULT_MARKDOWN_REPORT,
     DEFAULT_MASTER,
     DEFAULT_POLICY,
+    DEFAULT_GUARDED_TRANSITION,
     build_legacy_master_boundary_report,
 )
 
@@ -26,6 +27,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--policy", default=str(DEFAULT_POLICY))
     parser.add_argument("--trader-master", default=str(DEFAULT_MASTER))
+    parser.add_argument("--transition-contract", default=str(DEFAULT_GUARDED_TRANSITION))
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--no-write", action="store_true")
     mode.add_argument("--write-report", action="store_true")
@@ -41,6 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root=args.project_root,
         policy_path=args.policy,
         trader_master_path=args.trader_master,
+        transition_contract_path=args.transition_contract,
         write_report=bool(args.write_report),
         output_json=args.output_json,
         output_markdown=args.output_markdown,
