@@ -39,7 +39,6 @@ from smartcrypto.data.trader_master_fingerprint_v2.legacy_master_governance impo
     TrackedFileInventory,
     analyze_python_source,
     audit_legacy_master_consumers,
-    build_legacy_master_boundary_report,
     load_legacy_master_policy,
 )
 
@@ -822,18 +821,63 @@ def test_boundary_allows_only_hash_pinned_transition_paths(template: Path) -> No
 
 
 def test_boundary_high_baseline_is_exactly_pinned() -> None:
-    report = build_legacy_master_boundary_report(
+    policy = load_legacy_master_policy(
         project_root=ROOT,
-        write_report=False,
+        policy_path=POLICY,
     )
-    assert report["critical_count"] == 0
-    assert report["high_count"] == 1
-    assert report["high_finding_paths"] == [
+
+    findings, metadata = audit_legacy_master_consumers(
+        project_root=ROOT,
+        policy=policy,
+    )
+
+    high_finding_paths = sorted(
+        {
+            finding.relative_path
+            for finding in findings
+            if finding.severity.value == "high"
+        }
+    )
+
+    critical_finding_paths = sorted(
+        {
+            finding.relative_path
+            for finding in findings
+            if finding.severity.value == "critical"
+        }
+    )
+
+    authorized_transition_paths = sorted(
+        {
+            finding.relative_path
+            for finding in findings
+            if finding.classification
+            == FindingClassification.AUTHORIZED_GUARDED_TRANSITION_IMPLEMENTATION
+        }
+    )
+
+    expected_high_paths = list(
+        GUARDED_TRANSITION_BASELINE_HIGH_PATHS
+    )
+
+    new_high_finding_paths = sorted(
+        set(high_finding_paths)
+        - set(GUARDED_TRANSITION_BASELINE_HIGH_PATHS)
+    )
+
+    assert metadata["tracked_file_discovery_complete"] is True
+    assert metadata["guarded_transition_present"] is True
+    assert metadata["guarded_transition_source_hashes_valid"] is True
+    assert metadata["guarded_transition_default_no_write"] is True
+    assert metadata["guarded_transition_apply_executed"] is False
+
+    assert critical_finding_paths == []
+    assert high_finding_paths == expected_high_paths
+    assert high_finding_paths == [
         "config/bitradex_ocr_legacy_contract_v1.json"
     ]
-    assert tuple(report["high_finding_paths"]) == GUARDED_TRANSITION_BASELINE_HIGH_PATHS
-    assert report["new_high_finding_count"] == 0
-    assert report["new_high_finding_paths"] == []
+    assert new_high_finding_paths == []
+    assert len(authorized_transition_paths) == 6
 
 
 def test_new_high_finding_is_not_absorbed_by_baseline(

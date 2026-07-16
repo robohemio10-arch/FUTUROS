@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "4074ea308570c3ad8bd3f4a269a264a1c454b7991397227d54f27cf836da34fc",
+  "aggregate_sha256": "a49d41ce1f65554a58fd0bb302eb36167561bb0b653464ca1e3225da8466e512",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -7520,10 +7520,10 @@
       "sha256": "939891e30bf72e42fddb4fbda1f35227f2cf2128118996c7835a41f480f64877"
     },
     {
-      "bytes": 34373,
+      "bytes": 35505,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_legacy_authorized_append_v1.py",
-      "sha256": "9cef87412cb8b4497234922b95e2a0002058f55af18a1b369a8791682e45a635"
+      "sha256": "4da31eecb52ec580a5e692628e40627ad58bea89199c6c5bd73c5f49eec30474"
     },
     {
       "bytes": 16976,
