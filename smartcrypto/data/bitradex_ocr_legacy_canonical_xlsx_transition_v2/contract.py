@@ -1,4 +1,4 @@
-"""Strict contract for the guarded Bitradex OCR legacy append transition."""
+"""Strict contract for the canonical XLSX transition over the legacy Master."""
 
 from __future__ import annotations
 
@@ -11,26 +11,30 @@ from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
 
-SCHEMA_VERSION = "trader_master_legacy_authorized_transition_v1"
-TRANSITION_ID = "bitradex_ocr_legacy_append_20260714_151816_v1"
+SCHEMA_VERSION = "trader_master_legacy_canonical_xlsx_transition_v2"
+TRANSITION_ID = "bitradex_ocr_legacy_canonical_xlsx_20260714_151816_v2"
 SOURCE_CONTRACT_ID = "bitradex_ocr_legacy_20260714_151816_v1"
 BATCH_ID = "20260714_151816"
 TRANSITION_STATE = "planned_not_executed"
-SUPERSEDED_TRANSITION_STATE = "failed_pre_replace_superseded"
-AUTHORIZATION_PHRASE = "AUTHORIZE_BITRADEX_OCR_LEGACY_APPEND_20260714_151816_504"
+AUTHORIZATION_PHRASE = (
+    "AUTHORIZE_BITRADEX_OCR_LEGACY_CANONICAL_XLSX_TRANSITION_"
+    "20260714_151816_504_V2"
+)
 IMPORTED_AT_UTC = "2026-07-14T19:49:13.500939+00:00"
-DEFAULT_TRANSITION_CONTRACT = Path("config/bitradex_ocr_legacy_append_transition_v1.json")
+DEFAULT_TRANSITION_CONTRACT = Path(
+    "config/bitradex_ocr_legacy_canonical_xlsx_transition_v2.json"
+)
 HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 EXPECTED_ALLOWED_ROOTS = (
     "data/trades",
-    "data/backups/bitradex_ocr_legacy_append",
+    "data/backups/bitradex_ocr_legacy_canonical_xlsx_transition_v2",
     "data/reports",
     "data/locks",
 )
 
 
 class TransitionContractError(ValueError):
-    """Raised when transition authority is absent, malformed, or drifted."""
+    """Raised when the transition authority is malformed or drifted."""
 
 
 @dataclass(frozen=True)
@@ -40,34 +44,32 @@ class PreState:
     master_xlsx_sha256: str
     master_parquet_sha256: str
     master_row_count: int
-    master_schema_column_count: int
+    canonical_schema_column_count: int
+    xlsx_classification: str
+    legacy_data_sheet: str
+    legacy_summary_sheet: str
+    legacy_data_header: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class TargetState:
+    canonical_xlsx_sheet: str
+    expected_row_count: int
+    canonical_schema_column_count: int
+    canonical_prefix_source: str
+    expected_prefix_semantic_sha256: str
+    expected_tail_semantic_sha256: str
+    expected_target_semantic_sha256: str
+    dataset_classification: str
 
 
 @dataclass(frozen=True)
 class AppendState:
     candidate_count: int
-    expected_post_row_count: int
     source_preview_summary: str
     source_preview_csv: str
-    xlsx_sheet: str
     preserve_existing_prefix: bool
     append_order: str
-
-
-@dataclass(frozen=True)
-class FundingPolicy:
-    funding_fee_value: None
-    funding_assumed_zero: bool
-    funding_derived_as_residual: bool
-    v2_financial_decomposition_eligible: bool
-
-
-@dataclass(frozen=True)
-class IdentityPolicy:
-    synthetic_order_id_authoritative: bool
-    synthetic_order_id_role: str
-    use_synthetic_order_id_as_v2_identity: bool
-    dedup_keys_are_collision_guards_only: bool
 
 
 @dataclass(frozen=True)
@@ -80,7 +82,6 @@ class ImportedAtPolicy:
     value_utc: str
     applies_to_all_candidate_rows: bool
     is_trade_event_timestamp: bool
-    derived_from_trade_fields: bool
     runtime_clock_allowed: bool
     filesystem_timestamp_allowed: bool
     batch_token_timestamp_allowed: bool
@@ -97,6 +98,7 @@ class ExecutionPolicy:
     cross_format_semantic_equality_required: bool
     post_apply_attestation_required: bool
     idempotent_reapply_forbidden: bool
+    build_xlsx_from_parquet_only: bool
 
 
 @dataclass(frozen=True)
@@ -116,9 +118,8 @@ class TransitionContract:
     source_contract_id: str
     batch_id: str
     pre_state: PreState
+    target_state: TargetState
     append_state: AppendState
-    funding_policy: FundingPolicy
-    identity_policy: IdentityPolicy
     imported_at_policy: ImportedAtPolicy
     execution_policy: ExecutionPolicy
     allowed_write_roots: tuple[str, ...]
@@ -165,8 +166,7 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
     batch_id = _string(payload, "batch_id")
     _equal(schema, SCHEMA_VERSION, "transition_schema_version_invalid")
     _equal(transition_id, TRANSITION_ID, "transition_id_invalid")
-    if state not in {TRANSITION_STATE, SUPERSEDED_TRANSITION_STATE}:
-        _fail("transition_state_invalid")
+    _equal(state, TRANSITION_STATE, "transition_state_invalid")
     _equal(source_contract_id, SOURCE_CONTRACT_ID, "source_contract_id_invalid")
     _equal(batch_id, BATCH_ID, "transition_batch_id_invalid")
 
@@ -177,73 +177,67 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
         master_xlsx_sha256=_hash(pre, "master_xlsx_sha256"),
         master_parquet_sha256=_hash(pre, "master_parquet_sha256"),
         master_row_count=_integer(pre, "master_row_count"),
-        master_schema_column_count=_integer(pre, "master_schema_column_count"),
+        canonical_schema_column_count=_integer(
+            pre, "canonical_schema_column_count"
+        ),
+        xlsx_classification=_string(pre, "xlsx_classification"),
+        legacy_data_sheet=_string(pre, "legacy_data_sheet"),
+        legacy_summary_sheet=_string(pre, "legacy_summary_sheet"),
+        legacy_data_header=_string_tuple(pre, "legacy_data_header"),
+    )
+    target = _object(payload, "target_state")
+    target_state = TargetState(
+        canonical_xlsx_sheet=_string(target, "canonical_xlsx_sheet"),
+        expected_row_count=_integer(target, "expected_row_count"),
+        canonical_schema_column_count=_integer(
+            target, "canonical_schema_column_count"
+        ),
+        canonical_prefix_source=_string(target, "canonical_prefix_source"),
+        expected_prefix_semantic_sha256=_hash(
+            target, "expected_prefix_semantic_sha256"
+        ),
+        expected_tail_semantic_sha256=_hash(
+            target, "expected_tail_semantic_sha256"
+        ),
+        expected_target_semantic_sha256=_hash(
+            target, "expected_target_semantic_sha256"
+        ),
+        dataset_classification=_string(target, "dataset_classification"),
     )
     append = _object(payload, "append_state")
     append_state = AppendState(
         candidate_count=_integer(append, "candidate_count"),
-        expected_post_row_count=_integer(append, "expected_post_row_count"),
         source_preview_summary=_string(append, "source_preview_summary"),
         source_preview_csv=_string(append, "source_preview_csv"),
-        xlsx_sheet=_string(append, "xlsx_sheet"),
         preserve_existing_prefix=_boolean(append, "preserve_existing_prefix"),
         append_order=_string(append, "append_order"),
     )
-    funding_payload = _object(payload, "funding_policy")
-    if "funding_fee_value" not in funding_payload or funding_payload["funding_fee_value"] is not None:
-        _fail("transition_funding_fee_must_be_null")
-    funding = FundingPolicy(
-        funding_fee_value=None,
-        funding_assumed_zero=_boolean(funding_payload, "funding_assumed_zero"),
-        funding_derived_as_residual=_boolean(funding_payload, "funding_derived_as_residual"),
-        v2_financial_decomposition_eligible=_boolean(
-            funding_payload, "v2_financial_decomposition_eligible"
-        ),
-    )
-    identity_payload = _object(payload, "identity_policy")
-    identity = IdentityPolicy(
-        synthetic_order_id_authoritative=_boolean(
-            identity_payload, "synthetic_order_id_authoritative"
-        ),
-        synthetic_order_id_role=_string(identity_payload, "synthetic_order_id_role"),
-        use_synthetic_order_id_as_v2_identity=_boolean(
-            identity_payload, "use_synthetic_order_id_as_v2_identity"
-        ),
-        dedup_keys_are_collision_guards_only=_boolean(
-            identity_payload, "dedup_keys_are_collision_guards_only"
-        ),
-    )
-    imported_at_payload = _object(payload, "imported_at_policy")
+    imported = _object(payload, "imported_at_policy")
     imported_at = ImportedAtPolicy(
-        semantic_role=_string(imported_at_payload, "semantic_role"),
-        source_type=_string(imported_at_payload, "source_type"),
-        source_relative_path=_string(imported_at_payload, "source_relative_path"),
-        source_json_path=_string(imported_at_payload, "source_json_path"),
-        source_file_sha256=_hash(imported_at_payload, "source_file_sha256"),
-        value_utc=_string(imported_at_payload, "value_utc"),
+        semantic_role=_string(imported, "semantic_role"),
+        source_type=_string(imported, "source_type"),
+        source_relative_path=_string(imported, "source_relative_path"),
+        source_json_path=_string(imported, "source_json_path"),
+        source_file_sha256=_hash(imported, "source_file_sha256"),
+        value_utc=_string(imported, "value_utc"),
         applies_to_all_candidate_rows=_boolean(
-            imported_at_payload, "applies_to_all_candidate_rows"
+            imported, "applies_to_all_candidate_rows"
         ),
-        is_trade_event_timestamp=_boolean(
-            imported_at_payload, "is_trade_event_timestamp"
-        ),
-        derived_from_trade_fields=_boolean(
-            imported_at_payload, "derived_from_trade_fields"
-        ),
-        runtime_clock_allowed=_boolean(
-            imported_at_payload, "runtime_clock_allowed"
-        ),
+        is_trade_event_timestamp=_boolean(imported, "is_trade_event_timestamp"),
+        runtime_clock_allowed=_boolean(imported, "runtime_clock_allowed"),
         filesystem_timestamp_allowed=_boolean(
-            imported_at_payload, "filesystem_timestamp_allowed"
+            imported, "filesystem_timestamp_allowed"
         ),
         batch_token_timestamp_allowed=_boolean(
-            imported_at_payload, "batch_token_timestamp_allowed"
+            imported, "batch_token_timestamp_allowed"
         ),
     )
     execution_payload = _object(payload, "execution_policy")
     execution = ExecutionPolicy(
         default_mode=_string(execution_payload, "default_mode"),
-        apply_requires_plan_sha256=_boolean(execution_payload, "apply_requires_plan_sha256"),
+        apply_requires_plan_sha256=_boolean(
+            execution_payload, "apply_requires_plan_sha256"
+        ),
         apply_requires_authorization_phrase=_boolean(
             execution_payload, "apply_requires_authorization_phrase"
         ),
@@ -259,38 +253,62 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
         idempotent_reapply_forbidden=_boolean(
             execution_payload, "idempotent_reapply_forbidden"
         ),
+        build_xlsx_from_parquet_only=_boolean(
+            execution_payload, "build_xlsx_from_parquet_only"
+        ),
     )
     safety_payload = _object(payload, "safety")
     safety = SafetyPolicy(
         operational_authority=_boolean(safety_payload, "operational_authority"),
         sends_orders=_boolean(safety_payload, "sends_orders"),
         changes_risk=_boolean(safety_payload, "changes_risk"),
-        exchange_private_access=_boolean(safety_payload, "exchange_private_access"),
+        exchange_private_access=_boolean(
+            safety_payload, "exchange_private_access"
+        ),
     )
     roots = _string_tuple(payload, "allowed_write_roots")
     source_hashes_payload = _object(payload, "authorized_source_sha256")
-    source_hashes = tuple(sorted((str(key), _hash(source_hashes_payload, str(key))) for key in source_hashes_payload))
+    source_hashes = tuple(
+        sorted(
+            (str(key), _hash(source_hashes_payload, str(key)))
+            for key in source_hashes_payload
+        )
+    )
 
-    if pre_state.master_row_count != 3058 or pre_state.master_schema_column_count != 25:
-        _fail("transition_pre_state_invalid")
-    if append_state.candidate_count != 504 or append_state.expected_post_row_count != 3562:
-        _fail("transition_append_state_invalid")
-    if pre_state.master_row_count + append_state.candidate_count != append_state.expected_post_row_count:
+    if pre_state.master_row_count != 3058:
+        _fail("transition_pre_state_row_count_invalid")
+    if pre_state.canonical_schema_column_count != 25:
+        _fail("transition_pre_state_schema_invalid")
+    if pre_state.xlsx_classification != "legacy_ocr_evidence_workbook":
+        _fail("transition_pre_xlsx_classification_invalid")
+    if pre_state.legacy_data_sheet != "trades_master_candidate":
+        _fail("transition_legacy_data_sheet_invalid")
+    if pre_state.legacy_summary_sheet != "BUILD_SUMMARY":
+        _fail("transition_legacy_summary_sheet_invalid")
+    if len(pre_state.legacy_data_header) != 71:
+        _fail("transition_legacy_header_invalid")
+    if target_state.canonical_xlsx_sheet != "trades_master_canonical":
+        _fail("transition_target_xlsx_sheet_invalid")
+    if (
+        target_state.expected_row_count != 3562
+        or target_state.canonical_schema_column_count != 25
+    ):
+        _fail("transition_target_state_invalid")
+    if target_state.canonical_prefix_source != "master_parquet_readonly_copy":
+        _fail("transition_target_prefix_source_invalid")
+    if target_state.dataset_classification != "research_only_legacy_non_v2":
+        _fail("transition_target_classification_invalid")
+    if append_state.candidate_count != 504:
+        _fail("transition_candidate_count_invalid")
+    if (
+        pre_state.master_row_count + append_state.candidate_count
+        != target_state.expected_row_count
+    ):
         _fail("transition_row_accounting_invalid")
-    if append_state.xlsx_sheet != "trades_master_candidate":
-        _fail("transition_xlsx_sheet_invalid")
     if append_state.preserve_existing_prefix is not True:
         _fail("transition_prefix_preservation_required")
     if append_state.append_order != "preview_csv_source_order":
         _fail("transition_append_order_invalid")
-    if any((funding.funding_assumed_zero, funding.funding_derived_as_residual, funding.v2_financial_decomposition_eligible)):
-        _fail("transition_funding_policy_unsafe")
-    if identity.synthetic_order_id_authoritative or identity.use_synthetic_order_id_as_v2_identity:
-        _fail("transition_synthetic_identity_unsafe")
-    if identity.synthetic_order_id_role != "legacy_dedup_alias_evidence_only":
-        _fail("transition_synthetic_identity_role_invalid")
-    if identity.dedup_keys_are_collision_guards_only is not True:
-        _fail("transition_collision_guard_policy_invalid")
     if imported_at.semantic_role != "ingestion_provenance_metadata":
         _fail("transition_imported_at_semantic_role_invalid")
     if imported_at.source_type != "package_authoritative_metadata":
@@ -300,19 +318,14 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
     _validate_utc_timestamp(imported_at.value_utc)
     if imported_at.value_utc != IMPORTED_AT_UTC:
         _fail("transition_imported_at_value_invalid")
-    if imported_at.applies_to_all_candidate_rows is not True:
-        _fail("transition_imported_at_scope_invalid")
-    if imported_at.is_trade_event_timestamp:
-        _fail("transition_imported_at_trade_timestamp_forbidden")
-    if any(
-        (
-            imported_at.derived_from_trade_fields,
-            imported_at.runtime_clock_allowed,
-            imported_at.filesystem_timestamp_allowed,
-            imported_at.batch_token_timestamp_allowed,
-        )
+    if (
+        imported_at.applies_to_all_candidate_rows is not True
+        or imported_at.is_trade_event_timestamp
+        or imported_at.runtime_clock_allowed
+        or imported_at.filesystem_timestamp_allowed
+        or imported_at.batch_token_timestamp_allowed
     ):
-        _fail("transition_imported_at_fallback_policy_unsafe")
+        _fail("transition_imported_at_policy_unsafe")
     if execution.default_mode != "plan":
         _fail("transition_default_mode_must_be_plan")
     if execution.authorization_phrase != AUTHORIZATION_PHRASE:
@@ -326,12 +339,20 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
             execution.cross_format_semantic_equality_required,
             execution.post_apply_attestation_required,
             execution.idempotent_reapply_forbidden,
+            execution.build_xlsx_from_parquet_only,
         )
     ):
         _fail("transition_execution_policy_unsafe")
     if roots != EXPECTED_ALLOWED_ROOTS:
         _fail("transition_allowed_write_roots_invalid")
-    if any((safety.operational_authority, safety.sends_orders, safety.changes_risk, safety.exchange_private_access)):
+    if any(
+        (
+            safety.operational_authority,
+            safety.sends_orders,
+            safety.changes_risk,
+            safety.exchange_private_access,
+        )
+    ):
         _fail("transition_safety_flags_unsafe")
     if not source_hashes:
         _fail("transition_authorized_sources_missing")
@@ -344,9 +365,8 @@ def parse_transition_contract(payload: Mapping[str, Any]) -> TransitionContract:
         source_contract_id=source_contract_id,
         batch_id=batch_id,
         pre_state=pre_state,
+        target_state=target_state,
         append_state=append_state,
-        funding_policy=funding,
-        identity_policy=identity,
         imported_at_policy=imported_at,
         execution_policy=execution,
         allowed_write_roots=roots,
@@ -370,8 +390,6 @@ def validate_imported_at_source(root: Path, policy: ImportedAtPolicy) -> Path:
         _fail("imported_at_source_missing")
     except ValueError:
         _fail("imported_at_source_outside_project_root")
-    if not resolved.is_file():
-        _fail("imported_at_source_missing")
     if file_sha256(resolved) != policy.source_file_sha256:
         _fail("imported_at_source_hash_mismatch")
     try:
@@ -380,27 +398,30 @@ def validate_imported_at_source(root: Path, policy: ImportedAtPolicy) -> Path:
         _fail(f"imported_at_source_unreadable:{type(exc).__name__}")
     if not isinstance(payload, dict):
         _fail("imported_at_source_root_must_be_object")
-    if policy.source_json_path not in payload:
-        _fail("imported_at_source_field_missing")
-    observed = payload[policy.source_json_path]
-    if not isinstance(observed, str):
-        _fail("imported_at_source_value_must_be_string")
+    observed = payload.get(policy.source_json_path)
     if observed != policy.value_utc:
         _fail("imported_at_source_value_mismatch")
-    _validate_utc_timestamp(observed)
+    _validate_utc_timestamp(str(observed))
     return resolved
 
 
-def verify_authorized_source_hashes(root: Path, contract: TransitionContract) -> tuple[str, ...]:
+def verify_authorized_source_hashes(
+    root: Path, contract: TransitionContract
+) -> tuple[str, ...]:
     errors: list[str] = []
     for relative, expected in contract.authorized_source_sha256:
         path = root / relative
-        if _unsafe_relative_path(relative) or path.is_symlink() or not path.is_file():
+        if (
+            _unsafe_relative_path(relative)
+            or path.is_symlink()
+            or not path.is_file()
+        ):
             errors.append(f"authorized_transition_source_invalid:{relative}")
             continue
-        actual = file_sha256(path)
-        if actual != expected:
-            errors.append(f"authorized_transition_source_hash_mismatch:{relative}")
+        if file_sha256(path) != expected:
+            errors.append(
+                f"authorized_transition_source_hash_mismatch:{relative}"
+            )
     return tuple(sorted(errors))
 
 
@@ -476,7 +497,9 @@ def _hash(payload: Mapping[str, Any], field: str) -> str:
 
 def _string_tuple(payload: Mapping[str, Any], field: str) -> tuple[str, ...]:
     value = payload.get(field)
-    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) for item in value
+    ):
         _fail(f"transition_string_array_required:{field}")
     return tuple(str(item) for item in value)
 

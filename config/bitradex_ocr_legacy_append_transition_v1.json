@@ -1,7 +1,7 @@
 {
   "schema_version": "trader_master_legacy_authorized_transition_v1",
   "transition_id": "bitradex_ocr_legacy_append_20260714_151816_v1",
-  "transition_state": "planned_not_executed",
+  "transition_state": "failed_pre_replace_superseded",
   "source_contract": "config/bitradex_ocr_legacy_contract_v1.json",
   "source_contract_id": "bitradex_ocr_legacy_20260714_151816_v1",
   "batch_id": "20260714_151816",
@@ -67,8 +67,8 @@
   ],
   "authorized_source_sha256": {
     "smartcrypto/data/bitradex_ocr_legacy_authorized_append/__init__.py": "9077505dffad0ccf9bb66c40ca1018059ff29b6629042fea918cd789c4772216",
-    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/contract.py": "7c286843f7176b183710f9dc2354f88397706bc9806a0037b88b6926cd0c5aa2",
-    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/executor.py": "5fd225854c299af3384d5b2301c4d200486b0ec47b090275812108b8622a092a",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/contract.py": "19ed0bfb3c94c354b85a6524cc465aa5c27e54764ee8bcc971280380f1a698ec",
+    "smartcrypto/data/bitradex_ocr_legacy_authorized_append/executor.py": "d32f225a7a4859e239be66a627df740ce4403bd7eecf73a45fd8c42942b888ee",
     "smartcrypto/data/bitradex_ocr_legacy_authorized_append/planner.py": "5ce315a8cc33b0e73dfe5b0ce40d16e03aca2f32a0429453e24ab3b56f8cf184",
     "smartcrypto/data/bitradex_ocr_legacy_authorized_append/transaction.py": "bc1ee68361014ad3bad63dd0c1c56594bc7ce760c968a2626136609352ce5c69",
     "scripts/build_bitradex_ocr_legacy_authorized_append_v1.py": "4b9b686036533fd33674ce79da0a332699fe13c9c9f23b90e5cdb1796eff6fd7"
