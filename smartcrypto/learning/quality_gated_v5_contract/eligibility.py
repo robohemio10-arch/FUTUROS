@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import pandas as pd
 
@@ -29,12 +30,26 @@ def flatten_reasons(*groups: Iterable[str] | None) -> list[str]:
         for reason in group:
             if reason:
                 reasons.add(str(reason))
-    precedence = {reason: index for index, reason in enumerate(BLOCK_REASON_PRECEDENCE)}
-    return sorted(reasons, key=lambda reason: (precedence.get(reason, len(precedence)), reason))
+    precedence = {
+        reason: index for index, reason in enumerate(BLOCK_REASON_PRECEDENCE)
+    }
+    return sorted(
+        reasons,
+        key=lambda reason: (precedence.get(reason, len(precedence)), reason),
+    )
 
 
 def choose_primary_reason(block_reasons: list[str]) -> str:
     return block_reasons[0] if block_reasons else "ELIGIBLE"
+
+
+def _normalized_column(
+    frame: pd.DataFrame,
+    column: str,
+) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series([""] * len(frame), index=frame.index, dtype="string")
+    return frame[column].map(normalize_trade_id).astype("string")
 
 
 def build_eligibility(
@@ -46,12 +61,15 @@ def build_eligibility(
     *,
     feature_name_audit: dict[str, Any],
 ) -> pd.DataFrame:
+    """Build immutable row-level eligibility and identity diagnostics.
+
+    ``order_id`` is carried forward only as diagnostic lineage. It never receives
+    canonical identity authority and never changes row eligibility.
+    """
+
     trade = trades.reset_index(drop=True)
-    ids = (
-        trade["trade_id"].map(normalize_trade_id)
-        if "trade_id" in trade.columns
-        else pd.Series([""] * len(trade))
-    )
+    ids = _normalized_column(trade, "trade_id")
+    order_ids = _normalized_column(trade, "order_id")
     duplicate_mask = ids.ne("") & ids.duplicated(keep=False)
 
     records: list[dict[str, Any]] = []
@@ -64,7 +82,10 @@ def build_eligibility(
             identity_reasons.append("BLOCKED_DUPLICATE_TRADE_ID")
 
         open_time = pd.to_datetime(
-            trade.iloc[index].get("open_ts", trade.iloc[index].get("open_time_utc")),
+            trade.iloc[index].get(
+                "open_ts",
+                trade.iloc[index].get("open_time_utc"),
+            ),
             errors="coerce",
             utc=True,
         )
@@ -75,7 +96,8 @@ def build_eligibility(
         for timeframe in ("1m", "5m"):
             freshness_reasons.extend(
                 freshness.iloc[index].get(
-                    f"snapshot_{timeframe}_block_reasons", []
+                    f"snapshot_{timeframe}_block_reasons",
+                    [],
                 )
             )
 
@@ -85,7 +107,8 @@ def build_eligibility(
             freshness_reasons,
             feature_quality.iloc[index].get("feature_block_reasons", []),
             temporal_leakage.iloc[index].get(
-                "temporal_leakage_block_reasons", []
+                "temporal_leakage_block_reasons",
+                [],
             ),
             global_feature_reasons,
         )
@@ -93,7 +116,8 @@ def build_eligibility(
         status = "BLOCKED" if block_reasons else "ELIGIBLE"
         records.append(
             {
-                "trade_id": ids.iloc[index],
+                "trade_id": str(ids.iloc[index]),
+                "order_id": str(order_ids.iloc[index]),
                 "eligibility_status": status,
                 "primary_reason": choose_primary_reason(block_reasons),
                 "block_reasons": block_reasons,
