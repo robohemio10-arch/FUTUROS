@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -53,12 +54,18 @@ def evidence_hash(report: dict[str, Any]) -> str:
         "evidence_hash",
         "row_records",
     }
-    payload = {key: value for key, value in report.items() if key not in excluded}
+    payload = {
+        key: value for key, value in report.items() if key not in excluded
+    }
     return hashlib.sha256(stable_json(payload).encode("utf-8")).hexdigest()
 
 
 def ensure_report_path(project_root: Path, path: Path) -> Path:
-    resolved = path.resolve() if path.is_absolute() else (project_root / path).resolve()
+    resolved = (
+        path.resolve()
+        if path.is_absolute()
+        else (project_root / path).resolve()
+    )
     allowed = (project_root / "data" / "reports").resolve()
     try:
         resolved.relative_to(allowed)
@@ -98,6 +105,10 @@ def render_markdown(report: dict[str, Any]) -> str:
     freshness = report.get("freshness", {})
     nonregression = report.get("nonregression", {})
     safety = report.get("safety_flags", {})
+    unavailability_reasons = nonregression.get(
+        "canonical_identity_unavailability_reasons",
+        [],
+    )
     lines = [
         "# Quality-Gated V5 Provenance, Freshness and Non-Regression Contract V1",
         "",
@@ -114,12 +125,45 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- In-progress snapshots: `{freshness.get('in_progress_snapshot_rows')}`",
         f"- Official rows: `{nonregression.get('official_rows')}`",
         f"- Projected rows: `{nonregression.get('projected_rows')}`",
-        f"- Unexplained removed official IDs: `{nonregression.get('unexplained_removed_official_ids')}`",
+        f"- Non-regression status: `{nonregression.get('status')}`",
+        f"- Non-regression reason: `{nonregression.get('reason')}`",
+        "- Canonical non-regression evaluable: "
+        f"`{nonregression.get('canonical_nonregression_evaluable')}`",
+        "- Artifact trade_id namespace compatible: "
+        f"`{nonregression.get('artifact_trade_id_namespace_compatible')}`",
+        "- Artifact trade_id overlap: "
+        f"`{nonregression.get('artifact_trade_id_overlap_unique_keys')}`",
+        "- Diagnostic order_id overlap: "
+        f"`{nonregression.get('order_id_diagnostic_overlap_unique_keys')}`",
+        "- Diagnostic order_id universe duplicate rows: "
+        f"`{nonregression.get('order_id_diagnostic_universe_duplicate_rows')}`",
+        "- Official identity loss proven: "
+        f"`{nonregression.get('official_identity_loss_proven')}`",
+        "- Official identity retention proven: "
+        f"`{nonregression.get('official_identity_retention_proven')}`",
+        "- Unexplained removed official IDs: "
+        f"`{nonregression.get('unexplained_removed_official_ids')}`",
         f"- Evidence hash: `{report.get('evidence_hash')}`",
         "",
-        "## Safety",
+        "## Canonical identity availability",
         "",
     ]
+    if unavailability_reasons:
+        for reason in unavailability_reasons:
+            lines.append(f"- `{reason}`")
+    else:
+        lines.append("- `canonical_identity_available`")
+
+    lines.extend(
+        [
+            "",
+            "`null` for unexplained removed official IDs means the gate was not "
+            "evaluable; it does not mean zero unexplained removals.",
+            "",
+            "## Safety",
+            "",
+        ]
+    )
     for key in sorted(safety):
         lines.append(f"- `{key}`: `{safety[key]}`")
     lines.extend(
@@ -147,7 +191,9 @@ def write_reports(
     resolved_jsonl = ensure_report_path(project_root, report_rows_jsonl)
     resolved_markdown = ensure_report_path(project_root, report_markdown)
 
-    main_payload = {key: value for key, value in report.items() if key != "row_records"}
+    main_payload = {
+        key: value for key, value in report.items() if key != "row_records"
+    }
     write_json(resolved_json, main_payload)
     write_jsonl(resolved_jsonl, row_records)
     atomic_write_text(resolved_markdown, render_markdown(report))
