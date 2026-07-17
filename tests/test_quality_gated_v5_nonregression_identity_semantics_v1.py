@@ -2,8 +2,14 @@ from __future__ import annotations
 
 import pandas as pd
 
+from smartcrypto.learning.quality_gated_v5_contract.eligibility import (
+    build_eligibility,
+)
 from smartcrypto.learning.quality_gated_v5_contract.nonregression import (
     compare_official_projection,
+)
+from smartcrypto.learning.quality_gated_v5_contract.reporting import (
+    render_markdown,
 )
 
 
@@ -166,3 +172,61 @@ def test_nonregression_audit_does_not_mutate_projection_block_reasons() -> None:
     compare_official_projection(official, projection)
 
     pd.testing.assert_frame_equal(projection, before)
+
+
+def test_eligibility_carries_order_id_as_diagnostic_only() -> None:
+    trades = pd.DataFrame(
+        {
+            "trade_id": ["trade-a"],
+            "order_id": ["order-a"],
+            "open_ts": [pd.Timestamp("2026-07-01T12:00:00Z")],
+        }
+    )
+    provenance = pd.DataFrame({"provenance_block_reasons": [[]]})
+    freshness = pd.DataFrame(
+        {
+            "snapshot_1m_block_reasons": [[]],
+            "snapshot_5m_block_reasons": [[]],
+        }
+    )
+    feature_quality = pd.DataFrame({"feature_block_reasons": [[]]})
+    temporal = pd.DataFrame({"temporal_leakage_block_reasons": [[]]})
+
+    result = build_eligibility(
+        trades,
+        provenance,
+        freshness,
+        feature_quality,
+        temporal,
+        feature_name_audit={"block_reasons": []},
+    )
+
+    assert result.loc[0, "trade_id"] == "trade-a"
+    assert result.loc[0, "order_id"] == "order-a"
+    assert bool(result.loc[0, "eligible_for_model_training"]) is True
+    assert result.loc[0, "block_reasons"] == []
+
+
+def test_markdown_distinguishes_not_evaluable_from_zero() -> None:
+    markdown = render_markdown(
+        {
+            "status": "blocked",
+            "reason": "nonregression_identity_gate_blocked",
+            "decision": "MANTER_EM_RESEARCH",
+            "nonregression": {
+                "status": "blocked",
+                "reason": "canonical_identity_unavailable_for_official_artifact",
+                "canonical_nonregression_evaluable": False,
+                "artifact_trade_id_namespace_compatible": False,
+                "unexplained_removed_official_ids": None,
+                "canonical_identity_unavailability_reasons": [
+                    "artifact_trade_id_zero_overlap_namespace_unproven"
+                ],
+            },
+            "safety_flags": {},
+        }
+    )
+
+    assert "Unexplained removed official IDs: `None`" in markdown
+    assert "gate was not evaluable" in markdown
+    assert "artifact_trade_id_zero_overlap_namespace_unproven" in markdown
