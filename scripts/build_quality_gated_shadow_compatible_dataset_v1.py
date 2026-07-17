@@ -5,6 +5,11 @@ The former entrypoint wrote candidate and full-audit Parquets before completing
 validation. That behavior is intentionally disabled. This wrapper delegates to
 the projection-only V5 contract and can write only research reports under
 ``data/reports`` when explicitly requested.
+
+``detect_ocr_rows`` remains available as a read-only compatibility API for
+legacy Phase 5 source-alignment tests and callers. It delegates provenance
+classification to the exact, versioned V5 contract; it performs no broad
+substring matching, model loading, dataset construction, or persistence.
 """
 
 from __future__ import annotations
@@ -14,6 +19,8 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -21,6 +28,27 @@ if str(PROJECT_ROOT) not in sys.path:
 from smartcrypto.learning.quality_gated_v5_contract import (  # noqa: E402
     build_quality_gated_v5_contract_report,
 )
+from smartcrypto.learning.quality_gated_v5_contract.provenance import (  # noqa: E402
+    classify_provenance_frame,
+)
+
+
+def detect_ocr_rows(frame: pd.DataFrame) -> pd.Series:
+    """Return rows matching an exact, versioned OCR provenance contract.
+
+    Historical rows and blocked partial, ambiguous, or unknown provenance rows
+    return ``False``. The returned boolean Series preserves the input index and
+    the function never mutates ``frame``.
+    """
+
+    if frame.empty:
+        return pd.Series(False, index=frame.index, dtype=bool)
+
+    classified = classify_provenance_frame(frame)
+    return (
+        classified["provenance_status"].eq("ok")
+        & classified["provenance_contract"].ne("historical")
+    ).astype(bool)
 
 
 def parse_args() -> argparse.Namespace:
