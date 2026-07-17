@@ -86,10 +86,20 @@ def trade_open_column(frame: pd.DataFrame) -> str | None:
 
 def normalized_trade_metadata(trades: pd.DataFrame) -> pd.DataFrame:
     trade = trades.reset_index(drop=True)
-    symbol_source = trade["symbol"] if "symbol" in trade.columns else trade.get("moeda", "")
-    side_source = trade["fechar_side"] if "fechar_side" in trade.columns else trade.get("side", "")
+    symbol_source = (
+        trade["symbol"] if "symbol" in trade.columns else trade.get("moeda", "")
+    )
+    side_source = (
+        trade["fechar_side"]
+        if "fechar_side" in trade.columns
+        else trade.get("side", "")
+    )
     open_column = trade_open_column(trade)
-    open_source = trade[open_column] if open_column is not None else pd.Series([pd.NaT] * len(trade))
+    open_source = (
+        trade[open_column]
+        if open_column is not None
+        else pd.Series([pd.NaT] * len(trade))
+    )
     return pd.DataFrame(
         {
             "trade_id": (
@@ -97,9 +107,13 @@ def normalized_trade_metadata(trades: pd.DataFrame) -> pd.DataFrame:
                 if "trade_id" in trade.columns
                 else pd.Series([""] * len(trade))
             ),
-            "symbol": pd.Series(symbol_source, index=trade.index).map(normalize_symbol),
+            "symbol": pd.Series(symbol_source, index=trade.index).map(
+                normalize_symbol
+            ),
             "side": pd.Series(side_source, index=trade.index).map(normalize_side),
-            "open_time_utc": pd.to_datetime(open_source, errors="coerce", utc=True),
+            "open_time_utc": pd.to_datetime(
+                open_source, errors="coerce", utc=True
+            ),
         }
     )
 
@@ -112,10 +126,17 @@ def freshness_summary(frame: pd.DataFrame) -> dict[str, Any]:
         "future_1m_rows": int(frame["snapshot_1m_is_future"].sum()),
         "future_5m_rows": int(frame["snapshot_5m_is_future"].sum()),
         "future_snapshot_rows": int(
-            (frame["snapshot_1m_is_future"] | frame["snapshot_5m_is_future"]).sum()
+            (
+                frame["snapshot_1m_is_future"]
+                | frame["snapshot_5m_is_future"]
+            ).sum()
         ),
-        "in_progress_1m_rows": int(frame["snapshot_1m_is_in_progress"].sum()),
-        "in_progress_5m_rows": int(frame["snapshot_5m_is_in_progress"].sum()),
+        "in_progress_1m_rows": int(
+            frame["snapshot_1m_is_in_progress"].sum()
+        ),
+        "in_progress_5m_rows": int(
+            frame["snapshot_5m_is_in_progress"].sum()
+        ),
         "in_progress_snapshot_rows": int(
             (
                 frame["snapshot_1m_is_in_progress"]
@@ -138,27 +159,56 @@ def grouped_feature_null_rates(
     metadata: pd.DataFrame,
     provenance: pd.DataFrame,
 ) -> dict[str, Any]:
+    """Calculate deterministic null-rate slices without nullable-groupby failures.
+
+    Pandas can raise ``ValueError: Categorical categories cannot be null`` when
+    ``groupby(..., dropna=False).groups`` operates on nullable string data. The
+    real 3,562-row universe contains missing opening timestamps, which generate
+    missing month labels. Missing grouping keys are therefore normalized to an
+    explicit sentinel before grouping. The operation remains read-only and
+    preserves the original row indices used to slice the feature matrix.
+    """
+
     numeric = features.apply(pd.to_numeric, errors="coerce")
     joined = metadata.copy()
-    joined["provenance_contract"] = provenance["provenance_contract"].astype(str)
-    joined["month"] = joined["open_time_utc"].dt.strftime("%Y-%m").astype("string")
+    joined["provenance_contract"] = provenance[
+        "provenance_contract"
+    ].astype(str)
+    joined["month"] = joined["open_time_utc"].dt.strftime("%Y-%m").astype(
+        "string"
+    )
+
     result: dict[str, Any] = {}
     for group_name in ("provenance_contract", "symbol", "side", "month"):
         group_payload: dict[str, Any] = {}
-        for group_value, indices in joined.groupby(group_name, dropna=False).groups.items():
-            rates = numeric.loc[list(indices)].isna().mean()
+        group_values = joined[group_name].astype("object")
+        group_values = group_values.where(
+            pd.notna(group_values), "<MISSING>"
+        )
+        grouped = joined.assign(_group_value=group_values).groupby(
+            "_group_value",
+            sort=True,
+            observed=True,
+        )
+        for group_value, group_frame in grouped:
+            rates = numeric.loc[group_frame.index].isna().mean()
             group_payload[str(group_value)] = {
-                feature: float(rate)
+                str(feature): float(rate)
                 for feature, rate in rates.items()
                 if float(rate) > 0.0
             }
         result[group_name] = group_payload
+
     v5_indices = provenance.index[
         provenance["provenance_contract"].eq("ocr_v5_20260714")
     ]
-    v5_rates = numeric.loc[list(v5_indices)].isna().mean() if len(v5_indices) else pd.Series(dtype=float)
+    v5_rates = (
+        numeric.loc[list(v5_indices)].isna().mean()
+        if len(v5_indices)
+        else pd.Series(dtype=float)
+    )
     result["tail_v5"] = {
-        feature: float(rate)
+        str(feature): float(rate)
         for feature, rate in v5_rates.items()
         if float(rate) > 0.0
     }
@@ -220,11 +270,17 @@ def build_quality_gated_v5_contract_report(
     generated_at = generated_at_utc or datetime.now(UTC).isoformat()
     trade_path = resolve(root, trade_enriched_path, DEFAULT_TRADE_ENRICHED)
     market_path = resolve(root, market_features_path, DEFAULT_MARKET_FEATURES)
-    official_path = resolve(root, official_quality_gated_path, DEFAULT_OFFICIAL_QUALITY_GATED)
+    official_path = resolve(
+        root, official_quality_gated_path, DEFAULT_OFFICIAL_QUALITY_GATED
+    )
     resolved_model_path = resolve(root, model_path, DEFAULT_MODEL_PATH)
     report_json = resolve(root, report_json_path, DEFAULT_REPORT_JSON)
-    report_jsonl = resolve(root, report_rows_jsonl_path, DEFAULT_REPORT_ROWS_JSONL)
-    report_markdown = resolve(root, report_markdown_path, DEFAULT_REPORT_MARKDOWN)
+    report_jsonl = resolve(
+        root, report_rows_jsonl_path, DEFAULT_REPORT_ROWS_JSONL
+    )
+    report_markdown = resolve(
+        root, report_markdown_path, DEFAULT_REPORT_MARKDOWN
+    )
 
     sources = [
         source_record("trade_enriched", trade_path),
@@ -253,7 +309,11 @@ def build_quality_gated_v5_contract_report(
             generated_at_utc=generated_at,
         )
 
-    if expected_model_sha256 and before_hashes["active_model_bytes_only"] != expected_model_sha256:
+    if (
+        expected_model_sha256
+        and before_hashes["active_model_bytes_only"]
+        != expected_model_sha256
+    ):
         blockers.append("active_model_sha256_mismatch")
 
     try:
@@ -288,14 +348,20 @@ def build_quality_gated_v5_contract_report(
 
     try:
         model_features, snapshots = build_model_feature_frame(trades, market)
-        feature_quality, feature_summary = audit_feature_quality(model_features)
+        feature_quality, feature_summary = audit_feature_quality(
+            model_features
+        )
         lineage = audit_prior_feature_lineage(trades, snapshots)
     except Exception as exc:
         blockers.append(f"feature_projection_failed:{exc.__class__.__name__}")
         model_features = pd.DataFrame(
-            np.nan, index=range(len(trades)), columns=list(MODEL_FEATURES)
+            np.nan,
+            index=range(len(trades)),
+            columns=list(MODEL_FEATURES),
         )
-        feature_quality, feature_summary = audit_feature_quality(model_features)
+        feature_quality, feature_summary = audit_feature_quality(
+            model_features
+        )
         lineage = pd.DataFrame(index=range(len(trades)))
 
     feature_name_audit = audit_feature_names(list(MODEL_FEATURES))
@@ -316,7 +382,10 @@ def build_quality_gated_v5_contract_report(
     freshness_stats = freshness_summary(freshness)
     eligibility_stats = eligibility_summary(eligibility)
 
-    if expected_v5_rows is not None and provenance_stats["v5_recognized_rows"] != expected_v5_rows:
+    if (
+        expected_v5_rows is not None
+        and provenance_stats["v5_recognized_rows"] != expected_v5_rows
+    ):
         blockers.append(
             "v5_provenance_recognized_count_mismatch:"
             f"{provenance_stats['v5_recognized_rows']}!={expected_v5_rows}"
@@ -343,13 +412,14 @@ def build_quality_gated_v5_contract_report(
         ],
         axis=1,
     )
-    combined["official_membership"] = combined["trade_id"].isin(official_ids)
+    combined["official_membership"] = combined["trade_id"].isin(
+        official_ids
+    )
     combined["projected_membership"] = combined[
         "eligible_for_model_training"
     ].astype(bool)
     row_records = [
-        json_safe(record)
-        for record in combined.to_dict(orient="records")
+        json_safe(record) for record in combined.to_dict(orient="records")
     ]
 
     after_hashes = {
@@ -387,7 +457,8 @@ def build_quality_gated_v5_contract_report(
             "actual_sha256": before_hashes["active_model_bytes_only"],
             "hash_match": (
                 expected_model_sha256 is None
-                or before_hashes["active_model_bytes_only"] == expected_model_sha256
+                or before_hashes["active_model_bytes_only"]
+                == expected_model_sha256
             ),
             "model_features_count": len(MODEL_FEATURES),
             "model_features": list(MODEL_FEATURES),
@@ -398,13 +469,17 @@ def build_quality_gated_v5_contract_report(
         "feature_quality": {
             **feature_summary,
             "null_rate_slices": grouped_feature_null_rates(
-                model_features, metadata, provenance
+                model_features,
+                metadata,
+                provenance,
             ),
         },
         "anti_leakage": {
             "feature_name_audit": feature_name_audit,
             "temporal_leakage_blocked_rows": int(
-                temporal_leakage["temporal_leakage_status"].eq("blocked").sum()
+                temporal_leakage["temporal_leakage_status"]
+                .eq("blocked")
+                .sum()
             ),
         },
         "eligibility": eligibility_stats,
