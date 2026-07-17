@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4b51e6ab3434d5d8d9f8e7606ddaa37f3cf77b9460ef1629557ee0ef0a5f69da",
+  "aggregate_sha256": "0755b0ae1630156be4a79de9926a885d5461faf839e54e03804d7bd9db564ba5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 273,
-    "manifested_files_total": 1555,
-    "python_files": 1179,
+    "docs_files": 274,
+    "manifested_files_total": 1570,
+    "python_files": 1193,
     "runtime_excluded_files_total": 0,
-    "test_files": 327,
-    "tracked_files_total": 1556,
+    "test_files": 330,
+    "tracked_files_total": 1571,
     "workflows": 1
   },
   "deterministic": true,
@@ -1898,6 +1898,12 @@
       "sha256": "2429420cc798327fd8b506f7b8145396c0d619e6e40cc9d25534d8ee18eb8a94"
     },
     {
+      "bytes": 9451,
+      "hash_mode": "text_lf",
+      "path": "docs/QUALITY_GATED_V5_PROVENANCE_FRESHNESS_AND_NONREGRESSION_CONTRACT_V1.md",
+      "sha256": "b3a3232120e21bfeca0652798cd4ef23765767cfc7af5ac49e055d26e8bcdb48"
+    },
+    {
       "bytes": 2484,
       "hash_mode": "text_lf",
       "path": "docs/READINESS_MONTE_CARLO_RISK_BUDGET_POLICY_INTEGRATION.md",
@@ -3224,10 +3230,16 @@
       "sha256": "8ba0eb2b6345815a9cec7848b3f1bad251cd8782c220f6f4ae9f13ccd65e7884"
     },
     {
-      "bytes": 20615,
+      "bytes": 2949,
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_shadow_compatible_dataset_v1.py",
-      "sha256": "ceff05631b664b483d4e887fdffb69d107db39b5e0e23971cb3bf3829aff5ae0"
+      "sha256": "a9adaf72c05db25f4a0bb70802654daaee9533efdaeee9c64b5c4d5275a84a18"
+    },
+    {
+      "bytes": 2859,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py",
+      "sha256": "3edf752b220b095e73c161603e82aae292c4f842dfaa3d003152640b97890d79"
     },
     {
       "bytes": 5632,
@@ -5784,6 +5796,66 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/walkforward_evaluator.py",
       "sha256": "3cf79fb60895daf71d9c52728ce2f8f77f3a09e10547a5bc54cbf7de8092fe99"
+    },
+    {
+      "bytes": 281,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/__init__.py",
+      "sha256": "aa1df41a1d4fc98df36a94dc80d994165a5cabceef44c5671165a2681606429e"
+    },
+    {
+      "bytes": 1971,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/anti_leakage.py",
+      "sha256": "067de31ceaafcc2d7bf727c68f880e9df9b3ea591a45c7cd9e4e6aa493c00798"
+    },
+    {
+      "bytes": 6506,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/contracts.py",
+      "sha256": "ba25ae6a577ef44c1936405dee380939f2ce4647365be23f1c8e87ff16bc081b"
+    },
+    {
+      "bytes": 4964,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/eligibility.py",
+      "sha256": "a5d577ffc0d32ed9bdb1ee9778a409748370bac7b5758b7a3028ac94d3606ce3"
+    },
+    {
+      "bytes": 13499,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/feature_quality.py",
+      "sha256": "33b7fb954b2f8c94dabe701bb17529445b478ed04ffcfd786910bf6727d25277"
+    },
+    {
+      "bytes": 6750,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/freshness.py",
+      "sha256": "8d3dda2a4d5fe84b085b5a4508cedd7527b0ed0adf5a264fde32ec7e51319793"
+    },
+    {
+      "bytes": 10955,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/nonregression.py",
+      "sha256": "ccf4b6c9d22254c485468c40ed08e4961bc869161e6957893b3b822d6ce3b614"
+    },
+    {
+      "bytes": 17654,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/projection.py",
+      "sha256": "7493567b277dc517552c1d18c2e23742c063f5b23ac89d4d898e7c58eb859fe2"
+    },
+    {
+      "bytes": 4896,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/provenance.py",
+      "sha256": "1d4cd832e41a6e5d98b283e2cbd17de582b820b9d38e6641dff75a8a0e197e9d"
+    },
+    {
+      "bytes": 6906,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/quality_gated_v5_contract/reporting.py",
+      "sha256": "2a081228bc613022a21e35d1a1eba5af0ccb0c01a620fe172f8a405d4381acfc"
     },
     {
       "bytes": 208,
@@ -9048,6 +9120,24 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_shadow_ensemble_threshold_calibration_v1.py",
       "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
+    },
+    {
+      "bytes": 8175,
+      "hash_mode": "text_lf",
+      "path": "tests/test_quality_gated_v5_nonregression_identity_semantics_v1.py",
+      "sha256": "04754d81d2c91e8e5e4adb79fe82caca80cea9978934a70ed3ad2cbb20c8babe"
+    },
+    {
+      "bytes": 2252,
+      "hash_mode": "text_lf",
+      "path": "tests/test_quality_gated_v5_null_grouping_regression_v1.py",
+      "sha256": "22f0aa2075d593517b835ed42bf0df335b9e71c529623885667305d45289ef27"
+    },
+    {
+      "bytes": 16208,
+      "hash_mode": "text_lf",
+      "path": "tests/test_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py",
+      "sha256": "f1bd4465c93064b741625349ceac129cf8bc096851070979a02b182d6d6c3b4e"
     },
     {
       "bytes": 19789,
