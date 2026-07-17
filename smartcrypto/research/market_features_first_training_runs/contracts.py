@@ -1,4 +1,4 @@
-"""Versioned contracts for point-in-time 5m research training runs."""
+"""Institutional contracts for 5m rematerialization and research training."""
 
 from __future__ import annotations
 
@@ -9,12 +9,20 @@ from typing import Final
 
 
 SCHEMA_VERSION: Final = "market_features_rematerialization_first_training_runs_v1"
-DECISION: Final = "MANTER_EM_RESEARCH"
+RESEARCH_DECISION: Final = "MANTER_EM_RESEARCH"
+NO_CANDIDATE_DECISION: Final = "NO_ELIGIBLE_MODEL_CANDIDATE"
+ELIGIBLE_CANDIDATE_DECISION: Final = "ELIGIBLE_RESEARCH_CANDIDATE_IDENTIFIED"
 EXPECTED_MASTER_ROWS: Final = 3504
 TIMEFRAME: Final = "5m"
 TIMEFRAME_SECONDS: Final = 300
 EMBARGO_SECONDS: Final = 1800
 RANDOM_SEED: Final = 42
+DRIFT_CUTOFF_UTC: Final = "2026-06-10T00:00:00+00:00"
+PAPER_V1_WATERMARK_UTC: Final = "2026-07-16T17:17:22.249000+00:00"
+
+CANONICAL_PYTHON_VERSION: Final = "3.11.15"
+CANONICAL_SKLEARN_VERSION: Final = "1.8.0"
+CANONICAL_JOBLIB_VERSION: Final = "1.5.3"
 
 DEFAULT_MASTER: Final = Path("data/trades/trades_master.parquet")
 DEFAULT_MARKET_FEATURES: Final = Path("data/features/market_features_60d.parquet")
@@ -24,9 +32,7 @@ DEFAULT_PAPER_SNAPSHOT: Final = Path(
 DEFAULT_SOURCE_PROFILE: Final = Path(
     "config/freqtrade_paper_closed_trades_source_profile_v2.json"
 )
-DEFAULT_OUTPUT_ROOT: Final = Path(
-    "data/research/market_features_first_training_runs_v1"
-)
+DEFAULT_OUTPUT_ROOT: Final = Path("data/research/market_features_first_training_runs_v1")
 DEFAULT_REPORT_JSON: Final = Path(
     "data/reports/market_features_rematerialization_first_training_runs_v1.json"
 )
@@ -34,7 +40,7 @@ DEFAULT_REPORT_MARKDOWN: Final = Path(
     "data/reports/market_features_rematerialization_first_training_runs_v1.md"
 )
 
-FEATURE_COLUMNS: Final = (
+MARKET_FEATURE_COLUMNS: Final = (
     "ret_1",
     "ret_3",
     "ret_5",
@@ -52,13 +58,54 @@ FEATURE_COLUMNS: Final = (
     "volume_z_30",
     "trend_score",
 )
-MODEL_FEATURE_COLUMNS: Final = tuple(f"feature_5m_{name}" for name in FEATURE_COLUMNS)
-MODEL_NAMES: Final = (
-    "logistic_regression",
-    "extra_trees",
-    "random_forest",
-    "hist_gradient_boosting",
+FEATURE_COLUMNS: Final = MARKET_FEATURE_COLUMNS
+POINT_IN_TIME_FEATURE_COLUMNS: Final = tuple(
+    f"feature_5m_{name}" for name in MARKET_FEATURE_COLUMNS
 )
+KNOWN_INPUT_FIELDS: Final = (
+    "symbol",
+    "side",
+    "entry_hour_utc",
+    "entry_day_of_week",
+    "feature_age_seconds",
+    "market_regime",
+    "volatility_regime",
+)
+KNOWN_NUMERIC_FEATURE_COLUMNS: Final = (
+    "meta_symbol_btcusdt",
+    "meta_symbol_ethusdt",
+    "meta_side_long",
+    "meta_side_short",
+    "entry_hour_utc",
+    "entry_day_of_week",
+    "feature_age_seconds",
+    "market_regime_trend_up",
+    "market_regime_trend_down",
+    "market_regime_range",
+    "market_regime_unknown",
+    "volatility_regime_low",
+    "volatility_regime_normal",
+    "volatility_regime_high",
+    "volatility_regime_unknown",
+)
+MODEL_FEATURE_COLUMNS: Final = (
+    *POINT_IN_TIME_FEATURE_COLUMNS,
+    *KNOWN_NUMERIC_FEATURE_COLUMNS,
+)
+
+CLASSIFIER_MODEL_NAMES: Final = (
+    "logistic_regression",
+    "extra_trees_classifier",
+    "random_forest_classifier",
+    "hist_gradient_boosting_classifier",
+)
+REGRESSOR_MODEL_NAMES: Final = (
+    "huber_regressor",
+    "random_forest_regressor",
+    "extra_trees_regressor",
+    "hist_gradient_boosting_regressor",
+)
+MODEL_NAMES: Final = (*CLASSIFIER_MODEL_NAMES, *REGRESSOR_MODEL_NAMES)
 
 FORBIDDEN_EXACT_FEATURES: Final = frozenset(
     {
@@ -76,6 +123,9 @@ FORBIDDEN_EXACT_FEATURES: Final = frozenset(
         "exit_reason",
         "profit_ratio",
         "target_profitable",
+        "provenance",
+        "source_file",
+        "ocr_source",
     }
 )
 FORBIDDEN_FEATURE_PREFIXES: Final = (
@@ -85,6 +135,39 @@ FORBIDDEN_FEATURE_PREFIXES: Final = (
     "outcome_",
     "pnl_",
     "close_",
+    "exit_",
+    "mfe_",
+    "mae_",
+    "post_entry_",
+    "source_",
+    "provenance_",
+)
+
+LOOKAHEAD_EXACT_COLUMNS: Final = frozenset(
+    {
+        "pnl",
+        "pnl_fechado",
+        "net_pnl",
+        "gross_pnl",
+        "mfe",
+        "mfe_pct",
+        "mae",
+        "mae_pct",
+        "close_time",
+        "close_time_utc",
+        "exit_price",
+        "exit_reason",
+        "profit_ratio",
+        "target_profitable",
+    }
+)
+LOOKAHEAD_COLUMN_PREFIXES: Final = (
+    "future_ret_",
+    "target_",
+    "label_",
+    "outcome_",
+    "pnl_",
+    "close_time_",
     "exit_",
     "mfe_",
     "mae_",
@@ -109,7 +192,9 @@ SAFETY_FLAGS: Final = MappingProxyType(
         "writes_sqlite": False,
         "writes_active_registry": False,
         "writes_signal_file": False,
+        "registry_write": False,
         "registry_write_performed": False,
+        "model_promotion": False,
         "model_promotion_performed": False,
         "active_model_changed": False,
         "updates_freqtrade": False,
@@ -118,6 +203,13 @@ SAFETY_FLAGS: Final = MappingProxyType(
         "updates_ai_shadow_runtime": False,
     }
 )
+
+
+@dataclass(frozen=True)
+class RuntimeEnvironment:
+    python_version: str
+    sklearn_version: str
+    joblib_version: str
 
 
 @dataclass(frozen=True)
@@ -152,11 +244,11 @@ class PipelineConfig:
     seed: int = RANDOM_SEED
     monte_carlo_iterations: int = 500
     monte_carlo_block_size: int = 20
+    maximum_negative_pnl_probability: float = 0.20
+    environment_override: RuntimeEnvironment | None = None
 
 
 def resolve_paths(project_root: str | Path) -> PipelinePaths:
-    """Resolve all inputs and research-only outputs below the project root."""
-
     root = Path(project_root).resolve()
     output_root = (root / DEFAULT_OUTPUT_ROOT).resolve()
     return PipelinePaths(
@@ -174,7 +266,13 @@ def resolve_paths(project_root: str | Path) -> PipelinePaths:
     )
 
 
-def safety_flags() -> dict[str, bool]:
-    """Return a mutable copy for report composition."""
+def canonical_environment() -> RuntimeEnvironment:
+    return RuntimeEnvironment(
+        python_version=CANONICAL_PYTHON_VERSION,
+        sklearn_version=CANONICAL_SKLEARN_VERSION,
+        joblib_version=CANONICAL_JOBLIB_VERSION,
+    )
 
+
+def safety_flags() -> dict[str, bool]:
     return dict(SAFETY_FLAGS)

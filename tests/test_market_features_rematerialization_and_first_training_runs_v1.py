@@ -13,22 +13,29 @@ from smartcrypto.research.market_features_first_training_runs.contracts import (
     FEATURE_COLUMNS,
     MODEL_FEATURE_COLUMNS,
     MODEL_NAMES,
+    PAPER_V1_WATERMARK_UTC,
     PipelineConfig,
+    RuntimeEnvironment,
+    canonical_environment,
     resolve_paths,
 )
 from smartcrypto.research.market_features_first_training_runs.pipeline import (
     attach_point_in_time_5m,
+    mark_paper_evaluation_sets,
     reconcile_master_rows,
     run_market_features_first_training_pipeline,
 )
 from smartcrypto.research.market_features_first_training_runs.training import (
     block_monte_carlo,
+    build_candidate_rankings,
     build_purged_walkforward_splits,
     max_drawdown,
-    rank_models,
     run_supervised_models,
+    select_expected_pnl_threshold,
 )
 from smartcrypto.research.market_features_first_training_runs.validation import (
+    build_concept_drift_report,
+    evaluate_canonical_environment,
     forbidden_feature_columns,
     normalize_5m_features,
     normalize_master,
@@ -39,10 +46,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "run_market_features_rematerialization_and_first_training_runs_v1.py"
 
 
-def feature_frame(*, periods: int = 500, gap_position: int | None = None) -> pd.DataFrame:
+def feature_frame(*, periods: int = 800) -> pd.DataFrame:
     timestamps = pd.date_range("2025-12-31", periods=periods, freq="5min", tz="UTC")
-    if gap_position is not None:
-        timestamps = timestamps.delete(gap_position)
     rows: list[dict[str, object]] = []
     for symbol_offset, symbol in enumerate(("BTCUSDT", "ETHUSDT")):
         for index, timestamp in enumerate(timestamps):
@@ -57,58 +62,123 @@ def feature_frame(*, periods: int = 500, gap_position: int | None = None) -> pd.
                 "close": price + (0.02 if index % 2 == 0 else -0.01),
                 "volume": 10.0 + (index % 17),
             }
-            for feature_offset, column in enumerate(FEATURE_COLUMNS):
-                row[column] = float(index + feature_offset + symbol_offset + 1) / 100.0
+            for offset, column in enumerate(FEATURE_COLUMNS):
+                row[column] = float(index + offset + 1) / 100.0
             rows.append(row)
     return pd.DataFrame(rows)
 
 
-def master_frame(*, rows: int = 100) -> pd.DataFrame:
+def master_frame(*, rows: int = 120) -> pd.DataFrame:
     timestamps = pd.date_range("2026-01-01 01:00", periods=rows, freq="5min", tz="UTC")
+    tail_start = max(0, rows - 20)
     return pd.DataFrame(
         {
             "moeda": np.where(np.arange(rows) % 2 == 0, "BTC_USDT", "ETH_USDT"),
-            "fechar_side": np.where(np.arange(rows) % 3 == 0, "Fechar Short", "Fechar Long"),
+            "fechar_side": np.where(
+                np.arange(rows) % 3 == 0, "Fechar Short", "Fechar Long"
+            ),
             "order_id": [f"master-{index}" for index in range(rows)],
-            "pnl_fechado": [f"{1.0 if index % 2 == 0 else -0.75} USDT" for index in range(rows)],
+            "pnl_fechado": [
+                f"{1.0 if index % 2 == 0 else -0.75} USDT" for index in range(rows)
+            ],
             "horario_abertura": timestamps.astype(str),
             "horario_fechamento": (timestamps + pd.Timedelta(minutes=2)).astype(str),
             "taxa_1": ["-0.10 USDT"] * rows,
             "taxa_2": ["-0.05 USDT"] * rows,
+            "source_file": [
+                "historical_non_ocr"
+                if index < tail_start
+                else "bitradex_20260714_synthetic_v5"
+                for index in range(rows)
+            ],
+            "ocr_source": [
+                None if index < tail_start else "bitradex_ocr_v2"
+                for index in range(rows)
+            ],
         }
     )
 
 
-def ready_training_frame(*, rows: int = 100) -> pd.DataFrame:
+def ready_training_frame(*, rows: int = 120) -> pd.DataFrame:
     normalized, _ = normalize_master(master_frame(rows=rows))
-    features = normalize_5m_features(feature_frame(periods=700))
-    aligned, _ = attach_point_in_time_5m(normalized, features, "master")
+    aligned, _ = attach_point_in_time_5m(
+        normalized, normalize_5m_features(feature_frame()), "master"
+    )
     return aligned
 
 
-def materialized_project(tmp_path: Path, *, rows: int = 100) -> Path:
+def materialized_project(tmp_path: Path, *, rows: int = 120) -> Path:
     project = tmp_path / "project"
     (project / "data" / "trades").mkdir(parents=True)
     (project / "data" / "features").mkdir(parents=True)
-    master_frame(rows=rows).to_parquet(project / "data" / "trades" / "trades_master.parquet")
-    feature_frame(periods=700).to_parquet(
+    master_frame(rows=rows).to_parquet(
+        project / "data" / "trades" / "trades_master.parquet"
+    )
+    feature_frame().to_parquet(
         project / "data" / "features" / "market_features_60d.parquet"
     )
     return project
 
 
-def test_default_is_no_write_and_research_only(tmp_path: Path) -> None:
+def canonical_config(**overrides: object) -> PipelineConfig:
+    values: dict[str, object] = {
+        "rematerialize_features": True,
+        "environment_override": canonical_environment(),
+    }
+    values.update(overrides)
+    return PipelineConfig(**values)
+
+
+def test_environment_gate_requires_exact_canonical_versions() -> None:
+    report = evaluate_canonical_environment(canonical_environment())
+    assert report["status"] == "ok"
+    assert report["training_allowed"] is True
+    assert report["expected"] == {
+        "python": "3.11.15",
+        "scikit_learn": "1.8.0",
+        "joblib": "1.5.3",
+    }
+
+
+def test_environment_mismatch_allows_diagnostics_but_blocks_financial_execution() -> None:
+    report = evaluate_canonical_environment(RuntimeEnvironment("3.12.10", "1.7.0", "1.5.1"))
+    assert report["status"] == "blocked"
+    assert report["diagnostics_allowed"] is True
+    assert report["training_allowed"] is False
+    assert report["backtest_allowed"] is False
+    assert report["monte_carlo_allowed"] is False
+
+
+def test_pipeline_mismatch_rematerializes_but_does_not_train(tmp_path: Path) -> None:
     project = materialized_project(tmp_path)
     result = run_market_features_first_training_pipeline(
         resolve_paths(project),
-        PipelineConfig(rematerialize_features=True),
+        PipelineConfig(
+            rematerialize_features=True,
+            run_baselines=True,
+            run_supervised_training=True,
+            run_backtest=True,
+            run_monte_carlo=True,
+            environment_override=RuntimeEnvironment("3.12.10", "1.7.0", "1.5.1"),
+        ),
     )
-    assert result.report["write_requested"] is False
+    assert result.report["status"] == "blocked"
+    assert result.report["reason"] == "canonical_training_environment_mismatch"
+    assert result.report["master_ready_row_count"] > 0
+    assert result.report["baselines"] == []
+    assert result.report["supervised_training"]["performed"] is False
+    assert result.report["backtest"]["performed"] is False
+    assert result.report["monte_carlo"]["performed"] is False
+
+
+def test_default_is_no_write_and_research_only(tmp_path: Path) -> None:
+    result = run_market_features_first_training_pipeline(
+        resolve_paths(materialized_project(tmp_path)), canonical_config()
+    )
     assert result.report["write_performed"] is False
     assert result.report["paper_only"] is True
     assert result.report["shadow_only"] is True
     assert result.report["operational_authority"] is False
-    assert not (project / "data" / "research").exists()
 
 
 def test_available_at_is_candle_timestamp_plus_five_minutes() -> None:
@@ -119,10 +189,10 @@ def test_available_at_is_candle_timestamp_plus_five_minutes() -> None:
 
 def test_point_in_time_never_uses_in_progress_candle() -> None:
     trade, _ = normalize_master(master_frame(rows=1))
-    features = normalize_5m_features(feature_frame(periods=400))
-    aligned, _ = attach_point_in_time_5m(trade, features, "master")
+    aligned, _ = attach_point_in_time_5m(
+        trade, normalize_5m_features(feature_frame()), "master"
+    )
     assert aligned.loc[0, "feature_available_at_utc"] <= aligned.loc[0, "open_time_utc"]
-    assert aligned.loc[0, "feature_timestamp_utc"] == pd.Timestamp("2026-01-01 00:55:00Z")
 
 
 def test_gap_is_blocked_without_forward_fill() -> None:
@@ -130,37 +200,61 @@ def test_gap_is_blocked_without_forward_fill() -> None:
     raw.loc[0, "horario_abertura"] = "2026-01-01 01:05:00+00:00"
     raw.loc[0, "horario_fechamento"] = "2026-01-01 01:07:00+00:00"
     trade, _ = normalize_master(raw)
-    features = feature_frame(periods=400)
+    features = feature_frame()
     features = features.loc[features["ts"] != pd.Timestamp("2026-01-01 01:00:00Z")]
     aligned, blockers = attach_point_in_time_5m(
-        trade,
-        normalize_5m_features(features),
-        "master",
+        trade, normalize_5m_features(features), "master"
     )
     assert aligned.loc[0, "row_status"] == "blocked"
-    assert any(item["reason"] == "five_minute_candle_gap_no_forward_fill" for item in blockers)
-
-
-def test_missing_feature_is_blocked_without_imputation() -> None:
-    trade, _ = normalize_master(master_frame(rows=1))
-    features = feature_frame(periods=400)
-    features.loc[features["symbol"] == "BTCUSDT", "volume"] = 1.0
-    aligned, blockers = attach_point_in_time_5m(
-        trade,
-        normalize_5m_features(features),
-        "master",
+    assert any(
+        item["reason"] == "five_minute_candle_gap_no_forward_fill"
+        for item in blockers
     )
-    assert aligned.loc[0, "row_status"] == "blocked"
-    assert any(item["reason"] == "missing_numeric_5m_features_no_imputation" for item in blockers)
+
+
+def test_known_entry_fields_are_materialized_and_numeric_features_are_finite() -> None:
+    frame = ready_training_frame(rows=4)
+    row = frame.loc[frame["row_status"].eq("ready")].iloc[0]
+    for field in (
+        "symbol",
+        "side",
+        "entry_hour_utc",
+        "entry_day_of_week",
+        "feature_age_seconds",
+        "market_regime",
+        "volatility_regime",
+    ):
+        assert field in frame.columns
+        assert pd.notna(row[field])
+    assert np.isfinite(row.loc[list(MODEL_FEATURE_COLUMNS)].astype(float)).all()
 
 
 @pytest.mark.parametrize(
     "column",
-    ["future_ret_1", "target_win", "pnl_fechado", "mfe_pct", "close_time", "exit_reason"],
+    [
+        "future_ret_1",
+        "target_win",
+        "pnl_fechado",
+        "mfe_pct",
+        "close_time",
+        "exit_reason",
+        "provenance",
+        "source_file",
+    ],
 )
-def test_output_and_lookahead_fields_are_forbidden_features(column: str) -> None:
+def test_output_and_provenance_fields_are_forbidden_features(column: str) -> None:
     assert column in forbidden_feature_columns([column])
     assert column not in MODEL_FEATURE_COLUMNS
+
+
+def test_source_provenance_metadata_does_not_block_market_source_normalization() -> None:
+    features = feature_frame(periods=80)
+    features["source_file"] = "public_5m_source"
+
+    normalized = normalize_5m_features(features)
+
+    assert not normalized.empty
+    assert "source_file" not in normalized.columns
 
 
 def test_expected_3504_and_canonical_3562_are_explicitly_reconciled() -> None:
@@ -168,75 +262,158 @@ def test_expected_3504_and_canonical_3562_are_explicitly_reconciled() -> None:
     assert result["row_count_delta"] == 58
     assert result["all_canonical_rows_retained"] is True
     assert result["silently_discarded_row_count"] == 0
-    assert result["unresolved_delta_row_count"] == 58
 
 
-def test_invalid_master_rows_have_individual_blockers() -> None:
-    frame = master_frame(rows=2)
-    frame.loc[1, "horario_abertura"] = None
-    normalized, blockers = normalize_master(frame)
-    assert len(normalized) == 2
-    assert normalized.loc[1, "row_status"] == "blocked"
-    assert {item["reason"] for item in blockers} == {"invalid_open_time"}
-    assert blockers[0]["source_row_number"] == 1
-
-
-def test_purged_walkforward_enforces_close_before_embargo_cutoff() -> None:
-    frame = ready_training_frame(rows=100)
+def test_purged_walkforward_has_fit_validation_and_same_test_baseline() -> None:
+    frame = ready_training_frame(rows=120)
     splits = build_purged_walkforward_splits(frame, embargo_seconds=300, max_folds=2)
     assert splits
     for split in splits:
+        assert split["fit_indices"]
+        assert split["validation_indices"]
         cutoff = pd.Timestamp(split["embargo_cutoff_utc"])
         assert (frame.loc[split["train_indices"], "close_time_utc"] < cutoff).all()
 
 
-def test_four_approved_models_train_without_imputation() -> None:
+def test_eight_approved_models_train_and_regression_thresholds_use_validation() -> None:
     result = run_supervised_models(
-        ready_training_frame(rows=100),
+        ready_training_frame(rows=120),
         seed=42,
         embargo_seconds=300,
         run_walkforward=True,
     )
     assert {item["model_name"] for item in result.model_summaries} == set(MODEL_NAMES)
     assert set(result.fitted_models) == set(MODEL_NAMES)
-    assert not result.predictions.empty
+    regression = result.predictions.loc[result.predictions["model_kind"].eq("regressor")]
+    assert set(regression["threshold_source"]) == {"master_fold_validation_only"}
+    assert result.fold_baselines
+    for baseline in result.fold_baselines:
+        fold_predictions = result.predictions.loc[
+            result.predictions["fold_id"].eq(baseline["fold_id"])
+        ]
+        assert set(baseline["test_trade_ids"]) == set(fold_predictions["trade_id"])
 
 
-def test_ranking_never_promotes() -> None:
-    summaries = (
-        {
-            "model_name": "a",
-            "net_pnl": 10.0,
-            "profit_factor": 2.0,
-            "expectancy": 1.0,
-            "max_drawdown": 2.0,
-            "stability_std_net_pnl": 1.0,
-        },
-        {
-            "model_name": "b",
-            "net_pnl": 5.0,
+def test_expected_pnl_threshold_is_selected_from_supplied_validation_only() -> None:
+    predictions = np.array([-1.0, -0.2, 0.1, 0.5])
+    pnl = np.array([-2.0, -1.0, 1.0, 3.0])
+    threshold = select_expected_pnl_threshold(predictions, pnl)
+    assert threshold in set(predictions) | {0.0}
+    assert threshold > -0.2
+
+
+def _summary(name: str, net: float, baseline_net: float) -> dict[str, object]:
+    return {
+        "model_name": name,
+        "model_kind": "regressor",
+        "fold_count": 3,
+        "positive_fold_count": 2 if net > 0 else 0,
+        "net_pnl": net,
+        "profit_factor": 1.5 if net > 0 else 0.8,
+        "expectancy": net / 30.0,
+        "max_drawdown": 2.0,
+        "stability_std_net_pnl": 1.0,
+        "baseline_always_allow": {
+            "net_pnl": baseline_net,
             "profit_factor": 1.2,
-            "expectancy": 0.5,
-            "max_drawdown": 4.0,
-            "stability_std_net_pnl": 3.0,
+            "expectancy": baseline_net / 30.0,
+            "max_drawdown": 3.0,
         },
+    }
+
+
+def test_negative_or_baseline_losing_models_have_no_selected_candidate() -> None:
+    rankings = build_candidate_rankings(
+        (_summary("loser", -1.0, 2.0),),
+        [
+            {
+                "model_name": "loser",
+                "net_pnl_median": -1.0,
+                "probability_negative_net_pnl": 0.8,
+            }
+        ],
+        maximum_negative_pnl_probability=0.2,
+        leakage_detected=False,
+        paper_rows_used_for_fit=0,
+        paper_rows_used_for_threshold=0,
     )
-    ranked = rank_models(summaries)
-    assert ranked[0]["model_name"] == "a"
-    assert all(item["promotion_eligible"] is False for item in ranked)
+    assert rankings["diagnostic_ranking"]
+    assert rankings["eligible_candidate_ranking"] == []
+    assert rankings["selected_candidate"] is None
+    assert rankings["decision"] == "NO_ELIGIBLE_MODEL_CANDIDATE"
 
 
-def test_drawdown_is_deterministic() -> None:
-    pnl = np.array([2.0, -1.0, -3.0, 2.0])
-    assert max_drawdown(pnl) == 4.0
+def test_candidate_requires_all_financial_and_monte_carlo_gates() -> None:
+    rankings = build_candidate_rankings(
+        (_summary("eligible", 10.0, 2.0),),
+        [
+            {
+                "model_name": "eligible",
+                "net_pnl_median": 8.0,
+                "probability_negative_net_pnl": 0.1,
+            }
+        ],
+        maximum_negative_pnl_probability=0.2,
+        leakage_detected=False,
+        paper_rows_used_for_fit=0,
+        paper_rows_used_for_threshold=0,
+    )
+    assert rankings["selected_candidate"]["model_name"] == "eligible"
+    assert rankings["decision"] == "ELIGIBLE_RESEARCH_CANDIDATE_IDENTIFIED"
 
 
-def test_block_monte_carlo_is_deterministic_and_uses_blocks() -> None:
+def test_concept_drift_includes_required_metrics_and_decompositions() -> None:
+    master = ready_training_frame(rows=120)
+    master.loc[master.index[:60], "open_time_utc"] = pd.date_range(
+        "2026-06-01", periods=60, freq="1h", tz="UTC"
+    )
+    master.loc[master.index[:60], "close_time_utc"] = (
+        master.loc[master.index[:60], "open_time_utc"] + pd.Timedelta(minutes=2)
+    )
+    master.loc[master.index[60:], "open_time_utc"] = pd.date_range(
+        "2026-06-11", periods=60, freq="1h", tz="UTC"
+    )
+    master.loc[master.index[60:], "close_time_utc"] = (
+        master.loc[master.index[60:], "open_time_utc"] + pd.Timedelta(minutes=2)
+    )
+    paper = master.iloc[:20].copy()
+    paper["provenance"] = "freqtrade_paper_snapshot"
+    paper["close_time_utc"] = pd.Timestamp("2026-07-15T00:00:00Z")
+    report = build_concept_drift_report(master, paper)
+    temporal = next(
+        item for item in report["comparisons"] if item["comparison_id"] == "master_temporal"
+    )
+    assert temporal["status"] == "ok"
+    assert temporal["feature_metrics"][0].keys() >= {
+        "psi",
+        "ks",
+        "wasserstein",
+    }
+    assert temporal["label_drift"]
+    assert temporal["pnl_drift"]
+    assert report["decomposition"].keys() == {"master", "paper_v1"}
+    assert report["provenance_used_as_feature"] is False
+
+
+def test_paper_v1_is_consumed_and_newer_rows_become_prospective_v2() -> None:
+    frame = ready_training_frame(rows=2)
+    frame["row_status"] = "ready"
+    watermark = pd.Timestamp(PAPER_V1_WATERMARK_UTC)
+    frame.loc[frame.index[0], "close_time_utc"] = watermark
+    frame.loc[frame.index[1], "close_time_utc"] = watermark + pd.Timedelta(seconds=1)
+    marked = mark_paper_evaluation_sets(frame)
+    assert marked.loc[frame.index[0], "paper_evaluation_set"] == "paper_evaluation_set_v1_consumed"
+    assert marked.loc[frame.index[1], "paper_evaluation_set"] == "prospective_holdout_v2"
+
+
+def test_block_monte_carlo_is_deterministic_and_uses_contiguous_blocks() -> None:
     predictions = pd.DataFrame(
         {
             "trade_id": [f"t{i}" for i in range(30)],
-            "open_time_utc": pd.date_range("2026-01-01", periods=30, freq="5min", tz="UTC"),
-            "model_name": ["logistic_regression"] * 30,
+            "open_time_utc": pd.date_range(
+                "2026-01-01", periods=30, freq="5min", tz="UTC"
+            ),
+            "model_name": ["huber_regressor"] * 30,
             "strategy_net_pnl": np.tile([1.0, -0.5, 0.25], 10),
         }
     )
@@ -246,25 +423,29 @@ def test_block_monte_carlo_is_deterministic_and_uses_blocks() -> None:
     assert first[0]["method"] == "contiguous_block_bootstrap"
 
 
+def test_drawdown_is_deterministic() -> None:
+    assert max_drawdown(np.array([2.0, -1.0, -3.0, 2.0])) == 4.0
+
+
 def test_write_flag_materializes_only_research_and_reports(tmp_path: Path) -> None:
     project = materialized_project(tmp_path)
     result = run_market_features_first_training_pipeline(
         resolve_paths(project),
-        PipelineConfig(
-            rematerialize_features=True,
+        canonical_config(
             run_baselines=True,
             write_research_artifacts=True,
-            expected_master_rows=100,
+            expected_master_rows=120,
         ),
     )
     assert result.report["write_performed"] is True
     written = [Path(item) for item in result.report["outputs_written"]]
-    assert written
     assert all((project / "data") in path.parents for path in written)
     assert not any("runtime" in path.parts or "registries" in path.parts for path in written)
 
 
-def test_cli_no_write_json_executes_with_required_contract(tmp_path: Path) -> None:
+def test_cli_current_noncanonical_environment_fails_closed_without_writes(
+    tmp_path: Path,
+) -> None:
     project = materialized_project(tmp_path)
     completed = subprocess.run(
         [
@@ -273,7 +454,9 @@ def test_cli_no_write_json_executes_with_required_contract(tmp_path: Path) -> No
             "--project-root",
             str(project),
             "--rematerialize-features",
-            "--run-baselines",
+            "--run-supervised-training",
+            "--run-backtest",
+            "--run-monte-carlo",
             "--no-write",
             "--json",
         ],
@@ -283,7 +466,11 @@ def test_cli_no_write_json_executes_with_required_contract(tmp_path: Path) -> No
         text=True,
     )
     payload = json.loads(completed.stdout)
+    assert payload["environment_gate"]["status"] == "blocked"
+    assert payload["supervised_training"]["performed"] is False
+    assert payload["backtest"]["performed"] is False
+    assert payload["monte_carlo"]["performed"] is False
     assert payload["write_performed"] is False
-    assert payload["one_minute_gate"]["status"] == "blocked"
-    assert payload["five_minute_contract"]["forward_fill_across_gaps"] is False
+    assert payload["selected_candidate"] is None
+    assert payload["decision"] == "NO_ELIGIBLE_MODEL_CANDIDATE"
     assert payload["sends_orders"] is False

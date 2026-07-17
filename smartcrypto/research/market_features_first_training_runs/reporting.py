@@ -1,4 +1,4 @@
-"""Stable reporting and research-only artifact materialization."""
+"""Stable research reporting with no operational artifact authority."""
 
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ def json_safe(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, Path):
         return str(value)
-    if isinstance(value, (np.integer,)):
+    if isinstance(value, np.integer):
         return int(value)
     if isinstance(value, (np.floating, float)):
         numeric = float(value)
         return numeric if math.isfinite(numeric) else None
-    if isinstance(value, (np.bool_,)):
+    if isinstance(value, np.bool_):
         return bool(value)
     if value is pd.NA:
         return None
@@ -39,40 +39,61 @@ def json_safe(value: Any) -> Any:
 
 def render_markdown(report: dict[str, Any]) -> str:
     reconciliation = report.get("master_row_reconciliation", {})
-    ranking = report.get("model_ranking", [])
+    environment = report.get("environment_gate", {})
+    diagnostic = report.get("diagnostic_ranking", [])
+    eligible = report.get("eligible_candidate_ranking", [])
     lines = [
         "# Market Features Rematerialization and First Training Runs V1",
         "",
         f"- Status: `{report.get('status')}`",
         f"- Reason: `{report.get('reason')}`",
-        f"- Decision: `{report.get('decision')}`",
-        f"- Generated at UTC: `{report.get('generated_at_utc')}`",
+        f"- Candidate decision: `{report.get('decision')}`",
+        f"- Research decision: `{report.get('research_decision')}`",
+        f"- Canonical environment: `{environment.get('status')}`",
+        f"- Expected environment: `{environment.get('expected')}`",
+        f"- Observed environment: `{environment.get('observed')}`",
         f"- Canonical Master rows: `{reconciliation.get('canonical_rows')}`",
         f"- Expected Master rows: `{reconciliation.get('expected_rows')}`",
         f"- Explicit row-count delta: `{reconciliation.get('row_count_delta')}`",
         f"- Master ready rows: `{report.get('master_ready_row_count')}`",
-        f"- Paper holdout ready rows: `{report.get('paper_ready_row_count')}`",
-        f"- 1m status: `{report.get('one_minute_gate', {}).get('status')}`",
-        f"- 5m availability rule: `{report.get('five_minute_contract', {}).get('available_at_rule')}`",
+        f"- Paper V1 consumed rows: `{report.get('paper_evaluation_set_v1_consumed_count')}`",
+        f"- Prospective holdout V2 rows: `{report.get('prospective_holdout_v2_count')}`",
+        f"- Paper V1 watermark: `{report.get('paper_evaluation_set_v1_watermark_utc')}`",
         "",
-        "## Model ranking",
+        "## Diagnostic ranking",
         "",
-        "| Rank | Model | Score | Promotion eligible |",
-        "|---:|---|---:|---|",
+        "Diagnostic order is not candidate eligibility or promotion authority.",
+        "",
+        "| Rank | Model | Kind | Score |",
+        "|---:|---|---|---:|",
     ]
-    for item in ranking:
+    for item in diagnostic:
         lines.append(
             f"| {item.get('rank')} | {item.get('model_name')} | "
-            f"{item.get('ranking_score', 0.0):.6f} | false |"
+            f"{item.get('model_kind')} | {item.get('ranking_score', 0.0):.6f} |"
         )
     lines.extend(
         [
             "",
+            "## Eligible candidate ranking",
+            "",
+            f"Eligible candidates: `{len(eligible)}`",
+            f"Selected candidate: `{report.get('selected_candidate')}`",
+            "",
+            "## Concept drift",
+            "",
+            f"- Status: `{report.get('concept_drift', {}).get('status')}`",
+            f"- Cohorts: `{report.get('concept_drift', {}).get('cohort_counts')}`",
+            "- Metrics: PSI, KS, Wasserstein, label drift, and net PnL drift.",
+            "- Decomposition: symbol, side, ISO week, and provenance.",
+            "- Provenance is diagnostic only and never a model feature.",
+            "",
             "## Institutional boundaries",
             "",
-            "Paper rows are an external holdout and never enter fitting or calibration.",
+            "A non-canonical Python/scikit-learn/joblib environment may run diagnostics only.",
+            "Paper rows never enter fitting, calibration, or threshold selection.",
             "No model is serialized, registered, promoted, or connected to runtime.",
-            "Rows with missing timestamps or market features remain individually blocked; no imputation is used.",
+            "Rows with unavailable point-in-time features remain blocked; no imputation is used.",
             "",
         ]
     )
@@ -87,8 +108,6 @@ def write_research_outputs(
     predictions: pd.DataFrame,
     report: dict[str, Any],
 ) -> list[str]:
-    """Write only ignored research/report artifacts after explicit opt-in."""
-
     _validate_output_paths(paths)
     written: list[str] = []
     for path, frame in (
