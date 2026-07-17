@@ -1,0 +1,239 @@
+# Quality-Gated V5 Provenance, Freshness and Non-Regression Contract V1
+
+## Status
+
+This branch introduces a research-only, projection-only contract over the 3,562-trade
+official universe. It does not train Qlib or IA Shadow, does not rebuild Phase 5,
+does not rematerialize candles, does not write candidate or official Parquets, and
+does not change runtime, risk, registry, services, signals or models.
+
+## Problem addressed
+
+The previous `build_quality_gated_shadow_compatible_dataset_v1.py` entrypoint:
+
+- recognized only historical OCR provenance markers;
+- accepted feature snapshots without a freshness gate;
+- accepted `merge_asof` snapshots with no temporal tolerance from `trade_enriched`;
+- wrote candidate/full-audit Parquets before completing validation;
+- used a fixed row-count threshold instead of set-based identity comparison;
+- collapsed row quality into a single reason string.
+
+The V5 tail requires an explicit provenance pair:
+
+```text
+source_file =
+bitradex_ocr_locked_candidates_20260714_151816_time_repaired_orderid_synthetic_v5
+
+ocr_source =
+bitradex_black_rectangles_time_repaired_orderid_synthetic_v5
+```
+
+No broad substring matching, positional inference, tail-size inference or synthetic
+`order_id` inference is permitted.
+
+## Architecture
+
+```text
+trade_enriched + market_features + official quality-gated + model SHA-256
+    -> exact provenance classification
+    -> snapshot availability/freshness
+    -> 74-feature construction and lineage diagnostics
+    -> feature-name and temporal anti-leakage
+    -> deterministic multi-reason eligibility
+    -> set-based official/projected identity comparison
+    -> JSON / JSONL / Markdown research evidence
+```
+
+## Entry points
+
+Primary CLI:
+
+```powershell
+python .\scripts\build_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py `
+  --project-root . `
+  --no-write `
+  --json
+```
+
+Explicit report-only write:
+
+```powershell
+python .\scripts\build_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py `
+  --project-root . `
+  --write-report `
+  --json
+```
+
+The legacy script is retained as a safe wrapper:
+
+```powershell
+python .\scripts\build_quality_gated_shadow_compatible_dataset_v1.py `
+  --project-root . `
+  --no-write `
+  --json
+```
+
+It no longer imports `joblib`, deserializes the active model, or writes candidate/full
+audit datasets.
+
+## Freshness semantics
+
+The contract treats stored candle timestamps as candle-open timestamps.
+
+```text
+snapshot_available_at = snapshot_time + timeframe_duration
+snapshot_available_at <= trade_open_time
+snapshot_age_seconds = trade_open_time - snapshot_available_at
+```
+
+Default maximum ages:
+
+```text
+1m: 120 seconds
+5m: 600 seconds
+```
+
+The following conditions block a row even when all model features are finite:
+
+- missing snapshot;
+- future snapshot;
+- in-progress candle;
+- stale snapshot;
+- unknown timestamp semantics.
+
+## Model contract
+
+The model is never deserialized. Its file is read only as bytes to verify SHA-256.
+
+```text
+expected model SHA-256:
+b5599c0d09881051b0e4456a9b3e94a38a10c4ecd1f0f14e37f736c2f9d083d4
+
+feature count:
+74
+```
+
+Feature families:
+
+- 16 `prior_1m_*`;
+- 16 `prior_5m_*`;
+- 16 `meta_*`;
+- 13 `v13_1m_*`;
+- 13 `v13_5m_*`.
+
+No imputation, unlimited forward-fill or feature fabrication is performed.
+
+## Multi-reason eligibility
+
+Every row contains:
+
+```text
+eligibility_status
+primary_reason
+block_reasons
+warning_reasons
+eligible_for_research_training
+eligible_for_model_training
+```
+
+`primary_reason` is chosen by deterministic precedence. All secondary blockers remain
+preserved in `block_reasons`.
+
+Data eligibility does not authorize training. This branch always reports:
+
+```text
+training_requested=false
+training_performed=false
+qlib_training_performed=false
+ai_shadow_training_performed=false
+```
+
+## Non-regression
+
+The projection compares trade identities rather than a fixed row threshold:
+
+```text
+official_trade_ids
+projected_trade_ids
+retained_official_ids
+blocked_official_ids
+newly_eligible_ids
+newly_blocked_ids
+official_ids_missing_from_universe
+unexplained_removed_ids
+```
+
+Primary gate:
+
+```text
+UNEXPLAINED_REMOVED_OFFICIAL_IDS=0
+```
+
+An explained reduction caused by freshness or anti-leakage is reported as
+`review_required`; it is not silently promoted and is not treated as defective merely
+because the count is lower.
+
+## Report outputs
+
+Only with `--write-report`:
+
+```text
+data/reports/
+  quality_gated_v5_provenance_freshness_nonregression_contract_v1.json
+  quality_gated_v5_provenance_freshness_nonregression_rows_v1.jsonl
+  quality_gated_v5_provenance_freshness_nonregression_contract_v1.md
+```
+
+Writes outside `data/reports` are rejected.
+
+No Parquet, SQLite, model, registry, runtime or signal output is created.
+
+## Safety contract
+
+```text
+paper_only=true
+shadow_only=true
+research_only=true
+read_only=true
+projection_only=true
+
+live_release_allowed=false
+canary_release_allowed=false
+live_trading_enabled=false
+order_submission_enabled=false
+real_order_submission_enabled=false
+sends_orders=false
+exchange_private_access=false
+changes_risk=false
+writes_runtime=false
+writes_sqlite=false
+writes_official=false
+writes_candidate=false
+writes_full_audit=false
+changes_model=false
+registry_write_performed=false
+model_promotion_performed=false
+active_model_changed=false
+services_started=false
+```
+
+## Expected real-data interpretation
+
+The contract is expected to prove, rather than assume:
+
+- universe rows: 3,562;
+- V5 provenance recognized: 504/504;
+- no duplicate `trade_id`;
+- stale/future/in-progress snapshots are never accepted;
+- the exact number of eligible rows is evidence, not a target;
+- every removed official identity has an explicit reason;
+- missing `prior_5m_*` is distinguished from absent raw 5m coverage.
+
+The subsequent feature-rematerialization branch remains separate:
+
+```text
+codex/market-features-1m-5m-freshness-rematerialization-v1
+```
+
+Qlib and IA Shadow challenger training remains blocked until that remediation and the
+subsequent contract rerun are complete.
