@@ -26,19 +26,26 @@ from smartcrypto.research.market_features_first_training_runs.pipeline import (
     run_market_features_first_training_pipeline,
 )
 from smartcrypto.research.market_features_first_training_runs.training import (
+    aggregate_fold_matched_financial,
     block_monte_carlo,
     build_candidate_rankings,
+    build_fold_contribution_report,
     build_purged_walkforward_splits,
+    financial_invariant_errors,
     max_drawdown,
+    run_cohort_aware_experiments,
     run_supervised_models,
     select_expected_pnl_threshold,
 )
 from smartcrypto.research.market_features_first_training_runs.validation import (
+    binary_drift_metrics,
     build_concept_drift_report,
+    categorical_drift_metrics,
     evaluate_canonical_environment,
     forbidden_feature_columns,
     normalize_5m_features,
     normalize_master,
+    population_stability_index,
 )
 
 
@@ -179,6 +186,9 @@ def test_default_is_no_write_and_research_only(tmp_path: Path) -> None:
     assert result.report["paper_only"] is True
     assert result.report["shadow_only"] is True
     assert result.report["operational_authority"] is False
+    assert result.report["runtime"] is False
+    assert result.report["risk"] is False
+    assert result.report["orders"] is False
 
 
 def test_available_at_is_candle_timestamp_plus_five_minutes() -> None:
@@ -294,6 +304,82 @@ def test_eight_approved_models_train_and_regression_thresholds_use_validation() 
         assert set(baseline["test_trade_ids"]) == set(fold_predictions["trade_id"])
 
 
+def test_fold_matched_financial_aggregation_preserves_temporal_accounting() -> None:
+    aggregate = aggregate_fold_matched_financial(
+        [
+            {"fold_id": 1, "_pnl_sequence": [10.0, -8.0]},
+            {"fold_id": 2, "_pnl_sequence": [2.0, -10.0]},
+        ],
+        sequence_key="_pnl_sequence",
+    )
+
+    assert aggregate["trade_count"] == 4
+    assert aggregate["active_trade_count"] == 4
+    assert aggregate["gross_profit"] == 12.0
+    assert aggregate["gross_loss"] == 18.0
+    assert aggregate["net_pnl"] == -6.0
+    assert aggregate["expectancy"] == -1.5
+    assert aggregate["profit_factor"] == pytest.approx(12.0 / 18.0)
+    assert aggregate["max_drawdown"] == 16.0
+    assert aggregate["fold_count"] == 2
+    assert aggregate["financial_invariants_valid"] is True
+
+
+@pytest.mark.parametrize(
+    ("metrics", "expected_error"),
+    [
+        (
+            {
+                "trade_count": 2,
+                "net_pnl": 4.0,
+                "gross_profit": 5.0,
+                "gross_loss": 2.0,
+                "expectancy": 2.0,
+                "profit_factor": 2.5,
+            },
+            "net_pnl_not_gross_profit_minus_gross_loss",
+        ),
+        (
+            {
+                "trade_count": 2,
+                "net_pnl": 3.0,
+                "gross_profit": 5.0,
+                "gross_loss": 2.0,
+                "expectancy": 3.0,
+                "profit_factor": 2.5,
+            },
+            "expectancy_not_net_pnl_div_trade_count",
+        ),
+        (
+            {
+                "trade_count": 0,
+                "net_pnl": 1.0,
+                "gross_profit": 1.0,
+                "gross_loss": 0.0,
+                "expectancy": 0.0,
+                "profit_factor": None,
+            },
+            "nonzero_net_pnl_with_zero_trade_count",
+        ),
+        (
+            {
+                "trade_count": 2,
+                "net_pnl": 3.0,
+                "gross_profit": 5.0,
+                "gross_loss": 2.0,
+                "expectancy": 1.5,
+                "profit_factor": None,
+            },
+            "profit_factor_null_with_nonzero_gross_loss",
+        ),
+    ],
+)
+def test_financial_invariants_fail_closed(
+    metrics: dict[str, object], expected_error: str
+) -> None:
+    assert expected_error in financial_invariant_errors(metrics)
+
+
 def test_expected_pnl_threshold_is_selected_from_supplied_validation_only() -> None:
     predictions = np.array([-1.0, -0.2, 0.1, 0.5])
     pnl = np.array([-2.0, -1.0, 1.0, 3.0])
@@ -384,15 +470,105 @@ def test_concept_drift_includes_required_metrics_and_decompositions() -> None:
         item for item in report["comparisons"] if item["comparison_id"] == "master_temporal"
     )
     assert temporal["status"] == "ok"
-    assert temporal["feature_metrics"][0].keys() >= {
-        "psi",
+    assert temporal["continuous_metrics"][0].keys() >= {
+        "psi_quantile",
         "ks",
         "wasserstein",
+    }
+    assert temporal["binary_metrics"][0].keys() >= {
+        "reference_prevalence",
+        "target_prevalence",
+        "psi_categorical",
+        "jensen_shannon",
+    }
+    assert temporal["categorical_metrics"][0].keys() >= {
+        "reference_distribution",
+        "target_distribution",
+        "jensen_shannon",
+        "chi_square",
     }
     assert temporal["label_drift"]
     assert temporal["pnl_drift"]
     assert report["decomposition"].keys() == {"master", "paper_v1"}
     assert report["provenance_used_as_feature"] is False
+
+
+def test_continuous_psi_does_not_invent_fixed_one_for_degenerate_data() -> None:
+    result = population_stability_index(np.ones(20), np.full(20, 2.0))
+    assert result is None
+
+
+def test_binary_and_categorical_drift_use_type_appropriate_metrics() -> None:
+    binary = binary_drift_metrics(
+        "side_long",
+        pd.Series([0] * 50 + [1] * 50),
+        pd.Series([0] * 20 + [1] * 80),
+    )
+    categorical = categorical_drift_metrics(
+        "symbol",
+        pd.Series(["BTCUSDT"] * 60 + ["ETHUSDT"] * 40),
+        pd.Series(["BTCUSDT"] * 30 + ["ETHUSDT"] * 70),
+    )
+
+    assert binary["feature_type"] == "binary"
+    assert binary["target_prevalence"] == 0.8
+    assert binary["jensen_shannon"] > 0
+    assert categorical["feature_type"] == "categorical"
+    assert categorical["chi_square"]["valid"] is True
+    assert categorical["jensen_shannon"] > 0
+
+
+def test_cohort_experiments_and_fold_three_attribution_are_master_only() -> None:
+    frame = ready_training_frame(rows=220)
+    first = frame.index[:120]
+    tail = frame.index[120:]
+    frame.loc[first, "open_time_utc"] = pd.date_range(
+        "2026-05-01", periods=len(first), freq="1h", tz="UTC"
+    )
+    frame.loc[tail, "open_time_utc"] = pd.date_range(
+        "2026-06-11", periods=len(tail), freq="1h", tz="UTC"
+    )
+    frame["close_time_utc"] = frame["open_time_utc"] + pd.Timedelta(minutes=2)
+    frame.loc[first, "is_ocr_v2_tail"] = False
+    frame.loc[first, "provenance"] = "historical_pre_v2"
+    frame.loc[tail, "is_ocr_v2_tail"] = True
+    frame.loc[tail, "provenance"] = "ocr_v2_tail"
+    full = run_supervised_models(
+        frame,
+        seed=42,
+        embargo_seconds=1800,
+        run_walkforward=True,
+        model_names=("logistic_regression",),
+        fit_final_models=False,
+    )
+
+    experiments = run_cohort_aware_experiments(
+        frame,
+        full_population_result=full,
+        seed=42,
+        embargo_seconds=1800,
+        model_names=("logistic_regression",),
+    )
+    fold_three = build_fold_contribution_report(full.predictions, fold_id=3)
+
+    assert set(experiments["experiments"]) == {"E1", "E2", "E3", "E4", "E5", "E6"}
+    assert experiments["paper_rows_used_for_fit"] == 0
+    assert experiments["paper_rows_used_for_threshold"] == 0
+    assert experiments["provenance_used_as_feature"] is False
+    assert experiments["experiments"]["E4"]["always_allow_uses_same_test_rows"] is True
+    assert experiments["experiments"]["E5"]["always_allow_uses_same_test_rows"] is True
+    assert experiments["experiments"]["E6"]["selection_authority"] is False
+    assert fold_three["status"] == "ok"
+    assert set(fold_three["dimensions"]) == {
+        "provenance",
+        "week",
+        "symbol",
+        "side",
+        "cutoff_period",
+        "ocr_v2_cohort",
+    }
+    assert fold_three["baseline_fold_matched"] is True
+    assert fold_three["paper_rows_used"] == 0
 
 
 def test_paper_v1_is_consumed_and_newer_rows_become_prospective_v2() -> None:

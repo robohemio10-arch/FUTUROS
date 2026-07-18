@@ -93,6 +93,37 @@ MODEL_FEATURE_COLUMNS: Final = (
     *KNOWN_NUMERIC_FEATURE_COLUMNS,
 )
 
+CONTINUOUS_DRIFT_COLUMNS: Final = (
+    *POINT_IN_TIME_FEATURE_COLUMNS,
+    "entry_hour_utc",
+    "entry_day_of_week",
+    "feature_age_seconds",
+)
+BINARY_DRIFT_COLUMNS: Final = tuple(
+    column
+    for column in KNOWN_NUMERIC_FEATURE_COLUMNS
+    if column not in {"entry_hour_utc", "entry_day_of_week", "feature_age_seconds"}
+)
+CATEGORICAL_DRIFT_COLUMNS: Final = (
+    "symbol",
+    "side",
+    "market_regime",
+    "volatility_regime",
+    "provenance",
+)
+
+COHORT_EXPERIMENTS: Final = MappingProxyType(
+    {
+        "E1": "full_population",
+        "E2": "historical_pre_v2",
+        "E3": "ocr_v2_tail",
+        "E4": "train_historical_pre_v2_test_ocr_v2_tail",
+        "E5": "train_pre_2026_06_10_test_post_2026_06_10",
+        "E6": "full_population_cohort_attribution",
+    }
+)
+FINANCIAL_INVARIANT_ABS_TOLERANCE: Final = 1e-9
+
 CLASSIFIER_MODEL_NAMES: Final = (
     "logistic_regression",
     "extra_trees_classifier",
@@ -188,6 +219,9 @@ SAFETY_FLAGS: Final = MappingProxyType(
         "sends_orders": False,
         "changes_risk": False,
         "changes_model": False,
+        "runtime": False,
+        "risk": False,
+        "orders": False,
         "writes_runtime": False,
         "writes_sqlite": False,
         "writes_active_registry": False,

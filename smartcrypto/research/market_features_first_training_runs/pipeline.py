@@ -35,8 +35,10 @@ from .training import (
     block_monte_carlo,
     build_baselines,
     build_candidate_rankings,
+    build_fold_contribution_report,
     evaluate_paper_holdout,
     qlib_gate,
+    run_cohort_aware_experiments,
     run_supervised_models,
 )
 from .validation import (
@@ -229,6 +231,41 @@ def run_market_features_first_training_pipeline(
         "fold_baseline_always_allow": list(training.fold_baselines),
         "baseline_uses_exact_model_test_rows": True,
     }
+    if can_train and training_performed:
+        report["cohort_aware_experiments"] = run_cohort_aware_experiments(
+            master,
+            full_population_result=training,
+            seed=config.seed,
+            embargo_seconds=config.embargo_seconds,
+        )
+        report["fold_3_contribution"] = build_fold_contribution_report(
+            training.predictions,
+            fold_id=3,
+        )
+    else:
+        blocked_reason = (
+            "canonical_training_environment_mismatch"
+            if not can_train
+            else "supervised_training_not_available"
+        )
+        report["cohort_aware_experiments"] = {
+            "status": "blocked",
+            "reason": blocked_reason,
+            "experiments": {},
+            "provenance_used_as_feature": False,
+            "paper_rows_used_for_fit": 0,
+            "paper_rows_used_for_calibration": 0,
+            "paper_rows_used_for_threshold": 0,
+            "selection_authority": False,
+        }
+        report["fold_3_contribution"] = {
+            "status": "blocked",
+            "reason": blocked_reason,
+            "fold_id": 3,
+            "dimensions": {},
+            "baseline_fold_matched": True,
+            "paper_rows_used": 0,
+        }
     report["backtest"] = {
         "requested": config.run_backtest,
         "performed": bool(can_train and config.run_backtest and training_performed),

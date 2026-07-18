@@ -10,8 +10,12 @@ import joblib
 import numpy as np
 import pandas as pd
 import sklearn
+from scipy.stats import chi2_contingency
 
 from .contracts import (
+    BINARY_DRIFT_COLUMNS,
+    CATEGORICAL_DRIFT_COLUMNS,
+    CONTINUOUS_DRIFT_COLUMNS,
     DRIFT_CUTOFF_UTC,
     FORBIDDEN_EXACT_FEATURES,
     FORBIDDEN_FEATURE_PREFIXES,
@@ -330,6 +334,11 @@ def build_concept_drift_report(master: pd.DataFrame, paper: pd.DataFrame) -> dic
         "cutoff_utc": cutoff.isoformat(),
         "paper_v1_watermark_utc": watermark.isoformat(),
         "feature_columns": list(MODEL_FEATURE_COLUMNS),
+        "feature_type_contract": {
+            "continuous": list(CONTINUOUS_DRIFT_COLUMNS),
+            "binary": list(BINARY_DRIFT_COLUMNS),
+            "categorical": list(CATEGORICAL_DRIFT_COLUMNS),
+        },
         "provenance_used_as_feature": False,
         "cohort_counts": {name: int(len(frame)) for name, frame in cohorts.items()},
         "comparisons": comparisons,
@@ -361,57 +370,113 @@ def _compare_cohorts(
     }
     if len(reference) < 5 or len(target) < 5:
         return {**base, "status": "insufficient_data", "feature_metrics": []}
-    feature_metrics: list[dict[str, Any]] = []
-    for column in MODEL_FEATURE_COLUMNS:
+    continuous_metrics: list[dict[str, Any]] = []
+    for column in CONTINUOUS_DRIFT_COLUMNS:
         left = _finite(reference[column])
         right = _finite(target[column])
         if len(left) < 5 or len(right) < 5:
-            feature_metrics.append(
-                {"feature": column, "status": "insufficient_data", "psi": None, "ks": None, "wasserstein": None}
+            continuous_metrics.append(
+                {
+                    "feature": column,
+                    "feature_type": "continuous",
+                    "status": "insufficient_data",
+                    "psi_quantile": None,
+                    "ks": None,
+                    "wasserstein": None,
+                }
             )
             continue
-        feature_metrics.append(
+        psi = population_stability_index(left, right)
+        continuous_metrics.append(
             {
                 "feature": column,
-                "status": "ok",
-                "psi": population_stability_index(left, right),
+                "feature_type": "continuous",
+                "status": "ok" if psi is not None else "psi_not_identifiable",
+                "psi": psi,
+                "psi_quantile": psi,
                 "ks": kolmogorov_smirnov_statistic(left, right),
                 "wasserstein": wasserstein_distance(left, right),
             }
         )
-    left_label = reference["target_profitable"].astype(float)
-    right_label = target["target_profitable"].astype(float)
+    binary_metrics = [
+        binary_drift_metrics(column, reference[column], target[column])
+        for column in BINARY_DRIFT_COLUMNS
+    ]
+    categorical_metrics = [
+        categorical_drift_metrics(column, reference[column], target[column])
+        for column in CATEGORICAL_DRIFT_COLUMNS
+    ]
+    feature_metrics = [*continuous_metrics, *binary_metrics, *categorical_metrics]
+    label_metrics = binary_drift_metrics(
+        "target_profitable",
+        reference["target_profitable"],
+        target["target_profitable"],
+    )
     left_pnl = reference["net_pnl"].astype(float)
     right_pnl = target["net_pnl"].astype(float)
-    valid = [item for item in feature_metrics if item["status"] == "ok"]
+    valid_continuous = [
+        item
+        for item in continuous_metrics
+        if item["status"] in {"ok", "psi_not_identifiable"}
+    ]
+    valid_psi = [
+        float(item["psi_quantile"])
+        for item in continuous_metrics
+        if item.get("psi_quantile") is not None
+    ]
     return {
         **base,
         "status": "ok",
         "feature_metrics": feature_metrics,
-        "mean_psi": float(np.mean([item["psi"] for item in valid])) if valid else None,
-        "max_ks": float(max(item["ks"] for item in valid)) if valid else None,
-        "mean_wasserstein": (
-            float(np.mean([item["wasserstein"] for item in valid])) if valid else None
+        "continuous_metrics": continuous_metrics,
+        "binary_metrics": binary_metrics,
+        "categorical_metrics": categorical_metrics,
+        "mean_psi": float(np.mean(valid_psi)) if valid_psi else None,
+        "max_ks": (
+            float(max(item["ks"] for item in valid_continuous))
+            if valid_continuous
+            else None
         ),
-        "label_drift": {
-            "reference_positive_rate": float(left_label.mean()),
-            "target_positive_rate": float(right_label.mean()),
-            "positive_rate_delta": float(right_label.mean() - left_label.mean()),
-        },
+        "mean_wasserstein": (
+            float(np.mean([item["wasserstein"] for item in valid_continuous]))
+            if valid_continuous
+            else None
+        ),
+        "label_drift": label_metrics,
         "pnl_drift": {
             "reference_mean_net_pnl": float(left_pnl.mean()),
             "target_mean_net_pnl": float(right_pnl.mean()),
             "mean_net_pnl_delta": float(right_pnl.mean() - left_pnl.mean()),
             "reference_median_net_pnl": float(left_pnl.median()),
             "target_median_net_pnl": float(right_pnl.median()),
+            "psi_quantile": population_stability_index(
+                left_pnl.to_numpy(float), right_pnl.to_numpy(float)
+            ),
+            "ks": kolmogorov_smirnov_statistic(
+                left_pnl.to_numpy(float), right_pnl.to_numpy(float)
+            ),
+            "wasserstein": wasserstein_distance(
+                left_pnl.to_numpy(float), right_pnl.to_numpy(float)
+            ),
         },
     }
 
 
-def population_stability_index(reference: np.ndarray, target: np.ndarray) -> float:
+def population_stability_index(
+    reference: np.ndarray,
+    target: np.ndarray,
+) -> float | None:
+    """Quantile PSI for continuous data; degenerate bins remain unidentifiable."""
+
+    reference = _finite_array(reference)
+    target = _finite_array(target)
+    if len(reference) < 2 or len(target) < 2:
+        return None
     quantiles = np.unique(np.quantile(reference, np.linspace(0.0, 1.0, 11)))
     if len(quantiles) < 3:
-        return 0.0 if np.isclose(np.mean(reference), np.mean(target)) else 1.0
+        if np.allclose(reference, reference[0]) and np.allclose(target, reference[0]):
+            return 0.0
+        return None
     quantiles[0] = -np.inf
     quantiles[-1] = np.inf
     ref_counts = np.histogram(reference, bins=quantiles)[0].astype(float)
@@ -420,6 +485,163 @@ def population_stability_index(reference: np.ndarray, target: np.ndarray) -> flo
     ref_share = np.maximum(ref_counts / max(1.0, ref_counts.sum()), epsilon)
     target_share = np.maximum(target_counts / max(1.0, target_counts.sum()), epsilon)
     return float(np.sum((target_share - ref_share) * np.log(target_share / ref_share)))
+
+
+def binary_drift_metrics(
+    feature: str,
+    reference: pd.Series,
+    target: pd.Series,
+) -> dict[str, Any]:
+    left = pd.to_numeric(reference, errors="coerce").dropna()
+    right = pd.to_numeric(target, errors="coerce").dropna()
+    if len(left) < 5 or len(right) < 5:
+        return {
+            "feature": feature,
+            "feature_type": "binary",
+            "status": "insufficient_data",
+            "reference_prevalence": None,
+            "target_prevalence": None,
+            "prevalence_delta": None,
+            "psi_categorical": None,
+            "jensen_shannon": None,
+        }
+    left_binary = left.astype(float).ge(0.5).astype(int).astype(str)
+    right_binary = right.astype(float).ge(0.5).astype(int).astype(str)
+    distributions = _aligned_categorical_distributions(left_binary, right_binary)
+    return {
+        "feature": feature,
+        "feature_type": "binary",
+        "status": "ok",
+        "reference_prevalence": float(left_binary.astype(int).mean()),
+        "target_prevalence": float(right_binary.astype(int).mean()),
+        "prevalence_delta": float(
+            right_binary.astype(int).mean() - left_binary.astype(int).mean()
+        ),
+        "psi_categorical": categorical_population_stability_index(*distributions),
+        "jensen_shannon": jensen_shannon_divergence(*distributions),
+    }
+
+
+def categorical_drift_metrics(
+    feature: str,
+    reference: pd.Series,
+    target: pd.Series,
+) -> dict[str, Any]:
+    left = reference.fillna("<missing>").astype(str)
+    right = target.fillna("<missing>").astype(str)
+    if len(left) < 5 or len(right) < 5:
+        return {
+            "feature": feature,
+            "feature_type": "categorical",
+            "status": "insufficient_data",
+            "reference_distribution": {},
+            "target_distribution": {},
+            "psi_categorical": None,
+            "jensen_shannon": None,
+            "chi_square": {"valid": False, "reason": "insufficient_data"},
+        }
+    categories, left_share, right_share, left_count, right_count = (
+        _categorical_distribution_details(left, right)
+    )
+    return {
+        "feature": feature,
+        "feature_type": "categorical",
+        "status": "ok",
+        "reference_distribution": dict(zip(categories, left_share, strict=True)),
+        "target_distribution": dict(zip(categories, right_share, strict=True)),
+        "psi_categorical": categorical_population_stability_index(
+            left_share, right_share
+        ),
+        "jensen_shannon": jensen_shannon_divergence(left_share, right_share),
+        "chi_square": chi_square_drift(left_count, right_count),
+    }
+
+
+def categorical_population_stability_index(
+    reference_share: np.ndarray,
+    target_share: np.ndarray,
+) -> float:
+    epsilon = 1e-8
+    left = np.clip(np.asarray(reference_share, dtype=float), epsilon, None)
+    right = np.clip(np.asarray(target_share, dtype=float), epsilon, None)
+    left /= left.sum()
+    right /= right.sum()
+    return float(np.sum((right - left) * np.log(right / left)))
+
+
+def jensen_shannon_divergence(
+    reference_share: np.ndarray,
+    target_share: np.ndarray,
+) -> float:
+    epsilon = 1e-12
+    left = np.clip(np.asarray(reference_share, dtype=float), epsilon, None)
+    right = np.clip(np.asarray(target_share, dtype=float), epsilon, None)
+    left /= left.sum()
+    right /= right.sum()
+    midpoint = 0.5 * (left + right)
+    divergence = 0.5 * np.sum(left * np.log(left / midpoint))
+    divergence += 0.5 * np.sum(right * np.log(right / midpoint))
+    return float(divergence)
+
+
+def chi_square_drift(
+    reference_count: np.ndarray,
+    target_count: np.ndarray,
+) -> dict[str, Any]:
+    observed = np.vstack(
+        (
+            np.asarray(reference_count, dtype=float),
+            np.asarray(target_count, dtype=float),
+        )
+    )
+    if observed.shape[1] < 2 or np.any(observed.sum(axis=0) == 0):
+        return {"valid": False, "reason": "insufficient_categories"}
+    expected = np.outer(observed.sum(axis=1), observed.sum(axis=0)) / observed.sum()
+    if np.any(expected < 5.0):
+        return {
+            "valid": False,
+            "reason": "expected_cell_count_below_5",
+            "minimum_expected_count": float(expected.min()),
+        }
+    statistic, p_value, degrees, _ = chi2_contingency(observed, correction=False)
+    return {
+        "valid": True,
+        "statistic": float(statistic),
+        "p_value": float(p_value),
+        "degrees_of_freedom": int(degrees),
+        "minimum_expected_count": float(expected.min()),
+    }
+
+
+def _aligned_categorical_distributions(
+    reference: pd.Series,
+    target: pd.Series,
+) -> tuple[np.ndarray, np.ndarray]:
+    _, left, right, _, _ = _categorical_distribution_details(reference, target)
+    return left, right
+
+
+def _categorical_distribution_details(
+    reference: pd.Series,
+    target: pd.Series,
+) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    categories = sorted(set(reference.astype(str)) | set(target.astype(str)))
+    left_count = np.asarray(
+        [(reference.astype(str) == category).sum() for category in categories],
+        dtype=float,
+    )
+    right_count = np.asarray(
+        [(target.astype(str) == category).sum() for category in categories],
+        dtype=float,
+    )
+    left_share = left_count / left_count.sum()
+    right_share = right_count / right_count.sum()
+    return categories, left_share, right_share, left_count, right_count
+
+
+def _finite_array(values: np.ndarray) -> np.ndarray:
+    array = np.asarray(values, dtype=float)
+    return array[np.isfinite(array)]
 
 
 def kolmogorov_smirnov_statistic(reference: np.ndarray, target: np.ndarray) -> float:

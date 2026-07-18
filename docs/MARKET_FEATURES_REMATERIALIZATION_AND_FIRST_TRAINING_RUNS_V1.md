@@ -1,13 +1,13 @@
 # Market Features Rematerialization and First Training Runs V1
 
-## Institutional boundary
+## Boundary
 
-This package rematerializes point-in-time five-minute market features and
-evaluates ephemeral research challengers. It is paper/shadow/research-only. It
-does not promote or serialize models, update a registry, change runtime or risk,
-submit orders, or access a private exchange.
+This package rematerializes point-in-time five-minute features and evaluates
+ephemeral research challengers. It is paper/shadow/research-only. It does not
+serialize or promote models, update a registry, change runtime or risk, submit
+orders, or access a private exchange.
 
-The canonical environment is exact and fail-closed:
+Financial execution is fail-closed to the exact canonical environment:
 
 | Component | Required version |
 | --- | --- |
@@ -15,20 +15,15 @@ The canonical environment is exact and fail-closed:
 | scikit-learn | 1.8.0 |
 | joblib | 1.5.3 |
 
-Another environment may run input validation, feature rematerialization,
-lineage reconciliation, paper-set classification, and concept-drift diagnosis.
-It may not fit models, calibrate thresholds, backtest, evaluate paper model
-predictions, or run Monte Carlo. A mismatch is reported as
-`canonical_training_environment_mismatch`.
+Other environments may diagnose data, alignment, lineage and drift. They may
+not run baselines, fitting, threshold selection, backtests, Qlib training,
+paper model evaluation or Monte Carlo.
 
-## Inputs and point-in-time contract
+## Point-in-time materialization
 
-Canonical inputs are `data/trades/trades_master.parquet`,
-`data/features/market_features_60d.parquet`, and the paper snapshot
-`data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite`. Paper access
-requires `--allow-paper-read` and uses the existing query-only snapshot adapter.
-
-For a candle whose timestamp is its open time:
+Canonical sources are `data/trades/trades_master.parquet`,
+`data/features/market_features_60d.parquet` and the query-only paper snapshot.
+Paper access requires `--allow-paper-read`.
 
 ```text
 available_at_utc = candle_timestamp_utc + 5 minutes
@@ -36,89 +31,113 @@ available_at_utc <= trade_open_time_utc
 0 <= feature_age_seconds < 300
 ```
 
-Only closed, already available candles are joined. Gaps are never crossed by
-forward fill and missing values are never imputed. One-minute data remains
-blocked for this period because confirmed paper coverage is zero.
+Only completed candles are joined. Gaps are never crossed by forward fill and
+missing values are never imputed. One-minute data remains blocked for the
+confirmed period of zero paper coverage. The historical 3,504-row expectation
+is reconciled explicitly with all 3,562 canonical Master rows; no row is
+silently removed.
 
-The historical `expected_rows=3504` is reconciled explicitly with the canonical
-Master row count. Every delta row is reported; no row is silently discarded.
+## Feature boundary
 
-## Model input boundary
+The model matrix contains contemporaneous OHLCV indicators and deterministic
+representations of symbol, side, entry hour, weekday, feature age, market
+regime and volatility regime. Provenance, dataset membership and cohort labels
+are diagnostics only. PnL, targets, MFE, MAE, close time, exit fields, future
+returns and every post-entry value are prohibited.
 
-The model matrix contains contemporaneous numeric OHLCV/indicator fields plus
-deterministic representations of these known-at-entry values:
+Paper rows never enter fitting, calibration, threshold selection, ablation or
+candidate selection. No row is excluded based on outcome or to manufacture a
+positive result. Only the pre-existing point-in-time row validation controls
+model eligibility.
 
-- `symbol` and `side`;
-- `entry_hour_utc` and `entry_day_of_week`;
-- `feature_age_seconds`;
-- `market_regime` and `volatility_regime`.
+## Models and thresholds
 
-Provenance is diagnostic only. Source names, OCR markers, dataset membership,
-PnL, target, MFE, MAE, close time, exit price, exit reason, future returns and
-all post-entry fields are prohibited as features.
+Classifiers are Logistic Regression, Extra Trees, Random Forest and Histogram
+Gradient Boosting. Expected-net-PnL regressors are Huber, Random Forest, Extra
+Trees and Histogram Gradient Boosting.
 
-## Walk-forward and baselines
+Walk-forward folds are expanding, purged and embargoed. Regressor thresholds
+are selected exclusively inside each Master fit/validation interval. The paper
+set cannot influence a threshold.
 
-The Master is evaluated with temporal expanding folds, purging and embargo.
-Each fold has fit, validation and test partitions. The `always_allow` baseline
-is calculated from exactly the same test trade IDs used by that model fold.
-This makes net PnL, profit factor and expectancy comparisons directly paired.
+## Fold-matched always-allow baseline
 
-Classifiers:
+Every candidate is compared with `always_allow` on the exact same temporal OOS
+trade IDs. Fold sequences are concatenated in chronological fold order before
+aggregate metrics are calculated. The aggregate publishes:
 
-- Logistic Regression;
-- Extra Trees Classifier;
-- Random Forest Classifier;
-- Histogram Gradient Boosting Classifier.
+- `trade_count` and `active_trade_count`;
+- `gross_profit`, `gross_loss` and `net_pnl`;
+- `expectancy` and `profit_factor`;
+- maximum drawdown over the concatenated temporal sequence;
+- `fold_count`.
 
-Expected-net-PnL regressors:
+The following invariants are enforced without repair:
 
-- Huber Regressor;
-- Random Forest Regressor;
-- Extra Trees Regressor;
-- Histogram Gradient Boosting Regressor.
+```text
+net_pnl == gross_profit - gross_loss
+expectancy == net_pnl / trade_count
+trade_count > 0 when net_pnl != 0
+profit_factor is null if and only if gross_loss == 0
+```
 
-For regressors, `predicted_expected_net_pnl` thresholds are selected only from
-the fold validation partition. Paper rows never participate in fitting,
-calibration, threshold selection, or candidate ranking.
+## Typed concept drift
 
-## Candidate gate
+Continuous features use quantile PSI, two-sample KS and Wasserstein distance.
+A degenerate reference that cannot define quantile bins reports PSI as null;
+the implementation never substitutes an artificial fixed value.
 
-`diagnostic_ranking` orders every evaluated model for analysis.
-`eligible_candidate_ranking` contains only models satisfying all gates:
+Binary features use reference/target prevalence, categorical PSI and
+Jensen-Shannon divergence. Categorical fields use explicit distributions,
+Jensen-Shannon, categorical PSI and chi-square only when expected cell counts
+are valid. Label and net-PnL drift remain separate outcome diagnostics.
 
-- OOS net PnL exceeds the paired `always_allow` baseline;
-- OOS profit factor exceeds the paired baseline;
-- OOS expectancy exceeds the paired baseline;
-- a strict majority of folds has positive model net PnL;
-- block-bootstrap Monte Carlo median net PnL is positive;
-- probability of negative Monte Carlo PnL stays below the configured limit;
-- no leakage is detected;
-- paper usage for fit, calibration and threshold selection is zero.
+Comparisons cover Master before/after `2026-06-10`, OCR V2 tail, historical
+pre-V2, historical non-OCR and paper through
+`2026-07-16T17:17:22.249Z`. Decomposition is by symbol, side, ISO week and
+provenance. Provenance never becomes a feature.
 
-When no model qualifies, `selected_candidate` is `null` and the decision is
-`NO_ELIGIBLE_MODEL_CANDIDATE`. Ranking never grants promotion authority.
+## Cohort-aware experiments
 
-## Drift diagnostics
+The research report contains six non-authoritative experiments:
 
-Concept drift is measured across these explicit cohorts:
+| ID | Contract |
+| --- | --- |
+| E1 | full Master population, purged walk-forward |
+| E2 | historical pre-V2 population |
+| E3 | OCR V2 tail population |
+| E4 | train historical pre-V2, test OCR V2 tail |
+| E5 | train before 2026-06-10, test on/after the cutoff |
+| E6 | full-population OOS attribution by cohort |
 
-- Master before `2026-06-10`;
-- Master on or after `2026-06-10`;
-- OCR V2 tail;
-- historical non-OCR rows;
-- paper rows through `2026-07-16T17:17:22.249Z`.
+E2/E3 use their own temporal walk-forward where sample size permits. E4/E5
+purge training rows against the first test timestamp and reserve a Master-only
+validation interval. Every experiment uses the always-allow baseline on its
+exact test rows. Insufficient cohorts remain blocked and visible.
 
-The report includes PSI, two-sample KS, Wasserstein distance, label drift and
-net-PnL drift, plus decompositions by symbol, side, ISO week and provenance.
-Missing cohorts remain visible as controlled diagnostic insufficiency; they are
-never synthesized.
+E1 is the only source considered by the research candidate gate. E2-E6 are
+diagnostic and cannot grant eligibility.
+
+## Fold 3 attribution
+
+Fold 3 OOS contribution is reported for each model by provenance, ISO week,
+symbol, side, pre/post-cutoff period and OCR V2 tail versus historical pre-V2.
+Each cell includes candidate and always-allow metrics on identical rows and the
+net-PnL delta. Paper rows are absent.
+
+## Candidate gate and paper watermark
+
+`diagnostic_ranking` contains every evaluated E1 model.
+`eligible_candidate_ranking` requires better OOS net PnL, profit factor and
+expectancy than fold-matched always-allow, a majority of positive folds,
+positive Monte Carlo median, acceptable negative-PnL probability, no leakage
+and zero paper use. Otherwise `selected_candidate` is null and the decision is
+`NO_ELIGIBLE_MODEL_CANDIDATE`.
 
 The 576 current paper trades are frozen as
-`paper_evaluation_set_v1_consumed`. The timestamp
-`2026-07-16T17:17:22.249Z` is the prospective watermark. Closed paper trades
-after it belong to `prospective_holdout_v2` and are not retroactively folded
-into V1.
+`paper_evaluation_set_v1_consumed`. Trades after
+`2026-07-16T17:17:22.249Z` form `prospective_holdout_v2` and never retroactively
+change V1 fitting or thresholds.
 
 ## CLI
 
@@ -140,10 +159,7 @@ python scripts/run_market_features_rematerialization_and_first_training_runs_v1.
   --json
 ```
 
-`--write-research-artifacts` is the only opt-in write path. It is restricted to
-ignored research evidence under `data/research` and reports under
-`data/reports`. It never writes Master, paper DB, runtime, active registry,
-models, signals, risk state or orders.
-
-Qlib is optional and fail-closed. Its absence or incomplete provider setup is a
-reported blocker and does not start any runtime service.
+`--write-research-artifacts` is the only write opt-in and is restricted to
+ignored `data/research` evidence and `data/reports`. It never writes Master,
+paper DB, runtime, active registry, model, signal, risk state or orders. Qlib is
+optional and fail-closed.

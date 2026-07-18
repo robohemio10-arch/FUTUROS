@@ -42,6 +42,8 @@ def render_markdown(report: dict[str, Any]) -> str:
     environment = report.get("environment_gate", {})
     diagnostic = report.get("diagnostic_ranking", [])
     eligible = report.get("eligible_candidate_ranking", [])
+    experiments = report.get("cohort_aware_experiments", {}).get("experiments", {})
+    fold_three = report.get("fold_3_contribution", {})
     lines = [
         "# Market Features Rematerialization and First Training Runs V1",
         "",
@@ -84,9 +86,34 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             f"- Status: `{report.get('concept_drift', {}).get('status')}`",
             f"- Cohorts: `{report.get('concept_drift', {}).get('cohort_counts')}`",
-            "- Metrics: PSI, KS, Wasserstein, label drift, and net PnL drift.",
+            "- Continuous: quantile PSI, KS, and Wasserstein.",
+            "- Binary: prevalence, categorical PSI, and Jensen-Shannon.",
+            "- Categorical: distributions, Jensen-Shannon, and valid chi-square.",
+            "- Outcomes: label drift and net PnL drift.",
             "- Decomposition: symbol, side, ISO week, and provenance.",
             "- Provenance is diagnostic only and never a model feature.",
+            "",
+            "## Cohort-aware experiments",
+            "",
+            "| Experiment | Status | Reason | OOS prediction rows |",
+            "|---|---|---|---:|",
+        ]
+    )
+    for experiment_id in ("E1", "E2", "E3", "E4", "E5", "E6"):
+        item = experiments.get(experiment_id, {})
+        lines.append(
+            f"| {experiment_id} | {item.get('status')} | {item.get('reason')} | "
+            f"{item.get('oos_prediction_row_count', 0)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Fold 3 contribution",
+            "",
+            f"- Status: `{fold_three.get('status')}`",
+            f"- Baseline fold-matched: `{fold_three.get('baseline_fold_matched')}`",
+            "- Dimensions: provenance, week, symbol, side, cutoff period, and OCR V2 cohort.",
+            "- Every contribution compares the candidate with always-allow on identical rows.",
             "",
             "## Institutional boundaries",
             "",

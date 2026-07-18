@@ -32,6 +32,9 @@ from sklearn.preprocessing import StandardScaler
 
 from .contracts import (
     CLASSIFIER_MODEL_NAMES,
+    COHORT_EXPERIMENTS,
+    DRIFT_CUTOFF_UTC,
+    FINANCIAL_INVARIANT_ABS_TOLERANCE,
     MODEL_FEATURE_COLUMNS,
     MODEL_NAMES,
     REGRESSOR_MODEL_NAMES,
@@ -201,6 +204,9 @@ def run_supervised_models(
     seed: int,
     embargo_seconds: int,
     run_walkforward: bool,
+    model_names: tuple[str, ...] = MODEL_NAMES,
+    fit_final_models: bool = True,
+    experiment_id: str = "E1_full_population",
 ) -> TrainingResult:
     eligible = frame.loc[frame["row_status"].eq("ready")].copy()
     if eligible.empty:
@@ -216,7 +222,7 @@ def run_supervised_models(
         return _blocked_training("no_valid_purged_split")
 
     prediction_frames: list[pd.DataFrame] = []
-    fold_metrics: dict[str, list[dict[str, Any]]] = {name: [] for name in MODEL_NAMES}
+    fold_metrics: dict[str, list[dict[str, Any]]] = {name: [] for name in model_names}
     fold_baselines: list[dict[str, Any]] = []
     blockers: list[dict[str, Any]] = []
     for split in splits:
@@ -233,14 +239,15 @@ def run_supervised_models(
                 }
             )
             continue
-        baseline = {
+        baseline_internal = {
             "fold_id": int(split["fold_id"]),
             "baseline_name": "always_allow",
             **financial_metrics(test["net_pnl"].to_numpy(dtype=float)),
             "test_trade_ids": test["trade_id"].astype(str).tolist(),
+            "_pnl_sequence": test["net_pnl"].astype(float).tolist(),
         }
-        fold_baselines.append(baseline)
-        for name in MODEL_NAMES:
+        fold_baselines.append(_public_financial_record(baseline_internal))
+        for name in model_names:
             kind = model_kind(name)
             estimator = build_model(name, seed=seed + int(split["fold_id"]))
             threshold: float
@@ -303,17 +310,11 @@ def run_supervised_models(
                     ),
                     **predictive,
                     **financial,
-                    "baseline_always_allow": {
-                        key: baseline[key]
-                        for key in (
-                            "net_pnl",
-                            "profit_factor",
-                            "expectancy",
-                            "max_drawdown",
-                        )
-                    },
+                    "_pnl_sequence": selected_pnl.tolist(),
+                    "baseline_always_allow": baseline_internal,
                 }
             )
+            timestamps = pd.to_datetime(test["open_time_utc"], utc=True)
             prediction_frames.append(
                 pd.DataFrame(
                     {
@@ -329,6 +330,21 @@ def run_supervised_models(
                         "observed_net_pnl": observed,
                         "strategy_net_pnl": selected_pnl,
                         "baseline_always_allow_net_pnl": observed,
+                        "symbol": test["symbol"].astype(str).to_numpy(),
+                        "side": test["side"].astype(str).to_numpy(),
+                        "provenance": test["provenance"].astype(str).to_numpy(),
+                        "week": timestamps.dt.strftime("%G-W%V").to_numpy(),
+                        "cutoff_period": np.where(
+                            timestamps.lt(pd.Timestamp(DRIFT_CUTOFF_UTC)),
+                            "pre_2026_06_10",
+                            "post_2026_06_10",
+                        ),
+                        "ocr_v2_cohort": np.where(
+                            test["is_ocr_v2_tail"].astype(bool).to_numpy(),
+                            "ocr_v2_tail",
+                            "historical_pre_v2",
+                        ),
+                        "experiment_id": experiment_id,
                         "dataset_partition": "master_walkforward_oos",
                     }
                 )
@@ -340,19 +356,22 @@ def run_supervised_models(
     )
     summaries = tuple(
         summarize_model(name, fold_metrics[name])
-        for name in MODEL_NAMES
+        for name in model_names
         if fold_metrics[name]
     )
     fitted: dict[str, Estimator] = {}
-    for name in MODEL_NAMES:
-        estimator = build_model(name, seed=seed)
-        target = (
-            eligible["target_profitable"].astype(int).to_numpy()
-            if model_kind(name) == "classifier"
-            else eligible["net_pnl"].to_numpy(dtype=float)
-        )
-        estimator.fit(eligible.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float), target)
-        fitted[name] = estimator
+    if fit_final_models:
+        for name in model_names:
+            estimator = build_model(name, seed=seed)
+            target = (
+                eligible["target_profitable"].astype(int).to_numpy()
+                if model_kind(name) == "classifier"
+                else eligible["net_pnl"].to_numpy(dtype=float)
+            )
+            estimator.fit(
+                eligible.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float), target
+            )
+            fitted[name] = estimator
     return TrainingResult(
         predictions=predictions,
         model_summaries=summaries,
@@ -533,6 +552,365 @@ def block_monte_carlo(
     return results
 
 
+def run_cohort_aware_experiments(
+    frame: pd.DataFrame,
+    *,
+    full_population_result: TrainingResult,
+    seed: int,
+    embargo_seconds: int,
+    model_names: tuple[str, ...] = MODEL_NAMES,
+) -> dict[str, Any]:
+    """Run Master-only cohort experiments without granting selection authority."""
+
+    ready = frame.loc[frame["row_status"].eq("ready")].copy()
+    historical = ready.loc[~ready["is_ocr_v2_tail"].astype(bool)].copy()
+    ocr_v2 = ready.loc[ready["is_ocr_v2_tail"].astype(bool)].copy()
+    cutoff = pd.Timestamp(DRIFT_CUTOFF_UTC)
+    pre_cutoff = ready.loc[ready["open_time_utc"].lt(cutoff)].copy()
+    post_cutoff = ready.loc[ready["open_time_utc"].ge(cutoff)].copy()
+
+    e2 = run_supervised_models(
+        historical,
+        seed=seed + 20,
+        embargo_seconds=embargo_seconds,
+        run_walkforward=True,
+        model_names=model_names,
+        fit_final_models=False,
+        experiment_id="E2_historical_pre_v2",
+    )
+    e3 = run_supervised_models(
+        ocr_v2,
+        seed=seed + 30,
+        embargo_seconds=embargo_seconds,
+        run_walkforward=True,
+        model_names=model_names,
+        fit_final_models=False,
+        experiment_id="E3_ocr_v2_tail",
+    )
+    e4 = _run_fixed_cohort_experiment(
+        train_source=historical,
+        test_source=ocr_v2,
+        experiment_id="E4_train_historical_pre_v2_test_ocr_v2_tail",
+        seed=seed + 40,
+        embargo_seconds=embargo_seconds,
+        model_names=model_names,
+    )
+    e5 = _run_fixed_cohort_experiment(
+        train_source=pre_cutoff,
+        test_source=post_cutoff,
+        experiment_id="E5_train_pre_cutoff_test_post_cutoff",
+        seed=seed + 50,
+        embargo_seconds=embargo_seconds,
+        model_names=model_names,
+    )
+    e6_attribution = build_prediction_contribution_report(
+        full_population_result.predictions
+    )
+    experiments = {
+        "E1": _experiment_payload(
+            "E1_full_population",
+            full_population_result,
+            source_rows=len(ready),
+        ),
+        "E2": _experiment_payload(
+            "E2_historical_pre_v2",
+            e2,
+            source_rows=len(historical),
+        ),
+        "E3": _experiment_payload(
+            "E3_ocr_v2_tail",
+            e3,
+            source_rows=len(ocr_v2),
+        ),
+        "E4": _experiment_payload(
+            "E4_train_historical_pre_v2_test_ocr_v2_tail",
+            e4,
+            source_rows=len(historical) + len(ocr_v2),
+        ),
+        "E5": _experiment_payload(
+            "E5_train_pre_cutoff_test_post_cutoff",
+            e5,
+            source_rows=len(pre_cutoff) + len(post_cutoff),
+        ),
+        "E6": {
+            "experiment_id": "E6_full_population_cohort_attribution",
+            "status": e6_attribution["status"],
+            "reason": e6_attribution["reason"],
+            "attribution": e6_attribution,
+            "selection_authority": False,
+            "paper_rows_used_for_fit": 0,
+            "paper_rows_used_for_threshold": 0,
+        },
+    }
+    return {
+        "status": (
+            "ok"
+            if experiments["E1"]["status"] == "ok"
+            else "blocked"
+        ),
+        "reason": "cohort_aware_experiments_completed",
+        "experiment_contract": dict(COHORT_EXPERIMENTS),
+        "experiments": experiments,
+        "provenance_used_as_feature": False,
+        "paper_rows_used_for_fit": 0,
+        "paper_rows_used_for_calibration": 0,
+        "paper_rows_used_for_threshold": 0,
+        "candidate_selection_source": "E1_full_population_only",
+        "input_master_row_count": int(len(frame)),
+        "ready_master_row_count": int(len(ready)),
+        "blocked_master_row_count": int(len(frame) - len(ready)),
+        "row_exclusion_policy": "point_in_time_validation_status_only",
+        "outcome_conditioned_row_exclusion": False,
+        "selection_authority": False,
+    }
+
+
+def build_fold_contribution_report(
+    predictions: pd.DataFrame,
+    *,
+    fold_id: int = 3,
+) -> dict[str, Any]:
+    selected = predictions.loc[predictions["fold_id"].eq(fold_id)].copy()
+    result = build_prediction_contribution_report(selected)
+    return {
+        **result,
+        "fold_id": int(fold_id),
+        "reason": (
+            "fold_contribution_completed"
+            if result["status"] == "ok"
+            else "fold_not_available"
+        ),
+    }
+
+
+def build_prediction_contribution_report(
+    predictions: pd.DataFrame,
+) -> dict[str, Any]:
+    dimensions = (
+        "provenance",
+        "week",
+        "symbol",
+        "side",
+        "cutoff_period",
+        "ocr_v2_cohort",
+    )
+    if predictions.empty:
+        return {
+            "status": "blocked",
+            "reason": "no_oos_predictions",
+            "dimensions": {dimension: [] for dimension in dimensions},
+            "baseline_fold_matched": True,
+            "paper_rows_used": 0,
+        }
+    output: dict[str, list[dict[str, Any]]] = {}
+    ordered = predictions.sort_values(
+        ["model_name", "open_time_utc", "trade_id"], kind="mergesort"
+    )
+    for dimension in dimensions:
+        records: list[dict[str, Any]] = []
+        for (model_name, value), group in ordered.groupby(
+            ["model_name", dimension], sort=True, dropna=False
+        ):
+            strategy = financial_metrics(group["strategy_net_pnl"].to_numpy(float))
+            baseline = financial_metrics(
+                group["baseline_always_allow_net_pnl"].to_numpy(float)
+            )
+            records.append(
+                {
+                    "model_name": str(model_name),
+                    dimension: str(value),
+                    "strategy": strategy,
+                    "baseline_always_allow": baseline,
+                    "net_pnl_delta_vs_always_allow": float(
+                        strategy["net_pnl"] - baseline["net_pnl"]
+                    ),
+                    "same_trade_rows_as_baseline": True,
+                }
+            )
+        output[dimension] = records
+    return {
+        "status": "ok",
+        "reason": "oos_contribution_completed",
+        "prediction_row_count": int(len(predictions)),
+        "model_count": int(predictions["model_name"].nunique()),
+        "dimensions": output,
+        "baseline_fold_matched": True,
+        "provenance_used_as_feature": False,
+        "paper_rows_used": 0,
+    }
+
+
+def _run_fixed_cohort_experiment(
+    *,
+    train_source: pd.DataFrame,
+    test_source: pd.DataFrame,
+    experiment_id: str,
+    seed: int,
+    embargo_seconds: int,
+    model_names: tuple[str, ...],
+) -> TrainingResult:
+    test = test_source.sort_values(["open_time_utc", "trade_id"], kind="mergesort")
+    if len(test) < 10:
+        return _blocked_training("insufficient_test_cohort_rows")
+    first_test_open = pd.Timestamp(test["open_time_utc"].min())
+    cutoff = first_test_open - pd.Timedelta(seconds=embargo_seconds)
+    train = train_source.loc[train_source["close_time_utc"].lt(cutoff)].sort_values(
+        ["open_time_utc", "trade_id"], kind="mergesort"
+    )
+    if len(train) < 40 or train["target_profitable"].nunique() < 2:
+        return _blocked_training("insufficient_purged_training_cohort_rows")
+    validation_size = max(10, len(train) // 5)
+    fit = train.iloc[:-validation_size]
+    validation = train.iloc[-validation_size:]
+    if len(fit) < 20 or fit["target_profitable"].nunique() < 2:
+        return _blocked_training("insufficient_fixed_experiment_fit_rows")
+
+    baseline_internal = {
+        "fold_id": 1,
+        "baseline_name": "always_allow",
+        **financial_metrics(test["net_pnl"].to_numpy(dtype=float)),
+        "test_trade_ids": test["trade_id"].astype(str).tolist(),
+        "_pnl_sequence": test["net_pnl"].astype(float).tolist(),
+    }
+    fold_metrics: dict[str, list[dict[str, Any]]] = {name: [] for name in model_names}
+    prediction_frames: list[pd.DataFrame] = []
+    for name in model_names:
+        estimator = build_model(name, seed=seed)
+        kind = model_kind(name)
+        if kind == "classifier":
+            estimator.fit(
+                train.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float),
+                train["target_profitable"].astype(int).to_numpy(),
+            )
+            score = _positive_probability(
+                estimator,
+                test.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float),
+            )
+            threshold = 0.5
+            threshold_source = "fixed_classifier_probability"
+            predictive = classification_metrics(
+                test["target_profitable"].astype(int).to_numpy(), score
+            )
+        else:
+            estimator.fit(
+                fit.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float),
+                fit["net_pnl"].to_numpy(dtype=float),
+            )
+            validation_score = np.asarray(
+                estimator.predict(
+                    validation.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(dtype=float)
+                ),
+                dtype=float,
+            )
+            threshold = select_expected_pnl_threshold(
+                validation_score,
+                validation["net_pnl"].to_numpy(dtype=float),
+            )
+            threshold_source = "master_experiment_validation_only"
+            score = np.asarray(
+                estimator.predict(test.loc[:, MODEL_FEATURE_COLUMNS].to_numpy(float)),
+                dtype=float,
+            )
+            predictive = regression_metrics(test["net_pnl"].to_numpy(float), score)
+        decision = score >= threshold
+        observed = test["net_pnl"].to_numpy(dtype=float)
+        strategy = np.where(decision, observed, 0.0)
+        fold_metrics[name].append(
+            {
+                "fold_id": 1,
+                "model_kind": kind,
+                "fit_rows": int(len(fit)),
+                "validation_rows": int(len(validation)),
+                "train_rows": int(len(train)),
+                "test_rows": int(len(test)),
+                "threshold": float(threshold),
+                "threshold_source": threshold_source,
+                "paper_used_for_threshold": False,
+                "purged_and_embargoed_rows": int(len(train_source) - len(train)),
+                **predictive,
+                **financial_metrics(strategy),
+                "_pnl_sequence": strategy.tolist(),
+                "baseline_always_allow": baseline_internal,
+            }
+        )
+        timestamps = pd.to_datetime(test["open_time_utc"], utc=True)
+        prediction_frames.append(
+            pd.DataFrame(
+                {
+                    "trade_id": test["trade_id"].astype(str).to_numpy(),
+                    "open_time_utc": timestamps.to_numpy(),
+                    "model_name": name,
+                    "model_kind": kind,
+                    "fold_id": 1,
+                    "model_score": score,
+                    "decision_allow": decision,
+                    "selected_threshold": float(threshold),
+                    "threshold_source": threshold_source,
+                    "observed_net_pnl": observed,
+                    "strategy_net_pnl": strategy,
+                    "baseline_always_allow_net_pnl": observed,
+                    "symbol": test["symbol"].astype(str).to_numpy(),
+                    "side": test["side"].astype(str).to_numpy(),
+                    "provenance": test["provenance"].astype(str).to_numpy(),
+                    "week": timestamps.dt.strftime("%G-W%V").to_numpy(),
+                    "cutoff_period": np.where(
+                        timestamps.lt(pd.Timestamp(DRIFT_CUTOFF_UTC)),
+                        "pre_2026_06_10",
+                        "post_2026_06_10",
+                    ),
+                    "ocr_v2_cohort": np.where(
+                        test["is_ocr_v2_tail"].astype(bool).to_numpy(),
+                        "ocr_v2_tail",
+                        "historical_pre_v2",
+                    ),
+                    "experiment_id": experiment_id,
+                    "dataset_partition": "master_fixed_cohort_oos",
+                }
+            )
+        )
+    predictions = pd.concat(prediction_frames, ignore_index=True)
+    return TrainingResult(
+        predictions=predictions,
+        model_summaries=tuple(
+            summarize_model(name, fold_metrics[name]) for name in model_names
+        ),
+        fold_baselines=(_public_financial_record(baseline_internal),),
+        fitted_models={},
+        blockers=(),
+    )
+
+
+def _experiment_payload(
+    experiment_id: str,
+    result: TrainingResult,
+    *,
+    source_rows: int,
+) -> dict[str, Any]:
+    status = "ok" if result.model_summaries else "blocked"
+    reason = (
+        "experiment_evaluated"
+        if status == "ok"
+        else str(result.blockers[0].get("reason", "experiment_not_evaluated"))
+        if result.blockers
+        else "experiment_not_evaluated"
+    )
+    return {
+        "experiment_id": experiment_id,
+        "status": status,
+        "reason": reason,
+        "source_row_count": int(source_rows),
+        "oos_prediction_row_count": int(len(result.predictions)),
+        "model_summaries": list(result.model_summaries),
+        "fold_baselines": list(result.fold_baselines),
+        "blockers": list(result.blockers),
+        "always_allow_uses_same_test_rows": True,
+        "paper_rows_used_for_fit": 0,
+        "paper_rows_used_for_calibration": 0,
+        "paper_rows_used_for_threshold": 0,
+        "selection_authority": False,
+    }
+
+
 def build_candidate_rankings(
     summaries: tuple[dict[str, Any], ...],
     monte_carlo: list[dict[str, Any]],
@@ -693,7 +1071,7 @@ def financial_metrics(pnl_values: np.ndarray | pd.Series) -> dict[str, Any]:
     gross_profit = float(pnl[pnl > 0].sum()) if len(pnl) else 0.0
     gross_loss = float(-pnl[pnl < 0].sum()) if len(pnl) else 0.0
     nonzero = pnl[pnl != 0]
-    return {
+    result = {
         "trade_count": int(len(pnl)),
         "active_trade_count": int(len(nonzero)),
         "net_pnl": float(pnl.sum()) if len(pnl) else 0.0,
@@ -704,6 +1082,59 @@ def financial_metrics(pnl_values: np.ndarray | pd.Series) -> dict[str, Any]:
         "win_rate": float(np.mean(nonzero > 0)) if len(nonzero) else 0.0,
         "max_drawdown": max_drawdown(pnl),
     }
+    errors = financial_invariant_errors(result)
+    if errors:
+        raise ValueError("financial_invariant_violation:" + ",".join(errors))
+    return {**result, "financial_invariants_valid": True}
+
+
+def financial_invariant_errors(
+    metrics: dict[str, Any],
+    *,
+    tolerance: float = FINANCIAL_INVARIANT_ABS_TOLERANCE,
+) -> list[str]:
+    """Return accounting violations without mutating or repairing metrics."""
+
+    trade_count = int(metrics.get("trade_count", 0))
+    net_pnl = float(metrics.get("net_pnl", 0.0))
+    gross_profit = float(metrics.get("gross_profit", 0.0))
+    gross_loss = float(metrics.get("gross_loss", 0.0))
+    expectancy = float(metrics.get("expectancy", 0.0))
+    profit_factor = metrics.get("profit_factor")
+    errors: list[str] = []
+    if not np.isclose(
+        net_pnl,
+        gross_profit - gross_loss,
+        rtol=0.0,
+        atol=tolerance,
+    ):
+        errors.append("net_pnl_not_gross_profit_minus_gross_loss")
+    if trade_count == 0:
+        if not np.isclose(net_pnl, 0.0, rtol=0.0, atol=tolerance):
+            errors.append("nonzero_net_pnl_with_zero_trade_count")
+        expected_expectancy = 0.0
+    else:
+        expected_expectancy = net_pnl / trade_count
+    if not np.isclose(
+        expectancy,
+        expected_expectancy,
+        rtol=0.0,
+        atol=tolerance,
+    ):
+        errors.append("expectancy_not_net_pnl_div_trade_count")
+    if gross_loss == 0.0:
+        if profit_factor is not None:
+            errors.append("profit_factor_must_be_null_when_gross_loss_zero")
+    elif profit_factor is None:
+        errors.append("profit_factor_null_with_nonzero_gross_loss")
+    elif not np.isclose(
+        float(profit_factor),
+        gross_profit / gross_loss,
+        rtol=0.0,
+        atol=tolerance,
+    ):
+        errors.append("profit_factor_ratio_mismatch")
+    return errors
 
 
 def max_drawdown(pnl_values: np.ndarray | pd.Series) -> float:
@@ -716,9 +1147,13 @@ def max_drawdown(pnl_values: np.ndarray | pd.Series) -> float:
 
 
 def summarize_model(name: str, folds: list[dict[str, Any]]) -> dict[str, Any]:
-    model_financial = _aggregate_financial(folds, prefix="")
-    baseline_financial = _aggregate_financial(
-        [item["baseline_always_allow"] for item in folds], prefix=""
+    model_financial = aggregate_fold_matched_financial(
+        folds,
+        sequence_key="_pnl_sequence",
+    )
+    baseline_financial = aggregate_fold_matched_financial(
+        [item["baseline_always_allow"] for item in folds],
+        sequence_key="_pnl_sequence",
     )
     net_by_fold = np.asarray([item["net_pnl"] for item in folds], dtype=float)
     predictive_fields = ("accuracy", "precision", "recall", "f1", "roc_auc", "mae", "rmse")
@@ -737,28 +1172,41 @@ def summarize_model(name: str, folds: list[dict[str, Any]]) -> dict[str, Any]:
         **model_financial,
         **predictive,
         "baseline_always_allow": baseline_financial,
-        "fold_metrics": folds,
+        "fold_metrics": [_public_fold_metric(item) for item in folds],
     }
 
 
-def _aggregate_financial(
-    records: list[dict[str, Any]], *, prefix: str
+def aggregate_fold_matched_financial(
+    records: list[dict[str, Any]],
+    *,
+    sequence_key: str,
 ) -> dict[str, Any]:
-    gross_profit = float(sum(float(item.get("gross_profit", 0.0)) for item in records))
-    gross_loss = float(sum(float(item.get("gross_loss", 0.0)) for item in records))
-    net_pnl = float(sum(float(item.get("net_pnl", 0.0)) for item in records))
-    trade_count = int(sum(int(item.get("trade_count", 0)) for item in records))
+    """Aggregate fold OOS sequences chronologically, preserving accounting."""
+
+    ordered = sorted(records, key=lambda item: int(item.get("fold_id", 0)))
+    sequences = [
+        np.asarray(item.get(sequence_key, []), dtype=float)
+        for item in ordered
+    ]
+    concatenated = np.concatenate(sequences) if sequences else np.array([], dtype=float)
+    result = financial_metrics(concatenated)
     return {
-        f"{prefix}net_pnl": net_pnl,
-        f"{prefix}gross_profit": gross_profit,
-        f"{prefix}gross_loss": gross_loss,
-        f"{prefix}profit_factor": gross_profit / gross_loss if gross_loss > 0 else None,
-        f"{prefix}expectancy": net_pnl / trade_count if trade_count else 0.0,
-        f"{prefix}max_drawdown": float(
-            max((float(item.get("max_drawdown", 0.0)) for item in records), default=0.0)
-        ),
-        f"{prefix}trade_count": trade_count,
+        **result,
+        "fold_count": int(len(ordered)),
+        "aggregation_method": "fold_matched_temporal_concatenation",
     }
+
+
+def _public_financial_record(record: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in record.items() if not key.startswith("_")}
+
+
+def _public_fold_metric(record: dict[str, Any]) -> dict[str, Any]:
+    public = _public_financial_record(record)
+    public["baseline_always_allow"] = _public_financial_record(
+        record["baseline_always_allow"]
+    )
+    return public
 
 
 def _require_gt(

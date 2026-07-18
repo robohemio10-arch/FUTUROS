@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "3baef7538a30ed54b3b92f5102c98fad29c315777241e782d55fd65fd9d61b33",
+  "aggregate_sha256": "efe20f26a5fe7ae2a2100547758568ebbc70e83d256328b1092a293c8f2197f8",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1268,10 +1268,10 @@
       "sha256": "456f34bdda28f6368216e775451a3762ffe796f9fd58b7ec0570b4db6ae3016b"
     },
     {
-      "bytes": 5383,
+      "bytes": 6338,
       "hash_mode": "text_lf",
       "path": "docs/MARKET_FEATURES_REMATERIALIZATION_AND_FIRST_TRAINING_RUNS_V1.md",
-      "sha256": "5bfe51a46bf7214b213fef0ee4da6fa2f84560730ec687822334adf696129148"
+      "sha256": "b603cdbddf2635ee4db3c29f72db550b01b6ece1d081d71bea62d9f554721ca0"
     },
     {
       "bytes": 3926,
@@ -6878,34 +6878,34 @@
       "sha256": "36601b85facf24a5c1871c46c5bd4168829c24de4505ac5b5dadb8cdaca7e86d"
     },
     {
-      "bytes": 7750,
+      "bytes": 8659,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_features_first_training_runs/contracts.py",
-      "sha256": "207348a9aa3b0773b2d94efb2280add6229adbb7459402ba1544ad4eefe8e5c1"
+      "sha256": "40efee5015453c07745cb988ae2f9e3e63f920ee607e822617e0419dab97e189"
     },
     {
-      "bytes": 22601,
+      "bytes": 23912,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_features_first_training_runs/pipeline.py",
-      "sha256": "c7283a49cd8fd8402fb029802092d59f5dec40ea3bbcfbc07bc61a00c0d071be"
+      "sha256": "303a60babce3434de5aa56da4cadf9b7f5ccb5f03dc0feeacb4646703e455d85"
     },
     {
-      "bytes": 6191,
+      "bytes": 7439,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_features_first_training_runs/reporting.py",
-      "sha256": "79764b9ae70091970b03e5d8dac0a51233a78c83166facaa85d6e7b6f18fdd73"
+      "sha256": "46adcc6e03b956b27fe67c102a96fab890481a10d85912fb0cfb0ce3359180a8"
     },
     {
-      "bytes": 30652,
+      "bytes": 47298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_features_first_training_runs/training.py",
-      "sha256": "235f43c845855f1dbc4a095a67f9d4b4cbc9e714ffceae13af7341d9e8497c71"
+      "sha256": "4b69e47664a8df17fd62a46a584fcaa0d969367ea884c40347a5e5905b105170"
     },
     {
-      "bytes": 23894,
+      "bytes": 31539,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_features_first_training_runs/validation.py",
-      "sha256": "511fb90de1222c3731fb295c61c93c9bb52582c0e9d9bd8c215a59dbd2df1f54"
+      "sha256": "089b494373cc216fe6b74b8d037a19f0b23d01bab7af60eb7bbf996aaa8ff111"
     },
     {
       "bytes": 7766,
@@ -8450,10 +8450,10 @@
       "sha256": "719de299af2775a1b566699cf1d396dee818d9b4aa49b38829801a2860495ea5"
     },
     {
-      "bytes": 17485,
+      "bytes": 23412,
       "hash_mode": "text_lf",
       "path": "tests/test_market_features_rematerialization_and_first_training_runs_v1.py",
-      "sha256": "c1113a69181c53af5a5cb6cad6d3107b31d7996e5eb9a143be37bacb06e2161e"
+      "sha256": "d15989bc92777e8e322207c9d4c71203e949b82325b78ada20fc4ab52361f6bf"
     },
     {
       "bytes": 4795,
