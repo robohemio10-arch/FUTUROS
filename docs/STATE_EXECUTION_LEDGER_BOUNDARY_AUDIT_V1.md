@@ -12,34 +12,89 @@ changes_risk: false
 
 ## Purpose
 
-This audit documents the existing authority boundaries among persistent state, financial ledgers, paper execution, risk decisions, operational evidence, and the read-only dashboard. It is an inventory and policy gate only. It does not move modules, change public schemas, create runtime writers, or execute audited code.
+This static audit documents authority boundaries among persistent state,
+financial ledgers, paper execution, risk decisions, operational evidence and
+the read-only dashboard. It does not import audited modules, move ownership,
+change public schemas, create runtime writers or execute application code.
 
 ## Authority Map
 
-- `smartcrypto.state` owns canonical runtime state, reconciliation state, and the canonical runtime financial event log.
-- Explicit ledger modules own order-intent, capital-reservation, and financial-event persistence. A second writer is not accepted merely because it uses a similar filename.
-- `smartcrypto.execution` owns paper execution intent and paper signal artifacts. It may consume risk decisions and delegate persistence to state/ledger authorities.
-- `smartcrypto.risk` owns decisions and safety gates. It does not implicitly own execution state or financial ledgers.
-- `smartcrypto.ops` owns reports, snapshots, health evidence, backup evidence, and audit outputs.
-- Dashboard pages and services consume read-only snapshots. `smartcrypto/dashboard/command_bus.py` is the named fail-closed command-audit adapter and remains unable to submit orders or change risk.
-- Operational scripts are typed entry points. They may write reports/evidence or delegate to a named domain authority; they do not acquire authority by writing a familiar path directly.
+- `smartcrypto.state` owns canonical runtime and reconciliation state.
+- Explicit ledger modules own order-intent, capital-reservation and financial
+  event persistence.
+- `smartcrypto.execution` owns paper intents and paper signal artifacts, while
+  delegating state and ledger persistence to named authorities.
+- `smartcrypto.risk` owns decisions and safety gates, not execution state.
+- `smartcrypto.ops` owns reports, snapshots, health and audit evidence.
+- Dashboard modules consume read-only snapshots. The documented command-bus
+  adapter remains unable to submit orders or change risk.
+- Scripts may write reports/evidence or delegate to a named domain authority.
 
-## Classification
+An undeclared writer does not acquire authority because its filename resembles
+an existing module.
 
-`authorized_writer` identifies an existing named persistence authority. `report_writer` identifies an ops/script report or evidence output. `read_only_consumer` identifies a module with reads and no detected writes. `ambiguous_state_or_ledger_writer`, `ambiguous_dashboard_writer`, and `ambiguous_risk_writer` are high-severity findings because they create competing authority.
+## Exact Scoped Authorities
 
-Cross-domain imports are evaluated directionally. Execution may consume risk/state contracts, ops may audit domain state, and dashboard may consume ops snapshots. `state -> execution` and ordinary `dashboard -> execution` dependencies are blocked because they invert the authority boundary.
+Decision Ledger validation and schema generation have five narrowly scoped
+sandbox/design-only authorities. A match requires literal equality of path,
+function or class context, and operation. The registry does not use wildcard,
+glob, prefix, substring, regex or directory authorization.
+
+| Exact path | Exact function | Operation | Authority | Classification |
+| --- | --- | --- | --- | --- |
+| `scripts/validate_decision_ledger_payload_v4_2.py` | `_atomic_write_json` | `write_text` | `decision_ledger_payload_validation_artifact_writer` | `sandbox_validation_artifact_writer` |
+| `scripts/validate_decision_ledger_runtime_integration_v1.py` | `write_json` | `write_text` | `decision_ledger_runtime_integration_validation_artifact_writer` | `sandbox_validation_artifact_writer` |
+| `scripts/validate_decision_ledger_runtime_profile_v1.py` | `atomic_write_json` | `write_text` | `decision_ledger_runtime_profile_validation_artifact_writer` | `sandbox_validation_artifact_writer` |
+| `smartcrypto/execution/decision_ledger_runtime_profile_v1/schema.py` | `write_runtime_profile_schema` | `write_text` | `decision_ledger_runtime_profile_schema_writer` | `design_schema_artifact_writer` |
+| `smartcrypto/execution/decision_ledger_v4_2/schema.py` | `write_payload_json_schema` | `write_text` | `decision_ledger_payload_schema_writer` | `design_schema_artifact_writer` |
+
+The three validators write only sandbox validation evidence. The two schema
+writers write only static design schemas. Every scoped contract declares:
+
+```text
+boundary=sandbox_design_only
+runtime_authority=false
+operational_state_authority=false
+financial_ledger_authority=false
+paper_restart_authority=false
+```
+
+A different operation, another function in the same file, a sibling filename,
+or any undeclared path bypasses no control. It proceeds through the original
+conservative `target_kind()` and writer classification.
+
+## Conservative Classification
+
+`authorized_writer` identifies an existing named persistence authority.
+`report_writer` identifies an ops/script report or evidence output.
+`read_only_consumer` has reads and no detected writes. Ambiguous state, ledger,
+dashboard and risk writers remain high severity because they may create a
+competing operational authority.
+
+Cross-domain imports are directional. Execution may consume risk/state
+contracts, ops may audit domain state, and dashboard may consume ops snapshots.
+`state -> execution` and ordinary `dashboard -> execution` remain blocked.
 
 ## Static Operation
 
-The auditor uses Python AST and the repository's versioned-file discovery contract. It does not import audited modules, call Docker, access the network or an exchange, dispatch notifications, read secrets, or mutate runtime artifacts. Output is deterministic and contains no generation timestamp.
+The auditor uses Python AST and versioned-file discovery. It does not import or
+execute scanned modules, call Docker, access a network or private exchange,
+dispatch notifications, read secrets or mutate runtime artifacts. Output is
+deterministic and has no generation timestamp.
 
 ```powershell
-python scripts/audit_state_execution_ledger_boundary.py --project-root . --json --fail-on high
+python scripts/audit_state_execution_ledger_boundary.py `
+  --project-root . `
+  --json `
+  --fail-on high
 ```
 
-Exit code is non-zero when a finding meets the configured threshold or source parsing fails. Medium findings remain visible as `warning`; they are never promoted to `ok`.
+Exit code is non-zero when a finding reaches the configured threshold or source
+parsing fails. Medium findings remain visible as `warning`.
 
 ## Safety
 
-This policy does not authorize live trading, canary release, order submission, private exchange access, or risk changes. Generated JSON is stdout-only unless an operator explicitly redirects it to an ignored runtime report path.
+These scoped authorities grant no operational integration, paper restart,
+runtime state, financial ledger, order, risk, Freqtrade or private-exchange
+authority. They do not authorize live or canary release. The auditor emits JSON
+to stdout only unless an operator redirects it to an ignored evidence path.

@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "0755b0ae1630156be4a79de9926a885d5461faf839e54e03804d7bd9db564ba5",
+  "aggregate_sha256": "b8a1474792283ab2e7684575ca15358259fe73a7217f5c4ced25aef530ad1bc9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2066,10 +2066,10 @@
       "sha256": "ebb9b06e5f86accbd5392803d2c73f2ff3364fcd504b86ae7f2b86d2f4cc1a78"
     },
     {
-      "bytes": 3225,
+      "bytes": 4777,
       "hash_mode": "text_lf",
       "path": "docs/STATE_EXECUTION_LEDGER_BOUNDARY_AUDIT_V1.md",
-      "sha256": "a84190bfa5d6386278a3ed4ed53cba8e8b80920a45725ce0f80850a823d4d191"
+      "sha256": "99dc798dcb42c7965cdaead409a7e640b73d10377fcdc93fecc40937e901bb4a"
     },
     {
       "bytes": 4981,
@@ -2636,10 +2636,10 @@
       "sha256": "9e55183481576b080631822f72c046cd6def11cd00930d3ea60adc50c7647816"
     },
     {
-      "bytes": 24877,
+      "bytes": 30273,
       "hash_mode": "text_lf",
       "path": "scripts/audit_state_execution_ledger_boundary.py",
-      "sha256": "cae0c0a346bb159655b05572cd6b1919f8a1c590353bdc6d683bf6b9c8664590"
+      "sha256": "094660874e6bf8a6d4c1397f6454b01820588a342e5772f0fd5c0078ec54f6d6"
     },
     {
       "bytes": 2144,
@@ -9296,10 +9296,10 @@
       "sha256": "f9a9a598719984242b5fe5fafe5f583315f7957903ce54f96149721c78b810ee"
     },
     {
-      "bytes": 7066,
+      "bytes": 12646,
       "hash_mode": "text_lf",
       "path": "tests/test_state_execution_ledger_boundary_audit_v1.py",
-      "sha256": "bd1b408af5fe8ce0a11ca88b9038ad17de110552dd6a595b14b1af2d205d3517"
+      "sha256": "a5757af6adc07d6beb951d7eb20f0ff819996b363db7ffc8bed078097c5be484"
     },
     {
       "bytes": 5009,
