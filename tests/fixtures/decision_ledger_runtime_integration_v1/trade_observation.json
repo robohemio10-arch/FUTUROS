@@ -1,0 +1,15 @@
+{
+  "exchange_private_access": false,
+  "execution_timestamp": "2026-07-20T18:00:05.000000Z",
+  "link_reason": "authoritative_freqtrade_trade_observed",
+  "observed_pair": "BTC/USDT:USDT",
+  "observed_side": "long",
+  "observed_symbol": "BTCUSDT",
+  "operational_authority": false,
+  "runtime_integration": false,
+  "sends_orders": false,
+  "source_database_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+  "source_row_fingerprint": "6666666666666666666666666666666666666666666666666666666666666666",
+  "source_table": "trades",
+  "trade_id": 595
+}

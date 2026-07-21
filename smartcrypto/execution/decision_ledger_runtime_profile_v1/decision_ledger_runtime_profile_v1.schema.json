@@ -1,0 +1,753 @@
+{
+  "$defs": {
+    "AIShadowDecision": {
+      "enum": [
+        "ALLOW",
+        "BLOCK",
+        "ABSTAIN",
+        "NOT_EVALUATED"
+      ],
+      "title": "AIShadowDecision",
+      "type": "string"
+    },
+    "Alignment": {
+      "enum": [
+        "aligned",
+        "counter",
+        "range",
+        "unknown"
+      ],
+      "title": "Alignment",
+      "type": "string"
+    },
+    "DecisionRecordV42": {
+      "additionalProperties": false,
+      "description": "Sealed decision payload with a self-verifying canonical SHA-256.",
+      "properties": {
+        "ai_shadow_decision": {
+          "$ref": "#/$defs/AIShadowDecision"
+        },
+        "ai_shadow_reasons": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Ai Shadow Reasons",
+          "type": "array"
+        },
+        "alignment": {
+          "$ref": "#/$defs/Alignment"
+        },
+        "approved_leverage": {
+          "minimum": 0.0,
+          "title": "Approved Leverage",
+          "type": "number"
+        },
+        "approved_stake_usdt": {
+          "minimum": 0.0,
+          "title": "Approved Stake Usdt",
+          "type": "number"
+        },
+        "calibrated_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Calibrated Probability"
+        },
+        "candidate_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "correlation_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "decision_timestamp": {
+          "format": "date-time",
+          "title": "Decision Timestamp",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "exchange_private_access": {
+          "const": false,
+          "default": false,
+          "title": "Exchange Private Access",
+          "type": "boolean"
+        },
+        "execution_timestamp": {
+          "default": null,
+          "title": "Execution Timestamp",
+          "type": "null"
+        },
+        "expected_net_pnl": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expected Net Pnl"
+        },
+        "fast_stop_probability": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fast Stop Probability"
+        },
+        "feature_contract_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Feature Contract Version",
+          "type": "string"
+        },
+        "feature_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Feature Hash",
+          "type": "string"
+        },
+        "feature_timestamp": {
+          "format": "date-time",
+          "title": "Feature Timestamp",
+          "type": "string"
+        },
+        "final_decision": {
+          "$ref": "#/$defs/FinalDecision"
+        },
+        "final_reasons": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Final Reasons",
+          "type": "array"
+        },
+        "idempotency_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "model_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Model Hash",
+          "type": "string"
+        },
+        "model_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Model Version",
+          "type": "string"
+        },
+        "operational_authority": {
+          "const": false,
+          "default": false,
+          "title": "Operational Authority",
+          "type": "boolean"
+        },
+        "pair": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Pair",
+          "type": "string"
+        },
+        "parent_event_id": {
+          "default": null,
+          "title": "Parent Event Id",
+          "type": "null"
+        },
+        "payload_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Payload Sha256",
+          "type": "string"
+        },
+        "qlib_score": {
+          "title": "Qlib Score",
+          "type": "number"
+        },
+        "record_type": {
+          "const": "decision",
+          "default": "decision",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "regime": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Regime",
+          "type": "string"
+        },
+        "risk_decision": {
+          "$ref": "#/$defs/RiskDecision"
+        },
+        "risk_reasons": {
+          "items": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Risk Reasons",
+          "type": "array"
+        },
+        "runtime_integration": {
+          "const": false,
+          "default": false,
+          "title": "Runtime Integration",
+          "type": "boolean"
+        },
+        "runtime_mode": {
+          "const": "paper",
+          "default": "paper",
+          "title": "Runtime Mode",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "decision_ledger_payload_v4_2",
+          "default": "decision_ledger_payload_v4_2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sends_orders": {
+          "const": false,
+          "default": false,
+          "title": "Sends Orders",
+          "type": "boolean"
+        },
+        "side": {
+          "$ref": "#/$defs/Side"
+        },
+        "signal_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Signal Id",
+          "type": "string"
+        },
+        "symbol": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "trade_id": {
+          "default": null,
+          "title": "Trade Id",
+          "type": "null"
+        }
+      },
+      "required": [
+        "event_id",
+        "signal_id",
+        "candidate_id",
+        "correlation_id",
+        "idempotency_key",
+        "pair",
+        "symbol",
+        "side",
+        "feature_timestamp",
+        "decision_timestamp",
+        "feature_contract_version",
+        "feature_hash",
+        "model_id",
+        "model_version",
+        "model_hash",
+        "qlib_score",
+        "calibrated_probability",
+        "expected_net_pnl",
+        "fast_stop_probability",
+        "regime",
+        "alignment",
+        "ai_shadow_decision",
+        "ai_shadow_reasons",
+        "risk_decision",
+        "risk_reasons",
+        "approved_stake_usdt",
+        "approved_leverage",
+        "final_decision",
+        "final_reasons",
+        "payload_sha256"
+      ],
+      "title": "DecisionRecordV42",
+      "type": "object"
+    },
+    "FinalDecision": {
+      "enum": [
+        "ALLOW",
+        "BLOCK"
+      ],
+      "title": "FinalDecision",
+      "type": "string"
+    },
+    "RiskDecision": {
+      "enum": [
+        "APPROVED",
+        "REJECTED",
+        "ERROR",
+        "NOT_EVALUATED"
+      ],
+      "title": "RiskDecision",
+      "type": "string"
+    },
+    "RuntimeDecisionLineageV1": {
+      "additionalProperties": false,
+      "description": "Fields preserved by the runtime envelope but absent from payload 4.2.",
+      "properties": {
+        "activation_state": {
+          "const": "sandbox_mapping_only",
+          "default": "sandbox_mapping_only",
+          "title": "Activation State",
+          "type": "string"
+        },
+        "exchange_private_access": {
+          "const": false,
+          "default": false,
+          "title": "Exchange Private Access",
+          "type": "boolean"
+        },
+        "field_source_registry_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Field Source Registry Sha256",
+          "type": "string"
+        },
+        "mapping_input_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Mapping Input Sha256",
+          "type": "string"
+        },
+        "operational_authority": {
+          "const": false,
+          "default": false,
+          "title": "Operational Authority",
+          "type": "boolean"
+        },
+        "profile_version": {
+          "const": "decision_ledger_runtime_observability_profile_v1",
+          "default": "decision_ledger_runtime_observability_profile_v1",
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "risk_checked_at_utc": {
+          "format": "date-time",
+          "title": "Risk Checked At Utc",
+          "type": "string"
+        },
+        "risk_config_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Risk Config Hash",
+          "type": "string"
+        },
+        "risk_policy_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Risk Policy Id",
+          "type": "string"
+        },
+        "runtime_integration": {
+          "const": false,
+          "default": false,
+          "title": "Runtime Integration",
+          "type": "boolean"
+        },
+        "sends_orders": {
+          "const": false,
+          "default": false,
+          "title": "Sends Orders",
+          "type": "boolean"
+        },
+        "source_signal_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Signal Sha256",
+          "type": "string"
+        },
+        "writer_invoked": {
+          "const": false,
+          "default": false,
+          "title": "Writer Invoked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "risk_checked_at_utc",
+        "risk_policy_id",
+        "risk_config_hash",
+        "source_signal_sha256",
+        "field_source_registry_sha256",
+        "mapping_input_sha256"
+      ],
+      "title": "RuntimeDecisionLineageV1",
+      "type": "object"
+    },
+    "RuntimeDecisionProjectionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_state": {
+          "const": "sandbox_mapping_only",
+          "default": "sandbox_mapping_only",
+          "title": "Activation State",
+          "type": "string"
+        },
+        "lineage": {
+          "$ref": "#/$defs/RuntimeDecisionLineageV1"
+        },
+        "profile_version": {
+          "const": "decision_ledger_runtime_observability_profile_v1",
+          "default": "decision_ledger_runtime_observability_profile_v1",
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "projection_type": {
+          "const": "decision_projection",
+          "default": "decision_projection",
+          "title": "Projection Type",
+          "type": "string"
+        },
+        "target_payload": {
+          "$ref": "#/$defs/DecisionRecordV42"
+        }
+      },
+      "required": [
+        "lineage",
+        "target_payload"
+      ],
+      "title": "RuntimeDecisionProjectionV1",
+      "type": "object"
+    },
+    "RuntimeTradeLinkLineageV1": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_state": {
+          "const": "sandbox_mapping_only",
+          "default": "sandbox_mapping_only",
+          "title": "Activation State",
+          "type": "string"
+        },
+        "exchange_private_access": {
+          "const": false,
+          "default": false,
+          "title": "Exchange Private Access",
+          "type": "boolean"
+        },
+        "field_source_registry_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Field Source Registry Sha256",
+          "type": "string"
+        },
+        "mapping_input_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Mapping Input Sha256",
+          "type": "string"
+        },
+        "operational_authority": {
+          "const": false,
+          "default": false,
+          "title": "Operational Authority",
+          "type": "boolean"
+        },
+        "profile_version": {
+          "const": "decision_ledger_runtime_observability_profile_v1",
+          "default": "decision_ledger_runtime_observability_profile_v1",
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "runtime_integration": {
+          "const": false,
+          "default": false,
+          "title": "Runtime Integration",
+          "type": "boolean"
+        },
+        "sends_orders": {
+          "const": false,
+          "default": false,
+          "title": "Sends Orders",
+          "type": "boolean"
+        },
+        "source_database_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Database Sha256",
+          "type": "string"
+        },
+        "source_row_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Row Fingerprint",
+          "type": "string"
+        },
+        "source_table": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Source Table",
+          "type": "string"
+        },
+        "writer_invoked": {
+          "const": false,
+          "default": false,
+          "title": "Writer Invoked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "source_database_sha256",
+        "source_table",
+        "source_row_fingerprint",
+        "field_source_registry_sha256",
+        "mapping_input_sha256"
+      ],
+      "title": "RuntimeTradeLinkLineageV1",
+      "type": "object"
+    },
+    "RuntimeTradeLinkProjectionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_state": {
+          "const": "sandbox_mapping_only",
+          "default": "sandbox_mapping_only",
+          "title": "Activation State",
+          "type": "string"
+        },
+        "lineage": {
+          "$ref": "#/$defs/RuntimeTradeLinkLineageV1"
+        },
+        "profile_version": {
+          "const": "decision_ledger_runtime_observability_profile_v1",
+          "default": "decision_ledger_runtime_observability_profile_v1",
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "projection_type": {
+          "const": "trade_link_projection",
+          "default": "trade_link_projection",
+          "title": "Projection Type",
+          "type": "string"
+        },
+        "target_payload": {
+          "$ref": "#/$defs/TradeLinkRecordV42"
+        }
+      },
+      "required": [
+        "lineage",
+        "target_payload"
+      ],
+      "title": "RuntimeTradeLinkProjectionV1",
+      "type": "object"
+    },
+    "Side": {
+      "enum": [
+        "long",
+        "short"
+      ],
+      "title": "Side",
+      "type": "string"
+    },
+    "TradeLinkRecordV42": {
+      "additionalProperties": false,
+      "description": "Sealed trade-link payload with a self-verifying canonical SHA-256.",
+      "properties": {
+        "candidate_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "correlation_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "decision_payload_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Decision Payload Sha256",
+          "type": "string"
+        },
+        "decision_timestamp": {
+          "format": "date-time",
+          "title": "Decision Timestamp",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "exchange_private_access": {
+          "const": false,
+          "default": false,
+          "title": "Exchange Private Access",
+          "type": "boolean"
+        },
+        "execution_timestamp": {
+          "format": "date-time",
+          "title": "Execution Timestamp",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "link_reason": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Link Reason",
+          "type": "string"
+        },
+        "operational_authority": {
+          "const": false,
+          "default": false,
+          "title": "Operational Authority",
+          "type": "boolean"
+        },
+        "pair": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Pair",
+          "type": "string"
+        },
+        "parent_event_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Parent Event Id",
+          "type": "string"
+        },
+        "payload_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Payload Sha256",
+          "type": "string"
+        },
+        "record_type": {
+          "const": "trade_link",
+          "default": "trade_link",
+          "title": "Record Type",
+          "type": "string"
+        },
+        "runtime_integration": {
+          "const": false,
+          "default": false,
+          "title": "Runtime Integration",
+          "type": "boolean"
+        },
+        "runtime_mode": {
+          "const": "paper",
+          "default": "paper",
+          "title": "Runtime Mode",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "decision_ledger_payload_v4_2",
+          "default": "decision_ledger_payload_v4_2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sends_orders": {
+          "const": false,
+          "default": false,
+          "title": "Sends Orders",
+          "type": "boolean"
+        },
+        "side": {
+          "$ref": "#/$defs/Side"
+        },
+        "signal_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Signal Id",
+          "type": "string"
+        },
+        "symbol": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "trade_id": {
+          "exclusiveMinimum": 0,
+          "title": "Trade Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "event_id",
+        "parent_event_id",
+        "signal_id",
+        "candidate_id",
+        "trade_id",
+        "correlation_id",
+        "idempotency_key",
+        "pair",
+        "symbol",
+        "side",
+        "decision_timestamp",
+        "execution_timestamp",
+        "decision_payload_sha256",
+        "link_reason",
+        "payload_sha256"
+      ],
+      "title": "TradeLinkRecordV42",
+      "type": "object"
+    }
+  },
+  "$id": "urn:smart-futuros:decision-ledger-runtime-profile:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/RuntimeDecisionProjectionV1"
+    },
+    {
+      "$ref": "#/$defs/RuntimeTradeLinkProjectionV1"
+    }
+  ],
+  "title": "SMART FUTUROS Decision Ledger Runtime Profile V1",
+  "x-activation-state": "sandbox_mapping_only",
+  "x-profile-version": "decision_ledger_runtime_observability_profile_v1",
+  "x-runtime-integration-allowed": false
+}

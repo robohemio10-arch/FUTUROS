@@ -1,0 +1,56 @@
+"""Local design-only contract and writer for decision-ledger payload 4.2."""
+
+from .contracts import (
+    AIShadowDecision,
+    Alignment,
+    DecisionRecordBodyV42,
+    DecisionRecordV42,
+    FinalDecision,
+    PayloadRecordV42,
+    RiskDecision,
+    SCHEMA_VERSION,
+    Side,
+    TradeLinkRecordBodyV42,
+    TradeLinkRecordV42,
+    parse_payload_record,
+    seal_decision_record,
+    seal_trade_link_record,
+)
+from .serialization import canonical_json_bytes, compute_payload_sha256
+from .writer import (
+    AppendReceipt,
+    DecisionLedgerError,
+    DecisionLedgerWriter,
+    LedgerHealthError,
+    LedgerHealthState,
+    LedgerLockError,
+    LedgerWriteError,
+    RuntimePathDeniedError,
+)
+
+__all__ = [
+    "AIShadowDecision",
+    "Alignment",
+    "AppendReceipt",
+    "DecisionLedgerError",
+    "DecisionLedgerWriter",
+    "DecisionRecordBodyV42",
+    "DecisionRecordV42",
+    "FinalDecision",
+    "LedgerHealthError",
+    "LedgerHealthState",
+    "LedgerLockError",
+    "LedgerWriteError",
+    "PayloadRecordV42",
+    "RiskDecision",
+    "RuntimePathDeniedError",
+    "SCHEMA_VERSION",
+    "Side",
+    "TradeLinkRecordBodyV42",
+    "TradeLinkRecordV42",
+    "canonical_json_bytes",
+    "compute_payload_sha256",
+    "parse_payload_record",
+    "seal_decision_record",
+    "seal_trade_link_record",
+]

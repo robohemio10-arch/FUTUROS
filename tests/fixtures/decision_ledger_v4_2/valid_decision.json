@@ -1,0 +1,49 @@
+{
+  "ai_shadow_decision": "ALLOW",
+  "ai_shadow_reasons": [
+    "score_above_threshold"
+  ],
+  "alignment": "aligned",
+  "approved_leverage": 2.0,
+  "approved_stake_usdt": 50.0,
+  "calibrated_probability": 0.61,
+  "candidate_id": "candidate_000001",
+  "correlation_id": "corr_000001",
+  "decision_timestamp": "2026-07-20T12:00:05Z",
+  "event_id": "evt_decision_000001",
+  "exchange_private_access": false,
+  "execution_timestamp": null,
+  "expected_net_pnl": 0.12,
+  "fast_stop_probability": 0.18,
+  "feature_contract_version": "unified_feature_contract_v1",
+  "feature_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "feature_timestamp": "2026-07-20T12:00:00Z",
+  "final_decision": "ALLOW",
+  "final_reasons": [
+    "ai_shadow_allow",
+    "risk_manager_approved"
+  ],
+  "idempotency_key": "decision:signal_000001:v1",
+  "model_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "model_id": "qlib_lgbm_ranker",
+  "model_version": "qlib_lgbm_v1",
+  "operational_authority": false,
+  "pair": "BTC/USDT:USDT",
+  "parent_event_id": null,
+  "payload_sha256": "c78ec909c1da90ebc1a3c01c114bdc4698c84fb4401bac13bdbf411d7191b5d2",
+  "qlib_score": 0.42,
+  "record_type": "decision",
+  "regime": "trend",
+  "risk_decision": "APPROVED",
+  "risk_reasons": [
+    "risk_limits_passed"
+  ],
+  "runtime_integration": false,
+  "runtime_mode": "paper",
+  "schema_version": "decision_ledger_payload_v4_2",
+  "sends_orders": false,
+  "side": "long",
+  "signal_id": "signal_000001",
+  "symbol": "BTCUSDT",
+  "trade_id": null
+}

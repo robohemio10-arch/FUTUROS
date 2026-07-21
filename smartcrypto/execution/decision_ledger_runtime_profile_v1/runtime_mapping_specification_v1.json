@@ -1,0 +1,14 @@
+{
+  "activation_state": "sandbox_mapping_only",
+  "branch_creation_allowed": false,
+  "canonical_decision_boundary": "after RiskManager and final decision, before active signal publication",
+  "canonical_trade_link_boundary": "after authoritative Freqtrade trade_id observation",
+  "field_source_registry_sha256": "47651baca1e0a476de183a62961203f8338a69deb79339d815ffa49ee9c07f1a",
+  "legacy_strategy_writer_canonical": false,
+  "paper_restart_authorized": false,
+  "profile_version": "decision_ledger_runtime_observability_profile_v1",
+  "risk_manager_final_authority": true,
+  "runtime_integration_allowed": false,
+  "schema_version": "decision_ledger_runtime_mapping_specification_v1",
+  "writer_invoked": false
+}
