@@ -1,0 +1,68 @@
+{
+  "activation_state": "sandbox_mapping_only",
+  "lineage": {
+    "activation_state": "sandbox_mapping_only",
+    "exchange_private_access": false,
+    "field_source_registry_sha256": "47651baca1e0a476de183a62961203f8338a69deb79339d815ffa49ee9c07f1a",
+    "mapping_input_sha256": "a4655e2d8343531e6dba47af8c8d26dcc34c77d620a20b83a7b836b4dba7d4a3",
+    "operational_authority": false,
+    "profile_version": "decision_ledger_runtime_observability_profile_v1",
+    "risk_checked_at_utc": "2026-07-20T18:00:01Z",
+    "risk_config_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+    "risk_policy_id": "risk_limits_yaml:0123456789abcdef",
+    "runtime_integration": false,
+    "sends_orders": false,
+    "source_signal_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+    "writer_invoked": false
+  },
+  "profile_version": "decision_ledger_runtime_observability_profile_v1",
+  "projection_type": "decision_projection",
+  "target_payload": {
+    "ai_shadow_decision": "ALLOW",
+    "ai_shadow_reasons": [
+      "shadow_observation_allow"
+    ],
+    "alignment": "aligned",
+    "approved_leverage": 2.0,
+    "approved_stake_usdt": 10.0,
+    "calibrated_probability": 0.61,
+    "candidate_id": "candidate-20260720-0001",
+    "correlation_id": "correlation-20260720-0001",
+    "decision_timestamp": "2026-07-20T18:00:02Z",
+    "event_id": "decision-event:94188adda2d71e02c3d756308a24b6f3dd7868bd",
+    "exchange_private_access": false,
+    "execution_timestamp": null,
+    "expected_net_pnl": 0.08,
+    "fast_stop_probability": 0.17,
+    "feature_contract_version": "feature-contract-v1",
+    "feature_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "feature_timestamp": "2026-07-20T18:00:00Z",
+    "final_decision": "ALLOW",
+    "final_reasons": [
+      "risk_manager_approved"
+    ],
+    "idempotency_key": "decision:e6b2c0bfc1aeaa3a22536e835d48b1eb6f2dcb8ca9a3702e21a46a58cedb6bb4",
+    "model_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "model_id": "qlib-model-research",
+    "model_version": "2026-07-20",
+    "operational_authority": false,
+    "pair": "BTC/USDT:USDT",
+    "parent_event_id": null,
+    "payload_sha256": "0570a1fc89dd843c8b50699ec412852b2d030f62f9accd05e3bda2abeeb4df8e",
+    "qlib_score": 0.42,
+    "record_type": "decision",
+    "regime": "trend_up",
+    "risk_decision": "APPROVED",
+    "risk_reasons": [
+      "risk_limits_passed"
+    ],
+    "runtime_integration": false,
+    "runtime_mode": "paper",
+    "schema_version": "decision_ledger_payload_v4_2",
+    "sends_orders": false,
+    "side": "long",
+    "signal_id": "signal-20260720-0001",
+    "symbol": "BTCUSDT",
+    "trade_id": null
+  }
+}

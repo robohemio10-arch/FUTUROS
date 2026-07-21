@@ -1,0 +1,38 @@
+{
+  "ai_shadow_decision": "ALLOW",
+  "ai_shadow_reasons": [
+    "shadow_observation_allow"
+  ],
+  "alignment": "aligned",
+  "approved_leverage": 0.0,
+  "approved_stake_usdt": 0.0,
+  "calibrated_probability": 0.61,
+  "candidate_id": "candidate-p04c-0002",
+  "correlation_id": "correlation-p04c-0002",
+  "expected_net_pnl": 0.08,
+  "fast_stop_probability": 0.17,
+  "feature_contract_version": "feature-contract-v1",
+  "feature_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "feature_timestamp": "2026-07-20T18:00:00.000000Z",
+  "final_decision": "BLOCK",
+  "final_reasons": [
+    "risk_manager_rejected"
+  ],
+  "model_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "model_id": "qlib-model-research",
+  "model_version": "2026-07-20",
+  "pair": "BTC/USDT:USDT",
+  "qlib_score": 0.42,
+  "regime": "trend_up",
+  "risk_approved": false,
+  "risk_checked_at_utc": "2026-07-20T18:00:01.000000Z",
+  "risk_config_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+  "risk_policy_id": "risk_limits_yaml:0123456789abcdef",
+  "risk_reasons": [
+    "max_positions_reached"
+  ],
+  "side": "long",
+  "signal_id": "signal-p04c-0002",
+  "symbol": "BTCUSDT",
+  "valid_until": "2026-07-20T18:30:00.000000Z"
+}
