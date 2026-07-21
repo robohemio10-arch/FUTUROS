@@ -25,6 +25,9 @@ from smartcrypto.data.paper_trade_lifecycle import (  # noqa: E402
     inspect_open_positions,
     inspect_outputs,
 )
+from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import (  # noqa: E402
+    sync_phase14_trade_links_readonly,
+)
 
 
 DEFAULT_OPERATIONAL_DB = Path("/paper-db/tradesv3.paper.sqlite")
@@ -77,6 +80,8 @@ def run_feedback_sync_once(
     report_path: Path = DEFAULT_REPORT,
     config: PaperFeedbackConfig | None = None,
     snapshot_exporter: Callable[[Path, Path], dict[str, Any]] = export_local_sqlite_snapshot,
+    decision_ledger_config: str | Path = "config/decision_ledger_paper_observability.yml",
+    decision_ledger_project_root: str | Path = PROJECT_ROOT,
 ) -> dict[str, Any]:
     snapshot_report = snapshot_exporter(Path(source_db), Path(snapshot_output))
     write_json(Path(snapshot_report_path), snapshot_report)
@@ -85,12 +90,27 @@ def run_feedback_sync_once(
     closed_report: dict[str, Any] = {}
     output_report: dict[str, Any] = {}
     summary_report: dict[str, Any] = {}
+    trade_link_report: dict[str, Any] = {
+        "status": "disabled",
+        "reason": "snapshot_not_available_for_trade_link_adapter",
+        "enabled": False,
+        "writer_invoked": False,
+        "writes_runtime": False,
+        "writes_sqlite": False,
+        "timestamp_only_matching_allowed": False,
+        "automatic_replay_allowed": False,
+    }
 
     if snapshot_report.get("status") == "ok":
         open_report = inspect_open_positions(config)
         closed_report = collect_closed_feedback(config)
         output_report = inspect_outputs(config)
         summary_report = collect_summary(config)
+        trade_link_report = sync_phase14_trade_links_readonly(
+            snapshot_db=snapshot_output,
+            project_root=decision_ledger_project_root,
+            config_source=decision_ledger_config,
+        ).model_dump(mode="json")
 
     status, reason = resolve_runtime_status(
         snapshot_report=snapshot_report,
@@ -113,6 +133,7 @@ def run_feedback_sync_once(
         "raw_rows": closed_report.get("raw_rows"),
         "output_summary_status": (output_report.get("phase14_status") or {}).get("status"),
         "phase14_summary_status": summary_report.get("status"),
+        "decision_ledger_trade_link": trade_link_report,
         "reports_generated": {
             "snapshot_export": str(snapshot_report_path),
             "open_positions": str(config.open_positions_report) if config else "data/reports/phase14_open_positions_report.json",

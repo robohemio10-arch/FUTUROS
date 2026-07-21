@@ -11,6 +11,10 @@ import math
 import pandas as pd
 import yaml
 
+from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import (
+    finalize_after_risk_manager,
+    prepare_before_risk_manager,
+)
 from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
@@ -162,7 +166,18 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
     if "model_version" in latest.columns and not latest["model_version"].dropna().empty:
         model_version = str(latest["model_version"].dropna().iloc[-1])
 
-    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=config.risk_limits_path)
+    observability_preparation = prepare_before_risk_manager(
+        candidate_signals,
+        producer_id="phase11-signal-contract-guard",
+    )
+    risk_gate = apply_risk_manager_gate(
+        observability_preparation.signals,
+        risk_limits_path=config.risk_limits_path,
+    )
+    observability = finalize_after_risk_manager(
+        observability_preparation,
+        risk_gate=risk_gate,
+    )
     if risk_gate.status != "ok":
         return {
             "generated_at": now.isoformat(),
@@ -172,6 +187,19 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
             "signals": [],
             "reason": risk_gate.reason,
             "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
+        }
+
+    if observability.report.publication_blocked:
+        return {
+            "generated_at": now.isoformat(),
+            "runtime_mode": config.runtime_mode,
+            "model_version": model_version,
+            "source": "phase11_signal_contract_guard",
+            "signals": [],
+            "reason": observability.report.reason,
+            "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
         }
 
     return {
@@ -179,8 +207,9 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
         "runtime_mode": config.runtime_mode,
         "model_version": model_version,
         "source": "phase11_signal_contract_guard",
-        "signals": risk_gate.approved_signals,
+        "signals": observability.active_signals,
         "risk_manager_gate": risk_gate.to_dict(),
+        "decision_ledger_observability": observability.report.model_dump(mode="json"),
     }
 
 

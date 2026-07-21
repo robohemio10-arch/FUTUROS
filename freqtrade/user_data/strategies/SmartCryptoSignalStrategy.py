@@ -48,6 +48,9 @@ class SmartCryptoSignalStrategy(IStrategy):
 
         dataframe["smartcrypto_signal_side"] = None
         dataframe["smartcrypto_signal_confidence"] = 0.0
+        dataframe["smartcrypto_decision_event_id"] = None
+        dataframe["smartcrypto_signal_id"] = None
+        dataframe["smartcrypto_correlation_id"] = None
         dataframe["smartcrypto_exit_requested"] = False
 
         if len(dataframe.index) == 0:
@@ -58,6 +61,13 @@ class SmartCryptoSignalStrategy(IStrategy):
         if payload["accepted"]:
             dataframe.at[last_index, "smartcrypto_signal_side"] = payload["side"]
             dataframe.at[last_index, "smartcrypto_signal_confidence"] = payload["confidence"]
+            dataframe.at[last_index, "smartcrypto_decision_event_id"] = payload.get(
+                "decision_event_id"
+            )
+            dataframe.at[last_index, "smartcrypto_signal_id"] = payload.get("signal_id")
+            dataframe.at[last_index, "smartcrypto_correlation_id"] = payload.get(
+                "correlation_id"
+            )
 
         if exit_payload["accepted"]:
             dataframe.at[last_index, "smartcrypto_exit_requested"] = True
@@ -71,6 +81,9 @@ class SmartCryptoSignalStrategy(IStrategy):
                 "confidence": payload.get("confidence"),
                 "reason": payload.get("reason"),
                 "lookup": payload.get("lookup"),
+                "decision_event_id": payload.get("decision_event_id"),
+                "signal_id": payload.get("signal_id"),
+                "correlation_id": payload.get("correlation_id"),
                 "exit_requested": bool(exit_payload["accepted"]),
                 "exit_reason": exit_payload.get("reason"),
                 "ts": self._now_iso(),
@@ -90,10 +103,27 @@ class SmartCryptoSignalStrategy(IStrategy):
         pair = metadata.get("pair", "")
         last_index = dataframe.index[-1]
         side = dataframe.at[last_index, "smartcrypto_signal_side"] if "smartcrypto_signal_side" in dataframe else None
+        decision_event_id = (
+            dataframe.at[last_index, "smartcrypto_decision_event_id"]
+            if "smartcrypto_decision_event_id" in dataframe
+            else None
+        )
+        signal_id = (
+            dataframe.at[last_index, "smartcrypto_signal_id"]
+            if "smartcrypto_signal_id" in dataframe
+            else None
+        )
+        correlation_id = (
+            dataframe.at[last_index, "smartcrypto_correlation_id"]
+            if "smartcrypto_correlation_id" in dataframe
+            else None
+        )
 
         if side == "long":
             dataframe.at[last_index, "enter_long"] = 1
-            dataframe.at[last_index, "enter_tag"] = "smartcrypto_long"
+            dataframe.at[last_index, "enter_tag"] = self._entry_tag(
+                "long", decision_event_id
+            )
             self._write_decision(
                 {
                     "event": "populate_entry_trend",
@@ -101,13 +131,18 @@ class SmartCryptoSignalStrategy(IStrategy):
                     "accepted": True,
                     "side": "long",
                     "reason": "entry_signal_set",
+                    "decision_event_id": decision_event_id,
+                    "signal_id": signal_id,
+                    "correlation_id": correlation_id,
                     "ts": self._now_iso(),
                 }
             )
 
         if side == "short":
             dataframe.at[last_index, "enter_short"] = 1
-            dataframe.at[last_index, "enter_tag"] = "smartcrypto_short"
+            dataframe.at[last_index, "enter_tag"] = self._entry_tag(
+                "short", decision_event_id
+            )
             self._write_decision(
                 {
                     "event": "populate_entry_trend",
@@ -115,6 +150,9 @@ class SmartCryptoSignalStrategy(IStrategy):
                     "accepted": True,
                     "side": "short",
                     "reason": "entry_signal_set",
+                    "decision_event_id": decision_event_id,
+                    "signal_id": signal_id,
+                    "correlation_id": correlation_id,
                     "ts": self._now_iso(),
                 }
             )
@@ -208,6 +246,8 @@ class SmartCryptoSignalStrategy(IStrategy):
         # (see smartcrypto/execution/signal_risk_gate.py), and a missing or
         # malformed field must fail closed, never open.
         risk_approved = matching_signal.get("risk_approved") is True
+        decision_ledger = matching_signal.get("decision_ledger")
+        decision_ledger = decision_ledger if isinstance(decision_ledger, dict) else {}
 
         if side not in {"long", "short"}:
             return {"accepted": False, "reason": "invalid_side", "side": side, "confidence": confidence}
@@ -220,6 +260,9 @@ class SmartCryptoSignalStrategy(IStrategy):
             "reason": "signal_payload_found",
             "side": side,
             "confidence": confidence,
+            "decision_event_id": decision_ledger.get("decision_event_id"),
+            "signal_id": decision_ledger.get("signal_id"),
+            "correlation_id": decision_ledger.get("correlation_id"),
             "lookup": {
                 "source_path": str(source_path),
                 "source_reason": "active_signals_found",
@@ -334,6 +377,12 @@ class SmartCryptoSignalStrategy(IStrategy):
             return float(value)
         except Exception:
             return 0.0
+
+    def _entry_tag(self, side: str, decision_event_id: Any) -> str:
+        base = f"smartcrypto_{side}"
+        if not isinstance(decision_event_id, str) or not decision_event_id:
+            return base
+        return f"{base}|decision_event_id={decision_event_id}"
 
     def _write_decision(self, payload: dict[str, Any]) -> None:
         for path in self._decision_log_paths:
