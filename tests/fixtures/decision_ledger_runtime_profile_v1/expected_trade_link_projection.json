@@ -1,0 +1,43 @@
+{
+  "activation_state": "sandbox_mapping_only",
+  "lineage": {
+    "activation_state": "sandbox_mapping_only",
+    "exchange_private_access": false,
+    "field_source_registry_sha256": "47651baca1e0a476de183a62961203f8338a69deb79339d815ffa49ee9c07f1a",
+    "mapping_input_sha256": "7715b0ca67b3d2b59cff2f94e41b729c1b788882811868b2ddd7f6ce3322329f",
+    "operational_authority": false,
+    "profile_version": "decision_ledger_runtime_observability_profile_v1",
+    "runtime_integration": false,
+    "sends_orders": false,
+    "source_database_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+    "source_row_fingerprint": "6666666666666666666666666666666666666666666666666666666666666666",
+    "source_table": "trades",
+    "writer_invoked": false
+  },
+  "profile_version": "decision_ledger_runtime_observability_profile_v1",
+  "projection_type": "trade_link_projection",
+  "target_payload": {
+    "candidate_id": "candidate-20260720-0001",
+    "correlation_id": "correlation-20260720-0001",
+    "decision_payload_sha256": "0570a1fc89dd843c8b50699ec412852b2d030f62f9accd05e3bda2abeeb4df8e",
+    "decision_timestamp": "2026-07-20T18:00:02Z",
+    "event_id": "trade-link-event:836e1e6a08e996958d2a46e224485e77663b8cce",
+    "exchange_private_access": false,
+    "execution_timestamp": "2026-07-20T18:00:05Z",
+    "idempotency_key": "trade-link:7996e0a31c5bd245b54fc85476dca41258204d45c34ad8f54b46d4dd6472ef42",
+    "link_reason": "authoritative_freqtrade_trade_observed",
+    "operational_authority": false,
+    "pair": "BTC/USDT:USDT",
+    "parent_event_id": "decision-event:94188adda2d71e02c3d756308a24b6f3dd7868bd",
+    "payload_sha256": "a5429a9ff6c8f22ddf1dba7c5f4083214a8f4589bc9cd8994d90e46f4409e815",
+    "record_type": "trade_link",
+    "runtime_integration": false,
+    "runtime_mode": "paper",
+    "schema_version": "decision_ledger_payload_v4_2",
+    "sends_orders": false,
+    "side": "long",
+    "signal_id": "signal-20260720-0001",
+    "symbol": "BTCUSDT",
+    "trade_id": 595
+  }
+}
