@@ -18,6 +18,10 @@ from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
 )
+from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import (
+    finalize_after_risk_manager,
+    prepare_before_risk_manager,
+)
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 
 
@@ -420,11 +424,23 @@ def build_active_signals(
     candidate_signals = list(paper_candidate_wiring["allowed_signals"])
     paper_candidate_wiring_summary = summarize_runtime_wiring(paper_candidate_wiring)
 
+    observability_preparation = prepare_before_risk_manager(
+        candidate_signals,
+        producer_id="phase13-signal-producer",
+    )
+
     # Final authorization gate: RiskManager is the last word before any
     # signal can be considered "active". Signals RiskManager rejects are
     # never written as active signals; they only appear, for evidence, in
     # risk_manager_gate.rejected_signal_reasons in the report below.
-    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=risk_limits_path)
+    risk_gate = apply_risk_manager_gate(
+        observability_preparation.signals,
+        risk_limits_path=risk_limits_path,
+    )
+    observability = finalize_after_risk_manager(
+        observability_preparation,
+        risk_gate=risk_gate,
+    )
 
     if risk_gate.status != "ok":
         report = {
@@ -446,11 +462,37 @@ def build_active_signals(
             "valid_until_max": None,
             "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
             "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
         }
         atomic_write_json(report_path, report)
         return report
 
-    signals = risk_gate.approved_signals
+    if observability.report.publication_blocked:
+        report = {
+            "status": "blocked",
+            "reason": observability.report.reason,
+            "created_at": generated_at.isoformat(),
+            "predictions_path": str(predictions_path),
+            "primary_signals_path": str(primary_path),
+            "pinned_signals_path": str(pinned_path),
+            "signals_before_primary": len(before_primary),
+            "signals_before_pinned": len(before_pinned),
+            "signals_after": 0,
+            "written_primary": False,
+            "written_pinned": False,
+            "prediction_rows": int(len(frame)),
+            "prediction_freshness": freshness,
+            "generated_at": generated_at.isoformat(),
+            "valid_until_min": None,
+            "valid_until_max": None,
+            "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
+            "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
+        }
+        atomic_write_json(report_path, report)
+        return report
+
+    signals = observability.active_signals
     signal_payload = {
         "generated_at": generated_at.isoformat(),
         "source": "phase13_signal_producer_hardening",
@@ -493,6 +535,7 @@ def build_active_signals(
         "valid_until_max": max([item["valid_until"] for item in signals], default=None),
         "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
         "risk_manager_gate": risk_gate.to_dict(),
+        "decision_ledger_observability": observability.report.model_dump(mode="json"),
     }
 
     atomic_write_json(report_path, report)

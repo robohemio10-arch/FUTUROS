@@ -6,6 +6,10 @@ from typing import Any
 
 import pandas as pd
 
+from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import (
+    finalize_after_risk_manager,
+    prepare_before_risk_manager,
+)
 from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
@@ -93,10 +97,22 @@ def export_qlib_freqtrade_signals(
             }
         )
 
+    observability_preparation = prepare_before_risk_manager(
+        candidate_signals,
+        producer_id="phase8-qlib-signal-exporter",
+    )
+
     # candidate_signals acima não carrega nenhuma alegação de risk_approved.
     # A única autoridade autorizada a definir esse campo é o RiskManager,
     # via apply_risk_manager_gate().
-    risk_gate = apply_risk_manager_gate(candidate_signals, risk_limits_path=risk_limits_path)
+    risk_gate = apply_risk_manager_gate(
+        observability_preparation.signals,
+        risk_limits_path=risk_limits_path,
+    )
+    observability = finalize_after_risk_manager(
+        observability_preparation,
+        risk_gate=risk_gate,
+    )
 
     if risk_gate.status != "ok":
         report = {
@@ -104,11 +120,23 @@ def export_qlib_freqtrade_signals(
             "reason": risk_gate.reason,
             "signals_candidate": len(candidate_signals),
             "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
         }
         write_json(report_path, report)
         return report
 
-    signals = risk_gate.approved_signals
+    if observability.report.publication_blocked:
+        report = {
+            "status": "blocked",
+            "reason": observability.report.reason,
+            "signals_candidate": len(candidate_signals),
+            "risk_manager_gate": risk_gate.to_dict(),
+            "decision_ledger_observability": observability.report.model_dump(mode="json"),
+        }
+        write_json(report_path, report)
+        return report
+
+    signals = observability.active_signals
     payload: dict[str, Any] = {
         "generated_at": generated_at.isoformat(),
         "runtime_mode": "paper",
@@ -125,6 +153,7 @@ def export_qlib_freqtrade_signals(
         "output_path": str(output_path),
         "created_at": generated_at.isoformat(),
         "risk_manager_gate": risk_gate.to_dict(),
+        "decision_ledger_observability": observability.report.model_dump(mode="json"),
     }
     write_json(report_path, report)
     return report

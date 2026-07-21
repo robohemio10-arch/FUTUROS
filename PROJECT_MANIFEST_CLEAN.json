@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d5d805d1663f9e8451a1f318725b2082b655983cbc4180ac049507861c84cbdb",
+  "aggregate_sha256": "966392e5fc3c2a1e7db8591a0d429fcb8a79f82c6eb5c130bd82ed0adb4a8576",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 278,
-    "manifested_files_total": 1623,
-    "python_files": 1229,
+    "docs_files": 279,
+    "manifested_files_total": 1635,
+    "python_files": 1239,
     "runtime_excluded_files_total": 0,
-    "test_files": 335,
-    "tracked_files_total": 1624,
+    "test_files": 336,
+    "tracked_files_total": 1636,
     "workflows": 1
   },
   "deterministic": true,
@@ -318,6 +318,12 @@
       "hash_mode": "text_lf",
       "path": "config/dashboard_command_bus.example.yml",
       "sha256": "6aa89f1e10a50051545781323dfe2c4adc6c1ecfd0a71fb18af36271e8007c8c"
+    },
+    {
+      "bytes": 784,
+      "hash_mode": "text_lf",
+      "path": "config/decision_ledger_paper_observability.yml",
+      "sha256": "04bd73795e8f1c72422db52180d164bfc38c633b61375ef4775787d426c33982"
     },
     {
       "bytes": 289,
@@ -1056,6 +1062,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DATA_QUALITY_REPORT_AND_DATASET_MANIFEST.md",
       "sha256": "5e8face1af33608553e994ff7bb3561e557be4b473434e2103319525eff97292"
+    },
+    {
+      "bytes": 8505,
+      "hash_mode": "text_lf",
+      "path": "docs/DECISION_LEDGER_PAPER_OBSERVABILITY_WIRING_V1.md",
+      "sha256": "af282f8bf3a4e0585996265e77e2908d8bdba1bbbfdadd3bdc6f47fcbac4bc79"
     },
     {
       "bytes": 5002,
@@ -2222,10 +2234,10 @@
       "sha256": "6dfa520e4b03338e8442428f51d1ccbe6167ded39c73c9031891e6eb9b8055f6"
     },
     {
-      "bytes": 13607,
+      "bytes": 15905,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/strategies/SmartCryptoSignalStrategy.py",
-      "sha256": "6e1aff89347a662ca6ec0742c6e1a9f5cc0bc5cdf728c0c5c5e647a22e42874a"
+      "sha256": "a926aa70e8d9b4f5589f2c4ebf034f5b04255033a66610d3646a4b046561e652"
     },
     {
       "bytes": 1117,
@@ -2312,16 +2324,16 @@
       "sha256": "cf576f72ec7a95d98a77f1a827b6976aa1e198e3e9ea17cf9befb7c52ca5e410"
     },
     {
-      "bytes": 1721,
+      "bytes": 1767,
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
-      "sha256": "b5c91731a515f9f96702315f069d2924cf1440ff90c223e92973bfe46f5edb31"
+      "sha256": "5d6edbd8bdb682a8903c9a79993bc1cafaaf38a81e87980b547b473e2b7c5467"
     },
     {
       "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "3c9bd0a4bf11aa473773e094b9f4dfbb9b3a5e86d44c447993f69cafea175c9e"
+      "sha256": "165470cac3c42b53de04dc88387c205bcae9267b9280c30158b6ff729c2c21b8"
     },
     {
       "bytes": 92,
@@ -2466,6 +2478,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_dashboard_visual_ocr_template_v1.py",
       "sha256": "abed79a2c9a10f77489c9d4a8d09c9987b557447f9dddcd5facbfe4324b7e93f"
+    },
+    {
+      "bytes": 4483,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_decision_ledger_paper_observability_wiring_v1.py",
+      "sha256": "429352f91ae431d6e481ceee1d8c0ecf28c63452f60232772c38a760b0436702"
     },
     {
       "bytes": 7231,
@@ -4172,10 +4190,10 @@
       "sha256": "8fea255c1f9af744161ee4f3cb56aded73b63f6912a0bd023d79915c2cf4160d"
     },
     {
-      "bytes": 5956,
+      "bytes": 6907,
       "hash_mode": "text_lf",
       "path": "scripts/run_phase14_runtime_feedback_sync.py",
-      "sha256": "9c3f732a18efba2255906e92adb5cc199d5a8aec19b6f2d21a07670c50ccf885"
+      "sha256": "8f3ba34b75193cfe71d4090fde3e4c78580dbb23f1c21fd689b89862244c3651"
     },
     {
       "bytes": 6929,
@@ -4398,6 +4416,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/validate_credential_rotation_attestation_v1.py",
       "sha256": "3d9f76998d51ad0f3266d17d7fe2489dd5c2dd7f8b25775e40c2fe7c0e2d3297"
+    },
+    {
+      "bytes": 3373,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_decision_ledger_paper_observability_wiring_v1.py",
+      "sha256": "577b4162ea589152fa3586e23719c43e693a53f82c004655a298165d22f7a392"
     },
     {
       "bytes": 4727,
@@ -5216,6 +5240,48 @@
       "sha256": "f4b1a9ce3d92d29c7f3b09430d618cfee8a66c131c0f811f4b83716833dc7fd2"
     },
     {
+      "bytes": 1452,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/__init__.py",
+      "sha256": "d7e95eb18146b1f5fdf3503265f0ac423e874d1455ab2670fc6f399198f2fc31"
+    },
+    {
+      "bytes": 1467,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/config.py",
+      "sha256": "b078faead229d8cd51ab88f35ef680f1db319a32dafb36cc354f572985f79ce3"
+    },
+    {
+      "bytes": 6722,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/contracts.py",
+      "sha256": "cab07e5d71ede8a18bd00bef3dd227e80c56ffe6353b7a52274b2ac925dcf837"
+    },
+    {
+      "bytes": 11174,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/coordinator.py",
+      "sha256": "0c7e43172eb25c8119358c6b2772fce3c106fe240d441b30396f2bd1c80e9e5b"
+    },
+    {
+      "bytes": 5650,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/lineage.py",
+      "sha256": "0f2e4fbd9df9801d5904f5a4a224827ce9e538dcf6fa16b6318b34d09254c41c"
+    },
+    {
+      "bytes": 10887,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/sink.py",
+      "sha256": "24661a99b90e64bc1dfe1bd294e2170c14b8ce952579c53be9da7f4e84eb453d"
+    },
+    {
+      "bytes": 10003,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/trade_link.py",
+      "sha256": "3d8a0893a28bc9cad7ec7635ff6cf5a133efc23c22b552b7f469fb2359d11837"
+    },
+    {
       "bytes": 1556,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/decision_ledger_paper_runtime_writer_v1/__init__.py",
@@ -5450,10 +5516,10 @@
       "sha256": "ed489ab7761b8795ab2b961e5f815f8e4b7e3bffae6b8ffa6758bd4ce6c56862"
     },
     {
-      "bytes": 7996,
+      "bytes": 9124,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_contract_guard.py",
-      "sha256": "9bbe69e139d21c562e6ca574fcf4d267cede18cc2e7bc8e7b094ceab9ce14dbf"
+      "sha256": "ef627a318054abc963bbbaa0110a82a17a978ed3e68ff4131a3fafdd1ee28e35"
     },
     {
       "bytes": 850,
@@ -5462,10 +5528,10 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 22069,
+      "bytes": 23823,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "835cd1ca8e2d18bd5eb044c7e16408363961ed14e018c6894633c012d185d989"
+      "sha256": "4e8be2035f677c81cd045cabe2c167f5d9c74abf3387839851a5b7b5ea91f042"
     },
     {
       "bytes": 10881,
@@ -6944,10 +7010,10 @@
       "sha256": "85ddac68d8ac36b4bd6be9b29919b554e9fabab71dde57b496391777e71b9159"
     },
     {
-      "bytes": 4051,
+      "bytes": 5113,
       "hash_mode": "text_lf",
       "path": "smartcrypto/qlib_engine/signal_exporter.py",
-      "sha256": "36147dfee572fbc002c9db618425ae9d86255b4210edd40e23a10d2b85267908"
+      "sha256": "3a1c62259478a4dc4b1b22db3c3a392f92fce28cf294bc87e3655b61ef6d4f1c"
     },
     {
       "bytes": 3739,
@@ -8460,6 +8526,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_data_quality_report_dataset_manifest.py",
       "sha256": "c45f2a74905f52c3a6c29044ea595b0c5924d539812528df47a8500190f05e13"
+    },
+    {
+      "bytes": 18021,
+      "hash_mode": "text_lf",
+      "path": "tests/test_decision_ledger_paper_observability_wiring_v1.py",
+      "sha256": "763eeddee36849cb4a324f9c0ec2ff848f5f9fb571f87626562e41a731d7f1fe"
     },
     {
       "bytes": 13192,
