@@ -22,6 +22,8 @@ SAFETY_FLAGS = {
     "exchange_private_access": False,
     "sends_orders": False,
     "changes_risk": False,
+    "runtime_integration_allowed": False,
+    "paper_restart_authorized": False,
     "canary_release_allowed": False,
     "live_release_allowed": False,
 }
@@ -62,6 +64,99 @@ KNOWN_AUTHORITIES = {
     "smartcrypto/risk/risk_recovery_modes.py": "risk_recovery_report_writer",
     "scripts/run_order_intent_capital_ledger_audit.py": "ledger_audit_report_writer",
 }
+
+
+class ScopedWriterAuthority:
+    __slots__ = (
+        "path",
+        "function_or_class",
+        "allowed_operations",
+        "authority_id",
+        "classification",
+        "boundary",
+        "runtime_authority",
+        "operational_state_authority",
+        "financial_ledger_authority",
+        "paper_restart_authority",
+    )
+
+    def __init__(
+        self,
+        *,
+        path: str,
+        function_or_class: str,
+        allowed_operations: frozenset[str],
+        authority_id: str,
+        classification: str,
+    ) -> None:
+        self.path = path
+        self.function_or_class = function_or_class
+        self.allowed_operations = allowed_operations
+        self.authority_id = authority_id
+        self.classification = classification
+        self.boundary = "sandbox_design_only"
+        self.runtime_authority = False
+        self.operational_state_authority = False
+        self.financial_ledger_authority = False
+        self.paper_restart_authority = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "path": self.path,
+            "function_or_class": self.function_or_class,
+            "allowed_operations": sorted(self.allowed_operations),
+            "authority_id": self.authority_id,
+            "classification": self.classification,
+            "boundary": self.boundary,
+            "runtime_authority": self.runtime_authority,
+            "operational_state_authority": self.operational_state_authority,
+            "financial_ledger_authority": self.financial_ledger_authority,
+            "paper_restart_authority": self.paper_restart_authority,
+        }
+
+
+SCOPED_WRITER_AUTHORITIES = (
+    ScopedWriterAuthority(
+        path="scripts/validate_decision_ledger_payload_v4_2.py",
+        function_or_class="_atomic_write_json",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="decision_ledger_payload_validation_artifact_writer",
+        classification="sandbox_validation_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="scripts/validate_decision_ledger_runtime_integration_v1.py",
+        function_or_class="write_json",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="decision_ledger_runtime_integration_validation_artifact_writer",
+        classification="sandbox_validation_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="scripts/validate_decision_ledger_runtime_profile_v1.py",
+        function_or_class="atomic_write_json",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="decision_ledger_runtime_profile_validation_artifact_writer",
+        classification="sandbox_validation_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="smartcrypto/execution/decision_ledger_runtime_profile_v1/schema.py",
+        function_or_class="write_runtime_profile_schema",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="decision_ledger_runtime_profile_schema_writer",
+        classification="design_schema_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="smartcrypto/execution/decision_ledger_v4_2/schema.py",
+        function_or_class="write_payload_json_schema",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="decision_ledger_payload_schema_writer",
+        classification="design_schema_artifact_writer",
+    ),
+)
+SCOPED_WRITER_AUTHORITY_INDEX = {
+    (authority.path, authority.function_or_class, operation): authority
+    for authority in SCOPED_WRITER_AUTHORITIES
+    for operation in authority.allowed_operations
+}
 AUTHORITY_MAP = {
     "state": {
         "authority": "persistent runtime state, reconciliation state, and canonical state event log",
@@ -99,6 +194,18 @@ AUTHORITY_MAP = {
         "write_policy": "reports/evidence only unless delegating to a named authority",
     },
 }
+
+
+def scoped_writer_authority(
+    relative_path: str,
+    function_or_class: str,
+    operation: str,
+) -> ScopedWriterAuthority | None:
+    """Resolve authority only when path, symbol, and operation match exactly."""
+
+    return SCOPED_WRITER_AUTHORITY_INDEX.get(
+        (normalize_path(relative_path), function_or_class, operation)
+    )
 
 
 def load_versioned_file_discovery() -> ModuleType:
@@ -457,9 +564,33 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         visitor = BoundaryVisitor(relative_path)
         visitor.visit(tree)
         module_writers: list[dict[str, Any]] = []
+        module_scoped_authorities: set[str] = set()
         for raw in visitor.writes:
-            kind = target_kind(relative_path, raw["target_path_or_symbol"])
-            classification, severity, authority, recommendation = writer_classification(relative_path, domain, kind)
+            scoped_authority = scoped_writer_authority(
+                relative_path,
+                raw["function_or_class"],
+                raw["operation"],
+            )
+            if scoped_authority is not None:
+                kind = (
+                    "sandbox_validation_artifact"
+                    if scoped_authority.classification
+                    == "sandbox_validation_artifact_writer"
+                    else "design_schema_artifact"
+                )
+                classification = scoped_authority.classification
+                severity = "ok"
+                authority = scoped_authority.authority_id
+                recommendation = (
+                    "Keep this exact writer limited to its declared "
+                    "sandbox/design-only artifact boundary."
+                )
+                module_scoped_authorities.add(scoped_authority.authority_id)
+            else:
+                kind = target_kind(relative_path, raw["target_path_or_symbol"])
+                classification, severity, authority, recommendation = (
+                    writer_classification(relative_path, domain, kind)
+                )
             item = {
                 "file": relative_path,
                 "line": raw["line"],
@@ -472,7 +603,10 @@ def audit_project(project_root: Path) -> dict[str, Any]:
                 "severity": severity,
                 "authority": authority,
                 "recommendation": recommendation,
+                "scoped_authority": scoped_authority is not None,
             }
+            if scoped_authority is not None:
+                item.update(scoped_authority.as_dict())
             writer_targets.append(item)
             module_writers.append(item)
             if severity != "ok":
@@ -501,6 +635,7 @@ def audit_project(project_root: Path) -> dict[str, Any]:
                 "physical_domain": physical_domain(relative_path),
                 "role": role,
                 "authority": KNOWN_AUTHORITIES.get(relative_path),
+                "scoped_authorities": sorted(module_scoped_authorities),
                 "writer_count": len(module_writers),
                 "cross_domain_import_count": sum(
                     imported["target_domain"] != domain for imported in visitor.imports
@@ -546,6 +681,9 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         "writer_targets": writer_targets,
         "cross_domain_imports": cross_domain_imports,
         "authority_map": AUTHORITY_MAP,
+        "scoped_writer_authorities": [
+            authority.as_dict() for authority in SCOPED_WRITER_AUTHORITIES
+        ],
         "counts": counts,
         "critical_count": counts["critical"],
         "high_count": counts["high"],
