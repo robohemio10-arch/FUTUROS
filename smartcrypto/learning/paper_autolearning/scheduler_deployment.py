@@ -30,6 +30,16 @@ EXPECTED_SERVICE_COMMAND = [
     "--train-smoke",
     "--json",
 ]
+BOOTSTRAP_SERVICE_COMMAND_PREFIX = [
+    "python",
+    "scripts/docker_runtime_permissions_bootstrap.py",
+    "--service",
+    SERVICE_NAME,
+]
+BOOTSTRAP_PERMISSION_PATHS = {
+    "/app/data/reports",
+    "/app/data/feedback",
+}
 
 DEPLOYMENT_SAFETY_FLAGS: dict[str, bool] = {
     **SAFETY_FLAGS,
@@ -198,7 +208,28 @@ def normalize_command(command: Any) -> list[str]:
 
 def validate_service_command(service: Mapping[str, Any]) -> bool:
     command = normalize_command(service.get("command"))
-    return command == EXPECTED_SERVICE_COMMAND
+    if command == EXPECTED_SERVICE_COMMAND:
+        return True
+    if command[: len(BOOTSTRAP_SERVICE_COMMAND_PREFIX)] != BOOTSTRAP_SERVICE_COMMAND_PREFIX:
+        return False
+    if "--" not in command:
+        return False
+    separator = command.index("--")
+    if command[separator + 1 :] != EXPECTED_SERVICE_COMMAND:
+        return False
+    permission_argv = command[len(BOOTSTRAP_SERVICE_COMMAND_PREFIX) : separator]
+    if len(permission_argv) % 2 != 0:
+        return False
+    permission_paths = [
+        permission_argv[index + 1]
+        for index in range(0, len(permission_argv), 2)
+        if permission_argv[index] == "--path"
+    ]
+    return (
+        len(permission_paths) * 2 == len(permission_argv)
+        and len(permission_paths) == len(BOOTSTRAP_PERMISSION_PATHS)
+        and set(permission_paths) == BOOTSTRAP_PERMISSION_PATHS
+    )
 
 
 def validate_service_environment(service: Mapping[str, Any]) -> bool:

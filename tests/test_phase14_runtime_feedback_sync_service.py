@@ -90,9 +90,11 @@ def feedback_config(tmp_path: Path, snapshot: Path) -> PaperFeedbackConfig:
 
 def test_compose_contains_phase14_feedback_sync_service() -> None:
     service = compose()["services"]["phase14-feedback-sync-paper"]
+    command = [str(item) for item in service["command"]]
 
-    assert "run_phase14_runtime_feedback_sync.py" in service["command"]
-    assert "--interval-seconds 120" in service["command"]
+    assert "scripts/docker_runtime_permissions_bootstrap.py" in command
+    assert "scripts/run_phase14_runtime_feedback_sync.py" in command
+    assert command[command.index("--interval-seconds") + 1] == "120"
     assert "freqtrade_paper_db:/paper-db:ro" in service["volumes"]
     assert "./data:/app/data" in service["volumes"]
     assert "./config:/app/config:ro" in service["volumes"]
@@ -112,9 +114,11 @@ def test_phase14_feedback_sync_service_preserves_safety_flags() -> None:
 
 def test_phase14_feedback_sync_service_command_does_not_send_orders() -> None:
     service = compose()["services"]["phase14-feedback-sync-paper"]
+    command = service["command"]
+    command_text = "\n".join(str(item) for item in command) if isinstance(command, list) else str(command)
     text = "\n".join(
         [
-            service["command"],
+            command_text,
             "\n".join(service["volumes"]),
             (ROOT / "scripts" / "run_phase14_runtime_feedback_sync.py").read_text(encoding="utf-8"),
         ]

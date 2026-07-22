@@ -128,6 +128,7 @@ services:
       context: .
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
+    user: "0:0"
     env_file:
       - .env
     environment:
@@ -146,7 +147,24 @@ services:
       - ./scripts:/app/scripts:ro
       - ./smartcrypto:/app/smartcrypto:ro
       - freqtrade_paper_db:/paper-db:ro
-    command: python scripts/run_phase14_runtime_feedback_sync.py --source-db /paper-db/tradesv3.paper.sqlite --interval-seconds 120
+    command:
+      - python
+      - scripts/docker_runtime_permissions_bootstrap.py
+      - --service
+      - phase14-feedback-sync-paper
+      - --path
+      - /app/data/reports
+      - --path
+      - /app/data/snapshots/freqtrade-paper
+      - --path
+      - /app/data/trades
+      - --
+      - python
+      - scripts/run_phase14_runtime_feedback_sync.py
+      - --source-db
+      - /paper-db/tradesv3.paper.sqlite
+      - --interval-seconds
+      - "120"
 
   trade-event-notifications-paper:
     build:
@@ -179,6 +197,8 @@ services:
     command:
       - python
       - scripts/docker_runtime_permissions_bootstrap.py
+      - --service
+      - trade-event-notifications-paper
       - --path
       - /app/data/reports
       - --path
@@ -206,6 +226,7 @@ services:
     restart: "no"
     profiles:
       - autolearning
+    user: "0:0"
     env_file:
       - .env
     environment:
@@ -224,6 +245,15 @@ services:
       - ./scripts:/app/scripts:ro
       - ./smartcrypto:/app/smartcrypto:ro
     command:
+      - python
+      - scripts/docker_runtime_permissions_bootstrap.py
+      - --service
+      - paper-autolearning-scheduler
+      - --path
+      - /app/data/reports
+      - --path
+      - /app/data/feedback
+      - --
       - python
       - scripts/run_paper_autolearning_scheduler_v1.py
       - --project-root
