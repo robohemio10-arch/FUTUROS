@@ -63,11 +63,15 @@ def test_non_root_compose_does_not_report_root_requirement(tmp_path: Path) -> No
 
 
 def test_root_without_verified_bootstrap_is_blocked(tmp_path: Path) -> None:
-    compose = COMPOSE.read_text(encoding="utf-8").replace(
+    compose = COMPOSE.read_text(encoding="utf-8")
+    service_start = compose.index("  trade-event-notifications-paper:\n")
+    service_end = compose.index("\n  paper-autolearning-scheduler:\n", service_start)
+    service = compose[service_start:service_end].replace(
         "      - scripts/docker_runtime_permissions_bootstrap.py\n",
         "      - scripts/run_trade_event_notifications.py\n",
         1,
     )
+    compose = compose[:service_start] + service + compose[service_end:]
     root = copy_audit_inputs(tmp_path, compose_text=compose)
 
     report = audit_notification_runtime_permissions(project_root=root)
