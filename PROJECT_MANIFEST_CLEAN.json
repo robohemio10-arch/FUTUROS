@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b23c25dc177859dfd12e9d0dfb42eb5019292bad7d75c60bb8f6179195b5e42c",
+  "aggregate_sha256": "e0e748fdacb53c6b731ea6d52f983301a1fe14d203f2f6959a4f126e47218573",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 281,
-    "manifested_files_total": 1640,
-    "python_files": 1242,
+    "docs_files": 282,
+    "manifested_files_total": 1642,
+    "python_files": 1243,
     "runtime_excluded_files_total": 0,
-    "test_files": 339,
-    "tracked_files_total": 1641,
+    "test_files": 340,
+    "tracked_files_total": 1643,
     "workflows": 1
   },
   "deterministic": true,
@@ -1890,6 +1890,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_INSTITUTIONAL_RANKING_TRAINER_V1.md",
       "sha256": "76123e726551e857bfbf409d71465216260606982bf6d7206e6ec2abc29a44f9"
+    },
+    {
+      "bytes": 2151,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_MARKET_FEATURES_ATOMIC_TEMPFILE_HARDENING_V1.md",
+      "sha256": "a0058c1677a87e96454a74be2d11f2f33c6ae3ed5c84e898a413c62a7fb10fb2"
     },
     {
       "bytes": 3772,
@@ -6242,10 +6248,10 @@
       "sha256": "0807dacb0ead257e0b60304c26b97663409df4a7830ef171f450cc70c1965546"
     },
     {
-      "bytes": 2990,
+      "bytes": 6730,
       "hash_mode": "text_lf",
       "path": "smartcrypto/market/market_feature_schema.py",
-      "sha256": "8e66d1ac2f1fa7a9986114c88d1802c7cfd40f99c01496ed078f3fad7d1d9818"
+      "sha256": "f2a3310793c8abbcfc0197a3a552b6e9d9277a029e5965a8ea9fa65b9cf45656"
     },
     {
       "bytes": 18830,
@@ -9480,6 +9486,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_institutional_ranking_trainer_v1.py",
       "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
+    },
+    {
+      "bytes": 10235,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_market_features_atomic_tempfile_hardening_v1.py",
+      "sha256": "2c31cead5a2e31e9a4e5d122d55d6ea85e13a11c5bca0f4f1a0a878aeb415be0"
     },
     {
       "bytes": 8484,
