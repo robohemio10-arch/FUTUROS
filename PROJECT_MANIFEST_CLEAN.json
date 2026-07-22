@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e0e748fdacb53c6b731ea6d52f983301a1fe14d203f2f6959a4f126e47218573",
+  "aggregate_sha256": "a6a1e725c9b68ae0dcc58ef907f664ecffcce42a558cf414fce5cf6efa395c41",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 282,
-    "manifested_files_total": 1642,
+    "docs_files": 283,
+    "manifested_files_total": 1643,
     "python_files": 1243,
     "runtime_excluded_files_total": 0,
     "test_files": 340,
-    "tracked_files_total": 1643,
+    "tracked_files_total": 1644,
     "workflows": 1
   },
   "deterministic": true,
@@ -1892,10 +1892,10 @@
       "sha256": "76123e726551e857bfbf409d71465216260606982bf6d7206e6ec2abc29a44f9"
     },
     {
-      "bytes": 2151,
+      "bytes": 3092,
       "hash_mode": "text_lf",
       "path": "docs/QLIB_MARKET_FEATURES_ATOMIC_TEMPFILE_HARDENING_V1.md",
-      "sha256": "a0058c1677a87e96454a74be2d11f2f33c6ae3ed5c84e898a413c62a7fb10fb2"
+      "sha256": "a7bcd2b889fc1bb712b8e5731d740713c1139850090252478ae37c85b79dee41"
     },
     {
       "bytes": 3772,
@@ -1944,6 +1944,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_RESEARCH_BACKEND_RUNTIME_DEPENDENCY_GATE_V1.md",
       "sha256": "23632f8b7182734c21b2f615983ff159a1736843473aafc3b3ff1079bcd45a41"
+    },
+    {
+      "bytes": 3261,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_RUNTIME_WRITABILITY_PROBE_AND_TEMP_CREATE_RETRY_V1.md",
+      "sha256": "88f84cc51d293e3af3b579ebb6ed55ff55dbfa2ae5e29ca60b4acac8c8b08546"
     },
     {
       "bytes": 3059,
@@ -3542,10 +3548,10 @@
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
     },
     {
-      "bytes": 13003,
+      "bytes": 20986,
       "hash_mode": "text_lf",
       "path": "scripts/docker_runtime_permissions_bootstrap.py",
-      "sha256": "4681a6e677272fe8e1a1b6d7fab844110a06a7bfc7a2672cbd63c26f744351da"
+      "sha256": "3bb938d15cc9d0ba46248db81f9aa72e9aef401693f26c358abeb286839caccd"
     },
     {
       "bytes": 580,
@@ -6248,10 +6254,10 @@
       "sha256": "0807dacb0ead257e0b60304c26b97663409df4a7830ef171f450cc70c1965546"
     },
     {
-      "bytes": 6730,
+      "bytes": 8050,
       "hash_mode": "text_lf",
       "path": "smartcrypto/market/market_feature_schema.py",
-      "sha256": "f2a3310793c8abbcfc0197a3a552b6e9d9277a029e5965a8ea9fa65b9cf45656"
+      "sha256": "3c7760a901ddecb1df1e31939e13b01c5eacf76288cb691d1932775269e709ed"
     },
     {
       "bytes": 18830,
@@ -9488,10 +9494,10 @@
       "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
     },
     {
-      "bytes": 10235,
+      "bytes": 17269,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_market_features_atomic_tempfile_hardening_v1.py",
-      "sha256": "2c31cead5a2e31e9a4e5d122d55d6ea85e13a11c5bca0f4f1a0a878aeb415be0"
+      "sha256": "a9b3ac038fb01d78fc4c7c8743495e6246dcb0bac4d4b1ec9bed3c814e31238e"
     },
     {
       "bytes": 8484,
@@ -9524,10 +9530,10 @@
       "sha256": "caf3b500f0e1fd905f3f98bfe54b0b32563050e1ccbf934aa0cd99d76ed0e67a"
     },
     {
-      "bytes": 6466,
+      "bytes": 17796,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_refresh_supervisor_runtime_permissions_v1.py",
-      "sha256": "42f6ad6a3e40c6b8b37d44fca6ec779dacce63ee9701c38b50bcd5016b638986"
+      "sha256": "c342db459db885330599b067b06a5d553115ed55b08f34d06bcfbbdb6d630354"
     },
     {
       "bytes": 8242,

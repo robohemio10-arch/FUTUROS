@@ -9,15 +9,15 @@ Eliminar a disputa sobre o temporário determinístico:
 A alteração preserva a semântica do pipeline Qlib paper e seu contrato
 operacional sem lookahead.
 
-## Incidente
+## Incidente inicial
 
-O primeiro ciclo do qlib-refresh-supervisor-paper falhou ao abrir o arquivo
+O primeiro ciclo do `qlib-refresh-supervisor-paper` falhou ao abrir o arquivo
 temporário determinístico. O bootstrap de permissões havia concluído e o
-processo já executava como UID/GID 10001:10001.
+processo já executava como UID/GID `10001:10001`.
 
-Após o restart automático, o ciclo seguinte concluiu com status ok.
+Após o restart automático, o ciclo seguinte concluiu com `status=ok`.
 
-## Causa estrutural
+## Primeira causa estrutural
 
 O writer anterior utilizava sempre o mesmo nome temporário:
 
@@ -27,47 +27,70 @@ Esse desenho permitia disputa com resíduos anteriores, writers concorrentes
 ou locks transitórios do bind mount.
 
 Os testes também demonstraram uma segunda fronteira: mesmo com temporários
-exclusivos, promoções simultâneas por os.replace sobre o mesmo destino podem
-produzir WinError 5 no Windows.
+exclusivos, promoções simultâneas por `os.replace` sobre o mesmo destino podem
+produzir erro transitório no Windows.
 
-## Solução
+## Solução incorporada pelo PR #321
 
-O writer agora:
+O writer passou a:
 
-1. cria um temporário exclusivo com tempfile.mkstemp;
-2. cria esse temporário no mesmo diretório do destino;
-3. mantém a serialização Parquet concorrente;
-4. serializa somente a promoção final dentro do processo;
-5. promove o resultado com os.replace;
-6. aplica retry exponencial curto e limitado para locks transitórios;
-7. falha imediatamente para erros permanentes;
-8. remove somente o temporário pertencente à execução;
-9. preserva o arquivo final anterior em caso de falha;
-10. não remove nem reutiliza o .tmp determinístico legado.
+1. criar um temporário exclusivo com `tempfile.mkstemp`;
+2. criar esse temporário no mesmo diretório do destino;
+3. manter a serialização Parquet concorrente;
+4. serializar somente a promoção final dentro do processo;
+5. promover o resultado com `os.replace`;
+6. aplicar retry exponencial curto e limitado à promoção;
+7. falhar imediatamente para erros permanentes;
+8. remover somente o temporário pertencente à execução;
+9. preservar o arquivo final anterior em caso de falha;
+10. não remover nem reutilizar o `.tmp` determinístico legado.
 
-## Retry
+## Evidência posterior ao PR #321
 
-São executadas no máximo cinco tentativas.
+Um novo cold start falhou antes da serialização e antes da promoção:
 
-O intervalo inicial é de 50 milissegundos, com crescimento exponencial.
+    PermissionError: [Errno 13] Permission denied:
+    /app/data/features/.market_features_60d.parquet.<token>.tmp
+
+A falha ocorreu dentro de `tempfile.mkstemp`. Portanto, o temporário exclusivo
+eliminou a colisão nominal, mas a criação do próprio temporário ainda precisava
+de tolerância limitada a indisponibilidade transitória do bind mount.
+
+## Hardening complementar
+
+A criação do temporário agora possui retry próprio:
+
+- até oito tentativas;
+- atraso inicial de 50 milissegundos;
+- backoff exponencial;
+- nomes exclusivos a cada tentativa;
+- retry apenas para erros transitórios;
+- falha imediata para erros permanentes;
+- nenhuma remoção de arquivos alheios;
+- preservação do arquivo final anterior.
+
+A promoção final permanece com cinco tentativas e lock process-local.
+
+## Classificação de erros transitórios
 
 São classificados como transitórios:
 
-- PermissionError;
-- EACCES;
-- EPERM;
-- EBUSY;
+- `PermissionError`;
+- `EACCES`;
+- `EPERM`;
+- `EBUSY`;
 - Windows error 5;
 - Windows sharing violation 32;
 - Windows lock violation 33.
+
+`ENOSPC` e demais erros permanentes permanecem fail-closed.
 
 ## Segurança
 
 Esta alteração não modifica:
 
 - Docker Compose;
-- bootstrap de permissões;
-- UID ou GID;
+- UID ou GID operacionais;
 - Freqtrade;
 - RiskManager;
 - modelos;

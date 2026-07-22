@@ -15,10 +15,12 @@ LOOKAHEAD_PREFIXES = ("future_ret_",)
 DEFAULT_LABEL_KEYS = ("symbol", "pair", "tf", "ts", "ts_ms")
 
 ATOMIC_TEMP_SUFFIX = ".tmp"
+ATOMIC_TEMP_CREATE_ATTEMPTS = 8
+ATOMIC_TEMP_CREATE_BASE_DELAY_SECONDS = 0.05
 ATOMIC_REPLACE_ATTEMPTS = 5
 ATOMIC_REPLACE_BASE_DELAY_SECONDS = 0.05
 
-_TRANSIENT_REPLACE_ERRNOS = frozenset(
+_TRANSIENT_FILESYSTEM_ERRNOS = frozenset(
     {
         errno.EACCES,
         errno.EPERM,
@@ -77,38 +79,79 @@ def sanitize_operational_market_features(
     )
 
 
-def _create_atomic_temp_path(target: Path) -> Path:
-    """
-    Create an invocation-exclusive temporary file beside the destination.
-
-    Keeping both files in the same directory preserves same-filesystem
-    atomic promotion through os.replace.
-    """
-    descriptor, raw_path = tempfile.mkstemp(
-        prefix=f".{target.name}.",
-        suffix=ATOMIC_TEMP_SUFFIX,
-        dir=str(target.parent),
-    )
-
-    temporary = Path(raw_path)
-
-    try:
-        os.close(descriptor)
-    except BaseException:
-        temporary.unlink(missing_ok=True)
-        raise
-
-    return temporary
-
-
-def _is_transient_replace_error(error: OSError) -> bool:
-    """Return whether a replace failure may be caused by a transient lock."""
+def _is_transient_filesystem_error(error: OSError) -> bool:
+    """Return whether a filesystem failure may be caused by a transient lock."""
     windows_error = getattr(error, "winerror", None)
 
     return (
         isinstance(error, PermissionError)
-        or error.errno in _TRANSIENT_REPLACE_ERRNOS
+        or error.errno in _TRANSIENT_FILESYSTEM_ERRNOS
         or windows_error in _TRANSIENT_WINDOWS_ERRORS
+    )
+
+
+def _retry_delay_seconds(
+    *,
+    base_delay_seconds: float,
+    attempt: int,
+) -> float:
+    return base_delay_seconds * (2**attempt)
+
+
+def _create_atomic_temp_path(target: Path) -> Path:
+    """
+    Create an invocation-exclusive temporary file beside the destination.
+
+    Temporary creation has its own bounded retry because bind mounts can reject
+    the first create operation during a cold-start permission transition.
+    """
+    for attempt in range(ATOMIC_TEMP_CREATE_ATTEMPTS):
+        try:
+            descriptor, raw_path = tempfile.mkstemp(
+                prefix=f".{target.name}.",
+                suffix=ATOMIC_TEMP_SUFFIX,
+                dir=str(target.parent),
+            )
+        except OSError as error:
+            is_last_attempt = (
+                attempt + 1
+                >= ATOMIC_TEMP_CREATE_ATTEMPTS
+            )
+
+            if (
+                not _is_transient_filesystem_error(error)
+                or is_last_attempt
+            ):
+                raise
+
+            time.sleep(
+                _retry_delay_seconds(
+                    base_delay_seconds=(
+                        ATOMIC_TEMP_CREATE_BASE_DELAY_SECONDS
+                    ),
+                    attempt=attempt,
+                )
+            )
+            continue
+
+        temporary = Path(raw_path)
+
+        try:
+            os.close(descriptor)
+        except OSError as error:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                error.add_note(
+                    "Failed to remove invocation-owned temporary "
+                    f"file after descriptor close failure: {cleanup_error}"
+                )
+            raise
+
+        return temporary
+
+    raise RuntimeError(
+        "atomic_temp_create_retry_loop_exhausted"
     )
 
 
@@ -120,8 +163,7 @@ def _replace_atomically_with_retry(
     Promote a completed temporary artifact to its final destination.
 
     Parquet serialization remains concurrent. Only the final promotion is
-    serialized inside this process. Bounded retry handles transient locks
-    from Windows, antivirus software, indexing or Docker Desktop bind mounts.
+    serialized inside this process.
     """
     with _PROMOTION_LOCK:
         for attempt in range(ATOMIC_REPLACE_ATTEMPTS):
@@ -135,17 +177,19 @@ def _replace_atomically_with_retry(
                 )
 
                 if (
-                    not _is_transient_replace_error(error)
+                    not _is_transient_filesystem_error(error)
                     or is_last_attempt
                 ):
                     raise
 
-                delay_seconds = (
-                    ATOMIC_REPLACE_BASE_DELAY_SECONDS
-                    * (2**attempt)
+                time.sleep(
+                    _retry_delay_seconds(
+                        base_delay_seconds=(
+                            ATOMIC_REPLACE_BASE_DELAY_SECONDS
+                        ),
+                        attempt=attempt,
+                    )
                 )
-
-                time.sleep(delay_seconds)
 
     raise RuntimeError(
         "atomic_replace_retry_loop_exhausted"
