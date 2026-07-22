@@ -21,6 +21,8 @@ def test_allowlist_is_exact() -> None:
         "/app/data/runtime",
         "/app/data/trades",
         "/app/data/feedback",
+        "/app/data/features",
+        "/app/data/predictions",
         "/app/data/snapshots/freqtrade-paper",
     }
 
@@ -244,3 +246,34 @@ def test_safety_flags_remain_paper_shadow_only() -> None:
         "sends_orders": False,
         "changes_risk": False,
     }
+
+
+def test_qlib_profile_has_exact_directories_and_nominal_file_coverage() -> None:
+    profile = bootstrap.SERVICE_PROFILES[bootstrap.QLIB_REFRESH_SERVICE]
+
+    assert profile.directories == (
+        "/app/data/runtime",
+        "/app/data/reports",
+        "/app/data/features",
+        "/app/data/predictions",
+    )
+    assert profile.covered_files == (
+        "/app/data/runtime/active_freqtrade_signals.json",
+        "/app/data/reports/qlib_market_features_refresh_report.json",
+        "/app/data/reports/qlib_market_features_refresh_report.json.tmp",
+    )
+    bootstrap.validate_profile_contract(profile)
+
+
+def test_profile_file_outside_authorized_directories_is_blocked() -> None:
+    profile = bootstrap.RuntimePermissionProfile(
+        service="synthetic",
+        directories=("/app/data/reports",),
+        covered_files=("/app/data/runtime/active_freqtrade_signals.json",),
+    )
+
+    with pytest.raises(
+        bootstrap.RuntimeBootstrapError,
+        match="profile_file_outside_authorized_directory",
+    ):
+        bootstrap.validate_profile_contract(profile)

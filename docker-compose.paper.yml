@@ -106,6 +106,7 @@ services:
       context: .
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
+    user: "0:0"
     env_file:
       - .env
     environment:
@@ -121,7 +122,24 @@ services:
       - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
       - ./smartcrypto:/app/smartcrypto:ro
-    command: python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300
+    command:
+      - python
+      - scripts/docker_runtime_permissions_bootstrap.py
+      - --service
+      - qlib-refresh-supervisor-paper
+      - --path
+      - /app/data/runtime
+      - --path
+      - /app/data/reports
+      - --path
+      - /app/data/features
+      - --path
+      - /app/data/predictions
+      - --
+      - python
+      - scripts/run_qlib_paper_refresh_supervisor.py
+      - --interval-seconds
+      - "300"
 
   phase14-feedback-sync-paper:
     build:

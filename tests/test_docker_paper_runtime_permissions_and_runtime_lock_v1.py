@@ -146,5 +146,7 @@ def test_no_world_writable_mode_or_generic_data_authority() -> None:
         "/app/data/runtime",
         "/app/data/trades",
         "/app/data/feedback",
+        "/app/data/features",
+        "/app/data/predictions",
         "/app/data/snapshots/freqtrade-paper",
     }
