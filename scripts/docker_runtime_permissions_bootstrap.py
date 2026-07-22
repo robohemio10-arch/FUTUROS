@@ -31,6 +31,7 @@ FILE_MODE = 0o600
 PHASE14_SERVICE = "phase14-feedback-sync-paper"
 AUTOLEARNING_SERVICE = "paper-autolearning-scheduler"
 NOTIFICATION_SERVICE = "trade-event-notifications-paper"
+QLIB_REFRESH_SERVICE = "qlib-refresh-supervisor-paper"
 
 ALLOWED_RUNTIME_PATHS = frozenset(
     {
@@ -38,6 +39,8 @@ ALLOWED_RUNTIME_PATHS = frozenset(
         "/app/data/runtime",
         "/app/data/trades",
         "/app/data/feedback",
+        "/app/data/features",
+        "/app/data/predictions",
         "/app/data/snapshots/freqtrade-paper",
     }
 )
@@ -51,6 +54,7 @@ class RuntimeBootstrapError(RuntimeError):
 class RuntimePermissionProfile:
     service: str
     directories: tuple[str, ...]
+    covered_files: tuple[str, ...] = ()
 
 
 SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
@@ -74,6 +78,20 @@ SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
         directories=(
             "/app/data/reports",
             "/app/data/runtime",
+        ),
+    ),
+    QLIB_REFRESH_SERVICE: RuntimePermissionProfile(
+        service=QLIB_REFRESH_SERVICE,
+        directories=(
+            "/app/data/runtime",
+            "/app/data/reports",
+            "/app/data/features",
+            "/app/data/predictions",
+        ),
+        covered_files=(
+            "/app/data/runtime/active_freqtrade_signals.json",
+            "/app/data/reports/qlib_market_features_refresh_report.json",
+            "/app/data/reports/qlib_market_features_refresh_report.json.tmp",
         ),
     ),
 }
@@ -137,11 +155,33 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def validate_requested_paths(profile: RuntimePermissionProfile, paths: Sequence[str]) -> None:
+    validate_profile_contract(profile)
     requested = tuple(paths)
     if len(requested) != len(set(requested)):
         raise RuntimeBootstrapError("duplicate_runtime_path")
     if set(requested) != set(profile.directories):
         raise RuntimeBootstrapError("service_runtime_path_contract_mismatch")
+
+
+def validate_profile_contract(profile: RuntimePermissionProfile) -> None:
+    if len(profile.directories) != len(set(profile.directories)):
+        raise RuntimeBootstrapError("duplicate_profile_directory")
+    if len(profile.covered_files) != len(set(profile.covered_files)):
+        raise RuntimeBootstrapError("duplicate_profile_file")
+    if not profile.directories or any(
+        directory not in ALLOWED_RUNTIME_PATHS for directory in profile.directories
+    ):
+        raise RuntimeBootstrapError("profile_directory_not_allowlisted")
+
+    directories = tuple(PurePosixPath(directory) for directory in profile.directories)
+    for value in profile.covered_files:
+        if not value.startswith("/") or "\x00" in value or "\\" in value:
+            raise RuntimeBootstrapError("profile_file_path_invalid")
+        candidate = PurePosixPath(value)
+        if any(part in {".", ".."} for part in candidate.parts) or str(candidate) != value:
+            raise RuntimeBootstrapError("profile_file_path_invalid")
+        if not any(candidate.is_relative_to(directory) for directory in directories):
+            raise RuntimeBootstrapError("profile_file_outside_authorized_directory")
 
 
 def reject_symlink_components(path: Path) -> None:

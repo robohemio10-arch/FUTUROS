@@ -24,6 +24,13 @@ MODULE_PATH = Path("scripts/run_qlib_paper_refresh_supervisor.py")
 COMPOSE_PATH = Path("docker-compose.paper.yml")
 
 
+def compose_command(service: dict[str, object]) -> list[str]:
+    value = service["command"]
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return str(value).split()
+
+
 def config(tmp_path: Path) -> PaperRefreshSupervisorConfig:
     return PaperRefreshSupervisorConfig(
         report_path=tmp_path / "supervisor.json",
@@ -263,7 +270,14 @@ def test_supervisor_does_not_reference_private_exchange_or_orders() -> None:
 def test_compose_contains_runtime_supervisor_service() -> None:
     service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
 
-    assert service["command"] == "python scripts/run_qlib_paper_refresh_supervisor.py --interval-seconds 300"
+    argv = compose_command(service)
+    separator = argv.index("--")
+    assert argv[separator + 1 :] == [
+        "python",
+        "scripts/run_qlib_paper_refresh_supervisor.py",
+        "--interval-seconds",
+        "300",
+    ]
     assert service["restart"] == "unless-stopped"
     assert service["working_dir"] == "/app"
 
@@ -280,7 +294,7 @@ def test_compose_supervisor_keeps_live_and_order_flags_false() -> None:
 def test_compose_supervisor_does_not_mount_freqtrade_db_or_call_freqtrade() -> None:
     service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
     volumes = service["volumes"]
-    combined = "\n".join([service["command"], *volumes])
+    combined = "\n".join([*compose_command(service), *volumes])
 
     assert "./data:/app/data" in volumes
     assert "./config:/app/config:ro" in volumes
@@ -297,7 +311,7 @@ def test_compose_supervisor_writes_only_runtime_data_tree() -> None:
     writable_mounts = [item for item in service["volumes"] if not item.endswith(":ro")]
 
     assert writable_mounts == ["./data:/app/data"]
-    assert "run_qlib_paper_refresh_supervisor.py" in service["command"]
+    assert "scripts/run_qlib_paper_refresh_supervisor.py" in compose_command(service)
 
 
 def test_start_paper_24h_uses_compose_up_without_manual_supervisor_duplication() -> None:
