@@ -26,7 +26,10 @@ class RuntimeSettings:
             database_path=Path(os.getenv("SMARTCRYPTO_DB_PATH", "data/sqlite/trading_dataset.sqlite")),
             signals_path=Path(os.getenv("SMARTCRYPTO_SIGNALS_PATH", "data/freqtrade_signals.json")),
             predictions_path=Path(
-                os.getenv("SMARTCRYPTO_PREDICTIONS_PATH", "data/predictions/latest_predictions.parquet")
+                os.getenv(
+                    "SMARTCRYPTO_PREDICTIONS_PATH",
+                    "data/predictions/latest_qlib_predictions.parquet",
+                )
             ),
         )
 

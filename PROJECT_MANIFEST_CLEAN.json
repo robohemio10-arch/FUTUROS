@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a6a1e725c9b68ae0dcc58ef907f664ecffcce42a558cf414fce5cf6efa395c41",
+  "aggregate_sha256": "99f06a90b7dc1b9326855643cc33b5e8d917b4664aa40fa9fc8bb2e0175251d9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 283,
-    "manifested_files_total": 1643,
-    "python_files": 1243,
+    "docs_files": 284,
+    "manifested_files_total": 1647,
+    "python_files": 1246,
     "runtime_excluded_files_total": 0,
-    "test_files": 340,
-    "tracked_files_total": 1644,
+    "test_files": 342,
+    "tracked_files_total": 1648,
     "workflows": 1
   },
   "deterministic": true,
@@ -572,10 +572,10 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 8882,
+      "bytes": 9519,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "319f6ef556edd1f4651f726b194b1742fafe110934b7c955ebb6f1b4c971ebd9"
+      "sha256": "ff5806a0da06418e2c9862e467e30b22418725c1d69529b0ea508b358c9c47db"
     },
     {
       "bytes": 1156,
@@ -834,6 +834,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
+    },
+    {
+      "bytes": 4693,
+      "hash_mode": "text_lf",
+      "path": "docs/CORE_PAPER_PREDICTION_PATH_AND_STARTUP_ORDERING_HARDENING_V1.md",
+      "sha256": "1fae01d30b676bb2ba374b0c524991577378f1a4da723551dcaa28e8c674003a"
     },
     {
       "bytes": 4592,
@@ -7652,6 +7658,12 @@
       "sha256": "70f26637fdb5f7b29b50f6741d8bbb1aa932cbe0ad44aefca6e6361d61dbc0e6"
     },
     {
+      "bytes": 12200,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/runtime/qlib_refresh_supervisor_healthcheck.py",
+      "sha256": "33d0c6c5a1a3fa0ed2fbf656db12146218afef52cb5cb1a7c65c7208c2b2efc8"
+    },
+    {
       "bytes": 327,
       "hash_mode": "text_lf",
       "path": "smartcrypto/security/credential_rotation_attestation/__init__.py",
@@ -7712,10 +7724,10 @@
       "sha256": "2abe3b54caceb981a656a1fdee60ad82c18c16676af8cf0909f7e48f58dfb6cd"
     },
     {
-      "bytes": 1796,
+      "bytes": 1860,
       "hash_mode": "text_lf",
       "path": "smartcrypto/settings.py",
-      "sha256": "d33b602613444edbd30bbb367278ae0f1a78a4c49b41143f4ef6ecab651714d0"
+      "sha256": "10398542104e7c454387ece4a1eefe66f13d04c79febaa2bcf1a1a5766bd5fcc"
     },
     {
       "bytes": 916,
@@ -8082,6 +8094,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 5120,
+      "hash_mode": "text_lf",
+      "path": "tests/test_core_paper_prediction_path_and_startup_ordering_hardening_v1.py",
+      "sha256": "d332768e6ebb9da8e59f9e814ca413cdb842abd070cb431ddf8a72fd4ac6c70e"
     },
     {
       "bytes": 23118,
@@ -9528,6 +9546,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_prediction_freshness_guard.py",
       "sha256": "caf3b500f0e1fd905f3f98bfe54b0b32563050e1ccbf934aa0cd99d76ed0e67a"
+    },
+    {
+      "bytes": 10184,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_refresh_supervisor_healthcheck_v1.py",
+      "sha256": "0b136663b08f673f29f084ebcec1cb9e8e1a746b16b2a8f6aacb5d6ed389b6f5"
     },
     {
       "bytes": 17796,
