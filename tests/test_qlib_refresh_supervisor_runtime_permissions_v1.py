@@ -683,19 +683,32 @@ def test_main_blocks_application_exec_when_writability_probe_fails(
         ),
     )
 
-    result = bootstrap.main([])
+    result = bootstrap.main(
+        [],
+        lock_factory=lambda _path: NoopLock(),
+    )
 
     assert result == 2
     assert exec_calls == []
     assert events == [
+        "runtime_bootstrap_lock_acquired",
         "runtime_permissions_prepared",
         "runtime_privileges_dropped",
+        "runtime_bootstrap_lock_released",
         "runtime_permissions_bootstrap_blocked",
     ]
 
 
 class ExecSentinel(RuntimeError):
     pass
+
+
+class NoopLock:
+    def acquire(self, _timeout_seconds: float) -> None:
+        return None
+
+    def release(self) -> None:
+        return None
 
 
 def test_main_emits_writability_verified_before_exec(
@@ -761,10 +774,15 @@ def test_main_emits_writability_verified_before_exec(
     )
 
     with pytest.raises(ExecSentinel):
-        bootstrap.main([])
+        bootstrap.main(
+            [],
+            lock_factory=lambda _path: NoopLock(),
+        )
 
     assert events == [
+        "runtime_bootstrap_lock_acquired",
         "runtime_permissions_prepared",
         "runtime_privileges_dropped",
         "runtime_writability_verified",
+        "runtime_bootstrap_lock_released",
     ]

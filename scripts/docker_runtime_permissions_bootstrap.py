@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO, NoReturn, cast
+from typing import Any, BinaryIO, NoReturn, Protocol, cast
 
 
 SAFE_FLAGS = {
@@ -39,6 +39,11 @@ WRITABILITY_PROBE_BASE_DELAY_SECONDS = 0.05
 WRITABILITY_PROBE_PAYLOAD = (
     b"smartcrypto-runtime-writability-probe\n"
 )
+BOOTSTRAP_LOCK_PATH = (
+    "/app/data/reports/.runtime-permissions-bootstrap.lock"
+)
+BOOTSTRAP_LOCK_TIMEOUT_SECONDS = 60.0
+BOOTSTRAP_LOCK_POLL_SECONDS = 0.1
 
 _TRANSIENT_FILESYSTEM_ERRNOS = frozenset(
     {
@@ -76,6 +81,14 @@ ALLOWED_RUNTIME_PATHS = frozenset(
 
 class RuntimeBootstrapError(RuntimeError):
     """Controlled fail-closed bootstrap error."""
+
+
+class RuntimeBootstrapLock(Protocol):
+    def acquire(self, timeout_seconds: float) -> None:
+        """Acquire the process-shared bootstrap lock."""
+
+    def release(self) -> None:
+        """Release the process-shared bootstrap lock."""
 
 
 @dataclass(frozen=True)
@@ -129,6 +142,128 @@ Chmod = Callable[[Path, int], None]
 ProbeFactory = Callable[[Path], BinaryIO]
 Fsync = Callable[[int], None]
 Sleep = Callable[[float], None]
+LockFactory = Callable[[Path], RuntimeBootstrapLock]
+
+
+class PosixAdvisoryBootstrapLock:
+    """Bounded POSIX advisory lock retained across the privilege drop."""
+
+    def __init__(
+        self,
+        path: Path,
+        *,
+        monotonic: Callable[[], float] = time.monotonic,
+        sleep: Sleep = time.sleep,
+    ) -> None:
+        self.path = path
+        self._monotonic = monotonic
+        self._sleep = sleep
+        self._descriptor: int | None = None
+        self._fcntl: Any = None
+
+    def acquire(self, timeout_seconds: float) -> None:
+        if timeout_seconds <= 0:
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_timeout_invalid"
+            )
+        reject_symlink_components(self.path.parent)
+        if not self.path.parent.is_dir():
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_parent_missing"
+            )
+        if self.path.is_symlink():
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_symlink_forbidden"
+            )
+        try:
+            fcntl: Any = __import__("fcntl")
+        except ImportError as exc:
+            raise RuntimeBootstrapError(
+                "posix_advisory_lock_unavailable"
+            ) from exc
+
+        flags = os.O_CREAT | os.O_RDWR
+        flags |= getattr(os, "O_CLOEXEC", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0)
+        try:
+            descriptor = os.open(
+                self.path,
+                flags,
+                FILE_MODE,
+            )
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                raise RuntimeBootstrapError(
+                    "runtime_bootstrap_lock_not_regular_file"
+                )
+            fchmod = getattr(os, "fchmod", None)
+            if not callable(fchmod):
+                raise RuntimeBootstrapError(
+                    "posix_fchmod_unavailable"
+                )
+            fchmod(descriptor, FILE_MODE)
+        except RuntimeBootstrapError:
+            if "descriptor" in locals():
+                os.close(descriptor)
+            raise
+        except OSError as exc:
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_open_failed"
+            ) from exc
+
+        deadline = self._monotonic() + timeout_seconds
+        while True:
+            try:
+                fcntl.flock(
+                    descriptor,
+                    fcntl.LOCK_EX | fcntl.LOCK_NB,
+                )
+                self._descriptor = descriptor
+                self._fcntl = fcntl
+                return
+            except BlockingIOError as exc:
+                if self._monotonic() >= deadline:
+                    os.close(descriptor)
+                    raise RuntimeBootstrapError(
+                        "runtime_bootstrap_lock_timeout"
+                    ) from exc
+                self._sleep(
+                    min(
+                        BOOTSTRAP_LOCK_POLL_SECONDS,
+                        max(0.0, deadline - self._monotonic()),
+                    )
+                )
+            except OSError as exc:
+                os.close(descriptor)
+                raise RuntimeBootstrapError(
+                    "runtime_bootstrap_lock_acquire_failed"
+                ) from exc
+
+    def release(self) -> None:
+        descriptor = self._descriptor
+        fcntl_module = self._fcntl
+        if descriptor is None or fcntl_module is None:
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_not_acquired"
+            )
+        self._descriptor = None
+        self._fcntl = None
+        try:
+            fcntl_module.flock(
+                descriptor,
+                fcntl_module.LOCK_UN,
+            )
+            os.close(descriptor)
+        except OSError as exc:
+            raise RuntimeBootstrapError(
+                "runtime_bootstrap_lock_release_failed"
+            ) from exc
+
+
+def default_lock_factory(
+    path: Path,
+) -> RuntimeBootstrapLock:
+    return PosixAdvisoryBootstrapLock(path)
 
 
 def non_root_identifier(value: str) -> int:
@@ -212,6 +347,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             "Exact runtime directory declared by the "
             "selected service profile."
         ),
+    )
+    parser.add_argument(
+        "--lock-timeout-seconds",
+        type=float,
+        default=BOOTSTRAP_LOCK_TIMEOUT_SECONDS,
     )
     parser.add_argument(
         "command",
@@ -796,6 +936,8 @@ def exec_application(
 
 def main(
     argv: list[str] | None = None,
+    *,
+    lock_factory: LockFactory | None = None,
 ) -> int:
     args = parse_args(
         list(
@@ -805,48 +947,72 @@ def main(
         )
     )
     profile = SERVICE_PROFILES[args.service]
-
     try:
         validate_requested_paths(
             profile,
             args.path,
         )
 
-        summary = prepare_runtime_permissions(
-            profile,
-            uid=args.uid,
-            gid=args.gid,
-        )
-
-        emit_event(
-            "runtime_permissions_prepared",
-            service=profile.service,
-            **summary,
-        )
-
-        drop_privileges(
-            uid=args.uid,
-            gid=args.gid,
-        )
-
-        emit_event(
-            "runtime_privileges_dropped",
-            service=profile.service,
-            effective_uid=args.uid,
-            effective_gid=args.gid,
-        )
-
-        writability_summary = (
-            verify_runtime_writability(
-                profile
+        factory = lock_factory or default_lock_factory
+        bootstrap_lock = factory(Path(BOOTSTRAP_LOCK_PATH))
+        bootstrap_lock.acquire(
+            float(
+                getattr(
+                    args,
+                    "lock_timeout_seconds",
+                    BOOTSTRAP_LOCK_TIMEOUT_SECONDS,
+                )
             )
         )
-
         emit_event(
-            "runtime_writability_verified",
+            "runtime_bootstrap_lock_acquired",
             service=profile.service,
-            **writability_summary,
+            lock_path=BOOTSTRAP_LOCK_PATH,
         )
+
+        try:
+            summary = prepare_runtime_permissions(
+                profile,
+                uid=args.uid,
+                gid=args.gid,
+            )
+
+            emit_event(
+                "runtime_permissions_prepared",
+                service=profile.service,
+                **summary,
+            )
+
+            drop_privileges(
+                uid=args.uid,
+                gid=args.gid,
+            )
+
+            emit_event(
+                "runtime_privileges_dropped",
+                service=profile.service,
+                effective_uid=args.uid,
+                effective_gid=args.gid,
+            )
+
+            writability_summary = (
+                verify_runtime_writability(
+                    profile
+                )
+            )
+
+            emit_event(
+                "runtime_writability_verified",
+                service=profile.service,
+                **writability_summary,
+            )
+        finally:
+            bootstrap_lock.release()
+            emit_event(
+                "runtime_bootstrap_lock_released",
+                service=profile.service,
+                lock_path=BOOTSTRAP_LOCK_PATH,
+            )
 
         exec_application(args.command)
     except RuntimeBootstrapError as exc:

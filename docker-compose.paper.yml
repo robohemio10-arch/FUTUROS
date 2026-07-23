@@ -71,7 +71,9 @@ services:
       - ./freqtrade/user_data/config.paper.json:/freqtrade/user_data/config.paper.json:ro
       - ./freqtrade/user_data/strategies:/freqtrade/user_data/strategies:ro
       - ./freqtrade/user_data/logs:/freqtrade/user_data/logs
-      - ./data:/freqtrade/user_data/data
+      - ./scripts/freqtrade_paper_healthcheck.py:/freqtrade/user_data/freqtrade_paper_healthcheck.py:ro
+      - freqtrade_paper_data:/freqtrade/user_data/data
+      - ./data/runtime:/freqtrade/user_data/data/runtime:ro
       - freqtrade_paper_db:/freqtrade/user_data/db
     command: >
       trade
@@ -79,6 +81,22 @@ services:
       --strategy SmartCryptoSignalStrategy
       --logfile /freqtrade/user_data/logs/freqtrade-paper.log
       --db-url sqlite:////freqtrade/user_data/db/tradesv3.paper.sqlite
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - /freqtrade/user_data/freqtrade_paper_healthcheck.py
+        - --quiet
+        - --config
+        - /freqtrade/user_data/config.paper.json
+        - --database
+        - /freqtrade/user_data/db/tradesv3.paper.sqlite
+        - --min-uptime-seconds
+        - "45"
+      interval: 15s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
 
   qlib-worker-paper:
     build:
@@ -110,6 +128,9 @@ services:
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
     user: "0:0"
+    depends_on:
+      freqtrade-paper:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -169,6 +190,11 @@ services:
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
     user: "0:0"
+    depends_on:
+      freqtrade-paper:
+        condition: service_healthy
+      qlib-refresh-supervisor-paper:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -205,6 +231,23 @@ services:
       - /paper-db/tradesv3.paper.sqlite
       - --interval-seconds
       - "120"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -m
+        - smartcrypto.runtime.phase14_feedback_sync_healthcheck
+        - --quiet
+        - --report
+        - /app/data/reports/phase14_runtime_feedback_sync_report.json
+        - --snapshot
+        - /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
+        - --max-age-seconds
+        - "300"
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
 
   trade-event-notifications-paper:
     build:
@@ -313,3 +356,5 @@ services:
 volumes:
   freqtrade_paper_db:
     name: futuros_freqtrade_paper_db
+  freqtrade_paper_data:
+    name: futuros_freqtrade_paper_data
