@@ -99,6 +99,19 @@ Esta branch nao executa containers e nao constitui certificacao runtime. O cold 
 V5 permanece pendente e deve ser conduzido por procedimento operacional separado,
 depois de merge e revisao.
 
+## Errata operacional V5
+
+O cold-start V5 encontrou um defeito de normalizacao no exporter do snapshot
+Phase 14: o parent absoluto retornado por `tempfile.mkstemp` era comparado com o
+parent logico relativo do target. Um tempfile corretamente confinado era, assim,
+classificado como externo e o snapshot retornava
+`snapshot_tempfile_creation_failed`.
+
+A serializacao do bootstrap, a queda para UID/GID 10001 e a writability foram
+comprovadas. O incidente nao foi um `PermissionError` operacional. A certificacao
+final continua pendente ate a correcao ser integrada e o cold-start V5.2 ser
+executado por procedimento separado.
+
 As invariantes permanecem:
 
 ```text

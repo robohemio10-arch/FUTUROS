@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5265cb1c7a7aa43013035b0531ada63ac922cd480cd6816ae290f322ef839715",
+  "aggregate_sha256": "9a959ca5cc75626146c8f6cd143068bc35a435b94c3decc851672a697eaa179b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 285,
-    "manifested_files_total": 1654,
-    "python_files": 1252,
+    "docs_files": 286,
+    "manifested_files_total": 1656,
+    "python_files": 1253,
     "runtime_excluded_files_total": 0,
-    "test_files": 346,
-    "tracked_files_total": 1655,
+    "test_files": 347,
+    "tracked_files_total": 1657,
     "workflows": 1
   },
   "deterministic": true,
@@ -836,10 +836,10 @@
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
     },
     {
-      "bytes": 5522,
+      "bytes": 6149,
       "hash_mode": "text_lf",
       "path": "docs/CORE_PAPER_BOOTSTRAP_SERIALIZATION_AND_PHASE14_ATOMIC_SNAPSHOT_V1.md",
-      "sha256": "2e2cfb6b4486c7e8d4a0cb239f8eaafa3507a28dca20e7e1d58404999373b5c9"
+      "sha256": "99b1ae4cfbf2e697fd84057dbb2420da5a964d28701c53471d667660ce21bbd5"
     },
     {
       "bytes": 4693,
@@ -1794,6 +1794,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PHASE14_PAPER_TRADE_LIFECYCLE_FEEDBACK.md",
       "sha256": "1256c2af75ccd9de4ccdcdaf4e68e02d0a82c2d8c389e3b2093bbacca35878d0"
+    },
+    {
+      "bytes": 4164,
+      "hash_mode": "text_lf",
+      "path": "docs/PHASE14_RELATIVE_OUTPUT_ATOMIC_TEMPFILE_FIX_V1.md",
+      "sha256": "c845042d81f27756ac84f3316bd34d017d94841e85d6a621e157de122783497b"
     },
     {
       "bytes": 5850,
@@ -3596,10 +3602,10 @@
       "sha256": "f63f2a61be2585c9fefb7e415f08c8471411deef4ea600023425d4874748605b"
     },
     {
-      "bytes": 18941,
+      "bytes": 29703,
       "hash_mode": "text_lf",
       "path": "scripts/export_freqtrade_paper_db_snapshot.py",
-      "sha256": "6b78f4e973f8cd16b861ee10016000de67ab7837bfe35a72285124743d09123e"
+      "sha256": "16e125beee445f7332447ba7bab3ae67f15b4d63f5ec12af70fb99b0ea2f557d"
     },
     {
       "bytes": 361,
@@ -9438,6 +9444,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_phase14_feedback_sync_healthcheck_v1.py",
       "sha256": "a8dcb6b4fbbfdf2ffb84680d9752993950d80e7652b236ee937a650c37df455b"
+    },
+    {
+      "bytes": 10339,
+      "hash_mode": "text_lf",
+      "path": "tests/test_phase14_relative_output_atomic_tempfile_fix_v1.py",
+      "sha256": "4ff3e8f30b538b4184a78fd63703f17ebe279b67270124796bb146b349c43401"
     },
     {
       "bytes": 7526,
