@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: docker/smartcrypto/Dockerfile
     restart: unless-stopped
+    depends_on:
+      qlib-refresh-supervisor-paper:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -14,7 +17,7 @@ services:
       SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       SMARTCRYPTO_DB_PATH: /app/data/sqlite/trading_dataset.sqlite
       SMARTCRYPTO_SIGNALS_PATH: /app/data/freqtrade_signals.json
-      SMARTCRYPTO_PREDICTIONS_PATH: /app/data/predictions/latest_predictions.parquet
+      SMARTCRYPTO_PREDICTIONS_PATH: /app/data/predictions/latest_qlib_predictions.parquet
       SMARTCRYPTO_FREQTRADE_DB_PATH: /app/data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite
       PYTHONPATH: /app
     volumes:
@@ -140,6 +143,25 @@ services:
       - scripts/run_qlib_paper_refresh_supervisor.py
       - --interval-seconds
       - "300"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -m
+        - smartcrypto.runtime.qlib_refresh_supervisor_healthcheck
+        - --quiet
+        - --report
+        - /app/data/reports/qlib_paper_refresh_supervisor_report.json
+        - --predictions
+        - /app/data/predictions/latest_qlib_predictions.parquet
+        - --market-features
+        - /app/data/features/market_features_60d.parquet
+        - --max-age-seconds
+        - "420"
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
 
   phase14-feedback-sync-paper:
     build:
