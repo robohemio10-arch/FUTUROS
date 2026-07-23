@@ -47,13 +47,15 @@ def test_compose_uses_linux_named_volume_for_freqtrade_paper_db() -> None:
     assert "--db-url sqlite:////freqtrade/user_data/db/tradesv3.paper.sqlite" in service["command"]
 
 
-def test_compose_preserves_config_strategy_and_data_binds() -> None:
+def test_compose_preserves_config_strategy_and_isolates_internal_data() -> None:
     volumes = compose()["services"]["freqtrade-paper"]["volumes"]
 
     assert "./freqtrade/user_data/config.paper.json:/freqtrade/user_data/config.paper.json:ro" in volumes
     assert "./freqtrade/user_data/strategies:/freqtrade/user_data/strategies:ro" in volumes
     assert "./freqtrade/user_data/logs:/freqtrade/user_data/logs" in volumes
-    assert "./data:/freqtrade/user_data/data" in volumes
+    assert "./data:/freqtrade/user_data/data" not in volumes
+    assert "freqtrade_paper_data:/freqtrade/user_data/data" in volumes
+    assert "./data/runtime:/freqtrade/user_data/data/runtime:ro" in volumes
 
 
 def test_live_and_real_order_flags_remain_blocked() -> None:

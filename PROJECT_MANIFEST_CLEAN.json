@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "99f06a90b7dc1b9326855643cc33b5e8d917b4664aa40fa9fc8bb2e0175251d9",
+  "aggregate_sha256": "5265cb1c7a7aa43013035b0531ada63ac922cd480cd6816ae290f322ef839715",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 284,
-    "manifested_files_total": 1647,
-    "python_files": 1246,
+    "docs_files": 285,
+    "manifested_files_total": 1654,
+    "python_files": 1252,
     "runtime_excluded_files_total": 0,
-    "test_files": 342,
-    "tracked_files_total": 1648,
+    "test_files": 346,
+    "tracked_files_total": 1655,
     "workflows": 1
   },
   "deterministic": true,
@@ -572,10 +572,10 @@
       "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
     },
     {
-      "bytes": 9519,
+      "bytes": 10858,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "ff5806a0da06418e2c9862e467e30b22418725c1d69529b0ea508b358c9c47db"
+      "sha256": "244ae9fa94d187123b308006b291139173c81ed44cb684d11a9c188469ae5cb6"
     },
     {
       "bytes": 1156,
@@ -834,6 +834,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CONFIG_SCHEMA_AND_RUNTIME_SAFETY_VALIDATION.md",
       "sha256": "074536b1da43abad49ee8b63a3ae834f7434622acf97c7a17d66a4761d8802ba"
+    },
+    {
+      "bytes": 5522,
+      "hash_mode": "text_lf",
+      "path": "docs/CORE_PAPER_BOOTSTRAP_SERIALIZATION_AND_PHASE14_ATOMIC_SNAPSHOT_V1.md",
+      "sha256": "2e2cfb6b4486c7e8d4a0cb239f8eaafa3507a28dca20e7e1d58404999373b5c9"
     },
     {
       "bytes": 4693,
@@ -3554,10 +3560,10 @@
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
     },
     {
-      "bytes": 20986,
+      "bytes": 26497,
       "hash_mode": "text_lf",
       "path": "scripts/docker_runtime_permissions_bootstrap.py",
-      "sha256": "3bb938d15cc9d0ba46248db81f9aa72e9aef401693f26c358abeb286839caccd"
+      "sha256": "008e0ca8dad45940ded1c044cc290d9b1a1f42c4d6fc3f6646245fed5cfedcb1"
     },
     {
       "bytes": 580,
@@ -3590,10 +3596,10 @@
       "sha256": "f63f2a61be2585c9fefb7e415f08c8471411deef4ea600023425d4874748605b"
     },
     {
-      "bytes": 7396,
+      "bytes": 18941,
       "hash_mode": "text_lf",
       "path": "scripts/export_freqtrade_paper_db_snapshot.py",
-      "sha256": "f4fe6141d0223954787fa10aebd2e3a0e1119f102fcdc9e52c009994e5c69e76"
+      "sha256": "6b78f4e973f8cd16b861ee10016000de67ab7837bfe35a72285124743d09123e"
     },
     {
       "bytes": 361,
@@ -3636,6 +3642,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/force_close_phase16_paper_trades.py",
       "sha256": "0df44de189c025762d4de4ae85e3a12ac2daedd505f64be7e32cef5cd167da0a"
+    },
+    {
+      "bytes": 10707,
+      "hash_mode": "text_lf",
+      "path": "scripts/freqtrade_paper_healthcheck.py",
+      "sha256": "cb796569a627834291fc761d729a14c4679b01bf51e7b0e9f42e32d56702cd8a"
     },
     {
       "bytes": 639,
@@ -7652,6 +7664,12 @@
       "sha256": "7ff6fe78dacdb90bd08b9d9c7cf1cad4f2fddb8261bc03c3ea18b9651fb8d69e"
     },
     {
+      "bytes": 12865,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/runtime/phase14_feedback_sync_healthcheck.py",
+      "sha256": "af080d71fe407c61512696907b7008b7a8e70492d41ebecb5702ded8eea71111"
+    },
+    {
       "bytes": 14231,
       "hash_mode": "text_lf",
       "path": "smartcrypto/runtime/preflight_orchestrator.py",
@@ -8094,6 +8112,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_config_schema_runtime_safety_validation.py",
       "sha256": "7581f4f34f874221b647bacd54ea8fe84a4fce80b99904f0ec453486fa089448"
+    },
+    {
+      "bytes": 8662,
+      "hash_mode": "text_lf",
+      "path": "tests/test_core_paper_bootstrap_serialization_v1.py",
+      "sha256": "f569e5b9aeddc8eb79a57468b1dcd2d975da11ea50abc20ad0d21d893b4fbb46"
     },
     {
       "bytes": 5120,
@@ -8738,10 +8762,16 @@
       "sha256": "57ee0bd6e648412f6e447ebbbd04e538ac37b848fbbf7b18be3fb53f38ede9b7"
     },
     {
-      "bytes": 5074,
+      "bytes": 5237,
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_linux_volume_persistence.py",
-      "sha256": "dea050c5ab9837a78884d620f7fd5386eca5e431cf590dba2286ac4fe83a1679"
+      "sha256": "6d77edf13bd8d795dff6dcac95529111e56f88f4c0d2087bf469fe93ca936faf"
+    },
+    {
+      "bytes": 6640,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_healthcheck_v1.py",
+      "sha256": "5e957de5bd1331bfa438b7593aec7dd7b01cc05ad9e98e6c534ce35f1e3f5fe3"
     },
     {
       "bytes": 10682,
@@ -9398,6 +9428,18 @@
       "sha256": "6e95523ca94a978620942db5f8c0baff150b0b21bb9571b5a02798b8a4180f3f"
     },
     {
+      "bytes": 10239,
+      "hash_mode": "text_lf",
+      "path": "tests/test_phase14_atomic_snapshot_v1.py",
+      "sha256": "477485e91141ae8cb8078ac4f86a6f649ba8284f0d0653a94cb2bb070ea98aac"
+    },
+    {
+      "bytes": 8520,
+      "hash_mode": "text_lf",
+      "path": "tests/test_phase14_feedback_sync_healthcheck_v1.py",
+      "sha256": "a8dcb6b4fbbfdf2ffb84680d9752993950d80e7652b236ee937a650c37df455b"
+    },
+    {
       "bytes": 7526,
       "hash_mode": "text_lf",
       "path": "tests/test_phase14_runtime_feedback_sync_service.py",
@@ -9554,10 +9596,10 @@
       "sha256": "0b136663b08f673f29f084ebcec1cb9e8e1a746b16b2a8f6aacb5d6ed389b6f5"
     },
     {
-      "bytes": 17796,
+      "bytes": 18250,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_refresh_supervisor_runtime_permissions_v1.py",
-      "sha256": "c342db459db885330599b067b06a5d553115ed55b08f34d06bcfbbdb6d630354"
+      "sha256": "3ab38d5b89250fd797cb5a6fe14181f9636b32739f4582f6b5aee5d8371cc1fb"
     },
     {
       "bytes": 8242,
