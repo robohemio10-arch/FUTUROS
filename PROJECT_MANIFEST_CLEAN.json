@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "9a959ca5cc75626146c8f6cd143068bc35a435b94c3decc851672a697eaa179b",
+  "aggregate_sha256": "fe9056fb3f2077937975258ad60dc7d5a18712b396966c1e07a1b3d866910f51",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2369,13 +2369,13 @@
       "bytes": 1767,
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
-      "sha256": "5d6edbd8bdb682a8903c9a79993bc1cafaaf38a81e87980b547b473e2b7c5467"
+      "sha256": "9402c8916a4a16b4c614eca51356a4c32f76f2a987737363cbb738be3a8dc384"
     },
     {
       "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "165470cac3c42b53de04dc88387c205bcae9267b9280c30158b6ff729c2c21b8"
+      "sha256": "4c5f7ab3a5c3e1c7c07975357529bcb9ec62b39ad8d7a2fa5b77cdf11495b825"
     },
     {
       "bytes": 92,
@@ -2387,7 +2387,7 @@
       "bytes": 1209,
       "hash_mode": "text_lf",
       "path": "requirements-runtime.lock",
-      "sha256": "1a4a61191ca8358a923d3de01488afdbb24ae82073ec2d6ee905d867aab35b01"
+      "sha256": "f28c7023df3cbe0ba54479a70960731f8391293589072330f530491a78f691ab"
     },
     {
       "bytes": 1286,
@@ -8651,7 +8651,7 @@
       "bytes": 5193,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_paper_runtime_permissions_and_runtime_lock_v1.py",
-      "sha256": "b2ff17ebe421f707c8ed411eab5f25641b8989c32e9dc23ccc34ef54f00d1c87"
+      "sha256": "240a6b4206434fd175f1c85afd2350c28933721481d1ebcde59ef83299554f5d"
     },
     {
       "bytes": 9072,
