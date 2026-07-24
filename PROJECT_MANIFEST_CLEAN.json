@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "af39f58cf953ea792b3a4017aee0d1145ad8a4bcea08a5bcd76555c88b1a0930",
+  "aggregate_sha256": "fe9056fb3f2077937975258ad60dc7d5a18712b396966c1e07a1b3d866910f51",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8651,7 +8651,7 @@
       "bytes": 5193,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_paper_runtime_permissions_and_runtime_lock_v1.py",
-      "sha256": "b2ff17ebe421f707c8ed411eab5f25641b8989c32e9dc23ccc34ef54f00d1c87"
+      "sha256": "240a6b4206434fd175f1c85afd2350c28933721481d1ebcde59ef83299554f5d"
     },
     {
       "bytes": 9072,
