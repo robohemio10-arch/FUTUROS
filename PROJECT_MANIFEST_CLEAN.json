@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "c92bde78136b4f1b05c8ed7c6b63dca30e61d7120395d3a0653085f85770a027",
+  "aggregate_sha256": "a68cb1bf7b18bfe52a2023464b98a68d416f235aa4926d26e23a7277344049b4",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -9602,10 +9602,10 @@
       "sha256": "8a82cf0f1d8fe1c48520d2ac9297ec0d1149c70a3635f59f7b8a1fd5394826fd"
     },
     {
-      "bytes": 10562,
+      "bytes": 9207,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_paper_refresh_supervisor.py",
-      "sha256": "e7fb1aa881ae91b0acd7c845a74656872fd08bf941ae0727c2c9e36ee98a157e"
+      "sha256": "dfa52164e6c25330f39562b430f886b6be1203f15a65dfa721c4096447398ed2"
     },
     {
       "bytes": 8276,
