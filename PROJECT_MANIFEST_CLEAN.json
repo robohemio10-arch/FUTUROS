@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2ec837034536cb2bb41204d0c70234c680046a9c4c812e5d9a9cfbf2917132d7",
+  "aggregate_sha256": "a68cb1bf7b18bfe52a2023464b98a68d416f235aa4926d26e23a7277344049b4",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 286,
-    "manifested_files_total": 1656,
-    "python_files": 1253,
+    "manifested_files_total": 1658,
+    "python_files": 1255,
     "runtime_excluded_files_total": 0,
-    "test_files": 347,
-    "tracked_files_total": 1657,
+    "test_files": 348,
+    "tracked_files_total": 1659,
     "workflows": 1
   },
   "deterministic": true,
@@ -3650,10 +3650,10 @@
       "sha256": "0df44de189c025762d4de4ae85e3a12ac2daedd505f64be7e32cef5cd167da0a"
     },
     {
-      "bytes": 10707,
+      "bytes": 13025,
       "hash_mode": "text_lf",
       "path": "scripts/freqtrade_paper_healthcheck.py",
-      "sha256": "cb796569a627834291fc761d729a14c4679b01bf51e7b0e9f42e32d56702cd8a"
+      "sha256": "4d7c3272e8811683eeb1adb93d5a5cfd0e45d6616593e5b94392b5e758c304fb"
     },
     {
       "bytes": 639,
@@ -7040,10 +7040,10 @@
       "sha256": "4924ac8f162bedc8a1cd9e8fa2094c24e0f65e2e4eed2c2fe1e2fdf74566a9cc"
     },
     {
-      "bytes": 10533,
+      "bytes": 12705,
       "hash_mode": "text_lf",
       "path": "smartcrypto/qlib_engine/paper_refresh_supervisor.py",
-      "sha256": "7b5a61e07ffbfd902b870593aa8f5930f1826b343f2b68e4225d4e5dd6173531"
+      "sha256": "0614c5b3b74d183364d30d2e4d8a6af94991c796dcae0aad76255f394b024ac7"
     },
     {
       "bytes": 7123,
@@ -7686,6 +7686,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/runtime/qlib_refresh_supervisor_healthcheck.py",
       "sha256": "33d0c6c5a1a3fa0ed2fbf656db12146218afef52cb5cb1a7c65c7208c2b2efc8"
+    },
+    {
+      "bytes": 7617,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/runtime/shared_freqtrade_signal_artifact.py",
+      "sha256": "2aebf857b57c557dd1ad500463f9b5b59d633957381d2c7441990354139d3b2e"
     },
     {
       "bytes": 327,
@@ -8786,6 +8792,12 @@
       "sha256": "13d5507a0161fe9a9c3dfceaf8b247052f01e892c59ec253876339b0c468c5ee"
     },
     {
+      "bytes": 8224,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_signal_permission_contract_hotfix_v1.py",
+      "sha256": "19c00ad36501df051c57dabecfcae758d585173e4e0e1e9c8230bac468669c7b"
+    },
+    {
       "bytes": 9201,
       "hash_mode": "text_lf",
       "path": "tests/test_full_historical_validation_15s_core_v1.py",
@@ -9590,10 +9602,10 @@
       "sha256": "8a82cf0f1d8fe1c48520d2ac9297ec0d1149c70a3635f59f7b8a1fd5394826fd"
     },
     {
-      "bytes": 10562,
+      "bytes": 9207,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_paper_refresh_supervisor.py",
-      "sha256": "e7fb1aa881ae91b0acd7c845a74656872fd08bf941ae0727c2c9e36ee98a157e"
+      "sha256": "dfa52164e6c25330f39562b430f886b6be1203f15a65dfa721c4096447398ed2"
     },
     {
       "bytes": 8276,
