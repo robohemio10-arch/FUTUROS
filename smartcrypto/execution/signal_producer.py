@@ -130,7 +130,7 @@ def read_json(path: str | os.PathLike[str]) -> dict[str, Any]:
 
 
 def atomic_write_json(path: str | os.PathLike[str], payload: Mapping[str, Any]) -> None:
-    institutional_atomic_write_json(path, payload, sort_keys=False)
+    institutional_atomic_write_json(Path(path), payload, sort_keys=False)
 
 
 def active_signals_from_payload(payload: Mapping[str, Any], now: datetime | None = None) -> list[dict[str, Any]]:

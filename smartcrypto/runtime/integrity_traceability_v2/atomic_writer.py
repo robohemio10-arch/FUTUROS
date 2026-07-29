@@ -532,8 +532,7 @@ class _InterProcessFileLock:
 
 def _lock_descriptor(descriptor: int) -> None:
     if os.name == "nt":
-        import msvcrt
-
+        msvcrt: Any = importlib.import_module("msvcrt")
         os.lseek(descriptor, 0, os.SEEK_SET)
         msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
         return
@@ -544,8 +543,7 @@ def _lock_descriptor(descriptor: int) -> None:
 
 def _unlock_descriptor(descriptor: int) -> None:
     if os.name == "nt":
-        import msvcrt
-
+        msvcrt: Any = importlib.import_module("msvcrt")
         os.lseek(descriptor, 0, os.SEEK_SET)
         msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
         return

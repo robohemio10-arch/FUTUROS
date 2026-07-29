@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "be987c041536e611ae2682645a0b5584fd7362addd05ffefaaffe1eeb79b18d8",
+  "aggregate_sha256": "64f8b6dc695c8f6b690ba967d30a7a63ae73a1d2b9e34674e11920a45e32bde3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -5594,10 +5594,10 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 23695,
+      "bytes": 23701,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "e651069836e63f1b0f0475acf45a356b83cce2c0e64ba25190f1a5fd08fe0dd7"
+      "sha256": "4402be5f355a86e077d656b600a20587d5e8f6ba589174311870e70ce705e56d"
     },
     {
       "bytes": 10881,
@@ -7688,10 +7688,10 @@
       "sha256": "1c3d070b8c0f4a1ef516bbba8fbde8375bcfd674cece66947598666d37e0f75d"
     },
     {
-      "bytes": 20800,
+      "bytes": 20866,
       "hash_mode": "text_lf",
       "path": "smartcrypto/runtime/integrity_traceability_v2/atomic_writer.py",
-      "sha256": "8853cc832789d3c906b886bf6cfe7717776cc979a77cc3eb44b972f48657773d"
+      "sha256": "e0e19a7c3a6e416e71abb625f329141a70883d37623c9ae899259fe799cf0323"
     },
     {
       "bytes": 15477,
