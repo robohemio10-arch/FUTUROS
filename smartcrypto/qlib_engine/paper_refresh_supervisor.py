@@ -12,6 +12,10 @@ from smartcrypto.execution.signal_producer import build_active_signals, inspect_
 from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
 from smartcrypto.qlib_engine.market_features_refresh import refresh_qlib_market_features
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+from smartcrypto.runtime.shared_freqtrade_signal_artifact import (
+    SharedFreqtradeSignalArtifactError,
+    publish_shared_freqtrade_signal_artifact,
+)
 
 
 OK = "ok"
@@ -20,6 +24,7 @@ MARKET_FEATURES_FAILED = "market_features_failed"
 PREDICTIONS_FAILED = "predictions_failed"
 PHASE13_FAILED = "phase13_failed"
 STALE_AFTER_REFRESH = "stale_after_refresh"
+SHARED_SIGNAL_PERMISSION_FAILED = "shared_signal_permission_contract_failed"
 
 DEFAULT_REPORT_PATH = Path("data/reports/qlib_paper_refresh_supervisor_report.json")
 DEFAULT_MARKET_FEATURES_PATH = Path("data/features/market_features_60d.parquet")
@@ -33,6 +38,7 @@ PredictionRefreshFn = Callable[..., dict[str, Any]]
 Phase13Fn = Callable[..., dict[str, Any]]
 FreshnessFn = Callable[..., dict[str, Any]]
 SignalInspectFn = Callable[[str | os.PathLike[str]], dict[str, Any]]
+SignalPermissionFn = Callable[..., dict[str, Any]]
 
 
 @dataclass(frozen=True)
@@ -66,6 +72,7 @@ def run_paper_refresh_supervisor(
     phase13_fn: Phase13Fn = build_active_signals,
     freshness_fn: FreshnessFn = inspect_qlib_prediction_freshness,
     signal_inspect_fn: SignalInspectFn = inspect_signal_file,
+    signal_permission_fn: SignalPermissionFn = publish_shared_freqtrade_signal_artifact,
     write_report: bool = True,
 ) -> dict[str, Any]:
     cfg = config or PaperRefreshSupervisorConfig()
@@ -151,6 +158,41 @@ def run_paper_refresh_supervisor(
             write_json(cfg.report_path, report)
         return report
 
+    signal_permission_contract: dict[str, Any]
+    try:
+        signal_permission_contract = signal_permission_fn(
+            cfg.pinned_signals_path,
+            required=bool(phase13_report.get("written_pinned")),
+        )
+    except SharedFreqtradeSignalArtifactError as exc:
+        signal_permission_contract = {
+            "status": BLOCKED,
+            "reason": str(exc),
+            "path": str(cfg.pinned_signals_path),
+            "consumer_readable": False,
+            "paper_only": True,
+            "shadow_only": True,
+            "live_trading_enabled": False,
+            "order_submission_enabled": False,
+            "real_order_submission_enabled": False,
+            "exchange_private_access": False,
+            "sends_orders": False,
+            "changes_risk": False,
+            "changes_model": False,
+        }
+        report = base_report(
+            cfg,
+            status=PHASE13_FAILED,
+            reason=f"{SHARED_SIGNAL_PERMISSION_FAILED}:{exc}",
+            market_report=market_report,
+            prediction_report=prediction_report,
+            phase13_report=phase13_report,
+            signal_permission_contract=signal_permission_contract,
+        )
+        if write_report:
+            write_json(cfg.report_path, report)
+        return report
+
     freshness = freshness_fn(
         cfg.predictions_output_path,
         max_allowed_age_minutes=cfg.max_prediction_age_minutes,
@@ -169,6 +211,7 @@ def run_paper_refresh_supervisor(
             phase13_report=phase13_report,
             freshness=freshness,
             signals_after=signals_after,
+            signal_permission_contract=signal_permission_contract,
         )
         if write_report:
             write_json(cfg.report_path, report)
@@ -183,6 +226,7 @@ def run_paper_refresh_supervisor(
         phase13_report=phase13_report,
         freshness=freshness,
         signals_after=signals_after,
+        signal_permission_contract=signal_permission_contract,
     )
     if write_report:
         write_json(cfg.report_path, report)
@@ -213,6 +257,7 @@ def base_report(
     phase13_report: dict[str, Any] | None = None,
     freshness: dict[str, Any] | None = None,
     signals_after: dict[str, Any] | None = None,
+    signal_permission_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     market_report = market_report or {}
     prediction_report = prediction_report or {}
@@ -227,7 +272,16 @@ def base_report(
         "phase13_status": phase13_report.get("status"),
         "input_data_status": freshness.get("input_data_status") or prediction_report.get("input_data_status"),
         "prediction_freshness": freshness,
-        "signals_after": signals_after or {"path": str(cfg.pinned_signals_path), "exists": Path(cfg.pinned_signals_path).exists()},
+        "signals_after": signals_after or {
+            "path": str(cfg.pinned_signals_path),
+            "exists": Path(cfg.pinned_signals_path).exists(),
+        },
+        "signal_permission_contract": signal_permission_contract or {
+            "status": "not_evaluated",
+            "reason": "phase13_not_completed",
+            "path": str(cfg.pinned_signals_path),
+            "consumer_readable": False,
+        },
         "next_recommended_run_seconds": int(cfg.next_recommended_run_seconds),
         "market_features_report": market_report,
         "predictions_report": prediction_report,
@@ -259,7 +313,10 @@ def write_json(path: str | Path, payload: dict[str, Any]) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     tmp = target.with_suffix(target.suffix + ".tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    tmp.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str),
+        encoding="utf-8",
+    )
     tmp.replace(target)
 
 
