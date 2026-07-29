@@ -238,7 +238,7 @@ def test_supervisor_blocks_when_permission_contract_fails(
     assert report["signal_permission_contract"][
         "consumer_readable"
     ] is False
-    assert report["sends_orders"] is False
+    assert report["signal_permission_contract"]["sends_orders"] is False
 
 
 def test_healthcheck_blocks_permission_denied_signal_file(
