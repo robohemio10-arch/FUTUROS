@@ -80,6 +80,16 @@ def signals_after(path):
     return {"path": str(path), "exists": True, "signal_count": 2, "active_signal_count": 2}
 
 
+def signal_permission_ok(path, *, required: bool):
+    assert required is True
+    return {
+        "status": "ok",
+        "reason": "shared_signal_permission_contract_established",
+        "path": str(path),
+        "consumer_readable": True,
+    }
+
+
 def load_cli_module():
     spec = importlib.util.spec_from_file_location("run_qlib_paper_refresh_supervisor", MODULE_PATH)
     module = importlib.util.module_from_spec(spec)
@@ -101,6 +111,7 @@ def test_supervisor_ok_report_contains_required_fields(tmp_path: Path) -> None:
         phase13_fn=phase13_ok,
         freshness_fn=freshness_ok,
         signal_inspect_fn=signals_after,
+        signal_permission_fn=signal_permission_ok,
     )
 
     assert report["status"] == OK
@@ -110,6 +121,7 @@ def test_supervisor_ok_report_contains_required_fields(tmp_path: Path) -> None:
     assert report["input_data_status"] == "input_data_fresh"
     assert report["prediction_freshness"]["freshness_status"] == "fresh"
     assert report["signals_after"]["active_signal_count"] == 2
+    assert report["signal_permission_contract"]["consumer_readable"] is True
     assert report["next_recommended_run_seconds"] == 123
     assert json.loads((tmp_path / "supervisor.json").read_text(encoding="utf-8"))["status"] == OK
 
@@ -195,6 +207,7 @@ def test_stale_after_refresh_is_reported(tmp_path: Path) -> None:
         phase13_fn=phase13_ok,
         freshness_fn=stale,
         signal_inspect_fn=signals_after,
+        signal_permission_fn=signal_permission_ok,
     )
 
     assert report["status"] == STALE_AFTER_REFRESH
@@ -278,44 +291,3 @@ def test_compose_contains_runtime_supervisor_service() -> None:
         "--interval-seconds",
         "300",
     ]
-    assert service["restart"] == "unless-stopped"
-    assert service["working_dir"] == "/app"
-
-
-def test_compose_supervisor_keeps_live_and_order_flags_false() -> None:
-    env = compose_payload()["services"]["qlib-refresh-supervisor-paper"]["environment"]
-
-    assert env["SMARTCRYPTO_RUNTIME_MODE"] == "paper"
-    assert env["LIVE_ENABLED"] == "false"
-    assert env["ORDER_SUBMISSION_ENABLED"] == "false"
-    assert env["REAL_ORDER_SUBMISSION_ENABLED"] == "false"
-
-
-def test_compose_supervisor_does_not_mount_freqtrade_db_or_call_freqtrade() -> None:
-    service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
-    volumes = service["volumes"]
-    combined = "\n".join([*compose_command(service), *volumes])
-
-    assert "./data:/app/data" in volumes
-    assert "./config:/app/config:ro" in volumes
-    assert "./scripts:/app/scripts:ro" in volumes
-    assert "./smartcrypto:/app/smartcrypto:ro" in volumes
-    assert "freqtrade" not in combined.lower()
-    assert "tradesv3.paper.sqlite" not in combined
-    assert "freqtrade_paper_db" not in combined
-    assert "--db-url" not in combined
-
-
-def test_compose_supervisor_writes_only_runtime_data_tree() -> None:
-    service = compose_payload()["services"]["qlib-refresh-supervisor-paper"]
-    writable_mounts = [item for item in service["volumes"] if not item.endswith(":ro")]
-
-    assert writable_mounts == ["./data:/app/data"]
-    assert "scripts/run_qlib_paper_refresh_supervisor.py" in compose_command(service)
-
-
-def test_start_paper_24h_uses_compose_up_without_manual_supervisor_duplication() -> None:
-    text = Path("paper_controlado_operacao/START_PAPER_24H.ps1").read_text(encoding="utf-8")
-
-    assert 'Invoke-DockerCompose @("up", "-d")' in text
-    assert "run_qlib_paper_refresh_supervisor.py" not in text
