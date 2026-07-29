@@ -13,6 +13,9 @@ from typing import Any
 
 DEFAULT_CONFIG_PATH = Path("/freqtrade/user_data/config.paper.json")
 DEFAULT_DATABASE_PATH = Path("/freqtrade/user_data/db/tradesv3.paper.sqlite")
+DEFAULT_SIGNAL_PATH = Path(
+    "/freqtrade/user_data/data/runtime/active_freqtrade_signals.json"
+)
 DEFAULT_MIN_UPTIME_SECONDS = 45
 
 SAFE_FLAGS = {
@@ -182,10 +185,56 @@ def _database_findings(path: Path) -> tuple[list[str], bool]:
     return findings, not findings
 
 
+def _signal_file_findings(
+    path: Path,
+) -> tuple[list[str], bool, bool, int | None]:
+    """Validate readability only when the producer artifact is present.
+
+    A missing file is allowed during bootstrap or a legitimate empty-signal
+    interval. An existing-but-unreadable file is a blocking integration fault.
+    """
+
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except FileNotFoundError:
+        return [], False, False, None
+    except PermissionError:
+        return ["signal_file_permission_denied"], False, False, None
+    except OSError:
+        return ["signal_file_unreadable"], False, False, None
+
+    if stat.S_ISLNK(metadata.st_mode):
+        return ["signal_file_symlink_forbidden"], True, False, None
+    if not stat.S_ISREG(metadata.st_mode):
+        return ["signal_file_not_regular_file"], True, False, None
+    if metadata.st_size <= 0:
+        return ["signal_file_empty"], True, False, None
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except PermissionError:
+        return ["signal_file_permission_denied"], True, False, None
+    except (OSError, UnicodeError):
+        return ["signal_file_unreadable"], True, False, None
+    except json.JSONDecodeError:
+        return ["signal_file_invalid_json"], True, False, None
+
+    if not isinstance(payload, dict):
+        return ["signal_file_not_object"], True, False, None
+
+    signals = payload.get("signals", [])
+    if not isinstance(signals, list):
+        return ["signal_file_signals_not_list"], True, False, None
+
+    signal_count = sum(1 for item in signals if isinstance(item, dict))
+    return [], True, True, signal_count
+
+
 def run_freqtrade_paper_healthcheck(
     *,
     config_path: str | Path = DEFAULT_CONFIG_PATH,
     database_path: str | Path = DEFAULT_DATABASE_PATH,
+    signal_path: str | Path = DEFAULT_SIGNAL_PATH,
     min_uptime_seconds: int = DEFAULT_MIN_UPTIME_SECONDS,
     now: datetime | None = None,
     proc_stat_path: str | Path = "/proc/stat",
@@ -197,6 +246,7 @@ def run_freqtrade_paper_healthcheck(
     checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     config = Path(config_path)
     database = Path(database_path)
+    signals = Path(signal_path)
     findings: list[str] = []
     pid1_started_at: datetime | None = None
     uptime_seconds: float | None = None
@@ -259,6 +309,14 @@ def run_freqtrade_paper_healthcheck(
     findings.extend(database_findings)
     trades_table_present = readonly_open_ok
 
+    (
+        signal_findings,
+        signal_file_exists,
+        signal_file_readable,
+        signal_count,
+    ) = _signal_file_findings(signals)
+    findings.extend(signal_findings)
+
     blocking_findings = sorted(set(findings))
     status = "blocked" if blocking_findings else "ok"
     return {
@@ -277,6 +335,10 @@ def run_freqtrade_paper_healthcheck(
         "database_path": str(database),
         "database_readonly_open_ok": readonly_open_ok,
         "trades_table_present": trades_table_present,
+        "signal_path": str(signals),
+        "signal_file_exists": signal_file_exists,
+        "signal_file_readable": signal_file_readable,
+        "signal_count": signal_count,
         "dry_run": dry_run,
         "blocking_findings": blocking_findings,
         **SAFE_FLAGS,
@@ -289,6 +351,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH))
     parser.add_argument("--database", default=str(DEFAULT_DATABASE_PATH))
+    parser.add_argument("--signals", default=str(DEFAULT_SIGNAL_PATH))
     parser.add_argument(
         "--min-uptime-seconds",
         type=int,
@@ -303,6 +366,7 @@ def main(argv: list[str] | None = None) -> int:
     report = run_freqtrade_paper_healthcheck(
         config_path=args.config,
         database_path=args.database,
+        signal_path=args.signals,
         min_uptime_seconds=args.min_uptime_seconds,
     )
     if not args.quiet:
