@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_write_json as institutional_atomic_write_json,
+)
 
 
 def utc_now() -> datetime:
@@ -45,12 +47,7 @@ def normalize_pair(value: str | None) -> str:
 
 
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8", dir=str(path.parent), suffix=".tmp") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2, sort_keys=False)
-        fh.write("\n")
-        tmp_name = fh.name
-    os.replace(tmp_name, path)
+    institutional_atomic_write_json(path, payload, sort_keys=False)
 
 
 def read_json(path: Path) -> dict[str, Any] | None:

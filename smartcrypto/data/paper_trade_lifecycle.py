@@ -13,6 +13,8 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
+
 
 @dataclass(frozen=True)
 class PaperFeedbackConfig:
@@ -61,8 +63,7 @@ def ensure_parent(path: Path) -> None:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
-    ensure_parent(path)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    atomic_write_json(path, payload, sort_keys=False)
 
 
 def find_existing_db(candidates: tuple[Path, ...]) -> Path | None:

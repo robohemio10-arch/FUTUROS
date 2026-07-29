@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
+
 
 DEFAULT_INPUT_PATH = Path("data/reports/ai_shadow_model_outcomes.jsonl")
 DEFAULT_REPORT_PATH = Path("data/reports/monte_carlo_risk_simulation_report.json")
@@ -568,11 +570,7 @@ def blocked_report(
 def write_report(report: dict[str, Any], report_path: Path | None) -> None:
     if report_path is None:
         return
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        json.dumps(report, indent=2, ensure_ascii=False, default=str),
-        encoding="utf-8",
-    )
+    atomic_write_json(report_path, report, sort_keys=False)
 
 
 def utc_timestamp() -> str:

@@ -10,6 +10,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    ConsistentReadError,
+    read_json_consistent,
+)
+
 
 DEFAULT_REPORT_PATH = Path(
     "/app/data/reports/phase14_runtime_feedback_sync_report.json"
@@ -131,8 +136,8 @@ def _read_report(path: Path) -> dict[str, Any]:
     if metadata.st_size <= 0:
         raise Phase14HealthcheckError("report_empty")
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        payload = read_json_consistent(path)
+    except ConsistentReadError as exc:
         raise Phase14HealthcheckError("report_invalid_json") from exc
     if not isinstance(payload, dict):
         raise Phase14HealthcheckError("report_not_object")

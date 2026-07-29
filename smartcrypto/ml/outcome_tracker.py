@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +9,10 @@ from typing import Any
 import pandas as pd
 
 from smartcrypto.ml.model_decision_logger import normalize_side, normalize_symbol, read_jsonl, stable_hash
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_append_jsonl,
+    atomic_write_json,
+)
 
 
 DEFAULT_DECISIONS_PATH = Path("data/reports/ai_shadow_model_decisions.jsonl")
@@ -93,13 +96,7 @@ class OutcomeTracker:
         return payload
 
     def _save(self, payload: dict[str, Any]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temp_path = self.path.with_suffix(self.path.suffix + f".{uuid.uuid4().hex}.tmp")
-        temp_path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
-        temp_path.replace(self.path)
+        atomic_write_json(self.path, payload)
 
 
 def track_ai_shadow_outcomes(
@@ -152,11 +149,7 @@ def track_ai_shadow_outcomes(
 
     matched_count = sum(1 for item in tracked if item["matched"])
     status = "ok" if matched_count else "no_matches"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("a", encoding="utf-8", newline="\n") as handle:
-        for item in tracked:
-            handle.write(json.dumps(item, ensure_ascii=False, sort_keys=True, default=str))
-            handle.write("\n")
+    atomic_append_jsonl(output, tracked)
 
     report = {
         "status": status,
@@ -363,9 +356,7 @@ def safety_payload() -> dict[str, Any]:
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
-    output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    atomic_write_json(path, payload, sort_keys=False)
 
 
 def utc_timestamp() -> str:

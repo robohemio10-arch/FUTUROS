@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
 
 
 DEFAULT_CONFIG_PATH = Path("config/qlib_model.yml")
@@ -56,11 +57,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> QlibEngineConfig:
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
-    target = Path(path)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_suffix(target.suffix + ".tmp")
-    tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
-    tmp.replace(target)
+    atomic_write_json(path, payload, sort_keys=False)
 
 
 def qlib_runtime_status() -> dict[str, Any]:

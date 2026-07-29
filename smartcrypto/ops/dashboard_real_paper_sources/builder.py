@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import sqlite3
 from collections import Counter
@@ -10,6 +9,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    ConsistentReadError,
+    atomic_write_json,
+    read_json_consistent,
+)
 
 
 SCHEMA_VERSION = "dashboard_real_paper_sources_snapshot_v1"
@@ -149,11 +154,7 @@ def build_real_paper_sources_snapshot(
     }
 
     if write and resolved_output is not None:
-        resolved_output.parent.mkdir(parents=True, exist_ok=True)
-        resolved_output.write_text(
-            json.dumps(json_safe(snapshot), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        atomic_write_json(resolved_output, json_safe(snapshot))
 
     exit_code = 2 if status == "blocked" else 0
     return BuildResult(exit_code=exit_code, snapshot=json_safe(snapshot), output_path=resolved_output)
@@ -171,13 +172,13 @@ def load_json_report(path: Path) -> dict[str, Any]:
         }
 
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
+        payload = read_json_consistent(path)
+    except ConsistentReadError as exc:
         return {
             "exists": True,
             "path": path.as_posix(),
             "status": "error",
-            "error": f"{type(exc).__name__}:{exc}",
+            "error": f"{type(exc).__name__}:{exc.reason}",
             "size_bytes": path.stat().st_size,
         }
 

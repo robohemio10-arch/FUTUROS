@@ -10,6 +10,11 @@ from typing import Any
 
 import pandas as pd
 
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_append_jsonl,
+    atomic_write_json,
+)
+
 
 RISK_ACTIONS = {"ALLOW_SHADOW", "BLOCK_AI", "REDUCE_CONFIDENCE", "NO_ACTION"}
 SECRET_MARKERS = ("secret", "token", "key", "password", "credential")
@@ -82,10 +87,7 @@ class ModelDecisionLogger:
         return decision
 
     def append(self, decision: ModelDecision) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(json.dumps(decision.to_dict(), ensure_ascii=False, sort_keys=True))
-            handle.write("\n")
+        atomic_append_jsonl(self.path, (decision.to_dict(),))
 
     def read(self) -> list[dict[str, Any]]:
         return read_jsonl(self.path)
@@ -159,11 +161,7 @@ def log_ai_shadow_model_decisions(
             )
         decisions.append(normalize_decision_row(merged, source=str(source)))
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("a", encoding="utf-8", newline="\n") as handle:
-        for decision in decisions:
-            handle.write(json.dumps(decision, ensure_ascii=False, sort_keys=True, default=str))
-            handle.write("\n")
+    atomic_append_jsonl(output, decisions)
 
     report = {
         "status": "ok",
@@ -346,9 +344,7 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
-    output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    atomic_write_json(path, payload, sort_keys=False)
 
 
 def first_float(row: dict[str, Any], keys: tuple[str, ...], *, default: float) -> float:

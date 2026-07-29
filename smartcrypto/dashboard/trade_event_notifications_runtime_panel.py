@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    ConsistentReadError,
+    read_json_consistent,
+)
 
 DEFAULT_TRADE_EVENT_NOTIFICATIONS_REPORT_PATH = Path(
     "data/reports/trade_event_notifications_report.json"
@@ -64,14 +68,14 @@ def load_json_object(path: str | Path) -> dict[str, Any]:
         }
 
     try:
-        payload = json.loads(target.read_text(encoding="utf-8"))
-    except Exception as exc:
+        payload = read_json_consistent(target)
+    except ConsistentReadError as exc:
         return {
             "exists": True,
             "status": "invalid",
             "path": str(target),
             "payload": {},
-            "reason": f"{type(exc).__name__}: {exc}",
+            "reason": f"{type(exc).__name__}: {exc.reason}",
         }
 
     if not isinstance(payload, dict):

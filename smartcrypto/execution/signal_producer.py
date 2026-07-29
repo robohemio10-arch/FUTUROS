@@ -23,6 +23,9 @@ from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import 
     prepare_before_risk_manager,
 )
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_write_json as institutional_atomic_write_json,
+)
 
 
 DEFAULT_CONFIG_PATH = "config/signal_producer.yml"
@@ -127,15 +130,7 @@ def read_json(path: str | os.PathLike[str]) -> dict[str, Any]:
 
 
 def atomic_write_json(path: str | os.PathLike[str], payload: Mapping[str, Any]) -> None:
-    file_path = Path(path)
-    ensure_parent(file_path)
-
-    tmp_path = file_path.with_suffix(file_path.suffix + ".tmp")
-    with tmp_path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2, default=str)
-        handle.write("\n")
-
-    tmp_path.replace(file_path)
+    institutional_atomic_write_json(Path(path), payload, sort_keys=False)
 
 
 def active_signals_from_payload(payload: Mapping[str, Any], now: datetime | None = None) -> list[dict[str, Any]]:

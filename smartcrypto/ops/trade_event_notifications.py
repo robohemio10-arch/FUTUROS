@@ -18,6 +18,7 @@ from smartcrypto.ops.notification_channels import (
     preflight_notification_channels,
     settings_from_env,
 )
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
 
 WATCHED_PAIRS: dict[str, str] = {
     "BTC/USDT:USDT": "https://www.binance.com/en/futures/BTCUSDT",
@@ -776,9 +777,7 @@ def dispatch_trade_events(
 
 
 def write_report(report: Mapping[str, Any], report_path: str | Path) -> None:
-    target = Path(report_path)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    atomic_write_json(report_path, report)
 
 
 def run_trade_event_notification_scan(

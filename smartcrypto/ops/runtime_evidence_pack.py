@@ -14,6 +14,11 @@ from smartcrypto.ops.paper_runtime_health_and_freshness.auditor import (
 from smartcrypto.ops.paper_runtime_health_and_freshness.contracts import (
     EXPECTED_PAPER_SERVICES,
 )
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    ConsistentReadError,
+    atomic_write_json,
+    read_json_consistent,
+)
 
 
 SCHEMA_VERSION = "runtime_evidence_pack_v2"
@@ -563,12 +568,12 @@ def load_json_evidence(path: Path, *, required: bool) -> dict[str, Any]:
             "payload": {},
         }
     try:
-        payload = json.loads(path.read_text(encoding="utf-8-sig") or "{}")
-    except json.JSONDecodeError as exc:
+        payload = read_json_consistent(path)
+    except ConsistentReadError as exc:
         return {
             "status": "invalid_schema",
             "reason": "invalid_json",
-            "error": str(exc),
+            "error": exc.reason,
             "path": str(path),
             "exists": True,
             "required": required,
@@ -1108,8 +1113,7 @@ def resolve_under_root(root: Path, value: str | Path) -> Path:
 
 
 def write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    atomic_write_json(path, payload)
 
 
 def iso(value: datetime) -> str:

@@ -5,6 +5,11 @@ from datetime import datetime
 from pathlib import Path
 import zipfile
 
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_write_json,
+    read_json_consistent,
+)
+
 
 REPORTS = [
     "data/reports/phase16_preflight_report.json",
@@ -19,7 +24,7 @@ REPORTS = [
 def read_json(path: Path):
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    return read_json_consistent(path)
 
 
 def main() -> None:
@@ -31,8 +36,7 @@ def main() -> None:
     }
 
     out = Path("data/reports/phase16_summary.json")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    atomic_write_json(out, summary, sort_keys=False)
 
     evidence_dir = Path("data/evidence")
     evidence_dir.mkdir(parents=True, exist_ok=True)
