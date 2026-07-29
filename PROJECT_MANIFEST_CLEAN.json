@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "64f8b6dc695c8f6b690ba967d30a7a63ae73a1d2b9e34674e11920a45e32bde3",
+  "aggregate_sha256": "0d4cdb0657171a2afa46abb16a290b5137cb3f303d4a862f7168f763903d07d6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 287,
-    "manifested_files_total": 1666,
-    "python_files": 1262,
+    "docs_files": 288,
+    "manifested_files_total": 1676,
+    "python_files": 1271,
     "runtime_excluded_files_total": 0,
-    "test_files": 349,
-    "tracked_files_total": 1667,
+    "test_files": 350,
+    "tracked_files_total": 1677,
     "workflows": 1
   },
   "deterministic": true,
@@ -548,10 +548,10 @@
       "sha256": "f71b0d5f91368cfbf5f9c820cd0562b16178f7dd9e7e798b22e5c25280907e61"
     },
     {
-      "bytes": 9476,
+      "bytes": 11532,
       "hash_mode": "text_lf",
       "path": "config/trader_master_legacy_research_only_policy_v1.json",
-      "sha256": "1d5f4ab5fc31726e8949e74cc8777eeef89fca69f0beba92b566e4018310b741"
+      "sha256": "b6723f604e51559a96cc3f71032d74145d38214f5fa0ba772fb4a00262203751"
     },
     {
       "bytes": 168,
@@ -804,6 +804,12 @@
       "hash_mode": "text_lf",
       "path": "docs/BITRADEX_OCR_V11_SINGLE_COMMAND_INGESTION_ORCHESTRATOR.md",
       "sha256": "6922d0500cb6e356d547a9490340e50e03bdac24cef83ea8a5faeeac6e71178d"
+    },
+    {
+      "bytes": 7328,
+      "hash_mode": "text_lf",
+      "path": "docs/CANONICAL_DATA_FOUNDATION_V2.md",
+      "sha256": "470cf3a8421fa35b395a483b75a694323592463b324e9882385753e71e18183d"
     },
     {
       "bytes": 3243,
@@ -2838,6 +2844,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_bitradex_ocr_legacy_canonical_xlsx_transition_v2.py",
       "sha256": "123bd195a147681fa46a840a2adde860dafa6526cc17aa97f2c0ac676d18df59"
+    },
+    {
+      "bytes": 2287,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_canonical_data_foundation_v2.py",
+      "sha256": "64d53bebae456b6ce7e40372b57910219e0adbe7f7bada31b6411d4cb3d75e91"
     },
     {
       "bytes": 4936,
@@ -5118,6 +5130,48 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/bitradex_ocr_legacy_compatibility/contract.py",
       "sha256": "ae61ffe97595273dd26f28865f04ace81f86a454116a4e6c0fc396d2a8fc2685"
+    },
+    {
+      "bytes": 1287,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/__init__.py",
+      "sha256": "a67993c2fbd304db9cada87bb487d85819cc726e416d981b7b5124f9a2fffdcd"
+    },
+    {
+      "bytes": 28112,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/candles.py",
+      "sha256": "19b28554e5554ff8dfaf6e05077e235d69141f3db5d609c5565b4d2ea869bc5d"
+    },
+    {
+      "bytes": 12308,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/contracts.py",
+      "sha256": "c64f0ae6575494627771b79596a21da1f15cf48042532135b290be076d0d5d7a"
+    },
+    {
+      "bytes": 24595,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/lineage.py",
+      "sha256": "7debb9f21366595ec8e41a48f642f76f18ff000af1212d9b3d936ecd4d972454"
+    },
+    {
+      "bytes": 9546,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/manifest.py",
+      "sha256": "9061713eb6e38bfdbcd621cbe7f00f11765bc4ce44e258ef596863bc5e61d38d"
+    },
+    {
+      "bytes": 24376,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/pipeline.py",
+      "sha256": "aa056da44dbaf28df116ff7e8cde7645a7b1a2b614ad9db055bff1c107c2da8b"
+    },
+    {
+      "bytes": 3297,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/canonical_data_foundation_v2/reporting.py",
+      "sha256": "c22df39a06e9e114ceb75623638ae6da7da4bf240986195e5a6be08d6c482b2a"
     },
     {
       "bytes": 13368,
@@ -8102,10 +8156,10 @@
       "sha256": "188b283884245c120e3c486acf3fda31c3b77d29ce1fd7da602c8c8fee278145"
     },
     {
-      "bytes": 14785,
+      "bytes": 15206,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_batch_readonly_adapter_v2.py",
-      "sha256": "939891e30bf72e42fddb4fbda1f35227f2cf2128118996c7835a41f480f64877"
+      "sha256": "1e8927f1d6defa0ee33810c2c959cce9ca008b87dda4f12d7aa0e9b125269018"
     },
     {
       "bytes": 35567,
@@ -8142,6 +8196,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_v11_single_command_ingestion_orchestrator.py",
       "sha256": "d56ae5a53211d7ebfab7045bc1d97bcb1fa123a87210a73a0dc24f102e7a70c5"
+    },
+    {
+      "bytes": 33907,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_data_foundation_v2.py",
+      "sha256": "b631c03840552f801d5b32153041cd1b29a11b83afefed52e9a52174e57a7502"
     },
     {
       "bytes": 3730,
@@ -9941,13 +10001,13 @@
       "bytes": 7559,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_reverification_closeout_v1.py",
-      "sha256": "f18b0de0bdae1e700e20a82ca058f5daa0abab6769082d1a377c7707fc65f46c"
+      "sha256": "0cecab6b0534dd72ae3b3e9da9ddfcda1d8db1b2e9f0fa20ef125552e6375fff"
     },
     {
       "bytes": 7110,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_writer_callsite_removal_v1.py",
-      "sha256": "d44be7f05bcb78f6439d55b52b9ded7e6d54a116e7c3b7c20ecefdba1efd8497"
+      "sha256": "b666507ad990ad50e9675790a4713542f61881abc5dfa394d2ecd1a9259e827d"
     },
     {
       "bytes": 13692,

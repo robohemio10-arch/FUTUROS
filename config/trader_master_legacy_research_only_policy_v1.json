@@ -180,6 +180,33 @@
       "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
       "justification": "Non-operational profit research analysis that reads the pinned legacy Master exclusively for historical diagnostics and economic hypothesis generation, with no import, signal, risk, model or execution authority.",
       "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/canonical_data_foundation_v2/lineage.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "evidence_inventory", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "B02 terminal lineage domain that reads the immutable legacy Master exclusively through the institutional temporary-copy adapter and cannot import, write, deduplicate, generate operational fingerprints, train, signal, change risk or execute orders.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "smartcrypto/data/canonical_data_foundation_v2/pipeline.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "evidence_inventory", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "B02 no-write orchestration that inventories and classifies legacy evidence without Trader Master mutation, runtime authority, model promotion, signals, risk changes or order execution.",
+      "operational_authority": false
+    },
+    {
+      "relative_path": "scripts/build_canonical_data_foundation_v2.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "evidence_inventory", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["diagnostic_metrics"],
+      "justification": "B02 no-write-by-default CLI. Explicit writes are restricted to ignored research reports and never target Trader Master, runtime, models, signals, risk or execution.",
+      "operational_authority": false
     }
   ],
   "quarantined_legacy_implementations": [
