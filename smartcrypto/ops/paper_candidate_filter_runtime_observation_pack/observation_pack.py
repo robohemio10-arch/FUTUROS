@@ -10,6 +10,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from smartcrypto.runtime.integrity_traceability_v2 import (
+    atomic_write_json,
+    atomic_write_text,
+)
+
 SCHEMA_VERSION = "paper_candidate_filter_runtime_observation_pack_v1"
 DEFAULT_AB_TEST_REPORT = Path("data/reports/paper_only_candidate_strategy_ab_test_v1.json")
 DEFAULT_DAILY_IMPACT_REPORT = Path("data/reports/paper_shadow_observation_daily_impact_report_v1.json")
@@ -167,10 +172,8 @@ def build_paper_candidate_filter_runtime_observation_pack(
             report["reason"] = output_error or markdown_error
             report["validation_errors"] = validate_observation_pack(report)
             return report
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        markdown_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
-        markdown_path.write_text(render_markdown_report(report), encoding="utf-8")
+        atomic_write_json(output_path, report)
+        atomic_write_text(markdown_path, render_markdown_report(report))
         report["write_performed"] = True
         report["output_path"] = _project_relative(output_path, root)
         report["markdown_output_path"] = _project_relative(markdown_path, root)

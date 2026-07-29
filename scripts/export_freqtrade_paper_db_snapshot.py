@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
+
 
 DEFAULT_VOLUME_NAME = "futuros_freqtrade_paper_db"
 DEFAULT_VOLUME_DB_PATH = "/paper-db/tradesv3.paper.sqlite"
@@ -142,11 +144,7 @@ def ensure_parent(path: Path) -> None:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
-    ensure_parent(path)
-    path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False, default=str),
-        encoding="utf-8",
-    )
+    atomic_write_json(path, payload, sort_keys=False)
 
 
 def _reject_existing_symlink_components(path: Path) -> None:

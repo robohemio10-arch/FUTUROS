@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import time
 from dataclasses import dataclass
@@ -12,6 +11,7 @@ from smartcrypto.execution.signal_producer import build_active_signals, inspect_
 from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
 from smartcrypto.qlib_engine.market_features_refresh import refresh_qlib_market_features
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
 from smartcrypto.runtime.shared_freqtrade_signal_artifact import (
     SharedFreqtradeSignalArtifactError,
     publish_shared_freqtrade_signal_artifact,
@@ -310,14 +310,7 @@ def unsafe_runtime_flags() -> list[str]:
 
 
 def write_json(path: str | Path, payload: dict[str, Any]) -> None:
-    target = Path(path)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_suffix(target.suffix + ".tmp")
-    tmp.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str),
-        encoding="utf-8",
-    )
-    tmp.replace(target)
+    atomic_write_json(path, payload)
 
 
 def utc_now() -> str:
