@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "401dd1e098fb09f834c0a7e3c473c39c64de99b929ff679c284d2bf26ecf4c25",
+  "aggregate_sha256": "1fcf6d3dc519d371dd4e5bf6394cc1a8c2f08963c544a0e4d56888c8a54b636e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -5312,10 +5312,10 @@
       "sha256": "e66a652cd8ac11f2290a8a08823829abc8e95b87270839cb2b1498d40bfdc46e"
     },
     {
-      "bytes": 12792,
+      "bytes": 13022,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
-      "sha256": "a38803ecb5a79d79435392ebbe83c3a59487ebb1cf61f4bfbe4ad02bde7a30cb"
+      "sha256": "d9bbb749d726b2352b1ca498a722f1419b8a5bf43ae2d958549095f543dcee42"
     },
     {
       "bytes": 28632,
@@ -9200,10 +9200,10 @@
       "sha256": "68ae6f65f4c2b92fd27506fb9a75421e368692a9b3215ca0da3368e8e99fdb26"
     },
     {
-      "bytes": 13692,
+      "bytes": 14889,
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_master_v11_phase5_source_alignment.py",
-      "sha256": "5fcfce64dbd15dad8bbb8fc08ac1f2798e618657b561385ac24941ddf2fa3c4f"
+      "sha256": "c18a889a7803d37abf6ee01c48aed3b54812888e95764beff7307e48231ccc7d"
     },
     {
       "bytes": 15449,
