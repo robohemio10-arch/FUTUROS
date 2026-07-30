@@ -25,6 +25,9 @@ from smartcrypto.data.trader_master_fingerprint_v2.legacy_lineage_profile import
     legacy_observation_key_for,
     profile_legacy_master_row,
 )
+from smartcrypto.data.trader_master_fingerprint_v2 import (
+    master_adapter as master_adapter_module,
+)
 from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
     read_trader_master_readonly,
 )
@@ -185,10 +188,47 @@ def test_no_xlsx_fallback_occurs() -> None:
 
 def test_duplicate_schema_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = write_master(tmp_path, [complete_trade()])
-    duplicate = pd.DataFrame([["a", "b"]], columns=["symbol", "symbol"])
-    monkeypatch.setattr(pd, "read_parquet", lambda _: duplicate)
+    original_hash = file_hash(path)
+    calls: dict[str, Any] = {}
+
+    class FakeTable:
+        def to_pandas(self, *, use_threads: bool) -> pd.DataFrame:
+            calls["to_pandas_use_threads"] = use_threads
+            return pd.DataFrame([["a", "b"]], columns=["symbol", "symbol"])
+
+    class FakeParquetFile:
+        def __init__(self, copied_path: Path) -> None:
+            calls["copied_path"] = Path(copied_path)
+
+        def read(self, *, use_threads: bool) -> FakeTable:
+            calls["read_use_threads"] = use_threads
+            return FakeTable()
+
+        def close(self) -> None:
+            calls["closed"] = True
+
+    monkeypatch.setattr(
+        master_adapter_module.pq,
+        "ParquetFile",
+        FakeParquetFile,
+    )
+
     bundle = read_trader_master_readonly(project_root=tmp_path, trader_master_path=path)
+
     assert bundle.report["reason"] == "duplicate_trader_master_columns"
+    copied_path = calls["copied_path"]
+    assert isinstance(copied_path, Path)
+    assert copied_path.name == "trades_master.parquet"
+    assert copied_path != path
+    assert calls["read_use_threads"] is False
+    assert calls["to_pandas_use_threads"] is False
+    assert calls["closed"] is True
+    assert bundle.report["write_performed"] is False
+    assert bundle.report["writes_trader_master"] is False
+    assert bundle.report["writes_runtime"] is False
+    assert bundle.report["writes_sqlite"] is False
+    assert bundle.report["writes_parquet"] is False
+    assert file_hash(path) == original_hash
 
 
 @pytest.mark.parametrize(

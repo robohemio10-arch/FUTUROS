@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "1fcf6d3dc519d371dd4e5bf6394cc1a8c2f08963c544a0e4d56888c8a54b636e",
+  "aggregate_sha256": "be044cead4dabb94e97a28c32c6a262488491861e3b0c7d4ddd9c2160aaf7e4f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -10106,10 +10106,10 @@
       "sha256": "12f3b3ccb440e703ad7cb6934bbb5ba99550e5842bd29d72cc76ed8b93f58a29"
     },
     {
-      "bytes": 18355,
+      "bytes": 19685,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_legacy_lineage_profile_v2.py",
-      "sha256": "0f27b70c5d47adb212f9baa13ad3198c759bc97c97a64a6702430cc30c0057de"
+      "sha256": "106f414fc49eaf37854aa76d641f55dd7448a98c59913d779c316fc312d4efdb"
     },
     {
       "bytes": 21951,
