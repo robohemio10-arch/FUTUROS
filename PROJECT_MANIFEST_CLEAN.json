@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0d4cdb0657171a2afa46abb16a290b5137cb3f303d4a862f7168f763903d07d6",
+  "aggregate_sha256": "a2f1dcb7dbfe6c6e366331886b042976d290b321c8e64ddb2c5b63989690a5d6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 288,
-    "manifested_files_total": 1676,
-    "python_files": 1271,
+    "docs_files": 289,
+    "manifested_files_total": 1690,
+    "python_files": 1284,
     "runtime_excluded_files_total": 0,
-    "test_files": 350,
-    "tracked_files_total": 1677,
+    "test_files": 351,
+    "tracked_files_total": 1691,
     "workflows": 1
   },
   "deterministic": true,
@@ -1242,6 +1242,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FULL_HISTORICAL_VALIDATION_15S_CORE_WALKFORWARD_MONTECARLO_V1.md",
       "sha256": "f082a0b9e6ceb0e944cdb6d4b3b54976a848621466f62ed63fb7b31f8da99b45"
+    },
+    {
+      "bytes": 8211,
+      "hash_mode": "text_lf",
+      "path": "docs/FUTURES_EXECUTION_REALISM_ENGINE_V2.md",
+      "sha256": "8fb2d1c024254e087061b70fe6773e29b75e3405a173d3a5da77f69fe586b65e"
     },
     {
       "bytes": 3234,
@@ -3024,6 +3030,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_freqtrade_paper_ai_selector_integration.py",
       "sha256": "ce980a0138bea044ed81563576db21401882e2249eb7802f315409f57bc61a2d"
+    },
+    {
+      "bytes": 2332,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_futures_execution_realism_engine_v2.py",
+      "sha256": "4afa5e0df6b16593d39bcdfb5c8be83650527f795eaa1fb8c8aa496de27e29dd"
     },
     {
       "bytes": 17376,
@@ -7274,6 +7286,72 @@
       "sha256": "23275ad9e5bf64e99ab5cbb2d926f2fa672c10678c526522e206eca575cdd829"
     },
     {
+      "bytes": 1084,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/__init__.py",
+      "sha256": "5141ae1fe7f14874f1c04ea1aa66d91876093af8945649b0abe512581dc3476c"
+    },
+    {
+      "bytes": 17033,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/contracts.py",
+      "sha256": "43235c9804d0938b9807007ffc08f0e9a6dd3e1b8ff764d871f2b7838620c314"
+    },
+    {
+      "bytes": 12588,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/costs.py",
+      "sha256": "eee212373f297d69768a4cdab37b82a51cf56997965e2a496d582e4e931c6adc"
+    },
+    {
+      "bytes": 71452,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/engine.py",
+      "sha256": "2381e99e817e8551e289333f92cea104392463b6ac6fdd1031ce69acb22fc844"
+    },
+    {
+      "bytes": 4167,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/events.py",
+      "sha256": "e3e3400d895203fe56ba275abaa3acd4ef5c22d42746cfdcb59d2d38f7781123"
+    },
+    {
+      "bytes": 3992,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/latency.py",
+      "sha256": "5fccf449ba259ca7548020996eeac6d21e32f4c481f0eefe2180bfa8649262f0"
+    },
+    {
+      "bytes": 17036,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/margin.py",
+      "sha256": "8c2ced70a951106b679c997646edb6887af0d5936a38ba591883a8da4e55b433"
+    },
+    {
+      "bytes": 13370,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/order_book.py",
+      "sha256": "cccab2bd08d8eb0579e73a270a86d5f36fd33798ee83682fa5283fc8b0e8c5dd"
+    },
+    {
+      "bytes": 15812,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/pipeline.py",
+      "sha256": "7c79a8fa08296b66b361019201bf1be244d5947af003cf9a639d088387da22f1"
+    },
+    {
+      "bytes": 3971,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/portfolio.py",
+      "sha256": "1db976ece756d9a06dc30a9da8358a1055bee01ad9af429ae521e2007617b079"
+    },
+    {
+      "bytes": 2771,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/futures_execution_realism_v2/reporting.py",
+      "sha256": "fdb077a7676b70f52ec47cbf54ab8a7134617d035b06d4a9e9591b90c9456af8"
+    },
+    {
       "bytes": 27676,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/historical_validation_15s.py",
@@ -8904,6 +8982,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_full_historical_validation_15s_core_v1.py",
       "sha256": "70284fb286ad4b19a36c6509c60eab3cb5dfd51ac57b7d1a7997a0f948a3edbc"
+    },
+    {
+      "bytes": 38214,
+      "hash_mode": "text_lf",
+      "path": "tests/test_futures_execution_realism_engine_v2.py",
+      "sha256": "f31e1f279f73c1bc73d77db196872a774fc7d1d969c8924409e79d24dfe97555"
     },
     {
       "bytes": 16957,
