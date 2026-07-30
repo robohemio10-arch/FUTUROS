@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "be044cead4dabb94e97a28c32c6a262488491861e3b0c7d4ddd9c2160aaf7e4f",
+  "aggregate_sha256": "a21c6f3ddc069a57c8f720ddc48f2b164d013a34d42e265a1fd2f4a2770a71b9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 289,
-    "manifested_files_total": 1690,
-    "python_files": 1284,
+    "docs_files": 290,
+    "manifested_files_total": 1704,
+    "python_files": 1296,
     "runtime_excluded_files_total": 0,
-    "test_files": 351,
-    "tracked_files_total": 1691,
+    "test_files": 352,
+    "tracked_files_total": 1705,
     "workflows": 1
   },
   "deterministic": true,
@@ -492,6 +492,12 @@
       "hash_mode": "text_lf",
       "path": "config/qlib_model.yml",
       "sha256": "0f956378303b28e06e113adf6f89e6ddc710c3d2c9a12d7fab71f15753d1ab90"
+    },
+    {
+      "bytes": 2230,
+      "hash_mode": "text_lf",
+      "path": "config/quant_validation_strategy_factory_v2.json",
+      "sha256": "8b860f3cb3e19af59b199bed15f9d747f3996bbbfcab33622ae7d229b4bbcd32"
     },
     {
       "bytes": 507,
@@ -1994,6 +2000,12 @@
       "sha256": "b3a3232120e21bfeca0652798cd4ef23765767cfc7af5ac49e055d26e8bcdb48"
     },
     {
+      "bytes": 2989,
+      "hash_mode": "text_lf",
+      "path": "docs/QUANT_VALIDATION_STRATEGY_FACTORY_V2.md",
+      "sha256": "751074901dccfe8ab0b2e2621c7e18d9a1d888b48e96caea1cf969b66fa64581"
+    },
+    {
       "bytes": 2484,
       "hash_mode": "text_lf",
       "path": "docs/READINESS_MONTE_CARLO_RISK_BUDGET_POLICY_INTEGRATION.md",
@@ -3360,6 +3372,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py",
       "sha256": "3edf752b220b095e73c161603e82aae292c4f842dfaa3d003152640b97890d79"
+    },
+    {
+      "bytes": 2799,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_quant_validation_strategy_factory_v2.py",
+      "sha256": "f7cb83e39ed98d0e2135f0dc5debfd64be5223a9413c88b1858c62eda86511af"
     },
     {
       "bytes": 5632,
@@ -7706,6 +7724,66 @@
       "sha256": "125732cad140fe592d9d2fcca908a9b5750967385fe9e42dc416dd1ad5336a18"
     },
     {
+      "bytes": 964,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/__init__.py",
+      "sha256": "42107b1556405a03c7416c57295284954cc8305b9de5129f417f8bb4cd7485d6"
+    },
+    {
+      "bytes": 12701,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/contracts.py",
+      "sha256": "486d5b47b6a44b27a0d4c6dab79db0876ceb458e86beb0d25b1dfaef3fe9eb17"
+    },
+    {
+      "bytes": 13477,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/data_quality.py",
+      "sha256": "5c812278cd933bb09fec881ba0246067ff8db762cd3ded6562076d5f2f9240ba"
+    },
+    {
+      "bytes": 4789,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/factory.py",
+      "sha256": "9e32ed9f97941bde7023793be0c20f50df182e59a7d4dea659a339023eaa649e"
+    },
+    {
+      "bytes": 11406,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/metrics.py",
+      "sha256": "b3c3774bfbdbe6a909c5a908e4275e8f287f9cb88c8a0dfa71a3ad3994f40f7b"
+    },
+    {
+      "bytes": 55289,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/pipeline.py",
+      "sha256": "2e1595e72f9a3cfda50b597c190950d2b41509aa96f75ab67bc9f44e4d3dca00"
+    },
+    {
+      "bytes": 2833,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/reporting.py",
+      "sha256": "bf7d4476f076afd847d7d9ee404b74b3a0c2faa848adb0af0a8b9ddcda8fb6a5"
+    },
+    {
+      "bytes": 19651,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/robustness.py",
+      "sha256": "6f00c4b398ddce9b3b03644ebda9d8277d95678bf0a46ead2ce60cdc02c7480a"
+    },
+    {
+      "bytes": 14485,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/splits.py",
+      "sha256": "0902313f337ac5668ca64d48be26148f316ccd384fc690048ddf6964c3ee97cb"
+    },
+    {
+      "bytes": 5838,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/quant_validation_strategy_factory_v2/stability.py",
+      "sha256": "d7b29d8d9543ba5a072f99362f42a483f3f7e11d192a97bf9a52178f9a0ee94a"
+    },
+    {
       "bytes": 11416,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/reporting.py",
@@ -9852,6 +9930,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_quality_gated_v5_provenance_freshness_nonregression_contract_v1.py",
       "sha256": "f1bd4465c93064b741625349ceac129cf8bc096851070979a02b182d6d6c3b4e"
+    },
+    {
+      "bytes": 16336,
+      "hash_mode": "text_lf",
+      "path": "tests/test_quant_validation_strategy_factory_v2.py",
+      "sha256": "589d6d8b519b278c97b0d605395cdb05c1aabc7195ad266933fdd27cdcf5acf1"
     },
     {
       "bytes": 19789,

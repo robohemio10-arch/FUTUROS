@@ -1,0 +1,104 @@
+{
+  "dataset_authority": "paper_outcome_reconciled",
+  "family_spaces": {
+    "atr_stop": {
+      "atr_multiplier": [
+        1.0,
+        1.5,
+        2.0
+      ],
+      "atr_period": [
+        7,
+        14,
+        21
+      ]
+    },
+    "baseline_no_change": {},
+    "entry_threshold": {
+      "entry_threshold": [
+        0.45,
+        0.5,
+        0.55
+      ]
+    },
+    "fixed_tp_sl": {
+      "stop_loss_bps": [
+        20,
+        40,
+        60
+      ],
+      "take_profit_bps": [
+        10,
+        20,
+        30
+      ]
+    },
+    "holding_period": {
+      "maximum_holding_minutes": [
+        15,
+        30,
+        60
+      ]
+    },
+    "trailing_stop": {
+      "activation_bps": [
+        10,
+        20,
+        30
+      ],
+      "trail_bps": [
+        5,
+        10,
+        15
+      ]
+    }
+  },
+  "feature_availability": {},
+  "feature_columns": [
+    "feature_momentum"
+  ],
+  "gates": {
+    "material_negative_segment_expectancy": -0.01,
+    "maximum_cost_drag_ratio": 0.75,
+    "maximum_white_reality_check_pvalue": 0.05,
+    "minimum_deflated_sharpe_probability": 0.95,
+    "minimum_oos_expectancy": 0.0,
+    "minimum_oos_profit_factor": 1.0,
+    "minimum_parameter_stability": 0.6,
+    "minimum_total_trades": 100,
+    "minimum_trades_per_fold": 20,
+    "minimum_trades_per_segment": 15
+  },
+  "methodology": {
+    "feature_selection_scope": "fold_local",
+    "normalization_scope": "fold_local",
+    "regime_construction": "point_in_time",
+    "threshold_calibration_scope": "validation_only"
+  },
+  "robustness": {
+    "annualization_factor": 365,
+    "block_bootstrap_size": 10,
+    "cpcv_group_count": 5,
+    "cpcv_test_group_count": 2,
+    "max_pbo": 0.5,
+    "max_risk_of_ruin": 0.05,
+    "monte_carlo_simulations": 1000,
+    "ruin_threshold_fraction": 0.3,
+    "seed": 42,
+    "significance_level": 0.05
+  },
+  "schema_version": "quant_validation_strategy_factory_config_v2",
+  "split": {
+    "embargo_seconds": 3600,
+    "feature_lookback_seconds": 0,
+    "fold_count": 3,
+    "label_horizon_seconds": 0,
+    "minimum_train_rows": 60,
+    "mode": "expanding",
+    "purge_seconds": 0,
+    "rolling_train_rows": 120,
+    "test_rows": 20,
+    "validation_rows": 20
+  },
+  "strategy_version": "v2"
+}
