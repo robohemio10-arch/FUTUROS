@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
+import smartcrypto.ml.feature_contract as feature_contract_module
 from smartcrypto.ml.drift_monitor import (
     build_ai_shadow_drift_baseline,
     run_ai_shadow_drift_monitor,
@@ -15,6 +18,7 @@ from smartcrypto.ml.drift_monitor import (
 from smartcrypto.ml.feature_contract import (
     FeatureContract,
     build_ai_shadow_feature_contract_from_frame,
+    read_table,
     write_feature_contract,
 )
 
@@ -245,6 +249,82 @@ def test_cli_build_drift_baseline_runs_successfully(tmp_path: Path) -> None:
     payload = json.loads(result.stdout)
     assert payload["status"] == "ok"
     assert output_path.exists()
+
+
+def test_parquet_reader_materializes_single_threaded_and_closes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = stable_frame(rows=2)
+    calls: dict[str, object] = {}
+
+    class FakeTable:
+        def to_pandas(self, *, use_threads: bool) -> pd.DataFrame:
+            calls["to_pandas_use_threads"] = use_threads
+            return expected.copy()
+
+    class FakeParquetFile:
+        def __init__(self, path: Path) -> None:
+            calls["path"] = path
+
+        def read(self, *, use_threads: bool) -> FakeTable:
+            calls["read_use_threads"] = use_threads
+            return FakeTable()
+
+        def close(self) -> None:
+            calls["closed"] = True
+
+    monkeypatch.setattr(feature_contract_module.pq, "ParquetFile", FakeParquetFile)
+
+    actual = read_table(Path("input.parquet"))
+
+    pd.testing.assert_frame_equal(actual, expected)
+    assert calls == {
+        "path": Path("input.parquet"),
+        "read_use_threads": False,
+        "to_pandas_use_threads": False,
+        "closed": True,
+    }
+
+
+def test_csv_reader_preserves_existing_contract(tmp_path: Path) -> None:
+    input_path = tmp_path / "input.csv"
+    expected = stable_frame(rows=3)
+    expected.to_csv(input_path, index=False)
+
+    actual = read_table(input_path)
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_cli_parquet_subprocess_teardown_is_stable(tmp_path: Path) -> None:
+    input_path = tmp_path / "input.parquet"
+    output_path = tmp_path / "baseline.json"
+    stable_frame().to_parquet(input_path)
+    environment = {**os.environ, "PYTHONFAULTHANDLER": "1"}
+
+    for iteration in range(1, 21):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/build_ai_shadow_drift_baseline.py",
+                "--input",
+                str(input_path),
+                "--output",
+                str(output_path),
+                "--strict",
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+        assert result.returncode == 0, (
+            f"iteration={iteration}; stdout={result.stdout!r}; stderr={result.stderr!r}"
+        )
+        assert json.loads(result.stdout)["status"] == "ok"
+        assert output_path.exists()
 
 
 def test_cli_run_drift_monitor_runs_successfully(tmp_path: Path) -> None:

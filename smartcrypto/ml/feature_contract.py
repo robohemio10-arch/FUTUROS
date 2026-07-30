@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 
 DEFAULT_CONTRACT_ID = "ai_shadow_feature_contract"
@@ -443,7 +444,12 @@ def read_table(path: str | Path) -> pd.DataFrame:
     file_path = Path(path)
     suffix = file_path.suffix.lower()
     if suffix == ".parquet":
-        return pd.read_parquet(file_path)
+        parquet_file = pq.ParquetFile(file_path)
+        try:
+            table = parquet_file.read(use_threads=False)
+            return table.to_pandas(use_threads=False)
+        finally:
+            parquet_file.close()
     if suffix == ".csv":
         return pd.read_csv(file_path)
     if suffix in {".json", ".jsonl"}:

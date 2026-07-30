@@ -35,6 +35,17 @@ python .\scripts\validate_ai_shadow_inference_input.py `
   --strict
 ```
 
+## Leitura Parquet Deterministica
+
+O `read_table()` preserva a API publica para Parquet, CSV, JSON e JSONL. Para
+Parquet, a leitura usa `pyarrow.parquet.ParquetFile` com `use_threads=false`
+tanto na materializacao da tabela quanto na conversao para `DataFrame`, e fecha
+o arquivo explicitamente depois da materializacao.
+
+Essa politica evita workers assincronos do dataset scanner durante o teardown do
+processo, sem alterar pools globais, variaveis de ambiente ou lockfiles. CSV,
+JSON e JSONL mantem os readers Pandas existentes.
+
 ## Bloqueios
 
 O contrato e o guard bloqueiam ou reportam de forma controlada:

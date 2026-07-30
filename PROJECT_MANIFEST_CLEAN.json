@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "a2f1dcb7dbfe6c6e366331886b042976d290b321c8e64ddb2c5b63989690a5d6",
+  "aggregate_sha256": "401dd1e098fb09f834c0a7e3c473c39c64de99b929ff679c284d2bf26ecf4c25",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -680,10 +680,10 @@
       "sha256": "edcc32f447039e968ec27f8db41085a46899001afdbbced412e003dda2ffd3d4"
     },
     {
-      "bytes": 2636,
+      "bytes": 3168,
       "hash_mode": "text_lf",
       "path": "docs/AI_SHADOW_FEATURE_CONTRACT_AND_INFERENCE_GUARD.md",
-      "sha256": "ba8e319a9aad4e4dd323225485cf373837f647d4f0e03f429964ddd57eed9e66"
+      "sha256": "70f28be6866a200286cc83a84684cbb3e4cf93b49c8d8832d612b0b43edcb4eb"
     },
     {
       "bytes": 3445,
@@ -6446,10 +6446,10 @@
       "sha256": "8a7da2ac47f43121c8ef1bc9ac0610d0f9c656a8e2d96645e3840d73dd1185d2"
     },
     {
-      "bytes": 19824,
+      "bytes": 20034,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ml/feature_contract.py",
-      "sha256": "3dc345f9509ec189b425035a23bc6784c951a5828168197af086fbf35ed6a3a5"
+      "sha256": "0ce771c3f3510f54027bdfc29855403b6914faaf625333166564b81809a31df7"
     },
     {
       "bytes": 15261,
@@ -8108,10 +8108,10 @@
       "sha256": "c52b305d9bb917c2365310ee2a348742c622b8826a2fc5feff3c300ac11111c1"
     },
     {
-      "bytes": 9802,
+      "bytes": 12226,
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_drift_monitor.py",
-      "sha256": "6992b8748de9f4430aff7653eb4b64e54388a07fc6d801ff83b5ec5309079536"
+      "sha256": "ac523aca7d9749b884392e760039051a6797a69aeedfdc871e961c909f12ee2b"
     },
     {
       "bytes": 8310,
