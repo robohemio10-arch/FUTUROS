@@ -329,14 +329,17 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
     registrations = {
         item["relative_path"]: item for item in policy["registered_consumers"]
     }
-    expected = {
+    expected_readers = {
         "smartcrypto/data/trader_master_fingerprint_v2/bitradex_ocr_adapter.py",
         "smartcrypto/research/profit_research/paper_analysis.py",
+        "smartcrypto/data/canonical_data_foundation_v2/lineage.py",
+        "smartcrypto/data/canonical_data_foundation_v2/pipeline.py",
     }
+    expected_cli = "scripts/build_canonical_data_foundation_v2.py"
 
-    assert expected <= registrations.keys()
-    assert len(registrations) == 11
-    for path in expected:
+    assert expected_readers | {expected_cli} <= registrations.keys()
+    assert len(registrations) == 14
+    for path in expected_readers:
         registration = registrations[path]
         assert registration["consumer_classification"] == "registered_readonly_consumer"
         assert registration["allowed_access_mode"] == "read_only"
@@ -347,6 +350,10 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
             "diagnostic_metrics",
         ]
         assert registration["operational_authority"] is False
+    assert registrations[expected_cli]["allowed_capabilities"] == [
+        "diagnostic_metrics"
+    ]
+    assert registrations[expected_cli]["operational_authority"] is False
     assert policy["prohibited_capabilities"] == [
         "write",
         "import",
