@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 
 import pandas as pd
+import pyarrow.parquet as pq
 
 from .fingerprint_spec import (
     FingerprintValidationError,
@@ -161,7 +162,12 @@ def read_trader_master_readonly(
         with TemporaryDirectory(prefix="trader-master-readonly-") as temporary:
             copied = Path(temporary) / "trades_master.parquet"
             shutil.copyfile(source, copied)
-            frame = pd.read_parquet(copied)
+            parquet_file = pq.ParquetFile(copied)
+            try:
+                table = parquet_file.read(use_threads=False)
+                frame = table.to_pandas(use_threads=False)
+            finally:
+                parquet_file.close()
             if after_read_hook is not None:
                 after_read_hook(source)
     except Exception as exc:

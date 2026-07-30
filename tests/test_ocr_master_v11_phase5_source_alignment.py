@@ -24,6 +24,7 @@ from scripts.sync_ocr_master_v11_phase5_sidecars import (
     build_phase5_compatibility_frame,
     sync_ocr_master_v11_phase5_sidecars,
 )
+from smartcrypto.data.trader_master_fingerprint_v2 import master_adapter as master_adapter_module
 from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import (
     read_trader_master_readonly,
 )
@@ -254,6 +255,41 @@ def test_phase5_gate_accepts_aligned_sidecars(tmp_path: Path) -> None:
         "compatibility_xlsx": 3,
         "legacy_master": 3,
     }
+
+
+def test_master_adapter_uses_single_thread_parquet_and_closes_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    master_path, _, _ = prepare_project(tmp_path)
+    calls: dict[str, object] = {}
+
+    class FakeTable:
+        def to_pandas(self, *, use_threads: bool) -> pd.DataFrame:
+            calls["to_pandas_use_threads"] = use_threads
+            return ocr_master()
+
+    class FakeParquetFile:
+        def __init__(self, path: Path) -> None:
+            calls["path"] = path
+
+        def read(self, *, use_threads: bool) -> FakeTable:
+            calls["read_use_threads"] = use_threads
+            return FakeTable()
+
+        def close(self) -> None:
+            calls["closed"] = True
+
+    monkeypatch.setattr(master_adapter_module.pq, "ParquetFile", FakeParquetFile)
+    bundle = read_trader_master_readonly(
+        project_root=tmp_path,
+        trader_master_path=master_path,
+    )
+
+    assert bundle.report["status"] == "ok"
+    assert calls["read_use_threads"] is False
+    assert calls["to_pandas_use_threads"] is False
+    assert calls["closed"] is True
 
 
 def test_trade_id_prefers_unique_dedup_key_and_preserves_order_id() -> None:
