@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a21c6f3ddc069a57c8f720ddc48f2b164d013a34d42e265a1fd2f4a2770a71b9",
+  "aggregate_sha256": "4dea332f75709e9990e59ab39e390bf18fcd9cf9ac6b6b3af218dc1eff950c5c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 290,
-    "manifested_files_total": 1704,
-    "python_files": 1296,
+    "docs_files": 291,
+    "manifested_files_total": 1716,
+    "python_files": 1306,
     "runtime_excluded_files_total": 0,
-    "test_files": 352,
-    "tracked_files_total": 1705,
+    "test_files": 353,
+    "tracked_files_total": 1717,
     "workflows": 1
   },
   "deterministic": true,
@@ -282,6 +282,12 @@
       "hash_mode": "text_lf",
       "path": "bitradex_realtime_collector_v6_safe_ticker_hotfix/src/bitradex_realtime_collector/processor.py",
       "sha256": "50005d33659b97c2514af9ff8cc2e447dbb3ee3592025acc9f88d967a6a7a6f1"
+    },
+    {
+      "bytes": 973,
+      "hash_mode": "text_lf",
+      "path": "config/ai_shadow_qlib_autotrain_v2.json",
+      "sha256": "e0efa74ed9ca9efc1e60d1d6db491abc664d33e0da30037005d9c0273b1a5a1d"
     },
     {
       "bytes": 3935,
@@ -720,6 +726,12 @@
       "hash_mode": "text_lf",
       "path": "docs/AI_SHADOW_OUTCOME_ATTRIBUTION.md",
       "sha256": "be1c91773396920be22e461f0c79b1cb6cf497ea18812b7946e6d3011cb632a6"
+    },
+    {
+      "bytes": 2622,
+      "hash_mode": "text_lf",
+      "path": "docs/AI_SHADOW_QLIB_AUTOTRAIN_V2.md",
+      "sha256": "c2a0608e07f87f1e359204b56f25acee13b6361332180985020af23c69214e27"
     },
     {
       "bytes": 2789,
@@ -2832,6 +2844,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_online_feedback_learning_loop.py",
       "sha256": "b13f41c4c5fa3f4507f5d2929ec3575459db01419d0ae18199efd4209de0e4a9"
+    },
+    {
+      "bytes": 2488,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_shadow_qlib_autotrain_v2.py",
+      "sha256": "6e8366b891073e55b182dfdf9af08ff60a963c4c68d70243b55373199a18a5aa"
     },
     {
       "bytes": 1844,
@@ -5714,6 +5732,54 @@
       "sha256": "f8190859edb9e45819a5b9e911a268025a51bed66251870cc4a5f35661bc9436"
     },
     {
+      "bytes": 543,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/__init__.py",
+      "sha256": "e03cb22607fda0f19e991378e5a2f9251d5dfd1abdf6f6060d8af838aa7471a7"
+    },
+    {
+      "bytes": 8643,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/calibration.py",
+      "sha256": "b41ef1477c5a74b3e6119b7cea18e61d1ec1cfa4dfdea5053107c771620bb86a"
+    },
+    {
+      "bytes": 10187,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/contracts.py",
+      "sha256": "4dc87fc38c802547f1b3aa19c7556f1d2429ef28b60fcc617a272354af960e36"
+    },
+    {
+      "bytes": 9435,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/counterfactual.py",
+      "sha256": "92285eaf0a765110cd6b75f25ba3beb63125a90862cd5bf759ed1200bbce7495"
+    },
+    {
+      "bytes": 5731,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/drift.py",
+      "sha256": "ac5087a87614d72d1aa8901d3e41d1ef19973bca63cd643789b938218679aae3"
+    },
+    {
+      "bytes": 5191,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/governance.py",
+      "sha256": "34b32e9f024254ab2a3f82508faf46fceccd6284c35db266f891ef0b1375866f"
+    },
+    {
+      "bytes": 12239,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/pipeline.py",
+      "sha256": "865dd7cf943c52a8a700febaa399675b3728f64e8698c6e4e54e9e33a6474546"
+    },
+    {
+      "bytes": 2222,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/ai_shadow_qlib_autotrain_v2/reporting.py",
+      "sha256": "794f0831acdd65ae00e3e1272e2d11d57649ad20d1c4c09ceeabf97f520e1dc6"
+    },
+    {
       "bytes": 189,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/ai_shadow_trainer/__init__.py",
@@ -8232,6 +8298,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_outcome_attribution.py",
       "sha256": "f81f949575a0169fd9df4d883bfd9335f4ab7c30d198db23c1f6c2784974999e"
+    },
+    {
+      "bytes": 11251,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_shadow_qlib_autotrain_v2.py",
+      "sha256": "51070a216f9d3a506955a9b674b76033a1913e0512080a3b51bd2a5ea9d92bec"
     },
     {
       "bytes": 20998,
