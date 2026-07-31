@@ -1,0 +1,36 @@
+{
+  "calibration_bins": 10,
+  "min_bucket_rows": 5,
+  "min_training_sample_rows": 100,
+  "max_brier_degradation": 0.03,
+  "max_ece_degradation": 0.03,
+  "max_expected_value_degradation": 0.05,
+  "strategy_policies": [
+    {
+      "policy_id": "qlib_ranker_shadow",
+      "score_source": "qlib_rank_probability",
+      "enter_threshold": 0.6,
+      "ai_shadow_reject_below": null
+    },
+    {
+      "policy_id": "ai_shadow_quality_veto",
+      "score_source": "qlib_rank_probability",
+      "enter_threshold": 0.55,
+      "ai_shadow_reject_below": 0.45
+    },
+    {
+      "policy_id": "qlib_shadow_ensemble",
+      "score_source": "ensemble_probability",
+      "enter_threshold": 0.58,
+      "ai_shadow_reject_below": 0.35
+    }
+  ],
+  "cadence": {
+    "operational_check_minutes": 5,
+    "feedback_trigger": "trade_closed",
+    "drift_check_minutes": 60,
+    "smoke_training_interval_days": 1,
+    "full_training_interval_days": 7,
+    "governance_interval_days": 30
+  }
+}
