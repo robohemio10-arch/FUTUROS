@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4dea332f75709e9990e59ab39e390bf18fcd9cf9ac6b6b3af218dc1eff950c5c",
+  "aggregate_sha256": "a2d800d7c2e0bfe02e414ea228a3e246ae541219ed438bd80ccf7b2fe059f01a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 291,
-    "manifested_files_total": 1716,
-    "python_files": 1306,
+    "docs_files": 292,
+    "manifested_files_total": 1722,
+    "python_files": 1311,
     "runtime_excluded_files_total": 0,
-    "test_files": 353,
-    "tracked_files_total": 1717,
+    "test_files": 354,
+    "tracked_files_total": 1723,
     "workflows": 1
   },
   "deterministic": true,
@@ -1272,6 +1272,12 @@
       "hash_mode": "text_lf",
       "path": "docs/FUTUROS_CONSOLIDATED_STATE_2026-05-28.md",
       "sha256": "7e1d9450f496e438f9d2c734958a44fd1726f08398cb829dc58233775c0e2559"
+    },
+    {
+      "bytes": 4464,
+      "hash_mode": "text_lf",
+      "path": "docs/G00_TARGETED_FEEDBACK_BACKFILL_V1.md",
+      "sha256": "87f73b8df749d6b19522549fb96162619a98881cafa8817138ce2fb2053cdb47"
     },
     {
       "bytes": 5256,
@@ -4208,6 +4214,12 @@
       "sha256": "67605a284878677cea9c77a1122d6402a2d303126ff8c68c15c2e2e64adfaedd"
     },
     {
+      "bytes": 2924,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_g00_targeted_feedback_backfill_v1.py",
+      "sha256": "162c027440c78df558f54356f48fe9f4ca49c854787412e1bbf014ad7e0168d6"
+    },
+    {
       "bytes": 3142,
       "hash_mode": "text_lf",
       "path": "scripts/run_market_data_health_audit.py",
@@ -5928,6 +5940,24 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/freqtrade_paper_ai_selector_e2e_dryrun/selector_dryrun.py",
       "sha256": "e1f47864514311a6d6ac1eeff410221717431d1e6074b2fd32f8b388a6e2bf6d"
+    },
+    {
+      "bytes": 310,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/g00_targeted_feedback_backfill/__init__.py",
+      "sha256": "4cd40f7e46f0a19be9a4c4da8c895bfde0cbd39ca4292d46e80c7f6ab0431557"
+    },
+    {
+      "bytes": 8028,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/g00_targeted_feedback_backfill/contracts.py",
+      "sha256": "562d72102e1e63cd36aa8240e83a4375666f40dee7f4bd15a3e3a53726a6de24"
+    },
+    {
+      "bytes": 28024,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/g00_targeted_feedback_backfill/orchestrator.py",
+      "sha256": "d5a39249e67c22e34b2c5fb4caa53424cb1ceec6c273d8fdd421b07c0a4cb4d6"
     },
     {
       "bytes": 214,
@@ -9138,6 +9168,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_futures_execution_realism_engine_v2.py",
       "sha256": "f31e1f279f73c1bc73d77db196872a774fc7d1d969c8924409e79d24dfe97555"
+    },
+    {
+      "bytes": 14013,
+      "hash_mode": "text_lf",
+      "path": "tests/test_g00_targeted_feedback_backfill_v1.py",
+      "sha256": "f49a217e34228d03e4d38dc8829bc32c66a7bb3779c2dcd9f2a8c3418b6d68a7"
     },
     {
       "bytes": 16957,
