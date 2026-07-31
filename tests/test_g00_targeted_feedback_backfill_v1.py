@@ -460,3 +460,140 @@ def test_confirmation_text_is_exposed_by_cli(
     code = cli.main(["--print-confirmation-text"])
     assert code == 0
     assert capsys.readouterr().out.strip() == CONFIRMATION_TEXT
+# G00 nested mtime canonicalization regression coverage
+
+
+def diagnostics_with_nested_source_metadata() -> dict[str, Any]:
+    source = diagnostics()
+    metadata = {
+        "mtime_utc": "2026-07-31T21:10:44.901374+00:00",
+        "max_close_time_utc": "2026-07-31T20:59:00+00:00",
+        "size": 123456,
+        "sha256": "a" * 64,
+        "normalized_record_count": 601,
+    }
+    source["source_status"] = {
+        "paper_db": {
+            "status": "ok",
+            "metadata": dict(metadata),
+        },
+        "closed_trades_csv": {
+            "status": "ok",
+            "metadata": {
+                **metadata,
+                "sha256": "b" * 64,
+            },
+        },
+    }
+    source["source_summary"] = {
+        "paper_db": {
+            "status": "ok",
+            "metadata": dict(metadata),
+        },
+        "closed_trades_csv": {
+            "status": "ok",
+            "metadata": {
+                **metadata,
+                "sha256": "b" * 64,
+            },
+        },
+    }
+    return source
+
+
+def test_nested_source_mtime_only_does_not_change_authorization_hashes(
+    tmp_path: Path,
+) -> None:
+    prepare_root(tmp_path)
+    first_source = diagnostics_with_nested_source_metadata()
+    second_source = json.loads(json.dumps(first_source))
+
+    second_source["source_status"]["paper_db"]["metadata"][
+        "mtime_utc"
+    ] = "2026-07-31T21:12:40.222658+00:00"
+    second_source["source_summary"]["paper_db"]["metadata"][
+        "mtime_utc"
+    ] = "2026-07-31T21:12:40.222658+00:00"
+    second_source["source_status"]["closed_trades_csv"]["metadata"][
+        "mtime_utc"
+    ] = "2026-07-31T21:12:40.482593+00:00"
+    second_source["source_summary"]["closed_trades_csv"]["metadata"][
+        "mtime_utc"
+    ] = "2026-07-31T21:12:40.482593+00:00"
+
+    first = probe(tmp_path, first_source)
+    second = probe(tmp_path, second_source)
+
+    for field in (
+        "diagnostics_identity_hash",
+        "plan_hash",
+        "dryrun_hash",
+        "target_batch_hash",
+        "source_fingerprint_hash",
+    ):
+        assert first[field] == second[field]
+
+
+def test_nested_max_close_time_remains_authorization_bound(
+    tmp_path: Path,
+) -> None:
+    prepare_root(tmp_path)
+    first_source = diagnostics_with_nested_source_metadata()
+    second_source = json.loads(json.dumps(first_source))
+
+    second_source["source_status"]["paper_db"]["metadata"][
+        "max_close_time_utc"
+    ] = "2026-07-31T21:01:00+00:00"
+
+    first = probe(tmp_path, first_source)
+    second = probe(tmp_path, second_source)
+
+    assert (
+        first["diagnostics_identity_hash"]
+        != second["diagnostics_identity_hash"]
+    )
+    assert first["plan_hash"] != second["plan_hash"]
+
+
+def test_unrelated_nested_mtime_remains_authorization_bound(
+    tmp_path: Path,
+) -> None:
+    prepare_root(tmp_path)
+    first_source = diagnostics_with_nested_source_metadata()
+    second_source = json.loads(json.dumps(first_source))
+
+    first_source["missing_in_feedback_records"][0][
+        "mtime_utc"
+    ] = "2026-07-31T21:10:44.901374+00:00"
+    second_source["missing_in_feedback_records"][0][
+        "mtime_utc"
+    ] = "2026-07-31T21:12:40.222658+00:00"
+
+    first = probe(tmp_path, first_source)
+    second = probe(tmp_path, second_source)
+
+    assert (
+        first["diagnostics_identity_hash"]
+        != second["diagnostics_identity_hash"]
+    )
+    assert first["plan_hash"] != second["plan_hash"]
+
+
+def test_paper_db_authority_status_remains_authorization_bound(
+    tmp_path: Path,
+) -> None:
+    prepare_root(tmp_path)
+    first_source = diagnostics_with_nested_source_metadata()
+    second_source = json.loads(json.dumps(first_source))
+    second_source["paper_db_authority_status"] = (
+        "runtime_db_stale_against_csv"
+    )
+
+    first = probe(tmp_path, first_source)
+    second = probe(tmp_path, second_source)
+
+    assert (
+        first["diagnostics_identity_hash"]
+        != second["diagnostics_identity_hash"]
+    )
+    assert first["plan_hash"] != second["plan_hash"]

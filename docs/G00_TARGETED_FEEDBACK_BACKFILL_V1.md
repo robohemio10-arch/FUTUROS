@@ -155,3 +155,33 @@ payloads.
 
 The field must remain present in no-write probes because it is one of the
 authorization-bound values compared across consecutive deterministic runs.
+## Deterministic authorization identity under periodic refresh
+
+The paper snapshot and the closed-trades CSV may be rewritten periodically
+without a semantic content change. A filesystem rewrite changes `mtime_utc`
+even when source size and SHA-256 remain identical.
+
+The authorization identity therefore excludes only these observational paths:
+
+```text
+source_status.<source>.metadata.mtime_utc
+source_summary.<source>.metadata.mtime_utc
+```
+
+The exclusion is path-aware. `mtime_utc` is not globally ignored. An
+`mtime_utc` located in any other part of the diagnostics remains bound to the
+authorization identity.
+
+The following evidence remains authorization-bound:
+
+- source existence, size and content SHA-256;
+- source fingerprint;
+- `max_close_time_utc` and freshness/authority verdicts;
+- trade identities, open/close timestamps and financial fields;
+- missing-feedback records, schema validation and conflicts;
+- plan, dry-run and target-batch identities.
+
+A real source-content change therefore still changes the source fingerprint
+and blocks an authorization created from older evidence. The canonicalization
+does not weaken the controlled writer, lock, backup, atomic replacement,
+post-write validation, rollback or target-only scope.

@@ -453,30 +453,81 @@ _VOLATILE_DIAGNOSTICS_KEYS = frozenset(
     }
 )
 
+_VOLATILE_DIAGNOSTICS_PATH_PREFIXES = frozenset(
+    {
+        ("source_status",),
+        ("source_summary",),
+    }
+)
 
-def _diagnostics_identity_payload(value: Any) -> Any:
+
+def _is_volatile_diagnostics_path(
+    path: tuple[str, ...],
+) -> bool:
+    """Return whether one exact observational metadata path is volatile.
+
+    Only ``source_status.<source>.metadata.mtime_utc`` and
+    ``source_summary.<source>.metadata.mtime_utc`` are excluded. The source
+    name is intentionally wildcarded, while all other path components are
+    exact. Financial timestamps, trade timestamps, freshness verdicts,
+    source authority, source size/content identity and ``max_close_time_utc``
+    remain authorization-bound.
+    """
+
+    if len(path) != 4:
+        return False
+
+    root, _source_name, container, field = path
+    return (
+        (root,) in _VOLATILE_DIAGNOSTICS_PATH_PREFIXES
+        and container == "metadata"
+        and field == "mtime_utc"
+    )
+
+
+def _diagnostics_identity_payload(
+    value: Any,
+    *,
+    _path: tuple[str, ...] = (),
+) -> Any:
     """Return the deterministic evidence identity used by authorization hashes.
 
     Runtime/report metadata that does not change the underlying feedback-gap
-    evidence is excluded recursively. Financial fields, trade identities,
-    source authority, validation results, writer inventory and warnings remain
-    bound to the hash.
+    evidence is excluded recursively. Periodic snapshot refreshes may rewrite
+    identical paper DB/CSV content and therefore update only the source
+    ``mtime_utc``. Those two observational paths are excluded path-by-path;
+    semantic timestamps and every content-bearing field remain included.
     """
 
     if isinstance(value, Mapping):
-        return {
-            str(key): _diagnostics_identity_payload(item)
-            for key, item in sorted(
-                value.items(),
-                key=lambda pair: str(pair[0]),
+        normalized: dict[str, Any] = {}
+        for key, item in sorted(
+            value.items(),
+            key=lambda pair: str(pair[0]),
+        ):
+            normalized_key = str(key)
+            if normalized_key in _VOLATILE_DIAGNOSTICS_KEYS:
+                continue
+
+            child_path = (*_path, normalized_key)
+            if _is_volatile_diagnostics_path(child_path):
+                continue
+
+            normalized[normalized_key] = _diagnostics_identity_payload(
+                item,
+                _path=child_path,
             )
-            if str(key) not in _VOLATILE_DIAGNOSTICS_KEYS
-        }
+        return normalized
+
     if isinstance(value, (list, tuple)):
         return [
-            _diagnostics_identity_payload(item)
-            for item in value
+            _diagnostics_identity_payload(
+                item,
+                _path=(*_path, f"[{index}]"),
+            )
+            for index, item in enumerate(value)
         ]
+
     return value
 
 
