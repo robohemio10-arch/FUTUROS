@@ -14,6 +14,7 @@ from .contracts import (
     CONFIG_SCHEMA_VERSION,
     DEFAULT_CONFIG_PATH,
     EVIDENCE_SCHEMA_VERSION,
+    MANDATORY_SOAK_METRICS,
     REQUIRED_CHAOS_SCENARIOS,
     REQUIRED_TESTNET_STAGES,
     mapping,
@@ -87,6 +88,61 @@ def read_json(path: Path) -> tuple[dict[str, Any], str | None]:
     return dict(payload), None
 
 
+def _validate_config_bounds(config: Mapping[str, Any]) -> list[str]:
+    errors: list[str] = []
+    paper_ab = mapping(config.get("paper_ab"))
+    testnet = mapping(config.get("testnet_e2e"))
+    chaos = mapping(config.get("chaos"))
+    capacity = mapping(config.get("capacity"))
+    soak = mapping(config.get("soak"))
+
+    if positive_int(paper_ab.get("minimum_trades_per_strategy"), 0) < 1:
+        errors.append("config_minimum_trades_invalid")
+    if positive_int(paper_ab.get("minimum_stability_periods"), 0) < 2:
+        errors.append("config_minimum_stability_periods_invalid")
+    positive_period_ratio = finite(
+        paper_ab.get("minimum_positive_period_ratio")
+    )
+    if (
+        positive_period_ratio is None
+        or not 0.0 <= positive_period_ratio <= 1.0
+    ):
+        errors.append("config_minimum_positive_period_ratio_invalid")
+    for field in (
+        "minimum_expectancy_delta",
+        "minimum_profit_factor_delta",
+        "maximum_drawdown_regression_ratio",
+        "maximum_total_cost_bps",
+    ):
+        value = finite(paper_ab.get(field))
+        if value is None or value < 0:
+            errors.append(f"config_paper_ab_numeric_invalid:{field}")
+
+    if positive_int(testnet.get("minimum_runs"), 0) < 3:
+        errors.append("config_minimum_testnet_runs_below_three")
+    recovery_seconds = finite(chaos.get("maximum_recovery_seconds"))
+    if recovery_seconds is None or recovery_seconds <= 0:
+        errors.append("config_maximum_recovery_seconds_invalid")
+
+    participation = finite(capacity.get("maximum_participation_ratio"))
+    if participation is None or not 0 < participation <= 1:
+        errors.append("config_maximum_participation_ratio_invalid")
+    for field in (
+        "maximum_total_execution_cost_bps",
+        "maximum_leverage",
+        "minimum_liquidation_buffer_pct",
+    ):
+        value = finite(capacity.get(field))
+        if value is None or value <= 0:
+            errors.append(f"config_capacity_numeric_invalid:{field}")
+    if positive_int(capacity.get("minimum_observations_per_symbol"), 0) < 1:
+        errors.append("config_minimum_capacity_observations_invalid")
+
+    if positive_int(soak.get("required_days"), 0) < 30:
+        errors.append("config_soak_required_days_below_thirty")
+    return errors
+
+
 def load_config(
     root: Path,
     path_value: str | Path | None,
@@ -107,18 +163,29 @@ def load_config(
     errors: list[str] = []
     if config.get("schema_version") != CONFIG_SCHEMA_VERSION:
         errors.append("config_schema_version_invalid")
-    for section in ("paper_ab", "testnet_e2e", "chaos", "capacity"):
+    for section in (
+        "paper_ab",
+        "testnet_e2e",
+        "chaos",
+        "capacity",
+        "soak",
+    ):
         if not isinstance(config.get(section), Mapping):
             errors.append(f"config_section_missing:{section}")
 
     testnet = mapping(config.get("testnet_e2e"))
     chaos = mapping(config.get("chaos"))
     capacity = mapping(config.get("capacity"))
+    soak = mapping(config.get("soak"))
     stages = {str(item) for item in testnet.get("required_stages") or []}
     scenarios = {str(item) for item in chaos.get("required_scenarios") or []}
     symbols = {
         str(item).upper()
         for item in capacity.get("required_symbols") or []
+    }
+    soak_metrics = {
+        str(item)
+        for item in soak.get("required_metrics") or []
     }
     errors.extend(
         f"config_missing_testnet_stage:{item}"
@@ -132,6 +199,11 @@ def load_config(
         f"config_missing_capacity_symbol:{item}"
         for item in sorted({"BTCUSDT", "ETHUSDT"} - symbols)
     )
+    errors.extend(
+        f"config_missing_soak_metric:{item}"
+        for item in sorted(set(MANDATORY_SOAK_METRICS) - soak_metrics)
+    )
+    errors.extend(_validate_config_bounds(config))
     return config, source, sorted(set(errors))
 
 
