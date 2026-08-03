@@ -182,9 +182,14 @@ def build_paper_ab_testnet_chaos_readiness_v2(
 
     if write_report and not path_errors:
         writer = writer_backend or B01AtomicReportWriter(root)
-        writer.write_json(output_json, report)
-        writer.write_text(output_markdown, render_markdown(report))
-        report["write_report_performed"] = True
+        persisted_report = dict(report)
+        persisted_report["write_report_performed"] = True
+        writer.write_json(output_json, persisted_report)
+        writer.write_text(
+            output_markdown,
+            render_markdown(persisted_report),
+        )
+        report = persisted_report
     return report
 
 
