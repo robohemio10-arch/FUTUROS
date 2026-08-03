@@ -11,6 +11,9 @@
   },
   "testnet_e2e": {
     "minimum_runs": 3,
+    "accepted_evidence_classes": [
+      "exchange_testnet"
+    ],
     "required_stages": [
       "signal_created",
       "risk_approved",
