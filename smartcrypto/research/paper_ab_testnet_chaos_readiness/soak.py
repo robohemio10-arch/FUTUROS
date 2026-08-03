@@ -7,26 +7,17 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from .contracts import DECISION_READY, mapping
-from .io import positive_int
+from .contracts import (
+    DECISION_READY,
+    MANDATORY_SOAK_METRICS,
+    mapping,
+)
+from .io import canonical_sha256, positive_int
 from .writer import ReportWriter
 
 SOAK_SCHEMA_VERSION = "paper_shadow_soak_state_v2"
 DEFAULT_SOAK_STATE_PATH = Path(
     "data/reports/soak/paper_shadow_soak_state_v2.json"
-)
-MANDATORY_SOAK_METRICS = (
-    "uptime",
-    "freshness",
-    "trades",
-    "gaps",
-    "duplicates",
-    "missed_signals",
-    "feedback_completeness",
-    "drift",
-    "drawdown",
-    "containers",
-    "notifications",
 )
 
 
@@ -40,6 +31,8 @@ def _parse_timestamp(value: str | None) -> datetime:
 
 
 def build_soak_plan(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Build the mandatory G07 observation contract prepared by B06."""
+
     soak_config = mapping(config.get("soak"))
     required_days = positive_int(soak_config.get("required_days"), 30)
     configured_metrics = tuple(
@@ -100,7 +93,7 @@ def build_initial_soak_state(
         "unresolved_p0_count": 0,
         "unresolved_p1_count": 0,
         "alerts": [],
-        "readiness_report_sha256": readiness_report.get("evidence_sha256"),
+        "readiness_report_sha256": canonical_sha256(readiness_report),
         "paper_only": True,
         "shadow_only": True,
         "live_release_allowed": False,
