@@ -48,21 +48,18 @@ class TestnetGateway(Protocol):
     environment: str
     endpoint_class: str
     real_order: bool
+    evidence_class: str
+    testnet_order_submitted: bool
 
-    def submit(self, signal: TestnetSignal) -> TestnetOrder:
-        """Submit one isolated testnet order."""
+    def submit(self, signal: TestnetSignal) -> TestnetOrder: ...
 
-    def partial_fill(self, order_id: str, quantity: float) -> TestnetOrder:
-        """Apply one deterministic partial fill."""
+    def partial_fill(self, order_id: str, quantity: float) -> TestnetOrder: ...
 
-    def cancel(self, order_id: str) -> TestnetOrder:
-        """Cancel the unfilled remainder."""
+    def cancel(self, order_id: str) -> TestnetOrder: ...
 
-    def reconcile(self) -> Mapping[str, Any]:
-        """Return a reconciled snapshot."""
+    def reconcile(self) -> Mapping[str, Any]: ...
 
-    def restart_and_recover(self) -> Mapping[str, Any]:
-        """Simulate restart and deterministic state recovery."""
+    def restart_and_recover(self) -> Mapping[str, Any]: ...
 
 
 @dataclass(frozen=True)
@@ -82,11 +79,13 @@ class ConservativeTestnetRiskGate:
 
 
 class InMemoryTestnetGateway:
-    """Deterministic isolated gateway used by tests and local sandbox probes."""
+    """Deterministic isolated gateway used by tests and sandbox probes."""
 
     environment = "testnet"
     endpoint_class = "testnet"
     real_order = False
+    evidence_class = "isolated_harness"
+    testnet_order_submitted = False
 
     def __init__(self) -> None:
         self._orders: dict[str, TestnetOrder] = {}
@@ -171,13 +170,16 @@ def run_isolated_testnet_e2e(
     resolved_risk_gate = risk_gate or ConservativeTestnetRiskGate()
     resolved_gateway = gateway or InMemoryTestnetGateway()
     stages = {
-        "signal_created": False,
-        "risk_approved": False,
-        "order_submitted_testnet": False,
-        "partial_fill_observed": False,
-        "cancel_observed": False,
-        "reconciliation_complete": False,
-        "restart_recovery_complete": False,
+        stage: False
+        for stage in (
+            "signal_created",
+            "risk_approved",
+            "order_submitted_testnet",
+            "partial_fill_observed",
+            "cancel_observed",
+            "reconciliation_complete",
+            "restart_recovery_complete",
+        )
     }
     blockers: list[str] = []
 
@@ -203,9 +205,7 @@ def run_isolated_testnet_e2e(
         stages["order_submitted_testnet"] = True
         partial_quantity = signal.quantity * partial_fill_ratio
         filled = resolved_gateway.partial_fill(order.order_id, partial_quantity)
-        stages["partial_fill_observed"] = (
-            0 < filled.filled_quantity < filled.quantity
-        )
+        stages["partial_fill_observed"] = 0 < filled.filled_quantity < filled.quantity
         cancelled = resolved_gateway.cancel(order.order_id)
         stages["cancel_observed"] = cancelled.status == "cancelled"
         reconciliation = dict(resolved_gateway.reconcile())
@@ -241,6 +241,8 @@ def _evidence(
         "environment": gateway.environment,
         "endpoint_class": gateway.endpoint_class,
         "real_order": gateway.real_order,
+        "evidence_class": gateway.evidence_class,
+        "testnet_order_submitted": gateway.testnet_order_submitted,
         "active_runtime_touched": False,
         "status": "pass" if not blockers else "blocked",
         "stages": dict(stages),
