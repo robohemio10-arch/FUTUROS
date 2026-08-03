@@ -44,6 +44,19 @@ REQUIRED_CHAOS_SCENARIOS = (
     "restart_loop",
     "reconciliation_recovery",
 )
+MANDATORY_SOAK_METRICS = (
+    "uptime",
+    "freshness",
+    "trades",
+    "gaps",
+    "duplicates",
+    "missed_signals",
+    "feedback_completeness",
+    "drift",
+    "drawdown",
+    "containers",
+    "notifications",
+)
 
 SAFETY_FLAGS: dict[str, bool] = {
     "research_only": True,
