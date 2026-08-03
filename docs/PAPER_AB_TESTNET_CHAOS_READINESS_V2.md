@@ -1,54 +1,75 @@
-# B06 — Paper A/B, Testnet, Chaos, Capacity and Readiness V2
+# B06 — Paper A/B, Testnet, Chaos, Capacity e Readiness V2
 
-## Objective
+## Objetivo
 
-Implement the final research-only engineering gate before a 30-day paper/shadow
-soak. The component consolidates evidence for:
+A B06 implementa o último gate de engenharia antes do soak contínuo de 30 dias
+em paper/shadow. O pacote consolida cinco frentes:
 
-1. paper A/B comparison between one champion and one or more challengers;
-2. isolated testnet end-to-end execution evidence;
-3. deterministic chaos and recovery evidence;
-4. capacity and market-impact analysis;
-5. unresolved P0/P1 incident control;
-6. advisory readiness for the 30-day soak.
+1. comparação Paper A/B entre champion e challengers;
+2. contrato e validação de evidência E2E em exchange testnet;
+3. harness isolado de testes de caos e recovery;
+4. envelope de capacity e market impact;
+5. preparação e inicialização documental do soak.
 
-The component evaluates evidence. It does not execute testnet or real orders,
-change risk, restart containers, modify Freqtrade, update Qlib/IA Shadow runtime,
-train models, write active registries or promote a challenger.
+A B06 não ativa live/canary, não envia ordens reais, não altera RiskManager,
+Freqtrade, Qlib ou IA Shadow ativos, não treina nem promove modelos e não
+reinicia containers.
 
-## Canonical command
-
-Default no-write probe:
-
-```powershell
-python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
-  --project-root . `
-  --evidence data/reports/paper_ab_testnet_chaos_evidence_v2.json `
-  --json
-```
-
-Optional advisory report write, restricted to `data/reports` through the B01
-atomic writer:
-
-```powershell
-python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
-  --project-root . `
-  --evidence data/reports/paper_ab_testnet_chaos_evidence_v2.json `
-  --write-report `
-  --json
-```
-
-`--fail-on-blocked` returns exit code `2` when any B06 gate is blocked.
-
-## Evidence contract
-
-Top-level schema version:
+## Componentes
 
 ```text
-paper_ab_testnet_chaos_evidence_v2
+smartcrypto/research/paper_ab_testnet_chaos_readiness/
+├── capacity.py
+├── chaos_harness.py
+├── contracts.py
+├── gates.py
+├── io.py
+├── paper_ab.py
+├── readiness.py
+├── soak.py
+├── testnet_harness.py
+└── writer.py
 ```
 
-Required sections:
+CLI:
+
+```text
+scripts/build_paper_ab_testnet_chaos_readiness_v2.py
+```
+
+Configuração:
+
+```text
+config/paper_ab_testnet_chaos_readiness_v2.json
+```
+
+## Execução padrão fail-closed
+
+Sem evidência, a execução permanece bloqueada e não escreve arquivos:
+
+```powershell
+python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
+  --project-root . `
+  --json
+```
+
+Resultado esperado:
+
+```text
+status=blocked
+decision=BLOCKED_BEFORE_SOAK
+ready_for_30_day_soak=false
+```
+
+## Contrato de evidência
+
+O JSON de evidência usa:
+
+```text
+schema_version=paper_ab_testnet_chaos_evidence_v2
+```
+
+Estrutura mínima:
 
 ```json
 {
@@ -69,52 +90,65 @@ Required sections:
 }
 ```
 
-## Paper A/B gate
+## Paper A/B
 
-Each strategy must use the same `evaluation_window_id` and provide the minimum
-configured trade count. Every trade requires:
+Champion e challengers devem usar o mesmo `evaluation_window_id` e fornecer,
+por padrão, pelo menos 30 trades cada.
 
-- `trade_id`;
-- `symbol` (`BTCUSDT` or `ETHUSDT`);
-- `side` (`long` or `short`);
-- `close_time_utc`;
-- `net_pnl`;
-- `notional`;
-- `fees`;
-- `funding`.
-
-The evaluator calculates:
-
-- trade count;
-- win/loss/breakeven counts;
-- net PnL;
-- gross profit and loss;
-- profit factor;
-- expectancy;
-- win rate;
-- average win and loss;
-- payoff;
-- maximum drawdown;
-- turnover;
-- total cost and cost in basis points.
-
-A challenger may be recommended for quarantine/soak when it meets the configured
-expectancy, profit factor, drawdown and cost criteria. The recommendation is
-advisory only:
+Campos obrigatórios por trade:
 
 ```text
+trade_id
+symbol
+side
+close_time_utc
+net_pnl
+notional
+fees
+funding
+```
+
+Métricas calculadas:
+
+- quantidade de trades;
+- wins, losses e breakeven;
+- PnL líquido e bruto;
+- profit factor;
+- expectancy;
+- hit rate;
+- ganho e perda médios;
+- payoff;
+- drawdown máximo;
+- turnover;
+- custos totais e custo em basis points;
+- estabilidade por semana ISO;
+- proporção de períodos positivos;
+- melhor e pior período;
+- dispersão da expectancy temporal.
+
+Uma recomendação de challenger é apenas advisory:
+
+```text
+action=QUARANTINE_CHALLENGER_FOR_SOAK|KEEP_CHAMPION
 automatic_promotion=false
-model_promotion_performed=false
 operational_authority=false
 ```
 
-The A/B gate can pass while the champion remains selected. A/B completion is not
-automatic promotion.
+## Testnet E2E
 
-## Testnet E2E gate
+A readiness final exige evidência produzida por exchange testnet real, nunca
+mainnet/produção:
 
-The evaluator requires at least three isolated testnet evidence runs. Each run
-must explicitly prove:
+```text
+evidence_class=exchange_testnet
+environment=testnet
+endpoint_class=testnet
+testnet_order_submitted=true
+real_order=false
+active_runtime_touched=false
+```
+
+Etapas obrigatórias:
 
 ```text
 signal_created
@@ -126,23 +160,29 @@ reconciliation_complete
 restart_recovery_complete
 ```
 
-Every run must state:
+### Harness isolado local
 
-```text
-environment=testnet
-endpoint_class=testnet
-real_order=false
-active_runtime_touched=false
+A opção abaixo executa um smoke determinístico e sem rede:
+
+```powershell
+python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
+  --project-root . `
+  --evidence data/reports/paper_ab_testnet_chaos_evidence_v2.json `
+  --run-isolated-testnet `
+  --json
 ```
 
-Production, live or mainnet endpoint evidence is blocked.
+Esse harness valida o software local de signal → risk → order → partial fill →
+cancel → reconciliation → restart/recovery. Ele usa
+`evidence_class=isolated_harness` e, deliberadamente, **não satisfaz sozinho o
+gate final de exchange testnet**.
 
-The B06 evaluator does not call an exchange. Testnet execution must be produced
-by an isolated harness and supplied as evidence.
+O pacote não contém credenciais, SDK de exchange, chamada de rede ou autoridade
+para enviar ordens.
 
-## Chaos and recovery gate
+## Caos e recovery
 
-All mandatory scenarios must pass:
+O harness isolado executa em diretório temporário:
 
 ```text
 open_trade_restart
@@ -157,89 +197,143 @@ restart_loop
 reconciliation_recovery
 ```
 
-Each scenario requires:
+Comando:
+
+```powershell
+python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
+  --project-root . `
+  --evidence data/reports/paper_ab_testnet_chaos_evidence_v2.json `
+  --run-isolated-chaos `
+  --json
+```
+
+Critérios por cenário:
 
 ```text
 status=pass
 data_loss=false
 duplicate_orders=false
 active_runtime_touched=false
-recovery_seconds<=configured_limit
+recovery_seconds<=maximum_recovery_seconds
 ```
 
-The scenarios must run in an isolated harness. The evaluator itself does not
-restart or mutate active containers.
+O harness não reinicia containers ativos. Restart, disco cheio, indisponibilidade
+e locks são simulados em sandbox temporário.
 
-## Capacity and market-impact gate
+## Capacity e market impact
 
-Minimum evidence is required independently for BTCUSDT and ETHUSDT. Every
-observation includes:
-
-- `observation_id`;
-- `symbol`;
-- `notional`;
-- `depth_usdt`;
-- `leverage`;
-- `participation_ratio`;
-- `spread_bps`;
-- `slippage_bps`;
-- `market_impact_bps`;
-- `liquidation_buffer_pct`.
-
-The gate blocks observations that exceed configured limits for total execution
-cost, participation, leverage or liquidation buffer. It calculates a
-conservative advisory safe notional per symbol:
+Cada observação deve informar:
 
 ```text
-minimum observed depth × maximum participation ratio
+observation_id
+symbol
+stake
+notional
+depth_usdt
+leverage
+participation_ratio
+frequency_per_hour
+turnover_per_day
+spread_bps
+slippage_bps
+market_impact_bps
+liquidation_buffer_pct
 ```
 
-This value is not written to RiskManager or Freqtrade.
+O gate valida:
 
-## Incident gate
+- BTCUSDT e ETHUSDT separadamente;
+- stake × leverage compatível com notional;
+- frequência e turnover positivos;
+- participation ratio;
+- leverage máxima;
+- buffer de liquidação;
+- spread + slippage + impact;
+- quantidade mínima de observações.
 
-No unresolved P0 or P1 incident is permitted. `resolved` and `closed` are the
-only terminal statuses accepted for those severities.
+A saída contém envelope advisory por símbolo:
 
-## Final readiness decision
+- safe notional;
+- safe stake na leverage máxima configurada;
+- leverage máxima observada;
+- frequência máxima observada;
+- turnover máximo observado;
+- custo máximo observado;
+- market impact máximo observado.
 
-The decision is:
+Nenhuma recomendação é aplicada ao RiskManager ou ao Freqtrade.
+
+## Readiness e soak
+
+A decisão final é:
 
 ```text
 READY_FOR_30_DAY_SOAK
 ```
 
-only when all six gates pass:
+somente quando passam:
 
-1. G00 prerequisite;
-2. paper A/B;
-3. testnet E2E;
-4. chaos/recovery;
+1. G00;
+2. Paper A/B;
+3. exchange testnet E2E;
+4. caos/recovery;
 5. capacity/market impact;
-6. incident control.
+6. ausência de P0/P1 aberto.
 
-Otherwise:
+Caso contrário:
 
 ```text
 BLOCKED_BEFORE_SOAK
 ```
 
-This decision authorizes no live/canary release and does not start the soak by
-itself. It is an advisory readiness artifact.
+O plano do soak exige no mínimo 30 dias e as métricas:
 
-## Safety invariants
+```text
+uptime
+freshness
+trades
+gaps
+duplicates
+missed_signals
+feedback_completeness
+drift
+drawdown
+containers
+notifications
+```
 
-The following values remain fixed:
+Após readiness completa, o estado inicial pode ser persistido explicitamente:
+
+```powershell
+python scripts/build_paper_ab_testnet_chaos_readiness_v2.py `
+  --project-root . `
+  --evidence data/reports/paper_ab_testnet_chaos_evidence_v2.json `
+  --initialize-soak `
+  --write-report `
+  --json
+```
+
+Essa operação apenas cria estado advisory em `data/reports/soak`. Ela não cria
+scheduler, não inicia serviço e não altera runtime ou containers.
+
+## Writer
+
+Relatórios e estado do soak usam o writer atômico da B01, restrito a
+`data/reports`, com JSON sem NaN. O modo padrão continua no-write.
+
+## Invariantes de segurança
 
 ```text
 research_only=true
 paper_only=true
 shadow_only=true
+operational_authority=false
 live_trading_enabled=false
 live_release_allowed=false
 canary_release_allowed=false
 order_submission_enabled=false
 real_order_submission_enabled=false
+testnet_order_submission_enabled=false
 exchange_private_access=false
 sends_orders=false
 changes_risk=false
@@ -256,10 +350,12 @@ updates_freqtrade=false
 updates_risk_manager=false
 updates_qlib_runtime=false
 updates_ai_shadow_runtime=false
+starts_soak=false
 ```
 
-## Operational status after implementation
+## Estado após implementação
 
-The B06 software gate is implemented when this package, CLI, configuration and
-tests are merged. B06 operational readiness remains blocked until real,
-isolated evidence is supplied for paper A/B, testnet, chaos and capacity.
+A implementação de software da B06 pode ser concluída e validada sem declarar
+readiness operacional. A decisão permanecerá bloqueada até o projeto fornecer
+evidência paper A/B real, exchange testnet E2E real, capacity observada e todos
+os demais gates aprovados.
