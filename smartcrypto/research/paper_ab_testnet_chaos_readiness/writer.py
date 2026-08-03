@@ -1,26 +1,57 @@
 """B01-backed advisory report writer for B06."""
+
 from __future__ import annotations
+
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Protocol
+
 from .contracts import ALLOWED_REPORT_ROOT
 
+
 class ReportWriter(Protocol):
-    def write_json(self, path: Path, payload: Mapping[str, Any]) -> None: ...
-    def write_text(self, path: Path, text: str) -> None: ...
+    """Minimal writer boundary used by the B06 orchestrator."""
+
+    def write_json(
+        self,
+        path: Path,
+        payload: Mapping[str, Any],
+    ) -> None:
+        """Write one JSON advisory report."""
+
+    def write_text(self, path: Path, text: str) -> None:
+        """Write one text advisory report."""
+
 
 class B01AtomicReportWriter:
+    """Write B06 reports through the institutional B01 atomic writer."""
+
     def __init__(self, project_root: Path) -> None:
-        self.project_root = project_root
+        self.project_root = project_root.resolve()
+
     def _policy(self) -> Any:
         from smartcrypto.runtime.integrity_traceability_v2 import AtomicWritePolicy
+
         return AtomicWritePolicy.restricted(
             authorized_roots=(self.project_root / ALLOWED_REPORT_ROOT,),
             working_directory=self.project_root,
         )
-    def write_json(self, path: Path, payload: Mapping[str, Any]) -> None:
+
+    def write_json(
+        self,
+        path: Path,
+        payload: Mapping[str, Any],
+    ) -> None:
         from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
-        atomic_write_json(path, dict(payload), policy=self._policy())
+
+        atomic_write_json(
+            path,
+            dict(payload),
+            policy=self._policy(),
+            allow_nan=False,
+        )
+
     def write_text(self, path: Path, text: str) -> None:
         from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_text
+
         atomic_write_text(path, text, policy=self._policy())
