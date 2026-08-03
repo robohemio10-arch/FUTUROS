@@ -7,7 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .capacity import evaluate_capacity
 from .contracts import (
+    ALLOWED_REPORT_ROOT,
     CONFIG_SCHEMA_VERSION,
     DECISION_BLOCKED,
     DECISION_READY,
@@ -21,7 +23,6 @@ from .contracts import (
     mapping,
 )
 from .gates import (
-    evaluate_capacity,
     evaluate_chaos,
     evaluate_incidents,
     evaluate_prerequisites,
@@ -35,7 +36,25 @@ from .io import (
     resolve,
 )
 from .paper_ab import evaluate_paper_ab
+from .soak import (
+    DEFAULT_SOAK_STATE_PATH,
+    build_soak_plan,
+    initialize_soak_state,
+)
 from .writer import B01AtomicReportWriter, ReportWriter
+
+
+def _soak_path_errors(root: Path, path: Path) -> list[str]:
+    errors: list[str] = []
+    try:
+        path.resolve().relative_to((root / ALLOWED_REPORT_ROOT).resolve())
+    except ValueError:
+        errors.append("soak_state_path_outside_data_reports")
+    if path.suffix.lower() != ".json":
+        errors.append("soak_state_path_extension_invalid")
+    if path.is_symlink():
+        errors.append("soak_state_path_symlink_forbidden")
+    return errors
 
 
 def build_paper_ab_testnet_chaos_readiness_v2(
@@ -48,10 +67,12 @@ def build_paper_ab_testnet_chaos_readiness_v2(
     write_report: bool = False,
     output_json_path: str | Path | None = None,
     output_markdown_path: str | Path | None = None,
+    initialize_soak: bool = False,
+    soak_state_path: str | Path | None = None,
     writer_backend: ReportWriter | None = None,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
-    """Evaluate all B06 gates and optionally persist an advisory report."""
+    """Evaluate all B06 gates and optionally persist advisory state."""
 
     root = Path(project_root).resolve()
     output_json = resolve(root, output_json_path, DEFAULT_REPORT_JSON)
@@ -60,11 +81,19 @@ def build_paper_ab_testnet_chaos_readiness_v2(
         output_markdown_path,
         DEFAULT_REPORT_MARKDOWN,
     )
+    resolved_soak_path = resolve(
+        root,
+        soak_state_path,
+        DEFAULT_SOAK_STATE_PATH,
+    )
     path_errors = (
         report_path_errors(root, output_json, output_markdown)
         if write_report
         else []
     )
+    if initialize_soak:
+        path_errors.extend(_soak_path_errors(root, resolved_soak_path))
+
     config, config_source, config_errors = load_config(
         root,
         config_path,
@@ -120,6 +149,7 @@ def build_paper_ab_testnet_chaos_readiness_v2(
     )
     ready_for_soak = not top_level_errors and not failed_gate_ids
     safety = dict(SAFETY_FLAGS)
+    soak_plan = build_soak_plan(config)
 
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
@@ -138,8 +168,8 @@ def build_paper_ab_testnet_chaos_readiness_v2(
         ),
         "b06_implementation_scope": [
             "paper_ab",
-            "testnet_e2e_evidence",
-            "chaos_recovery_evidence",
+            "testnet_e2e",
+            "chaos_recovery",
             "capacity_market_impact",
             "soak_readiness",
         ],
@@ -158,14 +188,18 @@ def build_paper_ab_testnet_chaos_readiness_v2(
         "failed_gate_ids": failed_gate_ids,
         "gates": gates,
         "ready_for_30_day_soak": ready_for_soak,
-        "soak_start_authority": "advisory_only",
-        "testnet_execution_performed": False,
-        "chaos_execution_performed": False,
+        "soak_start_authority": "advisory_state_only",
+        "soak_plan": soak_plan,
+        "soak_initialization_requested": initialize_soak,
+        "soak_initialization_performed": False,
+        "soak_initialization_result": None,
+        "testnet_execution_performed_by_evaluator": False,
+        "chaos_execution_performed_by_evaluator": False,
         "paper_ab_recommendation": gates["paper_ab"].get(
             "recommendation"
         ),
         "capacity_recommendations": gates["capacity"].get(
-            "safe_notional_by_symbol",
+            "envelope_by_symbol",
             {},
         ),
         "blockers": blockers,
@@ -175,13 +209,31 @@ def build_paper_ab_testnet_chaos_readiness_v2(
         "output_paths": {
             "json": str(output_json),
             "markdown": str(output_markdown),
+            "soak_state": str(resolved_soak_path),
         },
         **safety,
         "safety_flags": safety,
     }
 
-    if write_report and not path_errors:
-        writer = writer_backend or B01AtomicReportWriter(root)
+    writer = writer_backend or B01AtomicReportWriter(root)
+    if initialize_soak and not _soak_path_errors(root, resolved_soak_path):
+        soak_result = initialize_soak_state(
+            readiness_report=report,
+            config=config,
+            output_path=resolved_soak_path,
+            writer=writer,
+            started_at_utc=generated_at_utc,
+        )
+        report["soak_initialization_result"] = soak_result
+        report["soak_initialization_performed"] = (
+            soak_result.get("write_performed") is True
+        )
+
+    if write_report and not report_path_errors(
+        root,
+        output_json,
+        output_markdown,
+    ):
         persisted_report = dict(report)
         persisted_report["write_report_performed"] = True
         writer.write_json(output_json, persisted_report)
@@ -202,6 +254,7 @@ def render_markdown(report: Mapping[str, Any]) -> str:
         f"- Status: `{report.get('status')}`",
         f"- Decision: `{report.get('decision')}`",
         f"- Ready for 30-day soak: `{report.get('ready_for_30_day_soak')}`",
+        f"- Soak state initialized: `{report.get('soak_initialization_performed')}`",
         "",
         "## Gates",
         "",
