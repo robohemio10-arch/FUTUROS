@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the B06 paper A/B, testnet, chaos, capacity and soak-readiness report."""
+"""Build the B06 paper A/B, testnet, chaos and readiness report."""
 
 from __future__ import annotations
 
@@ -19,14 +19,46 @@ from smartcrypto.research.paper_ab_testnet_chaos_readiness import (  # noqa: E40
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project-root", default=".", help="Project root. Defaults to current directory.")
-    parser.add_argument("--evidence", default=None, help="B06 evidence JSON. Required for a readiness decision.")
-    parser.add_argument("--config", default=None, help="Optional B06 configuration JSON.")
-    parser.add_argument("--write-report", action="store_true", help="Write advisory JSON/Markdown under data/reports.")
-    parser.add_argument("--output-json", default=None, help="Optional JSON report path under data/reports.")
-    parser.add_argument("--output-markdown", default=None, help="Optional Markdown report path under data/reports.")
-    parser.add_argument("--fail-on-blocked", action="store_true", help="Return exit code 2 when readiness is blocked.")
-    parser.add_argument("--json", action="store_true", help="Print compact JSON.")
+    parser.add_argument(
+        "--project-root",
+        default=".",
+        help="Project root. Defaults to current directory.",
+    )
+    parser.add_argument(
+        "--evidence",
+        default=None,
+        help="B06 evidence JSON. Required for a readiness decision.",
+    )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="Optional B06 configuration JSON.",
+    )
+    parser.add_argument(
+        "--write-report",
+        action="store_true",
+        help="Write advisory JSON/Markdown under data/reports.",
+    )
+    parser.add_argument(
+        "--output-json",
+        default=None,
+        help="Optional JSON report path under data/reports.",
+    )
+    parser.add_argument(
+        "--output-markdown",
+        default=None,
+        help="Optional Markdown report path under data/reports.",
+    )
+    parser.add_argument(
+        "--fail-on-blocked",
+        action="store_true",
+        help="Return exit code 2 when readiness is blocked.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print compact JSON.",
+    )
     return parser.parse_args(argv)
 
 
@@ -40,11 +72,18 @@ def main(argv: list[str] | None = None) -> int:
         output_json_path=args.output_json,
         output_markdown_path=args.output_markdown,
     )
-    if args.json:
-        print(json.dumps(report, sort_keys=True, ensure_ascii=False, default=str))
-    else:
-        print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False, default=str))
-    return 2 if args.fail_on_blocked and report["status"] != "ok" else 0
+    print(
+        json.dumps(
+            report,
+            indent=None if args.json else 2,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=str,
+        )
+    )
+    if args.fail_on_blocked and report["status"] != "ok":
+        return 2
+    return 0
 
 
 if __name__ == "__main__":
