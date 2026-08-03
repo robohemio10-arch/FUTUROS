@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import math
+from collections import defaultdict
 from collections.abc import Mapping
+from datetime import datetime
+from statistics import pstdev
 from typing import Any
 
 from .contracts import gate, mapping, mapping_list
@@ -22,10 +25,24 @@ def _metric_value(metrics: Mapping[str, Any], field: str) -> float:
     return value if value is not None else 0.0
 
 
+def _period_key(value: Any) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        timestamp = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    year, week, _weekday = timestamp.isocalendar()
+    return f"{year:04d}-W{week:02d}"
+
+
 def strategy_metrics(
     strategy: Mapping[str, Any],
     minimum_trade_count: int,
     maximum_cost_bps: float,
+    minimum_stability_periods: int,
+    minimum_positive_period_ratio: float,
 ) -> tuple[dict[str, Any], list[str]]:
     """Validate one strategy sample and calculate comparable net metrics."""
 
@@ -47,6 +64,7 @@ def strategy_metrics(
 
     trade_ids: list[str] = []
     net_pnls: list[float] = []
+    period_pnls: dict[str, list[float]] = defaultdict(list)
     turnover = 0.0
     total_cost = 0.0
 
@@ -54,6 +72,7 @@ def strategy_metrics(
         trade_id = str(trade.get("trade_id") or "").strip()
         symbol = str(trade.get("symbol") or "").strip().upper()
         side = str(trade.get("side") or "").strip().lower()
+        period = _period_key(trade.get("close_time_utc"))
         trade_ids.append(trade_id)
 
         if not trade_id:
@@ -62,8 +81,8 @@ def strategy_metrics(
             errors.append(f"trade_{index}:symbol_invalid")
         if side not in {"long", "short"}:
             errors.append(f"trade_{index}:side_invalid")
-        if not str(trade.get("close_time_utc") or "").strip():
-            errors.append(f"trade_{index}:close_time_utc_missing")
+        if period is None:
+            errors.append(f"trade_{index}:close_time_utc_invalid")
 
         net_pnl = finite(trade.get("net_pnl"))
         notional = finite(trade.get("notional"))
@@ -83,6 +102,8 @@ def strategy_metrics(
             continue
 
         net_pnls.append(net_pnl)
+        if period is not None:
+            period_pnls[period].append(net_pnl)
         turnover += notional
         total_cost += abs(fees) + abs(funding)
 
@@ -125,6 +146,34 @@ def strategy_metrics(
         else None
     )
 
+    period_totals = {
+        period: sum(values)
+        for period, values in sorted(period_pnls.items())
+    }
+    positive_period_count = sum(
+        total > 0 for total in period_totals.values()
+    )
+    negative_period_count = sum(
+        total < 0 for total in period_totals.values()
+    )
+    positive_period_ratio = (
+        positive_period_count / len(period_totals)
+        if period_totals
+        else None
+    )
+    period_expectancies = [
+        sum(values) / len(values)
+        for values in period_pnls.values()
+        if values
+    ]
+    if len(period_totals) < minimum_stability_periods:
+        errors.append("insufficient_stability_period_count")
+    if (
+        positive_period_ratio is None
+        or positive_period_ratio < minimum_positive_period_ratio
+    ):
+        errors.append("positive_period_ratio_below_limit")
+
     metrics = {
         "strategy_id": strategy_id or None,
         "evaluation_window_id": evaluation_window_id or None,
@@ -152,6 +201,28 @@ def strategy_metrics(
         "turnover_abs": rounded(turnover),
         "total_cost_abs": rounded(total_cost),
         "total_cost_bps": rounded(total_cost_bps),
+        "stability": {
+            "period_type": "iso_week",
+            "period_count": len(period_totals),
+            "positive_period_count": positive_period_count,
+            "negative_period_count": negative_period_count,
+            "positive_period_ratio": rounded(positive_period_ratio),
+            "worst_period_pnl_abs": rounded(
+                min(period_totals.values()) if period_totals else None
+            ),
+            "best_period_pnl_abs": rounded(
+                max(period_totals.values()) if period_totals else None
+            ),
+            "period_expectancy_stddev": rounded(
+                pstdev(period_expectancies)
+                if len(period_expectancies) > 1
+                else 0.0 if period_expectancies else None
+            ),
+            "period_pnl_abs": {
+                period: rounded(total)
+                for period, total in period_totals.items()
+            },
+        },
     }
     return metrics, sorted(set(errors))
 
@@ -173,6 +244,8 @@ def _challenger_is_eligible(
         config.get("maximum_drawdown_regression_ratio"),
         0.10,
     )
+    challenger_stability = mapping(challenger.get("stability"))
+    champion_stability = mapping(champion.get("stability"))
     return (
         _metric_value(challenger, "expectancy_abs_per_trade")
         >= _metric_value(champion, "expectancy_abs_per_trade")
@@ -182,6 +255,8 @@ def _challenger_is_eligible(
         and _metric_value(challenger, "max_drawdown_abs")
         <= _metric_value(champion, "max_drawdown_abs")
         * (1.0 + drawdown_regression_ratio)
+        and _metric_value(challenger_stability, "positive_period_ratio")
+        >= _metric_value(champion_stability, "positive_period_ratio")
     )
 
 
@@ -201,12 +276,22 @@ def evaluate_paper_ab(
         paper_ab_config.get("maximum_total_cost_bps"),
         50.0,
     )
+    minimum_stability_periods = positive_int(
+        paper_ab_config.get("minimum_stability_periods"),
+        4,
+    )
+    minimum_positive_period_ratio = finite_or(
+        paper_ab_config.get("minimum_positive_period_ratio"),
+        0.50,
+    )
 
     champion = mapping(source.get("champion"))
     champion_metrics, champion_errors = strategy_metrics(
         champion,
         minimum_trade_count,
         maximum_cost_bps,
+        minimum_stability_periods,
+        minimum_positive_period_ratio,
     )
     blockers = [f"champion:{item}" for item in champion_errors]
     evaluation_window_id = str(
@@ -225,6 +310,8 @@ def evaluate_paper_ab(
             candidate,
             minimum_trade_count,
             maximum_cost_bps,
+            minimum_stability_periods,
+            minimum_positive_period_ratio,
         )
         candidate_window_id = str(
             candidate.get("evaluation_window_id") or ""
