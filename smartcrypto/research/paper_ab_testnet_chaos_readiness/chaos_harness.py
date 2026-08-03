@@ -101,11 +101,10 @@ def _qlib_unavailable(_root: Path) -> ChaosResult:
     except RuntimeError:
         blocked = True
     recovered_prediction = 0.61
-    passed = blocked and not orders and recovered_prediction > 0
     return _result(
         "qlib_unavailable",
         started,
-        passed=passed,
+        passed=blocked and not orders and recovered_prediction > 0,
         duplicate_orders=False,
         entry_blocked_while_qlib_down=blocked,
         recovery_prediction_available=True,
@@ -127,10 +126,12 @@ def _signal_missing(_root: Path) -> ChaosResult:
 
 def _sqlite_locked(root: Path) -> ChaosResult:
     started = time.perf_counter()
+    root.mkdir(parents=True, exist_ok=True)
     database = root / "sqlite_locked.db"
     first = sqlite3.connect(database, timeout=0.0)
     second = sqlite3.connect(database, timeout=0.0)
     lock_detected = False
+    rows: list[tuple[Any, ...]] = []
     try:
         first.execute(
             "CREATE TABLE IF NOT EXISTS ledger "
@@ -164,11 +165,10 @@ def _sqlite_locked(root: Path) -> ChaosResult:
         first.close()
         second.close()
     identifiers = [str(row[0]) for row in rows]
-    passed = lock_detected and identifiers == ["recovered"]
     return _result(
         "sqlite_locked",
         started,
-        passed=passed,
+        passed=lock_detected and identifiers == ["recovered"],
         data_loss=False,
         duplicate_orders=False,
         lock_detected=lock_detected,
@@ -193,11 +193,10 @@ def _disk_full(root: Path) -> ChaosResult:
     preserved = target.read_text(encoding="utf-8") == original
     _atomic_write(target, '{"status":"recovered"}\n')
     recovered = json.loads(target.read_text(encoding="utf-8"))
-    passed = failure_detected and preserved and recovered["status"] == "recovered"
     return _result(
         "disk_full",
         started,
-        passed=passed,
+        passed=failure_detected and preserved and recovered["status"] == "recovered",
         data_loss=not preserved,
         duplicate_orders=False,
         enospc_detected=failure_detected,
@@ -211,11 +210,10 @@ def _clock_skew(_root: Path) -> ChaosResult:
     observed_skew_seconds = 600.0
     quarantined = observed_skew_seconds > allowed_skew_seconds
     orders: list[str] = []
-    passed = quarantined and not orders
     return _result(
         "clock_skew",
         started,
-        passed=passed,
+        passed=quarantined and not orders,
         duplicate_orders=False,
         observed_skew_seconds=observed_skew_seconds,
         event_quarantined=quarantined,
@@ -235,11 +233,10 @@ def _public_api_unavailable(_root: Path) -> ChaosResult:
     except ConnectionError:
         blocked = True
     recovered_price = 100.0
-    passed = blocked and not orders and recovered_price > 0
     return _result(
         "public_api_unavailable",
         started,
-        passed=passed,
+        passed=blocked and not orders and recovered_price > 0,
         duplicate_orders=False,
         entry_blocked=blocked,
         recovery_market_data_available=True,
@@ -260,11 +257,10 @@ def _corrupted_report(root: Path) -> ChaosResult:
         corruption_detected = True
     _atomic_write(report, backup.read_text(encoding="utf-8"))
     restored = json.loads(report.read_text(encoding="utf-8"))
-    passed = corruption_detected and restored.get("sequence") == 1
     return _result(
         "corrupted_report",
         started,
-        passed=passed,
+        passed=corruption_detected and restored.get("sequence") == 1,
         data_loss=restored.get("sequence") != 1,
         duplicate_orders=False,
         corruption_detected=corruption_detected,
@@ -283,15 +279,14 @@ def _restart_loop(_root: Path) -> ChaosResult:
             circuit_open = True
             break
         restart_attempts += 1
-    passed = (
-        circuit_open
-        and restart_attempts == maximum_restarts
-        and not orders
-    )
     return _result(
         "restart_loop",
         started,
-        passed=passed,
+        passed=(
+            circuit_open
+            and restart_attempts == maximum_restarts
+            and not orders
+        ),
         duplicate_orders=False,
         restart_attempts=restart_attempts,
         circuit_breaker_open=circuit_open,
@@ -304,14 +299,11 @@ def _reconciliation_recovery(_root: Path) -> ChaosResult:
     gateway_orders = {"order-a"}
     missing = ledger_orders - gateway_orders
     recovered_gateway_orders = gateway_orders | missing
-    duplicate_count = len(recovered_gateway_orders) - len(
-        set(recovered_gateway_orders)
-    )
-    passed = recovered_gateway_orders == ledger_orders and duplicate_count == 0
+    duplicate_count = len(recovered_gateway_orders) - len(set(recovered_gateway_orders))
     return _result(
         "reconciliation_recovery",
         started,
-        passed=passed,
+        passed=recovered_gateway_orders == ledger_orders and duplicate_count == 0,
         duplicate_orders=duplicate_count > 0,
         missing_before_recovery=sorted(missing),
         reconciled_order_ids=sorted(recovered_gateway_orders),
