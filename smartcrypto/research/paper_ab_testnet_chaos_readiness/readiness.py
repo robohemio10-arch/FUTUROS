@@ -1,13 +1,15 @@
-"""B06 orchestration: evidence evaluation only, no operational authority."""
+"""B06 orchestration: isolated evidence execution and readiness evaluation."""
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from .capacity import evaluate_capacity
+from .chaos_harness import run_isolated_chaos_suite
 from .contracts import (
     ALLOWED_REPORT_ROOT,
     CONFIG_SCHEMA_VERSION,
@@ -36,11 +38,8 @@ from .io import (
     resolve,
 )
 from .paper_ab import evaluate_paper_ab
-from .soak import (
-    DEFAULT_SOAK_STATE_PATH,
-    build_soak_plan,
-    initialize_soak_state,
-)
+from .soak import DEFAULT_SOAK_STATE_PATH, build_soak_plan, initialize_soak_state
+from .testnet_harness import TestnetSignal, run_isolated_testnet_e2e
 from .writer import B01AtomicReportWriter, ReportWriter
 
 
@@ -57,6 +56,32 @@ def _soak_path_errors(root: Path, path: Path) -> list[str]:
     return errors
 
 
+def _isolated_testnet_runs() -> list[dict[str, Any]]:
+    signals = (
+        TestnetSignal("b06-testnet-btc-long", "BTCUSDT", "long", 0.01, 50_000.0),
+        TestnetSignal("b06-testnet-eth-short", "ETHUSDT", "short", 0.10, 3_000.0),
+        TestnetSignal("b06-testnet-btc-short", "BTCUSDT", "short", 0.02, 40_000.0),
+    )
+    return [
+        run_isolated_testnet_e2e(run_id=f"b06-isolated-{index}", signal=signal)
+        for index, signal in enumerate(signals, start=1)
+    ]
+
+
+def _augment_evidence(
+    evidence: Mapping[str, Any],
+    *,
+    run_isolated_testnet: bool,
+    run_isolated_chaos: bool,
+) -> dict[str, Any]:
+    augmented = copy.deepcopy(dict(evidence))
+    if run_isolated_testnet:
+        augmented["testnet_e2e"] = {"runs": _isolated_testnet_runs()}
+    if run_isolated_chaos:
+        augmented["chaos"] = {"scenarios": run_isolated_chaos_suite()}
+    return augmented
+
+
 def build_paper_ab_testnet_chaos_readiness_v2(
     *,
     project_root: str | Path,
@@ -64,6 +89,8 @@ def build_paper_ab_testnet_chaos_readiness_v2(
     evidence_payload: Mapping[str, Any] | None = None,
     config_path: str | Path | None = None,
     config_payload: Mapping[str, Any] | None = None,
+    run_isolated_testnet: bool = False,
+    run_isolated_chaos: bool = False,
     write_report: bool = False,
     output_json_path: str | Path | None = None,
     output_markdown_path: str | Path | None = None,
@@ -72,64 +99,40 @@ def build_paper_ab_testnet_chaos_readiness_v2(
     writer_backend: ReportWriter | None = None,
     generated_at_utc: str | None = None,
 ) -> dict[str, Any]:
-    """Evaluate all B06 gates and optionally persist advisory state."""
+    """Run authorized isolated harnesses, evaluate gates and persist advisory state."""
 
     root = Path(project_root).resolve()
     output_json = resolve(root, output_json_path, DEFAULT_REPORT_JSON)
-    output_markdown = resolve(
-        root,
-        output_markdown_path,
-        DEFAULT_REPORT_MARKDOWN,
-    )
-    resolved_soak_path = resolve(
-        root,
-        soak_state_path,
-        DEFAULT_SOAK_STATE_PATH,
-    )
+    output_markdown = resolve(root, output_markdown_path, DEFAULT_REPORT_MARKDOWN)
+    resolved_soak_path = resolve(root, soak_state_path, DEFAULT_SOAK_STATE_PATH)
+
     path_errors = (
-        report_path_errors(root, output_json, output_markdown)
-        if write_report
-        else []
+        report_path_errors(root, output_json, output_markdown) if write_report else []
     )
     if initialize_soak:
         path_errors.extend(_soak_path_errors(root, resolved_soak_path))
 
     config, config_source, config_errors = load_config(
-        root,
-        config_path,
-        config_payload,
+        root, config_path, config_payload
     )
-    evidence, evidence_source, evidence_errors = load_evidence(
-        root,
-        evidence_path,
-        evidence_payload,
+    loaded_evidence, evidence_source, evidence_errors = load_evidence(
+        root, evidence_path, evidence_payload
+    )
+    evidence = _augment_evidence(
+        loaded_evidence,
+        run_isolated_testnet=run_isolated_testnet,
+        run_isolated_chaos=run_isolated_chaos,
     )
 
     gates: dict[str, dict[str, Any]] = {
-        "prerequisites": evaluate_prerequisites(
-            evidence.get("prerequisites")
-        ),
-        "paper_ab": evaluate_paper_ab(
-            evidence.get("paper_ab"),
-            config,
-        ),
-        "testnet_e2e": evaluate_testnet(
-            evidence.get("testnet_e2e"),
-            config,
-        ),
-        "chaos": evaluate_chaos(
-            evidence.get("chaos"),
-            config,
-        ),
-        "capacity": evaluate_capacity(
-            evidence.get("capacity"),
-            config,
-        ),
+        "prerequisites": evaluate_prerequisites(evidence.get("prerequisites")),
+        "paper_ab": evaluate_paper_ab(evidence.get("paper_ab"), config),
+        "testnet_e2e": evaluate_testnet(evidence.get("testnet_e2e"), config),
+        "chaos": evaluate_chaos(evidence.get("chaos"), config),
+        "capacity": evaluate_capacity(evidence.get("capacity"), config),
         "incidents": evaluate_incidents(evidence.get("incidents")),
     }
-    top_level_errors = sorted(
-        set([*path_errors, *config_errors, *evidence_errors])
-    )
+    top_level_errors = sorted(set([*path_errors, *config_errors, *evidence_errors]))
     failed_gate_ids = [
         name
         for name, gate_report in gates.items()
@@ -153,9 +156,7 @@ def build_paper_ab_testnet_chaos_readiness_v2(
 
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
-        "generated_at_utc": (
-            generated_at_utc or datetime.now(UTC).isoformat()
-        ),
+        "generated_at_utc": generated_at_utc or datetime.now(UTC).isoformat(),
         "project_root": str(root),
         "status": "ok" if ready_for_soak else "blocked",
         "reason": (
@@ -163,9 +164,7 @@ def build_paper_ab_testnet_chaos_readiness_v2(
             if ready_for_soak
             else "one_or_more_b06_gates_blocked"
         ),
-        "decision": (
-            DECISION_READY if ready_for_soak else DECISION_BLOCKED
-        ),
+        "decision": DECISION_READY if ready_for_soak else DECISION_BLOCKED,
         "b06_implementation_scope": [
             "paper_ab",
             "testnet_e2e",
@@ -174,15 +173,12 @@ def build_paper_ab_testnet_chaos_readiness_v2(
             "soak_readiness",
         ],
         "evidence_source": evidence_source,
-        "evidence_sha256": (
-            canonical_sha256(evidence) if evidence else None
-        ),
+        "evidence_sha256": canonical_sha256(evidence) if evidence else None,
         "config_source": config_source,
         "config_sha256": canonical_sha256(config) if config else None,
         "gate_count": len(gates),
         "passed_gate_count": sum(
-            gate_report.get("passed") is True
-            for gate_report in gates.values()
+            gate_report.get("passed") is True for gate_report in gates.values()
         ),
         "failed_gate_count": len(failed_gate_ids),
         "failed_gate_ids": failed_gate_ids,
@@ -193,14 +189,15 @@ def build_paper_ab_testnet_chaos_readiness_v2(
         "soak_initialization_requested": initialize_soak,
         "soak_initialization_performed": False,
         "soak_initialization_result": None,
-        "testnet_execution_performed_by_evaluator": False,
-        "chaos_execution_performed_by_evaluator": False,
-        "paper_ab_recommendation": gates["paper_ab"].get(
-            "recommendation"
-        ),
+        "isolated_testnet_harness_requested": run_isolated_testnet,
+        "isolated_testnet_harness_ran": run_isolated_testnet,
+        "isolated_chaos_harness_requested": run_isolated_chaos,
+        "isolated_chaos_harness_ran": run_isolated_chaos,
+        "testnet_execution_performed_by_evaluator": run_isolated_testnet,
+        "chaos_execution_performed_by_evaluator": run_isolated_chaos,
+        "paper_ab_recommendation": gates["paper_ab"].get("recommendation"),
         "capacity_recommendations": gates["capacity"].get(
-            "envelope_by_symbol",
-            {},
+            "envelope_by_symbol", {}
         ),
         "blockers": blockers,
         "warnings": [],
@@ -229,18 +226,11 @@ def build_paper_ab_testnet_chaos_readiness_v2(
             soak_result.get("write_performed") is True
         )
 
-    if write_report and not report_path_errors(
-        root,
-        output_json,
-        output_markdown,
-    ):
+    if write_report and not report_path_errors(root, output_json, output_markdown):
         persisted_report = dict(report)
         persisted_report["write_report_performed"] = True
         writer.write_json(output_json, persisted_report)
-        writer.write_text(
-            output_markdown,
-            render_markdown(persisted_report),
-        )
+        writer.write_text(output_markdown, render_markdown(persisted_report))
         report = persisted_report
     return report
 
@@ -262,15 +252,10 @@ def render_markdown(report: Mapping[str, Any]) -> str:
     for name, gate_report in mapping(report.get("gates")).items():
         item = mapping(gate_report)
         lines.append(
-            f"- `{name}`: `{item.get('status')}` — "
-            f"`{item.get('reason')}`"
+            f"- `{name}`: `{item.get('status')}` — `{item.get('reason')}`"
         )
     lines.extend(
-        [
-            "",
-            "Research/paper/shadow only; no operational authority.",
-            "",
-        ]
+        ["", "Research/paper/shadow only; no operational authority.", ""]
     )
     return "\n".join(lines)
 
