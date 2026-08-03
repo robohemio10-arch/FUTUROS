@@ -15,7 +15,6 @@ from smartcrypto.research.paper_ab_testnet_chaos_readiness import (
     MANDATORY_SOAK_METRICS,
     REQUIRED_CHAOS_SCENARIOS,
     REQUIRED_TESTNET_STAGES,
-    ConservativeTestnetRiskGate,
     InMemoryTestnetGateway,
     TestnetSignal as B06Signal,
     build_initial_soak_state,
