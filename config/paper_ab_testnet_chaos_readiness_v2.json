@@ -5,7 +5,9 @@
     "minimum_expectancy_delta": 0.0,
     "minimum_profit_factor_delta": 0.0,
     "maximum_drawdown_regression_ratio": 0.1,
-    "maximum_total_cost_bps": 50.0
+    "maximum_total_cost_bps": 50.0,
+    "minimum_stability_periods": 4,
+    "minimum_positive_period_ratio": 0.5
   },
   "testnet_e2e": {
     "minimum_runs": 3,
@@ -44,5 +46,21 @@
     "maximum_participation_ratio": 0.05,
     "maximum_leverage": 3.0,
     "minimum_liquidation_buffer_pct": 15.0
+  },
+  "soak": {
+    "required_days": 30,
+    "required_metrics": [
+      "uptime",
+      "freshness",
+      "trades",
+      "gaps",
+      "duplicates",
+      "missed_signals",
+      "feedback_completeness",
+      "drift",
+      "drawdown",
+      "containers",
+      "notifications"
+    ]
   }
 }
