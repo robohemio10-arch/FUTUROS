@@ -1,0 +1,48 @@
+{
+  "schema_version": "paper_ab_testnet_chaos_readiness_config_v2",
+  "paper_ab": {
+    "minimum_trades_per_strategy": 30,
+    "minimum_expectancy_delta": 0.0,
+    "minimum_profit_factor_delta": 0.0,
+    "maximum_drawdown_regression_ratio": 0.1,
+    "maximum_total_cost_bps": 50.0
+  },
+  "testnet_e2e": {
+    "minimum_runs": 3,
+    "required_stages": [
+      "signal_created",
+      "risk_approved",
+      "order_submitted_testnet",
+      "partial_fill_observed",
+      "cancel_observed",
+      "reconciliation_complete",
+      "restart_recovery_complete"
+    ]
+  },
+  "chaos": {
+    "maximum_recovery_seconds": 300.0,
+    "required_scenarios": [
+      "open_trade_restart",
+      "qlib_unavailable",
+      "signal_missing",
+      "sqlite_locked",
+      "disk_full",
+      "clock_skew",
+      "public_api_unavailable",
+      "corrupted_report",
+      "restart_loop",
+      "reconciliation_recovery"
+    ]
+  },
+  "capacity": {
+    "required_symbols": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "minimum_observations_per_symbol": 3,
+    "maximum_total_execution_cost_bps": 50.0,
+    "maximum_participation_ratio": 0.05,
+    "maximum_leverage": 3.0,
+    "minimum_liquidation_buffer_pct": 15.0
+  }
+}
