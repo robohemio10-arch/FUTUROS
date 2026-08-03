@@ -100,13 +100,8 @@ def _validate_config_bounds(config: Mapping[str, Any]) -> list[str]:
         errors.append("config_minimum_trades_invalid")
     if positive_int(paper_ab.get("minimum_stability_periods"), 0) < 2:
         errors.append("config_minimum_stability_periods_invalid")
-    positive_period_ratio = finite(
-        paper_ab.get("minimum_positive_period_ratio")
-    )
-    if (
-        positive_period_ratio is None
-        or not 0.0 <= positive_period_ratio <= 1.0
-    ):
+    positive_period_ratio = finite(paper_ab.get("minimum_positive_period_ratio"))
+    if positive_period_ratio is None or not 0.0 <= positive_period_ratio <= 1.0:
         errors.append("config_minimum_positive_period_ratio_invalid")
     for field in (
         "minimum_expectancy_delta",
@@ -163,13 +158,7 @@ def load_config(
     errors: list[str] = []
     if config.get("schema_version") != CONFIG_SCHEMA_VERSION:
         errors.append("config_schema_version_invalid")
-    for section in (
-        "paper_ab",
-        "testnet_e2e",
-        "chaos",
-        "capacity",
-        "soak",
-    ):
+    for section in ("paper_ab", "testnet_e2e", "chaos", "capacity", "soak"):
         if not isinstance(config.get(section), Mapping):
             errors.append(f"config_section_missing:{section}")
 
@@ -178,19 +167,19 @@ def load_config(
     capacity = mapping(config.get("capacity"))
     soak = mapping(config.get("soak"))
     stages = {str(item) for item in testnet.get("required_stages") or []}
-    scenarios = {str(item) for item in chaos.get("required_scenarios") or []}
-    symbols = {
-        str(item).upper()
-        for item in capacity.get("required_symbols") or []
-    }
-    soak_metrics = {
+    evidence_classes = {
         str(item)
-        for item in soak.get("required_metrics") or []
+        for item in testnet.get("accepted_evidence_classes") or []
     }
+    scenarios = {str(item) for item in chaos.get("required_scenarios") or []}
+    symbols = {str(item).upper() for item in capacity.get("required_symbols") or []}
+    soak_metrics = {str(item) for item in soak.get("required_metrics") or []}
     errors.extend(
         f"config_missing_testnet_stage:{item}"
         for item in sorted(set(REQUIRED_TESTNET_STAGES) - stages)
     )
+    if "exchange_testnet" not in evidence_classes:
+        errors.append("config_exchange_testnet_evidence_class_required")
     errors.extend(
         f"config_missing_chaos_scenario:{item}"
         for item in sorted(set(REQUIRED_CHAOS_SCENARIOS) - scenarios)
@@ -234,11 +223,7 @@ def load_evidence(
     return evidence, source, errors
 
 
-def report_path_errors(
-    root: Path,
-    json_path: Path,
-    markdown_path: Path,
-) -> list[str]:
+def report_path_errors(root: Path, json_path: Path, markdown_path: Path) -> list[str]:
     allowed = (root / ALLOWED_REPORT_ROOT).resolve()
     errors: list[str] = []
     targets = (
