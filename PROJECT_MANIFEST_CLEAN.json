@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d79ed97b5ef37214532f8583d1137b0d724a079273156d61a5a3498f52df2806",
+  "aggregate_sha256": "b4275220fa962b63a5090ee39b910e78f4bf21a090a16c1eaa2165cf521d4121",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 292,
-    "manifested_files_total": 1722,
-    "python_files": 1311,
+    "docs_files": 293,
+    "manifested_files_total": 1737,
+    "python_files": 1324,
     "runtime_excluded_files_total": 0,
-    "test_files": 354,
-    "tracked_files_total": 1723,
+    "test_files": 355,
+    "tracked_files_total": 1738,
     "workflows": 1
   },
   "deterministic": true,
@@ -426,6 +426,12 @@
       "hash_mode": "text_lf",
       "path": "config/paper.json",
       "sha256": "3e5942a892ab4a20b72f17f446d3cb3f5510ab4f65d3ee070c58ff8f441b0152"
+    },
+    {
+      "bytes": 1633,
+      "hash_mode": "text_lf",
+      "path": "config/paper_ab_testnet_chaos_readiness_v2.json",
+      "sha256": "e0efdc974465646ca7299a60d77db034571d0714c66925a5f0b9995c73254dce"
     },
     {
       "bytes": 682,
@@ -1530,6 +1536,12 @@
       "hash_mode": "text_lf",
       "path": "docs/P0_4C_SANDBOX_INTEGRATION_HARNESS_V1.md",
       "sha256": "143c7afcac92be3fa5c28ef32f6eb4e15fcb60ee1f3944f872d869bb3fcfd39d"
+    },
+    {
+      "bytes": 7615,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AB_TESTNET_CHAOS_READINESS_V2.md",
+      "sha256": "0ebbbfe0601c4a17edafdc51ff6acfe34364ac28b7fef55a832b4fd1f3e5f987"
     },
     {
       "bytes": 4342,
@@ -3174,6 +3186,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 2252,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_ab_testnet_chaos_readiness_v2.py",
+      "sha256": "f826f02e0f510d1242db29ea45c7a1533a0ef90ee6757a13fe409d8f53247839"
     },
     {
       "bytes": 2388,
@@ -7580,6 +7598,72 @@
       "sha256": "87d4f43d8846d50c36efea805c52a54dae2b573ef5a309c1685ef8605edd3a4c"
     },
     {
+      "bytes": 1540,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/__init__.py",
+      "sha256": "4f8e6cac32879d695010af9b4737f3b86d8c5f4fbf7e9e854a55db9a8a662db5"
+    },
+    {
+      "bytes": 7981,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/capacity.py",
+      "sha256": "b347f29e46eb3b7e46ff8545cff423896e13fc6439370ae83cad5563cb27ed6b"
+    },
+    {
+      "bytes": 10307,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/chaos_harness.py",
+      "sha256": "464cdf5e1f7f8789abd15fa5353b6eedaaede0cf35b3a715f1a67c962ae4da4b"
+    },
+    {
+      "bytes": 3373,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/contracts.py",
+      "sha256": "6ccd5b758a3807dc5a2e5d71e374add3bc974c68dbe0505e5313b71b822a3c49"
+    },
+    {
+      "bytes": 7179,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/gates.py",
+      "sha256": "2fe17c8e13299f538f0aa814ea75c7005c8d97f41306e5fb5fae480cac459933"
+    },
+    {
+      "bytes": 8503,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/io.py",
+      "sha256": "9ef4ac3be67258dd7142e9c51dbac7e8de376a8572f93ac4e7b8176be2f67091"
+    },
+    {
+      "bytes": 13060,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/paper_ab.py",
+      "sha256": "c1f6a4bef250502170716e20f5c9dc334a5f1aa286173c78aee50c7ac998be59"
+    },
+    {
+      "bytes": 9793,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/readiness.py",
+      "sha256": "b7778cfd2b1fc81fe12e1344935a1525b40197c37befa929821d804d054240db"
+    },
+    {
+      "bytes": 4451,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/soak.py",
+      "sha256": "7b50295bce16664656662dec60c3210872942ec98ee5efacef8a27fd254fd1ac"
+    },
+    {
+      "bytes": 8527,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/testnet_harness.py",
+      "sha256": "e4f4ec10c8ba811378b949115b647b971d71adbd0cb7caac22d676838ce832e6"
+    },
+    {
+      "bytes": 1618,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/writer.py",
+      "sha256": "aed2f3fcd55744e0af6553d3b376d56ca757acc83f28a78096cebfd0079ce958"
+    },
+    {
       "bytes": 668,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_closed_trades_readonly_source_contract/__init__.py",
@@ -9462,6 +9546,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 22573,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_ab_testnet_chaos_readiness_v2.py",
+      "sha256": "ee1fc15b781cd84a0773ea179451c7ddbc4b427b6981bd0c92dc3d7d03f8642d"
     },
     {
       "bytes": 13855,
