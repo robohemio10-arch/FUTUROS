@@ -24,7 +24,11 @@ from .feedback_store import (
     safe_float,
     write_feedback_outputs,
 )
-from .outcome_schema import DEFAULT_CLOSED_TRADES_CSV, DEFAULT_FEEDBACK_STORE, DEFAULT_OUTCOME_EVENTS
+from .outcome_schema import (
+    DEFAULT_CLOSED_TRADES_CSV,
+    DEFAULT_FEEDBACK_STORE,
+    DEFAULT_OUTCOME_EVENTS,
+)
 
 SCHEMA_VERSION = "phase14_feedback_lineage_reconciliation_v1"
 EXIT_CLASSIFICATION_FIELDS = ("roi_hit", "stoploss_hit", "forced_exit", "liquidation_flag")
@@ -83,27 +87,27 @@ def build_lineage_reconciliation(
     ]
 
     source_map, source_duplicates = _index_by_order_id(source_events)
-    existing_map, existing_duplicates = _index_by_order_id(existing_events)
+    _, existing_duplicates = _index_by_order_id(existing_events)
     conflicts: list[dict[str, Any]] = []
 
     for order_id in sorted(source_duplicates):
-        conflicts.append({"order_id": order_id, "field": "order_id", "reason": "duplicate_source_order_id"})
+        conflicts.append(
+            {"order_id": order_id, "field": "order_id", "reason": "duplicate_source_order_id"}
+        )
     for order_id in sorted(existing_duplicates):
-        conflicts.append({"order_id": order_id, "field": "order_id", "reason": "duplicate_existing_order_id"})
+        conflicts.append(
+            {
+                "order_id": order_id,
+                "field": "order_id",
+                "reason": "duplicate_existing_order_id",
+            }
+        )
 
     if conflicts:
-        return ReconciliationResult(
-            status="blocked",
+        return _blocked_result(
             reason="duplicate_order_identity_detected",
-            reconciled_events=[dict(event) for event in existing_events],
-            matched_count=0,
-            update_count=0,
-            unchanged_count=len(existing_events),
-            unmatched_existing_count=0,
-            unmatched_source_count=0,
-            conflict_count=len(conflicts),
+            existing_events=existing_events,
             conflicts=conflicts,
-            updated_order_ids=[],
         )
 
     reconciled: list[dict[str, Any]] = []
@@ -125,10 +129,7 @@ def build_lineage_reconciliation(
         matched_source_ids.add(order_id)
         row_conflicts = _find_conflicts(existing, source)
         if row_conflicts:
-            conflicts.extend(
-                {"order_id": order_id, **conflict}
-                for conflict in row_conflicts
-            )
+            conflicts.extend({"order_id": order_id, **conflict} for conflict in row_conflicts)
             reconciled.append(existing)
             continue
 
@@ -216,27 +217,19 @@ def reconcile_feedback_lineage_files(
     result = (
         build_lineage_reconciliation(existing_events=existing_events, source_rows=source_rows)
         if not blockers
-        else ReconciliationResult(
-            status="blocked",
+        else _blocked_result(
             reason="input_or_write_contract_blocked",
-            reconciled_events=[],
-            matched_count=0,
-            update_count=0,
-            unchanged_count=0,
-            unmatched_existing_count=0,
-            unmatched_source_count=0,
-            conflict_count=0,
+            existing_events=[],
             conflicts=[],
-            updated_order_ids=[],
         )
     )
 
-    write_performed = False
-    write_summary: dict[str, Any] = {}
     status = "blocked" if blockers or result.status == "blocked" else "ok"
     reason = blockers[0] if blockers else result.reason
+    write_performed = False
+    write_summary: dict[str, Any] = {}
 
-    if write and status == "ok":
+    if write and status == "ok" and result.update_count > 0:
         write_summary = write_feedback_outputs(
             feedback_store_path=feedback_path,
             outcome_events_path=outcome_path,
@@ -245,6 +238,7 @@ def reconcile_feedback_lineage_files(
         )
         write_performed = True
 
+    row_count_invariant = not blockers and len(result.reconciled_events) == len(existing_events)
     report = {
         "schema_version": SCHEMA_VERSION,
         "status": status,
@@ -256,7 +250,7 @@ def reconcile_feedback_lineage_files(
         "source_row_count": len(source_rows),
         "existing_event_count": len(existing_events),
         "reconciled_event_count": len(result.reconciled_events),
-        "row_count_invariant": len(result.reconciled_events) == len(existing_events),
+        "row_count_invariant": row_count_invariant,
         "matched_count": result.matched_count,
         "update_count": result.update_count,
         "unchanged_count": result.unchanged_count,
@@ -267,12 +261,34 @@ def reconcile_feedback_lineage_files(
         "updated_order_ids_sample": result.updated_order_ids[:50],
         "write_requested": bool(write),
         "write_performed": write_performed,
+        "writes_parquet": write_performed,
         "write_summary": write_summary,
         "blockers": blockers,
         **SAFETY_FLAGS,
-        "safety_flags": dict(SAFETY_FLAGS),
+        "safety_flags": {**SAFETY_FLAGS, "writes_parquet": write_performed},
     }
     return report
+
+
+def _blocked_result(
+    *,
+    reason: str,
+    existing_events: Sequence[Mapping[str, Any]],
+    conflicts: list[dict[str, Any]],
+) -> ReconciliationResult:
+    return ReconciliationResult(
+        status="blocked",
+        reason=reason,
+        reconciled_events=[dict(event) for event in existing_events],
+        matched_count=0,
+        update_count=0,
+        unchanged_count=len(existing_events),
+        unmatched_existing_count=0,
+        unmatched_source_count=0,
+        conflict_count=len(conflicts),
+        conflicts=conflicts,
+        updated_order_ids=[],
+    )
 
 
 def _index_by_order_id(
@@ -299,31 +315,67 @@ def _find_conflicts(existing: Mapping[str, Any], source: Mapping[str, Any]) -> l
     source_trade_id = normalize_identity(source.get("trade_id"))
     if existing_trade_id and source_trade_id and existing_trade_id != source_trade_id:
         conflicts.append(
-            {"field": "trade_id", "existing": existing_trade_id, "source": source_trade_id, "reason": "identity_mismatch"}
+            {
+                "field": "trade_id",
+                "existing": existing_trade_id,
+                "source": source_trade_id,
+                "reason": "identity_mismatch",
+            }
         )
 
     existing_reason = clean_text(existing.get("exit_reason"))
     source_reason = clean_text(source.get("exit_reason"))
     if existing_reason and source_reason and existing_reason != source_reason:
         conflicts.append(
-            {"field": "exit_reason", "existing": existing_reason, "source": source_reason, "reason": "exit_reason_mismatch"}
+            {
+                "field": "exit_reason",
+                "existing": existing_reason,
+                "source": source_reason,
+                "reason": "exit_reason_mismatch",
+            }
         )
 
     comparisons = (
-        ("symbol_norm", normalize_symbol(existing.get("symbol_norm") or existing.get("symbol")), normalize_symbol(source.get("symbol_norm") or source.get("symbol"))),
+        (
+            "symbol_norm",
+            normalize_symbol(existing.get("symbol_norm") or existing.get("symbol")),
+            normalize_symbol(source.get("symbol_norm") or source.get("symbol")),
+        ),
         ("side", normalize_side(existing.get("side")), normalize_side(source.get("side"))),
-        ("open_time_utc", normalize_time(existing.get("open_time_utc")), normalize_time(source.get("open_time_utc"))),
-        ("close_time_utc", normalize_time(existing.get("close_time_utc")), normalize_time(source.get("close_time_utc"))),
+        (
+            "open_time_utc",
+            normalize_time(existing.get("open_time_utc")),
+            normalize_time(source.get("open_time_utc")),
+        ),
+        (
+            "close_time_utc",
+            normalize_time(existing.get("close_time_utc")),
+            normalize_time(source.get("close_time_utc")),
+        ),
     )
     for field, left, right in comparisons:
         if left and right and left != right:
-            conflicts.append({"field": field, "existing": left, "source": right, "reason": "economic_identity_mismatch"})
+            conflicts.append(
+                {
+                    "field": field,
+                    "existing": left,
+                    "source": right,
+                    "reason": "economic_identity_mismatch",
+                }
+            )
 
     for field in ("net_pnl", "profit_ratio"):
         left = safe_float(existing.get(field))
         right = safe_float(source.get(field))
         if left is not None and right is not None and not _numbers_close(left, right):
-            conflicts.append({"field": field, "existing": left, "source": right, "reason": "economic_value_mismatch"})
+            conflicts.append(
+                {
+                    "field": field,
+                    "existing": left,
+                    "source": right,
+                    "reason": "economic_value_mismatch",
+                }
+            )
 
     return conflicts
 
@@ -345,11 +397,20 @@ def _enrich_event(existing: Mapping[str, Any], source: Mapping[str, Any]) -> tup
     if source_reason:
         for field in EXIT_CLASSIFICATION_FIELDS:
             expected = bool(source.get(field) is True)
-            if enriched.get(field) is not expected:
+            if _as_bool(enriched.get(field)) != expected:
                 enriched[field] = expected
                 changed = True
 
     return enriched, changed
+
+
+def _as_bool(value: object) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    try:
+        return bool(value) if value is not None else False
+    except (TypeError, ValueError):
+        return False
 
 
 def _numbers_close(left: float, right: float) -> bool:
