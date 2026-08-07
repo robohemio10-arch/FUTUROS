@@ -334,23 +334,27 @@ def write_feedback_outputs(
     clean_events = [_public_event_columns(event) for event in final_events]
     frame = pd.DataFrame(clean_events, columns=OUTCOME_EVENT_COLUMNS)
     frame.to_parquet(outcome_events_path, index=False)
-    feedback_frame = frame[
-        [
-            "order_id",
-            "symbol",
-            "side",
-            "open_time_utc",
-            "close_time_utc",
-            "entry_price",
-            "exit_price",
-            "net_pnl",
-            "profit_ratio",
-            "exit_reason",
-            "source_file",
-            "created_at_utc",
-            "event_id",
-        ]
-    ].copy()
+    feedback_columns = [
+        "order_id",
+        "trade_id",
+        "symbol",
+        "side",
+        "open_time_utc",
+        "close_time_utc",
+        "entry_price",
+        "exit_price",
+        "net_pnl",
+        "profit_ratio",
+        "exit_reason",
+        "roi_hit",
+        "stoploss_hit",
+        "forced_exit",
+        "liquidation_flag",
+        "source_file",
+        "created_at_utc",
+        "event_id",
+    ]
+    feedback_frame = frame[feedback_columns].copy()
     feedback_frame.to_parquet(feedback_store_path, index=False)
     return {"outcome_events_rows": len(frame), "feedback_rows": len(feedback_frame)}
 
