@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import math
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -20,6 +22,24 @@ class SmartCryptoSignalStrategy(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
     trailing_stop = False
+
+    _protective_exit_reasons = frozenset(
+        {
+            "stop_loss",
+            "stoploss_on_exchange",
+            "trailing_stop_loss",
+            "emergency_exit",
+            "force_exit",
+        }
+    )
+    _terminal_order_statuses = frozenset(
+        {"closed", "canceled", "cancelled", "expired", "rejected"}
+    )
+    _pending_order_statuses = frozenset(
+        {"open", "new", "pending", "partially_filled", "partially-filled"}
+    )
+    _exit_amount_relative_tolerance = 1e-9
+    _exit_amount_absolute_tolerance = 1e-12
 
     _signal_paths = [
         Path("/freqtrade/user_data/data/runtime/active_freqtrade_signals.json"),
@@ -102,7 +122,11 @@ class SmartCryptoSignalStrategy(IStrategy):
 
         pair = metadata.get("pair", "")
         last_index = dataframe.index[-1]
-        side = dataframe.at[last_index, "smartcrypto_signal_side"] if "smartcrypto_signal_side" in dataframe else None
+        side = (
+            dataframe.at[last_index, "smartcrypto_signal_side"]
+            if "smartcrypto_signal_side" in dataframe
+            else None
+        )
         decision_event_id = (
             dataframe.at[last_index, "smartcrypto_decision_event_id"]
             if "smartcrypto_decision_event_id" in dataframe
@@ -169,7 +193,11 @@ class SmartCryptoSignalStrategy(IStrategy):
 
         pair = metadata.get("pair", "")
         last_index = dataframe.index[-1]
-        exit_requested = bool(dataframe.at[last_index, "smartcrypto_exit_requested"]) if "smartcrypto_exit_requested" in dataframe else False
+        exit_requested = (
+            bool(dataframe.at[last_index, "smartcrypto_exit_requested"])
+            if "smartcrypto_exit_requested" in dataframe
+            else False
+        )
 
         if exit_requested:
             dataframe.at[last_index, "exit_long"] = 1
@@ -200,6 +228,123 @@ class SmartCryptoSignalStrategy(IStrategy):
         **kwargs: Any,
     ) -> float:
         return min(2.0, max_leverage)
+
+    def confirm_trade_exit(
+        self,
+        pair: str,
+        trade: Any,
+        order_type: str,
+        amount: float,
+        rate: float,
+        time_in_force: str,
+        exit_reason: str,
+        current_time: datetime,
+        **kwargs: Any,
+    ) -> bool:
+        """Reject duplicate non-protective full exits in paper/dry-run mode.
+
+        Freqtrade calls this callback immediately before placing a regular exit
+        order. The guard is intentionally local and constant-time with respect
+        to the trade's currently open orders: it performs no network, database,
+        filesystem, or model access.
+        """
+        del pair, order_type, rate, time_in_force, current_time, kwargs
+
+        if not self._paper_exit_idempotency_enabled():
+            return True
+
+        normalized_reason = str(exit_reason or "").strip().lower()
+        if normalized_reason in self._protective_exit_reasons:
+            return True
+
+        if getattr(trade, "is_open", None) is not True:
+            return False
+
+        full_exit = self._is_full_exit_request(trade, amount)
+        if full_exit is None:
+            return False
+        if not full_exit:
+            return True
+
+        pending_exit = self._has_pending_exit_order(trade)
+        if pending_exit is None:
+            return False
+        return not pending_exit
+
+    def _paper_exit_idempotency_enabled(self) -> bool:
+        config = getattr(self, "config", None)
+        return isinstance(config, Mapping) and config.get("dry_run") is True
+
+    def _is_full_exit_request(self, trade: Any, amount: float) -> bool | None:
+        try:
+            requested_amount = float(amount)
+            trade_amount = float(getattr(trade, "amount"))
+        except (TypeError, ValueError, AttributeError):
+            return None
+
+        if (
+            not math.isfinite(requested_amount)
+            or not math.isfinite(trade_amount)
+            or requested_amount <= 0.0
+            or trade_amount <= 0.0
+        ):
+            return None
+
+        tolerance = max(
+            self._exit_amount_absolute_tolerance,
+            abs(trade_amount) * self._exit_amount_relative_tolerance,
+        )
+        return requested_amount >= trade_amount - tolerance
+
+    def _has_pending_exit_order(self, trade: Any) -> bool | None:
+        expected_exit_side = str(getattr(trade, "exit_side", "") or "").strip().lower()
+        if expected_exit_side not in {"buy", "sell"}:
+            return None
+
+        try:
+            open_orders = getattr(trade, "open_orders")
+            orders = list(open_orders)
+        except (AttributeError, TypeError, RuntimeError):
+            return None
+
+        for order in orders:
+            pending_state = self._order_pending_state(order)
+            if pending_state is None:
+                return None
+            if not pending_state:
+                continue
+
+            order_side = self._order_side(order)
+            if order_side is None:
+                return None
+            if order_side == "stoploss":
+                continue
+            if order_side == expected_exit_side:
+                return True
+
+        return False
+
+    def _order_pending_state(self, order: Any) -> bool | None:
+        ft_is_open = getattr(order, "ft_is_open", None)
+        if ft_is_open is True:
+            return True
+        if ft_is_open is False:
+            return False
+
+        status = str(getattr(order, "status", "") or "").strip().lower()
+        if status in self._pending_order_statuses:
+            return True
+        if status in self._terminal_order_statuses:
+            return False
+        return None
+
+    def _order_side(self, order: Any) -> str | None:
+        ft_order_side = str(getattr(order, "ft_order_side", "") or "").strip().lower()
+        if ft_order_side in {"buy", "sell", "stoploss"}:
+            return ft_order_side
+
+        side = str(getattr(order, "side", "") or "").strip().lower()
+        return side if side in {"buy", "sell"} else None
 
     def _find_signal_for_pair(self, pair: str) -> dict[str, Any]:
         symbol = self._symbol_from_pair(pair)
@@ -238,7 +383,12 @@ class SmartCryptoSignalStrategy(IStrategy):
             }
 
         side = str(matching_signal.get("side", "")).lower()
-        confidence = self._safe_float(matching_signal.get("confidence", matching_signal.get("prob_up", matching_signal.get("score", 0.0))))
+        confidence = self._safe_float(
+            matching_signal.get(
+                "confidence",
+                matching_signal.get("prob_up", matching_signal.get("score", 0.0)),
+            )
+        )
         # risk_approved must be the exact boolean True. Absent, null, "true"
         # (string), 1, or any other truthy-but-not-True value is treated as
         # NOT approved. This is deliberately stricter than a plain truthy
@@ -250,10 +400,20 @@ class SmartCryptoSignalStrategy(IStrategy):
         decision_ledger = decision_ledger if isinstance(decision_ledger, dict) else {}
 
         if side not in {"long", "short"}:
-            return {"accepted": False, "reason": "invalid_side", "side": side, "confidence": confidence}
+            return {
+                "accepted": False,
+                "reason": "invalid_side",
+                "side": side,
+                "confidence": confidence,
+            }
 
         if not risk_approved:
-            return {"accepted": False, "reason": "risk_not_approved", "side": side, "confidence": confidence}
+            return {
+                "accepted": False,
+                "reason": "risk_not_approved",
+                "side": side,
+                "confidence": confidence,
+            }
 
         return {
             "accepted": True,
@@ -291,7 +451,11 @@ class SmartCryptoSignalStrategy(IStrategy):
             normalized_pairs = {str(item) for item in pairs}
             normalized_symbols = {self._symbol_from_pair(str(item)) for item in pairs}
 
-            if "all" in normalized_pairs or pair in normalized_pairs or symbol in normalized_symbols:
+            if (
+                "all" in normalized_pairs
+                or pair in normalized_pairs
+                or symbol in normalized_symbols
+            ):
                 return {
                     "accepted": True,
                     "reason": payload.get("reason", "phase15_controlled_paper_exit"),
@@ -300,7 +464,9 @@ class SmartCryptoSignalStrategy(IStrategy):
 
         return {"accepted": False, "reason": "no_active_exit_control"}
 
-    def _read_first_active_signal_file(self) -> tuple[dict[str, Any] | None, Path | None, str]:
+    def _read_first_active_signal_file(
+        self,
+    ) -> tuple[dict[str, Any] | None, Path | None, str]:
         # Walks every known signal path in priority order. A file that
         # exists but has no risk-approved, fresh signal for anyone (e.g. it
         # is empty, stale, or every signal in it was rejected) no longer
@@ -317,7 +483,11 @@ class SmartCryptoSignalStrategy(IStrategy):
             if payload is None:
                 continue
             last_path = path
-            active_signals = [signal for signal in self._extract_signals(payload) if self._is_signal_active(signal)]
+            active_signals = [
+                signal
+                for signal in self._extract_signals(payload)
+                if self._is_signal_active(signal)
+            ]
             if active_signals:
                 return payload, path, "active_signals_found"
             last_reason = "no_active_signals_in_file"
@@ -341,7 +511,12 @@ class SmartCryptoSignalStrategy(IStrategy):
             return [item for item in value if isinstance(item, dict)]
         return []
 
-    def _match_signal(self, signals: list[dict[str, Any]], pair: str, symbol: str) -> dict[str, Any] | None:
+    def _match_signal(
+        self,
+        signals: list[dict[str, Any]],
+        pair: str,
+        symbol: str,
+    ) -> dict[str, Any] | None:
         for signal in signals:
             signal_pair = str(signal.get("pair", ""))
             signal_symbol = str(signal.get("symbol", ""))
@@ -370,7 +545,13 @@ class SmartCryptoSignalStrategy(IStrategy):
             return False
 
     def _symbol_from_pair(self, pair: str) -> str:
-        return pair.replace("/", "").replace(":USDT", "").replace(":USD", "").replace("-", "").upper()
+        return (
+            pair.replace("/", "")
+            .replace(":USDT", "")
+            .replace(":USD", "")
+            .replace("-", "")
+            .upper()
+        )
 
     def _safe_float(self, value: Any) -> float:
         try:
