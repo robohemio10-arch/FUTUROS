@@ -85,7 +85,7 @@ class BrokenOpenOrdersTrade:
 
     @property
     def open_orders(self) -> list[FakeOrder]:
-        raise RuntimeError("simulated open-order inspection failure")
+        raise LookupError("simulated open-order inspection failure")
 
 
 def _strategy(*, dry_run: bool = True) -> Any:
@@ -249,6 +249,10 @@ def test_closed_trade_rejects_non_protective_exit_fail_closed() -> None:
 
 def test_open_order_inspection_failure_rejects_non_protective_exit_fail_closed() -> None:
     assert _confirm(_strategy(), BrokenOpenOrdersTrade(), exit_reason="roi") is False
+
+
+def test_protective_exit_bypasses_broken_open_order_inspection() -> None:
+    assert _confirm(_strategy(), BrokenOpenOrdersTrade(), exit_reason="stop_loss") is True
 
 
 def test_unknown_open_order_state_rejects_non_protective_exit_fail_closed() -> None:
