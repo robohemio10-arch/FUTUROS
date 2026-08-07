@@ -250,26 +250,32 @@ class SmartCryptoSignalStrategy(IStrategy):
         """
         del pair, order_type, rate, time_in_force, current_time, kwargs
 
-        if not self._paper_exit_idempotency_enabled():
-            return True
-
         normalized_reason = str(exit_reason or "").strip().lower()
         if normalized_reason in self._protective_exit_reasons:
             return True
 
-        if getattr(trade, "is_open", None) is not True:
-            return False
+        try:
+            if not self._paper_exit_idempotency_enabled():
+                return True
 
-        full_exit = self._is_full_exit_request(trade, amount)
-        if full_exit is None:
-            return False
-        if not full_exit:
-            return True
+            if getattr(trade, "is_open", None) is not True:
+                return False
 
-        pending_exit = self._has_pending_exit_order(trade)
-        if pending_exit is None:
+            full_exit = self._is_full_exit_request(trade, amount)
+            if full_exit is None:
+                return False
+            if not full_exit:
+                return True
+
+            pending_exit = self._has_pending_exit_order(trade)
+            if pending_exit is None:
+                return False
+            return not pending_exit
+        except Exception:
+            # Freqtrade wraps strategy callbacks and may fall back to allowing
+            # an exit when a strategy callback raises. Keep this paper-only
+            # idempotency boundary internally fail-closed instead.
             return False
-        return not pending_exit
 
     def _paper_exit_idempotency_enabled(self) -> bool:
         config = getattr(self, "config", None)
