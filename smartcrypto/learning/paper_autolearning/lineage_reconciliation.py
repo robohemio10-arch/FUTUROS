@@ -365,14 +365,18 @@ def _find_conflicts(existing: Mapping[str, Any], source: Mapping[str, Any]) -> l
             )
 
     for field in ("net_pnl", "profit_ratio"):
-        left = safe_float(existing.get(field))
-        right = safe_float(source.get(field))
-        if left is not None and right is not None and not _numbers_close(left, right):
+        numeric_left = safe_float(existing.get(field))
+        numeric_right = safe_float(source.get(field))
+        if (
+            numeric_left is not None
+            and numeric_right is not None
+            and not _numbers_close(numeric_left, numeric_right)
+        ):
             conflicts.append(
                 {
                     "field": field,
-                    "existing": left,
-                    "source": right,
+                    "existing": numeric_left,
+                    "source": numeric_right,
                     "reason": "economic_value_mismatch",
                 }
             )
