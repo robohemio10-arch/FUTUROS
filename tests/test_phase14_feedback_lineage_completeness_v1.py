@@ -232,7 +232,7 @@ def test_file_reconciliation_write_is_restricted_and_idempotent_in_tmp_data_feed
     assert first["update_count"] == 1
     assert first["row_count_invariant"] is True
     assert second["status"] == "ok"
-    assert second["write_performed"] is True
+    assert second["write_performed"] is False
     assert second["update_count"] == 0
     outcome = pd.read_parquet(outcome_path)
     feedback = pd.read_parquet(tmp_path / "data" / "feedback" / "paper_closed_trades_incremental.parquet")
