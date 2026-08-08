@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b4275220fa962b63a5090ee39b910e78f4bf21a090a16c1eaa2165cf521d4121",
+  "aggregate_sha256": "9ce2400fc2cf6250ac08e3ae86451dc120d7fe936a05876176fd3c579f0d3063",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 293,
-    "manifested_files_total": 1737,
-    "python_files": 1324,
+    "docs_files": 294,
+    "manifested_files_total": 1739,
+    "python_files": 1325,
     "runtime_excluded_files_total": 0,
-    "test_files": 355,
-    "tracked_files_total": 1738,
+    "test_files": 356,
+    "tracked_files_total": 1740,
     "workflows": 1
   },
   "deterministic": true,
@@ -1256,6 +1256,12 @@
       "sha256": "ba6fc88cc1aaa9b69e087a4d19df4c23a296772317814af23531c215aee63d92"
     },
     {
+      "bytes": 5727,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_PAPER_EXIT_IDEMPOTENCY_GUARD_V1.md",
+      "sha256": "d5a16244c4f9c8aa8ca89bd428e127de3cc528650ac1acc59b4e4e272e5bd951"
+    },
+    {
       "bytes": 4181,
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_PAPER_QUARANTINE_FORENSICS_V2.md",
@@ -2336,10 +2342,10 @@
       "sha256": "6dfa520e4b03338e8442428f51d1ccbe6167ded39c73c9031891e6eb9b8055f6"
     },
     {
-      "bytes": 15905,
+      "bytes": 21407,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/strategies/SmartCryptoSignalStrategy.py",
-      "sha256": "a926aa70e8d9b4f5589f2c4ebf034f5b04255033a66610d3646a4b046561e652"
+      "sha256": "7d8394b665795637591d7f7678f9e353130adaa4566b7b7d4122340b29dcf349"
     },
     {
       "bytes": 1117,
@@ -9222,6 +9228,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_linux_volume_persistence.py",
       "sha256": "6d77edf13bd8d795dff6dcac95529111e56f88f4c0d2087bf469fe93ca936faf"
+    },
+    {
+      "bytes": 8910,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_exit_idempotency_guard_v1.py",
+      "sha256": "8d3e8fa38e7f6b805f85fad641fa3d6a014cb2e6854620d4f52fafec72f16559"
     },
     {
       "bytes": 6640,
