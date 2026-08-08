@@ -6,13 +6,19 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+import pandas as pd
+
+from smartcrypto.learning.paper_autotrain_financial_objective import (
+    build_financial_objective,
+)
+
 from .challenger_training_smoke import run_challenger_training_smoke
 from .feedback_store import (
     build_feedback_events,
     read_existing_outcome_events,
     write_feedback_outputs,
 )
-from .microbatch_builder import build_daily_microbatch
+from .microbatch_builder import build_daily_microbatch, feature_columns_from_rows
 from .outcome_schema import (
     DEFAULT_CLOSED_TRADES_CSV,
     DEFAULT_FEEDBACK_STORE,
@@ -62,9 +68,37 @@ def build_paper_autolearning_foundation_report(
     microbatch = build_daily_microbatch(
         feedback_result.valid_events,
         output_dir=microbatch_output_dir,
-        write=write_feedback,
+        write=False,
     )
-    smoke = run_challenger_training_smoke(microbatch["microbatch"], enabled=train_smoke)
+    financial_objective = build_financial_objective(
+        root,
+        microbatch_frame=pd.DataFrame(microbatch["microbatch"]),
+    )
+    financial_rows = financial_objective.microbatch.to_dict(orient="records")
+    microbatch["microbatch"] = financial_rows
+    microbatch["microbatch_rows"] = len(financial_rows)
+    microbatch["feature_columns"] = feature_columns_from_rows(financial_rows)
+    if financial_rows and "target_profitable" not in microbatch["label_columns"]:
+        microbatch["label_columns"] = [*microbatch["label_columns"], "target_profitable"]
+    financial_training_blocked = bool(
+        financial_objective.summary.get("authoritative_expected")
+        and financial_objective.summary.get("status") not in {"ok", "warning"}
+    )
+    smoke = run_challenger_training_smoke(
+        financial_rows,
+        enabled=train_smoke and not financial_training_blocked,
+    )
+    if train_smoke and financial_training_blocked:
+        smoke.update(
+            training_smoke_status="blocked",
+            training_smoke_reason="profit_maximization_research_blocked",
+        )
+    microbatch_output_path = None
+    if write_feedback:
+        microbatch_output_path = _write_financial_microbatch(
+            financial_rows,
+            output_dir=microbatch_output_dir,
+        )
     existing_events = read_existing_outcome_events(outcome_path)
     write_performed = False
     if write_feedback:
@@ -113,12 +147,24 @@ def build_paper_autolearning_foundation_report(
         "margin_mode_available": feedback_result.futures_fields_coverage.get("margin_mode", 0.0) > 0,
         "liquidation_price_available": feedback_result.futures_fields_coverage.get("liquidation_price", 0.0) > 0,
         "microbatch_rows": microbatch["microbatch_rows"],
-        "microbatch_output_path": _project_relative(Path(microbatch["microbatch_output_path"]), root)
-        if microbatch.get("microbatch_output_path")
+        "microbatch_output_path": _project_relative(microbatch_output_path, root)
+        if microbatch_output_path is not None
         else None,
         "microbatch_feature_columns": microbatch["feature_columns"],
         "microbatch_label_columns": microbatch["label_columns"],
         "lookahead_columns": microbatch["lookahead_columns"],
+        "profit_maximization_summary": financial_objective.summary,
+        "financial_objective_applied_to_microbatch": bool(financial_rows),
+        "financial_sample_invalid_count": int(
+            financial_objective.summary.get("financial_sample_invalid_count", 0)
+        ),
+        "financial_training_blocked": financial_training_blocked,
+        "financial_sample_weight_mean": (
+            float(financial_objective.microbatch["financial_sample_weight"].mean())
+            if "financial_sample_weight" in financial_objective.microbatch.columns
+            and not financial_objective.microbatch.empty
+            else None
+        ),
         **smoke,
         "master_update_requested": False,
         "master_update_performed": False,
@@ -183,6 +229,32 @@ def render_markdown_report(report: Mapping[str, Any]) -> str:
             "",
         ]
     )
+
+
+def _write_financial_microbatch(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    output_dir: Path,
+) -> Path | None:
+    """Persist the financially weighted daily microbatch under the existing feedback root."""
+
+    if not rows:
+        return None
+    close_times = pd.to_datetime(
+        [row.get("close_time_utc") for row in rows],
+        utc=True,
+        errors="coerce",
+    )
+    valid_times = close_times[~pd.isna(close_times)]
+    run_date = (
+        valid_times.max().date().isoformat()
+        if len(valid_times)
+        else utc_now_iso()[:10]
+    )
+    destination = output_dir / f"{run_date}.parquet"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([dict(row) for row in rows]).to_parquet(destination, index=False)
+    return destination
 
 
 def _reason(status: str, source_reason: str, microbatch: Mapping[str, Any]) -> str:

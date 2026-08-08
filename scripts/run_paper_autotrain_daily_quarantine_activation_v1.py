@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the daily paper auto-training quarantine activation flow."""
+"""Run daily paper auto-training with the profit-first financial objective."""
 
 from __future__ import annotations
 
@@ -12,13 +12,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from smartcrypto.learning.paper_autotrain_daily_quarantine_activation.activation import (  # noqa: E402
-    DEFAULT_REPORT_JSON,
-    DEFAULT_REPORT_MD,
-    build_paper_autotrain_daily_quarantine_activation_v1,
-    render_markdown,
-    resolve,
-    write_json,
+from smartcrypto.learning.paper_autotrain_financial_objective import (  # noqa: E402
+    build_profit_aware_daily_autotrain,
 )
 
 
@@ -28,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", help="Print compact JSON.")
     parser.add_argument("--once", action="store_true", help="Execute one quarantine research cycle.")
     parser.add_argument("--write-feedback", action="store_true", help="Write quarantine feedback events under data/feedback.")
-    parser.add_argument("--train-challenger", action="store_true", help="Train quarantine challenger models if inputs/backends are available.")
+    parser.add_argument("--train-challenger", action="store_true", help="Train financially weighted quarantine challengers when eligible.")
     parser.add_argument("--write-quarantine-artifacts", action="store_true", help="Write quarantine research/model/registry artifacts.")
     parser.add_argument("--write-report", action="store_true", help="Write JSON/Markdown report under data/reports.")
     parser.add_argument("--dry-run", action="store_true", help="Plan the cycle without writes.")
@@ -41,9 +36,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    root = Path(args.project_root).resolve()
-    report = build_paper_autotrain_daily_quarantine_activation_v1(
-        project_root=root,
+    report = build_profit_aware_daily_autotrain(
+        Path(args.project_root).resolve(),
         once=args.once,
         write_feedback=args.write_feedback and not args.dry_run,
         train_challenger=args.train_challenger,
@@ -55,18 +49,15 @@ def main() -> int:
         output_json_path=args.output_json,
         output_markdown_path=args.output_markdown,
     )
-    if args.write_report and not args.dry_run:
-        output_json = resolve(root, args.output_json, DEFAULT_REPORT_JSON)
-        output_markdown = resolve(root, args.output_markdown, DEFAULT_REPORT_MD)
-        report["output_paths"]["report_json"] = str(output_json)
-        report["output_paths"]["report_markdown"] = str(output_markdown)
-        report["write_performed"] = True
-        write_json(output_json, report)
-        output_markdown.write_text(render_markdown(report), encoding="utf-8")
-    if args.json:
-        print(json.dumps(report, sort_keys=True, ensure_ascii=False, default=str))
-    else:
-        print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False, default=str))
+    print(
+        json.dumps(
+            report,
+            indent=None if args.json else 2,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=str,
+        )
+    )
     return 0
 
 
