@@ -19,7 +19,7 @@ from smartcrypto.research.profit_research_dataset import (
     resolve_build_paths,
 )
 
-from .contracts import ProfitMaximizationResult
+from .contracts import SAFETY_FLAGS, SCHEMA_VERSION, ProfitMaximizationResult
 from .metrics import prepare_profit_dataset
 from .optimizer import build_profit_maximization
 
@@ -64,14 +64,13 @@ def run_profit_maximization(
         return ProfitMaximizationResult(
             dataset=dataset_result.dataset,
             report={
-                "schema_version": "paper_profit_maximization_trader_master_qlib_v1",
+                "schema_version": SCHEMA_VERSION,
                 "status": "blocked",
                 "reason": "profit_research_dataset_unavailable",
                 "dataset_report": dataset_result.report,
-                "research_only": True,
-                "read_only": True,
-                "operational_authority": False,
-                "sends_orders": False,
+                "runtime_read_requested": allow_runtime_read,
+                "write_performed": False,
+                **SAFETY_FLAGS,
             },
         )
 
