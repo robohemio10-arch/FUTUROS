@@ -66,7 +66,7 @@ def test_new_peak_only_arms_trailing_for_subsequent_candle() -> None:
     path = candle_path(
         [
             ("2026-01-01T00:00:00Z", 100.0, 101.0, 99.0, 100.2),
-            ("2026-01-01T00:01:00Z", 100.2, 100.4, 100.1, 100.3),
+            ("2026-01-01T00:01:00Z", 100.9, 100.9, 100.1, 100.3),
             ("2026-01-01T00:02:00Z", 100.3, 100.4, 100.2, 100.3),
         ]
     )
@@ -80,6 +80,7 @@ def test_new_peak_only_arms_trailing_for_subsequent_candle() -> None:
     )
 
     assert result["stop_hit"] is True
+    assert result["gap_through_count"] == 0
     assert result["intrabar_ambiguous_count"] == 0
     assert result["exit_price"] == pytest.approx(100.75)
 
