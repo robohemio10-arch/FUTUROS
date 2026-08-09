@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -36,7 +37,7 @@ def momentum_frame(
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     start = pd.Timestamp("2026-01-01T00:00:00Z")
-    holdout_start = count - max(20, int((count * 0.20) + 0.999999))
+    holdout_start = count - max(20, math.ceil(count * 0.20))
     for index in range(count):
         ret12_selected = index % 2 == 0
         combo_selected = index % 6 in {0, 2}
@@ -197,14 +198,19 @@ def test_unprofitable_fixed_filters_do_not_open_holdout() -> None:
     assert report["ready_for_forward_paper_ab"] is False
 
 
-def test_historical_holdout_exposure_is_explicit_and_blocks_wiring_claim() -> None:
+def test_historical_exposure_is_explicit_and_blocks_wiring_claim() -> None:
     assert HOLDOUT_INDEPENDENCE["isolated_inside_this_validation"] is True
-    assert HOLDOUT_INDEPENDENCE["historically_unseen_during_threshold_discovery"] is False
+    assert HOLDOUT_INDEPENDENCE[
+        "walkforward_historically_unseen_during_threshold_discovery"
+    ] is False
+    assert HOLDOUT_INDEPENDENCE[
+        "holdout_historically_unseen_during_threshold_discovery"
+    ] is False
 
     _, report = validate_fixed_threshold_momentum(momentum_frame())
 
     assert report["holdout_independence"][
-        "historically_unseen_during_threshold_discovery"
+        "holdout_historically_unseen_during_threshold_discovery"
     ] is False
     assert report["ready_for_paper_wiring"] is False
 
