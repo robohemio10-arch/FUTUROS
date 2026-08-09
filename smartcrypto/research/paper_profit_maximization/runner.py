@@ -11,6 +11,7 @@ import pandas as pd
 
 from smartcrypto.data.trader_master_fingerprint_v2.master_adapter import read_trader_master_readonly
 from smartcrypto.research.profit_research.paper_analysis import (
+    DEFAULT_MASTER,
     build_exit_candidates,
     load_market_candles,
 )
@@ -23,7 +24,6 @@ from .contracts import SAFETY_FLAGS, SCHEMA_VERSION, ProfitMaximizationResult
 from .metrics import prepare_profit_dataset
 from .optimizer import build_profit_maximization
 
-DEFAULT_TRADER_MASTER = Path("data/trades/trades_master.parquet")
 DEFAULT_SCORE_SOURCES = (
     Path("data/reports/financial_label_target_store_v1.json"),
     Path("data/reports/ai_shadow_quality_veto_trainer_v1.json"),
@@ -74,7 +74,7 @@ def run_profit_maximization(
             },
         )
 
-    master_path = _resolve(root, trader_master, DEFAULT_TRADER_MASTER)
+    master_path = _resolve(root, trader_master, DEFAULT_MASTER)
     master = read_trader_master_readonly(
         project_root=root,
         trader_master_path=master_path,
