@@ -28,13 +28,21 @@ VALIDATION_SOURCE = (
 )
 
 
-def momentum_frame(count: int = 120, *, profitable: bool = True) -> pd.DataFrame:
+def momentum_frame(
+    count: int = 120,
+    *,
+    profitable: bool = True,
+    bad_holdout: bool = False,
+) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     start = pd.Timestamp("2026-01-01T00:00:00Z")
+    holdout_start = count - max(20, int((count * 0.20) + 0.999999))
     for index in range(count):
         ret12_selected = index % 2 == 0
         combo_selected = index % 6 in {0, 2}
-        if profitable:
+        if bad_holdout and index >= holdout_start:
+            pnl = -0.8 if ret12_selected else 0.1
+        elif profitable:
             if combo_selected:
                 pnl = 1.0
             elif ret12_selected:
@@ -153,6 +161,18 @@ def test_end_to_end_freezes_ret12_before_replay_holdout() -> None:
         "development",
         "replay_holdout",
     }
+
+
+def test_bad_replay_holdout_does_not_change_frozen_champion() -> None:
+    _, positive_report = validate_fixed_threshold_momentum(momentum_frame())
+    _, bad_report = validate_fixed_threshold_momentum(momentum_frame(bad_holdout=True))
+
+    assert positive_report["frozen_champion"] is not None
+    assert bad_report["frozen_champion"] is not None
+    assert positive_report["frozen_champion"]["arm_id"] == ARM_RET12
+    assert bad_report["frozen_champion"]["arm_id"] == ARM_RET12
+    assert bad_report["replay_holdout_passed"] is False
+    assert bad_report["ready_for_forward_paper_ab"] is False
 
 
 def test_candidate_must_pass_at_least_two_walkforward_folds() -> None:
