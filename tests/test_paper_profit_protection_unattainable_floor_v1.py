@@ -29,7 +29,7 @@ def test_floor_does_not_arm_above_running_mfe_after_costs() -> None:
             {
                 "ts": pd.Timestamp("2026-01-01T00:00:00Z"),
                 "open": 100.0,
-                "high": 100.10,
+                "high": 100.11,
                 "low": 100.0,
                 "close": 100.08,
                 "symbol": "ETHUSDT",
@@ -38,7 +38,7 @@ def test_floor_does_not_arm_above_running_mfe_after_costs() -> None:
             {
                 "ts": pd.Timestamp("2026-01-01T00:01:00Z"),
                 "open": 100.08,
-                "high": 100.10,
+                "high": 100.11,
                 "low": 99.50,
                 "close": 99.70,
                 "symbol": "ETHUSDT",
