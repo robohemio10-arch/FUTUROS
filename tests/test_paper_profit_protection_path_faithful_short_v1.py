@@ -27,7 +27,28 @@ def short_trade(*, net_pnl: float = -1.0) -> pd.Series:
     )
 
 
-def short_path(second_open: float = 99.8) -> pd.DataFrame:
+def short_path(*, gap_second_candle: bool = False) -> pd.DataFrame:
+    second = (
+        {
+            "ts": pd.Timestamp("2026-01-01T00:01:00Z"),
+            "open": 99.8,
+            "high": 99.9,
+            "low": 99.6,
+            "close": 99.8,
+            "symbol": "ETHUSDT",
+            "tf": "1m",
+        }
+        if gap_second_candle
+        else {
+            "ts": pd.Timestamp("2026-01-01T00:01:00Z"),
+            "open": 99.2,
+            "high": 99.4,
+            "low": 99.0,
+            "close": 99.2,
+            "symbol": "ETHUSDT",
+            "tf": "1m",
+        }
+    )
     return pd.DataFrame(
         [
             {
@@ -39,21 +60,13 @@ def short_path(second_open: float = 99.8) -> pd.DataFrame:
                 "symbol": "ETHUSDT",
                 "tf": "1m",
             },
-            {
-                "ts": pd.Timestamp("2026-01-01T00:01:00Z"),
-                "open": second_open,
-                "high": 99.9,
-                "low": 99.6,
-                "close": 99.8,
-                "symbol": "ETHUSDT",
-                "tf": "1m",
-            },
+            second,
             {
                 "ts": pd.Timestamp("2026-01-01T00:02:00Z"),
-                "open": 99.8,
-                "high": 99.9,
-                "low": 99.7,
-                "close": 99.8,
+                "open": 99.2,
+                "high": 99.3,
+                "low": 99.0,
+                "close": 99.2,
                 "symbol": "ETHUSDT",
                 "tf": "1m",
             },
@@ -71,6 +84,7 @@ def test_short_trailing_floor_is_directionally_symmetric() -> None:
     )
 
     assert result["stop_hit"] is True
+    assert result["gap_through_count"] == 0
     assert result["exit_price"] == pytest.approx(99.25)
     assert result["candidate_net_pnl"] > 0.0
 
@@ -78,7 +92,7 @@ def test_short_trailing_floor_is_directionally_symmetric() -> None:
 def test_short_gap_above_floor_uses_worse_open_fill() -> None:
     result = simulate_trade_path(
         short_trade(),
-        path=short_path(second_open=99.8),
+        path=short_path(gap_second_candle=True),
         timeframe="1m",
         trigger_mfe_pct=0.001,
         retention_fraction=0.75,
