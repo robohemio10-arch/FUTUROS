@@ -5,9 +5,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections.abc import Sequence
+from pathlib import Path
 
-from smartcrypto.research.paper_profit_maximization import run_profit_maximization
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from smartcrypto.research.paper_profit_maximization import run_profit_maximization  # noqa: E402
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -43,7 +49,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         timeframe=args.timeframe,
         allow_runtime_read=bool(args.allow_runtime_read),
     )
-    print(json.dumps(result.report, indent=None if args.json else 2, sort_keys=True, default=str))
+    print(
+        json.dumps(
+            result.report,
+            indent=None if args.json else 2,
+            sort_keys=True,
+            default=str,
+        )
+    )
     return 0 if result.report.get("status") == "ok" else 1
 
 
