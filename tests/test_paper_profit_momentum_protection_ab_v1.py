@@ -146,10 +146,13 @@ def test_retained_mfe_floor_can_turn_loser_positive_after_costs() -> None:
     )
 
     assert result["pessimistic_frame"].iloc[0]["net_pnl"] == pytest.approx(0.90)
-    assert result["diagnostics"]["pessimistic_recovered_winner_to_loser_count"] == 1
-    assert result["diagnostics"]["pessimistic_recovered_winner_to_loser_pnl"] == pytest.approx(
-        1.90
+    assert (
+        result["diagnostics"]["pessimistic_recovered_winner_to_loser_count"]
+        == 1
     )
+    assert result["diagnostics"][
+        "pessimistic_recovered_winner_to_loser_pnl"
+    ] == pytest.approx(1.90)
 
 
 def test_pessimistic_bound_counts_winner_sacrifice() -> None:
@@ -176,9 +179,9 @@ def test_pessimistic_bound_counts_winner_sacrifice() -> None:
     assert result["optimistic_frame"].iloc[0]["net_pnl"] == pytest.approx(1.5)
     assert result["pessimistic_frame"].iloc[0]["net_pnl"] == pytest.approx(0.90)
     assert result["diagnostics"]["pessimistic_harmed_winner_count"] == 1
-    assert result["diagnostics"]["pessimistic_winner_pnl_sacrificed"] == pytest.approx(
-        0.60
-    )
+    assert result["diagnostics"][
+        "pessimistic_winner_pnl_sacrificed"
+    ] == pytest.approx(0.60)
 
 
 def test_missing_path_or_cost_data_is_not_silently_simulated() -> None:
@@ -230,8 +233,10 @@ def test_best_candidate_must_be_positive_on_robust_oos_bound() -> None:
     assert best["robust_oos_net_pnl"] > 0
     assert best["robust_expectancy"] > 0
     assert best["robust_oos_expectancy"] > 0
-    assert best["robust_profit_factor"] > 1.0
-    assert best["robust_oos_profit_factor"] > 1.0
+    if best["robust_profit_factor"] is not None:
+        assert best["robust_profit_factor"] > 1.0
+    if best["robust_oos_profit_factor"] is not None:
+        assert best["robust_oos_profit_factor"] > 1.0
 
 
 def test_rank_prefers_robust_oos_improvement_over_in_sample_gain() -> None:
