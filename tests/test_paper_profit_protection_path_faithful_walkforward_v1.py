@@ -61,7 +61,7 @@ def test_fixed_candidate_set_is_exactly_the_four_preauthorized_policies() -> Non
     ]
 
 
-def test_new_peak_cannot_create_and_hit_trailing_floor_in_same_candle() -> None:
+def test_new_peak_only_arms_trailing_for_subsequent_candle() -> None:
     trade = trade_row(net_pnl=-0.5)
     path = candle_path(
         [
@@ -134,8 +134,8 @@ def test_partial_entry_and_exit_candles_are_excluded() -> None:
     path = candle_path(
         [
             ("2026-01-01T00:00:00Z", 100.0, 105.0, 95.0, 100.0),
-            ("2026-01-01T00:01:00Z", 100.0, 100.2, 99.9, 100.1),
-            ("2026-01-01T00:02:00Z", 100.1, 100.2, 100.0, 100.1),
+            ("2026-01-01T00:01:00Z", 100.0, 100.05, 99.95, 100.0),
+            ("2026-01-01T00:02:00Z", 100.0, 100.05, 99.95, 100.0),
             ("2026-01-01T00:03:00Z", 100.1, 106.0, 94.0, 100.0),
         ]
     )
@@ -159,8 +159,8 @@ def test_fixed_exit_slippage_is_charged_and_not_optimized() -> None:
     path = candle_path(
         [
             ("2026-01-01T00:00:00Z", 100.0, 101.0, 100.0, 100.9),
-            ("2026-01-01T00:01:00Z", 100.9, 101.0, 100.5, 100.8),
-            ("2026-01-01T00:02:00Z", 100.8, 100.9, 100.7, 100.8),
+            ("2026-01-01T00:01:00Z", 100.9, 101.0, 100.0, 100.8),
+            ("2026-01-01T00:02:00Z", 100.8, 100.9, 100.0, 100.8),
         ]
     )
 
@@ -173,7 +173,7 @@ def test_fixed_exit_slippage_is_charged_and_not_optimized() -> None:
     )
 
     assert result["stop_hit"] is True
-    assert result["candidate_net_pnl"] <= pytest.approx(0.001, abs=0.002)
+    assert abs(float(result["candidate_net_pnl"])) <= 0.002
 
 
 def test_walkforward_builds_three_expanding_history_folds() -> None:
