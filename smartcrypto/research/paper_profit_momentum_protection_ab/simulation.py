@@ -6,7 +6,6 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from smartcrypto.research.paper_profit_maximization.metrics import (
@@ -81,9 +80,6 @@ def evaluate_momentum_protection_ab(
         None,
     )
     output = prepared.copy()
-    output["ab_arm_ret12_eligible"] = False
-    output["ab_arm_ret12_ret1_eligible"] = False
-    eligible_ids = eligible["stable_trade_id"].astype("string")
     ret12_ids = set(
         eligible.loc[masks[ARM_RET12], "stable_trade_id"].astype("string")
     )
@@ -128,14 +124,15 @@ def evaluate_momentum_protection_ab(
             ),
             "decision_basis": "pessimistic_bound",
             "cost_basis": "observed_fees_plus_funding",
+            "extra_stop_slippage_assumed": False,
         },
     }
 
 
 def build_momentum_arm_masks(frame: pd.DataFrame) -> dict[str, pd.Series]:
     """Build the three fixed A/B arms authorized for this branch."""
-    ret12 = pd.to_numeric(frame.get("entry_return_12"), errors="coerce")
-    ret1 = pd.to_numeric(frame.get("entry_return_1"), errors="coerce")
+    ret12 = _numeric_column(frame, "entry_return_12")
+    ret1 = _numeric_column(frame, "entry_return_1")
     control = pd.Series(True, index=frame.index, dtype=bool)
     return {
         ARM_CONTROL: control,
@@ -157,7 +154,7 @@ def rank_ab_candidates(
             -_sort_float(item.get("robust_oos_delta_vs_global_baseline")),
             -_sort_float(item.get("robust_oos_net_pnl")),
             -_sort_float(item.get("robust_net_pnl")),
-            _sort_float(item.get("robust_maximum_drawdown")),
+            _sort_drawdown(item.get("robust_maximum_drawdown")),
             int(item.get("pessimistic_harmed_winner_count", 0)),
             str(item.get("candidate_id")),
         ),
@@ -237,15 +234,12 @@ def _build_protection_candidates(
             )
             robust = profit_metrics(simulation["pessimistic_frame"])
             optimistic = profit_metrics(simulation["optimistic_frame"])
+            pessimistic_frame = simulation["pessimistic_frame"]
             robust_train = profit_metrics(
-                simulation["pessimistic_frame"].loc[
-                    ~simulation["pessimistic_frame"]["__ab_oos"]
-                ]
+                pessimistic_frame.loc[~pessimistic_frame["__ab_oos"]]
             )
             robust_oos = profit_metrics(
-                simulation["pessimistic_frame"].loc[
-                    simulation["pessimistic_frame"]["__ab_oos"]
-                ]
+                pessimistic_frame.loc[pessimistic_frame["__ab_oos"]]
             )
             arm_delta = float(robust["net_pnl"]) - float(arm_metrics["net_pnl"])
             arm_oos_delta = float(robust_oos["net_pnl"]) - float(
@@ -316,14 +310,12 @@ def _simulate_protection(
     retention_fraction: float,
 ) -> dict[str, Any]:
     work = frame.copy()
-    net = pd.to_numeric(work["net_pnl"], errors="coerce")
-    mfe_abs = pd.to_numeric(work.get("mfe_absolute"), errors="coerce")
-    mfe_pct = pd.to_numeric(work.get("mfe_pct"), errors="coerce")
-    retracement = pd.to_numeric(
-        work.get("retracement_after_mfe_absolute"), errors="coerce"
-    )
-    fees = pd.to_numeric(work.get("fees"), errors="coerce")
-    funding = pd.to_numeric(work.get("funding"), errors="coerce")
+    net = _numeric_column(work, "net_pnl")
+    mfe_abs = _numeric_column(work, "mfe_absolute")
+    mfe_pct = _numeric_column(work, "mfe_pct")
+    retracement = _numeric_column(work, "retracement_after_mfe_absolute")
+    fees = _numeric_column(work, "fees")
+    funding = _numeric_column(work, "funding")
     costs = fees + funding
     floor_gross = pd.concat(
         [costs, mfe_abs * retention_fraction], axis=1
@@ -375,10 +367,16 @@ def _simulate_protection(
                 recovered_wtl.sum()
             ),
             "pessimistic_recovered_winner_to_loser_pnl": float(
-                (pessimistic_net.loc[recovered_wtl] - net.loc[recovered_wtl]).sum()
+                (
+                    pessimistic_net.loc[recovered_wtl]
+                    - net.loc[recovered_wtl]
+                ).sum()
             ),
             "pessimistic_winner_pnl_sacrificed": float(
-                (net.loc[harmed_winner] - pessimistic_net.loc[harmed_winner]).sum()
+                (
+                    net.loc[harmed_winner]
+                    - pessimistic_net.loc[harmed_winner]
+                ).sum()
             ),
             "simulation_incomplete_trade_count": int((~complete).sum()),
         },
@@ -483,8 +481,8 @@ def _winner_to_loser_mask(frame: pd.DataFrame) -> pd.Series:
     if "winner_to_loser_conversion" in frame.columns:
         values = frame["winner_to_loser_conversion"]
         return values.eq(True).fillna(False).astype(bool)  # noqa: E712
-    net = pd.to_numeric(frame.get("net_pnl"), errors="coerce")
-    mfe = pd.to_numeric(frame.get("mfe_absolute"), errors="coerce")
+    net = _numeric_column(frame, "net_pnl")
+    mfe = _numeric_column(frame, "mfe_absolute")
     return net.lt(0.0) & mfe.gt(0.0)
 
 
@@ -517,10 +515,25 @@ def _arm_condition(arm_id: str) -> dict[str, Any]:
 def _protection_id(trigger_pct: float, retention: float) -> str:
     trigger_bps = int(round(trigger_pct * 10000))
     retention_pct = int(round(retention * 100))
-    label = "net_breakeven" if retention_pct == 0 else f"retain_{retention_pct}pct_mfe"
+    label = (
+        "net_breakeven"
+        if retention_pct == 0
+        else f"retain_{retention_pct}pct_mfe"
+    )
     return f"trigger_{trigger_bps}bps__{label}"
+
+
+def _numeric_column(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(float("nan"), index=frame.index, dtype=float)
+    return pd.to_numeric(frame[column], errors="coerce")
 
 
 def _sort_float(value: Any) -> float:
     parsed = finite_or_none(value)
     return parsed if parsed is not None and math.isfinite(parsed) else -math.inf
+
+
+def _sort_drawdown(value: Any) -> float:
+    parsed = finite_or_none(value)
+    return parsed if parsed is not None and math.isfinite(parsed) else math.inf
