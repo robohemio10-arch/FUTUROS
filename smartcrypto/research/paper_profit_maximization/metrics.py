@@ -37,9 +37,9 @@ def prepare_profit_dataset(
             known_corrupt=bool(known_corrupt.iloc[index]),
             accounting_bad=bool(accounting_bad.iloc[index]),
             duplicate_identity=bool(duplicate_identity.iloc[index]),
-            existing_reason=(
-                output.iloc[index].get("rejection_reason")
-                or output.iloc[index].get("analysis_block_reason")
+            existing_reason=_first_present_text(
+                output.iloc[index].get("rejection_reason"),
+                output.iloc[index].get("analysis_block_reason"),
             ),
         )
         for index in range(len(output))
@@ -143,19 +143,23 @@ def normalize_trader_master_rows(rows: Sequence[Mapping[str, Any]]) -> pd.DataFr
         if net is None:
             continue
         identity = identity_from_row(row) or f"trader-master-row-{index}"
+        symbol = _first_present_value(row.get("symbol"), row.get("moeda"), "unknown")
+        side = _first_present_value(row.get("side"), row.get("fechar_side"), "unknown")
+        open_time = _first_present_value(row.get("open_time"), row.get("horario_abertura"))
+        close_time = _first_present_value(row.get("close_time"), row.get("horario_fechamento"))
         normalized.append(
             {
                 "stable_trade_id": identity,
                 "trade_id_numeric": trade_id_from_identity(identity),
-                "symbol": str(row.get("symbol") or row.get("moeda") or "unknown").upper(),
-                "side": str(row.get("side") or row.get("fechar_side") or "unknown").lower(),
+                "symbol": str(symbol).upper(),
+                "side": str(side).lower(),
                 "open_time_utc": pd.to_datetime(
-                    row.get("open_time") or row.get("horario_abertura"),
+                    open_time,
                     utc=True,
                     errors="coerce",
                 ),
                 "close_time_utc": pd.to_datetime(
-                    row.get("close_time") or row.get("horario_fechamento"),
+                    close_time,
                     utc=True,
                     errors="coerce",
                 ),
@@ -266,7 +270,7 @@ def build_loser_analysis(frame: pd.DataFrame) -> dict[str, Any]:
 def identity_from_row(row: Mapping[str, Any]) -> str | None:
     for key in ("stable_trade_id", "order_id", "event_id", "trade_id", "source_trade_id"):
         value = row.get(key)
-        if value is None:
+        if _is_missing_scalar(value):
             continue
         raw = str(value).strip()
         if not raw:
@@ -283,7 +287,7 @@ def identity_from_row(row: Mapping[str, Any]) -> str | None:
 
 
 def trade_id_from_identity(value: Any) -> float | None:
-    if value is None or value is pd.NA:
+    if _is_missing_scalar(value):
         return None
     raw = str(value).strip()
     if raw.startswith("freqtrade-paper-"):
@@ -321,7 +325,7 @@ def first_finite(*values: Any) -> float | None:
 
 
 def finite_or_none(value: Any) -> float | None:
-    if value is None or value is pd.NA or isinstance(value, bool):
+    if _is_missing_scalar(value) or isinstance(value, bool):
         return None
     try:
         parsed = float(value)
@@ -369,7 +373,7 @@ def _exclusion_reason(
     if accounting_bad:
         return "financial_accounting_not_reconciled"
     if not existing_ok:
-        return str(existing_reason or "upstream_analysis_ineligible")
+        return _first_present_text(existing_reason) or "upstream_analysis_ineligible"
     return None
 
 
@@ -408,6 +412,31 @@ def _ensure_stable_identity(frame: pd.DataFrame) -> pd.DataFrame:
             dtype="string",
         )
     return output
+
+
+def _is_missing_scalar(value: Any) -> bool:
+    if value is None or value is pd.NA:
+        return True
+    try:
+        missing = pd.isna(value)
+    except (TypeError, ValueError):
+        return False
+    return bool(missing) if isinstance(missing, (bool, np.bool_)) else False
+
+
+def _first_present_value(*values: Any) -> Any:
+    for value in values:
+        if not _is_missing_scalar(value):
+            return value
+    return None
+
+
+def _first_present_text(*values: Any) -> str | None:
+    value = _first_present_value(*values)
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _unique_close(values: Sequence[float]) -> list[float]:
