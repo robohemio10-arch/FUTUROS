@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "34febe9ab763572138f503f493ea352362d8565e5c023c110103dc865717de50",
+  "aggregate_sha256": "9609f009a15629be7decbca4546954226f48f8b89ef35f311e5a9301f0861418",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 296,
-    "manifested_files_total": 1758,
-    "python_files": 1342,
+    "docs_files": 297,
+    "manifested_files_total": 1768,
+    "python_files": 1351,
     "runtime_excluded_files_total": 0,
-    "test_files": 361,
-    "tracked_files_total": 1759,
+    "test_files": 365,
+    "tracked_files_total": 1769,
     "workflows": 1
   },
   "deterministic": true,
@@ -1788,6 +1788,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_PROFIT_MOMENTUM_PROTECTION_AB_V1.md",
       "sha256": "b61ce7fcea90d3a0b38ce87344b4784a799ac222938cf043e754e34b6d6a2a24"
+    },
+    {
+      "bytes": 4567,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_PROFIT_PROTECTION_PATH_FAITHFUL_WALKFORWARD_V1.md",
+      "sha256": "7bee8178049e4ad0341a91953b6516e0128eadf0b284ebe7c815f73ba7eafa78"
     },
     {
       "bytes": 3178,
@@ -4356,6 +4362,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_profit_momentum_protection_ab_v1.py",
       "sha256": "5d3582b46d36e93451e3244f430520dec0ba9cb9051f6b07685e9ad370ad01c1"
+    },
+    {
+      "bytes": 1918,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_profit_protection_path_faithful_walkforward_v1.py",
+      "sha256": "00acecd0183094b78c8b09385e495ec6241525e5e76d1e045255ca0c94179d47"
     },
     {
       "bytes": 2062,
@@ -7874,6 +7886,30 @@
       "sha256": "081227147c3c359b74429c288d3d49ed8684226a028be38983b04ade11c68ca5"
     },
     {
+      "bytes": 510,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_protection_path_faithful/__init__.py",
+      "sha256": "e68f050e99bbd07c322a28bf70c3cc37a8f6d756ec2e238a8dfecfa3bb394a75"
+    },
+    {
+      "bytes": 2166,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_protection_path_faithful/contracts.py",
+      "sha256": "7efb10e47a081986395044d635e93dd35f616c701a14d955d3006b79df289bff"
+    },
+    {
+      "bytes": 5960,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_protection_path_faithful/runner.py",
+      "sha256": "38414c9a99823ec4401161eed1f370af17a9a321e91512287a894c5eca0ce955"
+    },
+    {
+      "bytes": 26374,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_protection_path_faithful/simulation.py",
+      "sha256": "e2df8f61ec030d2d3a65eab5b9d7f03f59ce4c94bc7f97ee5d493c40963f574f"
+    },
+    {
       "bytes": 545,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_shadow_observation_daily_impact_report/__init__.py",
@@ -9918,6 +9954,30 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_profit_momentum_protection_ab_v1.py",
       "sha256": "fe8118d7f038a09d81d7a5c99349cb2c1d420d0e2f7dd608d3c259f98e149ba1"
+    },
+    {
+      "bytes": 726,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_protection_path_faithful_cli_v1.py",
+      "sha256": "c1c800d2315a7f754d6468ec03f64d5aa8d70209ab181bbdb9af5cb4cd88c686"
+    },
+    {
+      "bytes": 2807,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_protection_path_faithful_short_v1.py",
+      "sha256": "721db8365e36723b60b01a775f44f468a7a08fc3f0b511d145730b690062ab42"
+    },
+    {
+      "bytes": 9660,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_protection_path_faithful_walkforward_v1.py",
+      "sha256": "c52d9500160d3aa9f0095e8fd95256b0f69ded8604bb27b8353229f8cce1bea4"
+    },
+    {
+      "bytes": 1943,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_protection_unattainable_floor_v1.py",
+      "sha256": "0fecfab89bc4c95ebdcbc9af0c812aa6eae535d911bef91c2852d7697a973def"
     },
     {
       "bytes": 5824,
