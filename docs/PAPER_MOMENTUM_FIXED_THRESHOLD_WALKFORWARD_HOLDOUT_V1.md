@@ -32,13 +32,14 @@ O replay holdout nunca participa do ranking.
 
 ## Limitação metodológica obrigatória
 
-Os thresholds foram descobertos em uma análise anterior usando o histórico então disponível. Portanto, embora o último 20% fique isolado dentro desta branch, ele não pode ser descrito como holdout historicamente virgem em relação à descoberta dos thresholds.
+Os thresholds foram descobertos em análise anterior usando o histórico então disponível. Logo, os folds e o último 20% são cronologicamente isolados nesta branch, mas não são amostras historicamente inéditas em relação à descoberta original dos thresholds.
 
 O relatório registra explicitamente:
 
 - `isolated_inside_this_validation=true`;
-- `historically_unseen_during_threshold_discovery=false`;
-- `historically_pristine_holdout=false`.
+- `walkforward_historically_unseen_during_threshold_discovery=false`;
+- `holdout_historically_unseen_during_threshold_discovery=false`;
+- `historically_pristine_holdout=false` no replay final.
 
 Consequentemente, mesmo que o replay holdout passe, `ready_for_paper_wiring=false`. O resultado pode tornar o candidato elegível para um futuro A/B paper forward, que produzirá evidência realmente posterior ao congelamento dos thresholds.
 
@@ -118,8 +119,8 @@ Sem `--allow-runtime-read`, o runner permanece snapshot-first/fail-closed.
 
 ## Interpretação
 
-- `frozen_champion=null`: nenhum filtro fixo passou o walk-forward; não abrir replay holdout.
-- `replay_holdout_passed=false`: campeão development não sustentou o resultado no bloco final.
-- `replay_holdout_passed=true`: evidência cronológica favorável, mas historicamente exposta à descoberta anterior.
-- `ready_for_forward_paper_ab=true`: candidato pode ser considerado para uma etapa futura de A/B paper forward, mediante nova autorização nominal.
-- `ready_for_paper_wiring=false`: esta branch nunca concede autoridade operacional.
+- `frozen_champion=null`: nenhum filtro fixo passou a estabilidade temporal do replay walk-forward.
+- `replay_holdout_passed=false`: campeão development não sustentou o resultado no bloco cronológico final.
+- `replay_holdout_passed=true`: evidência cronológica favorável, ainda historicamente exposta à descoberta anterior.
+- `ready_for_forward_paper_ab=true`: candidato pode ser considerado para A/B paper forward mediante nova autorização nominal.
+- `ready_for_paper_wiring=false`: esta branch nunca concede autoridade operacional nem chama o replay de OOS pristine.
