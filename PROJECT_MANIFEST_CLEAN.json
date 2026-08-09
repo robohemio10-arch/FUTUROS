@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fb2443f5984184592c43b73c8086b2f50cc23a0d16ccf78be98c7473fb5b9fab",
+  "aggregate_sha256": "34febe9ab763572138f503f493ea352362d8565e5c023c110103dc865717de50",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 295,
-    "manifested_files_total": 1750,
-    "python_files": 1335,
+    "docs_files": 296,
+    "manifested_files_total": 1758,
+    "python_files": 1342,
     "runtime_excluded_files_total": 0,
-    "test_files": 359,
-    "tracked_files_total": 1751,
+    "test_files": 361,
+    "tracked_files_total": 1759,
     "workflows": 1
   },
   "deterministic": true,
@@ -1782,6 +1782,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_PROFIT_MAXIMIZATION_TRADER_MASTER_QLIB_V1.md",
       "sha256": "2692907940fa820e8cd6efd59ed3616ece627029e3630b2c4d6470bc8f0e9833"
+    },
+    {
+      "bytes": 5066,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_PROFIT_MOMENTUM_PROTECTION_AB_V1.md",
+      "sha256": "b61ce7fcea90d3a0b38ce87344b4784a799ac222938cf043e754e34b6d6a2a24"
     },
     {
       "bytes": 3178,
@@ -4344,6 +4350,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_profit_maximization_trader_master_qlib_v1.py",
       "sha256": "76753507862c92bb80ca21b819b7efe895508aa405d3c11a2f46812918760d9d"
+    },
+    {
+      "bytes": 1935,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_profit_momentum_protection_ab_v1.py",
+      "sha256": "5d3582b46d36e93451e3244f430520dec0ba9cb9051f6b07685e9ad370ad01c1"
     },
     {
       "bytes": 2062,
@@ -7838,6 +7850,30 @@
       "sha256": "92e5ce2a7fa5cd42c2918c62637e242ffcb59b529f01774fb15cf967f336ae45"
     },
     {
+      "bytes": 524,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_momentum_protection_ab/__init__.py",
+      "sha256": "60c1f06bfd7090c6a9e31a28bfdb5c9ae6315750e5b4312a7e03cd4f469569a0"
+    },
+    {
+      "bytes": 1381,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_momentum_protection_ab/contracts.py",
+      "sha256": "3278cf048719577558079490e41e0422d6e5127cf95e28fc89eef86d5ff6a86d"
+    },
+    {
+      "bytes": 2241,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_momentum_protection_ab/runner.py",
+      "sha256": "51a30f9799d27bd85bae56503682a6504256c93c718a22c99b6b62242b051d5c"
+    },
+    {
+      "bytes": 19706,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_profit_momentum_protection_ab/simulation.py",
+      "sha256": "081227147c3c359b74429c288d3d49ed8684226a028be38983b04ade11c68ca5"
+    },
+    {
       "bytes": 545,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_shadow_observation_daily_impact_report/__init__.py",
@@ -9870,6 +9906,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_profit_maximization_trader_master_qlib_v1.py",
       "sha256": "c864a48cfe2377e0a8122ac6e054ad940a06cdc672e720eaa81188c7ebfb88b4"
+    },
+    {
+      "bytes": 718,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_momentum_protection_ab_cli_v1.py",
+      "sha256": "51d2af326c90d1b10186b596aa69b1782d571e0b94d64f199811cdadfec78dda"
+    },
+    {
+      "bytes": 9515,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_profit_momentum_protection_ab_v1.py",
+      "sha256": "fe8118d7f038a09d81d7a5c99349cb2c1d420d0e2f7dd608d3c259f98e149ba1"
     },
     {
       "bytes": 5824,
