@@ -23,6 +23,7 @@ from .contracts import (
     FIXED_PROTECTION_CANDIDATES,
     HOLDOUT_RATIO,
     INITIAL_DEVELOPMENT_TRAIN_RATIO,
+    MIN_CAUSAL_PATH_COVERAGE_RATIO,
     MIN_ELIGIBLE_TRADES,
     MIN_HOLDOUT_TRADES,
     MIN_WALKFORWARD_POSITIVE_FOLDS,
@@ -36,7 +37,7 @@ def validate_path_faithful_candidates(
     paths_by_trade: Mapping[str, pd.DataFrame],
     timeframe: str,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Freeze candidate choice pre-holdout, then evaluate one champion on holdout."""
+    """Freeze one candidate pre-holdout, then evaluate only it on final holdout."""
     prepared, preparation = prepare_profit_dataset(frame)
     eligible = sort_trades(
         prepared.loc[prepared["profit_optimization_eligible"]].copy()
@@ -48,7 +49,10 @@ def validate_path_faithful_candidates(
             eligible_count=len(eligible),
         )
 
-    holdout_count = max(MIN_HOLDOUT_TRADES, int(math.ceil(len(eligible) * HOLDOUT_RATIO)))
+    holdout_count = max(
+        MIN_HOLDOUT_TRADES,
+        int(math.ceil(len(eligible) * HOLDOUT_RATIO)),
+    )
     if holdout_count >= len(eligible):
         return prepared, _blocked_report(
             "insufficient_trades_for_untouched_holdout",
@@ -85,8 +89,8 @@ def validate_path_faithful_candidates(
         ),
         None,
     )
+    annotated = _annotate_partitions(prepared, development, holdout)
     if champion is None:
-        annotated = _annotate_partitions(prepared, development, holdout)
         return annotated, {
             "status": "ok",
             "reason": "no_candidate_passed_walkforward_freeze_gate",
@@ -99,29 +103,30 @@ def validate_path_faithful_candidates(
             "holdout_evaluation": None,
             "path_faithful_validation_passed": False,
             "ready_for_paper_wiring": False,
+            "selection_contract": _selection_contract(),
+            "execution_model": _execution_model(),
             "preparation": preparation,
         }
 
     champion_config = _candidate_config(str(champion["candidate_id"]))
-    holdout_simulated, holdout_diag = simulate_candidate_frame(
+    holdout_simulated, holdout_diagnostics = simulate_candidate_frame(
         holdout,
         paths_by_trade=paths_by_trade,
         timeframe=timeframe,
         trigger_mfe_pct=float(champion_config["trigger_mfe_pct"]),
         retention_fraction=float(champion_config["retention_fraction_of_mfe"]),
     )
-    holdout_baseline_metrics = profit_metrics(holdout)
-    holdout_candidate_metrics = profit_metrics(holdout_simulated)
-    holdout_delta = float(holdout_candidate_metrics["net_pnl"]) - float(
-        holdout_baseline_metrics["net_pnl"]
+    holdout_baseline = profit_metrics(holdout)
+    holdout_candidate = profit_metrics(holdout_simulated)
+    holdout_delta = float(holdout_candidate["net_pnl"]) - float(
+        holdout_baseline["net_pnl"]
     )
     holdout_passed = _holdout_gate(
-        holdout_candidate_metrics,
-        baseline=holdout_baseline_metrics,
+        holdout_candidate,
+        baseline=holdout_baseline,
         delta_pnl=holdout_delta,
-        path_coverage_ratio=float(holdout_diag["path_coverage_ratio"]),
+        path_coverage_ratio=float(holdout_diagnostics["path_coverage_ratio"]),
     )
-    annotated = _annotate_partitions(prepared, development, holdout)
     return annotated, {
         "status": "ok",
         "reason": "path_faithful_walkforward_holdout_completed",
@@ -133,46 +138,32 @@ def validate_path_faithful_candidates(
         "frozen_champion": champion,
         "holdout_evaluation": {
             "candidate_id": champion["candidate_id"],
-            "baseline_metrics": holdout_baseline_metrics,
-            "candidate_metrics": holdout_candidate_metrics,
+            "baseline_metrics": holdout_baseline,
+            "candidate_metrics": holdout_candidate,
             "delta_pnl": holdout_delta,
-            "path_diagnostics": holdout_diag,
+            "path_diagnostics": holdout_diagnostics,
             "holdout_passed": holdout_passed,
         },
         "path_faithful_validation_passed": holdout_passed,
         "ready_for_paper_wiring": holdout_passed,
-        "selection_contract": {
-            "candidate_count": len(FIXED_PROTECTION_CANDIDATES),
-            "candidate_search_expanded": False,
-            "selection_uses_holdout": False,
-            "holdout_evaluated_after_champion_freeze": True,
-            "holdout_ratio": HOLDOUT_RATIO,
-            "walkforward_fold_count": WALKFORWARD_FOLD_COUNT,
-            "required_positive_walkforward_folds": MIN_WALKFORWARD_POSITIVE_FOLDS,
-        },
-        "execution_model": {
-            "running_mfe_is_causal": True,
-            "intrabar_order": "adverse_first_then_favorable",
-            "partial_entry_exit_candles_excluded": True,
-            "gap_through_stop_fill": "candle_open_if_worse_than_floor",
-            "observed_fees_charged": True,
-            "positive_funding_cost_charged": True,
-            "funding_credit_ignored": True,
-            "exit_slippage_bps": EXIT_SLIPPAGE_BPS,
-            "slippage_optimized": False,
-        },
+        "selection_contract": _selection_contract(),
+        "execution_model": _execution_model(),
         "preparation": preparation,
     }
 
 
 def build_walkforward_folds(development_count: int) -> list[dict[str, int]]:
-    """Build expanding-history validation folds entirely before final holdout."""
+    """Build three expanding-history validation folds before final holdout."""
     if development_count < WALKFORWARD_FOLD_COUNT + 2:
         return []
-    initial_train = max(1, int(math.floor(development_count * INITIAL_DEVELOPMENT_TRAIN_RATIO)))
+    initial_train = max(
+        1,
+        int(math.floor(development_count * INITIAL_DEVELOPMENT_TRAIN_RATIO)),
+    )
     remaining = development_count - initial_train
     if remaining < WALKFORWARD_FOLD_COUNT:
         return []
+
     folds: list[dict[str, int]] = []
     for fold_index in range(WALKFORWARD_FOLD_COUNT):
         validation_start = initial_train + int(
@@ -198,7 +189,7 @@ def build_walkforward_folds(development_count: int) -> list[dict[str, int]]:
 def rank_development_candidates(
     candidates: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Rank without any holdout information."""
+    """Rank candidates without any final-holdout information."""
     return sorted(
         [dict(item) for item in candidates],
         key=lambda item: (
@@ -231,7 +222,7 @@ def simulate_candidate_frame(
     output["protection_intrabar_ambiguous_count"] = 0
     output["protection_gap_through_count"] = 0
 
-    aggregate = {
+    aggregate: dict[str, int | float] = {
         "trade_count": int(len(output)),
         "path_complete_trade_count": 0,
         "path_missing_trade_count": 0,
@@ -241,51 +232,59 @@ def simulate_candidate_frame(
         "gap_through_stop_count": 0,
         "winner_to_loser_saved_count": 0,
         "winner_harmed_count": 0,
-        "gross_pnl_improvement": 0.0,
+        "net_pnl_delta_total": 0.0,
+        "unattainable_floor_skip_count": 0,
     }
 
     for index, trade in output.iterrows():
         stable_id = str(trade.get("stable_trade_id"))
-        path = paths_by_trade.get(stable_id)
         result = simulate_trade_path(
             trade,
-            path=path,
+            path=paths_by_trade.get(stable_id),
             timeframe=timeframe,
             trigger_mfe_pct=trigger_mfe_pct,
             retention_fraction=retention_fraction,
         )
         observed = finite_or_none(trade.get("net_pnl"))
-        candidate_net = result["candidate_net_pnl"]
+        candidate_net = float(result["candidate_net_pnl"])
         output.at[index, "net_pnl"] = candidate_net
-        output.at[index, "protection_exit_simulated"] = result["stop_hit"]
+        output.at[index, "protection_exit_simulated"] = bool(result["stop_hit"])
         output.at[index, "protection_exit_price"] = result["exit_price"]
-        output.at[index, "protection_path_complete"] = result["path_complete"]
-        output.at[index, "protection_boundary_candles_excluded"] = result[
-            "boundary_candles_excluded"
-        ]
-        output.at[index, "protection_intrabar_ambiguous_count"] = result[
-            "intrabar_ambiguous_count"
-        ]
-        output.at[index, "protection_gap_through_count"] = result["gap_through_count"]
+        output.at[index, "protection_path_complete"] = bool(result["path_complete"])
+        output.at[index, "protection_boundary_candles_excluded"] = int(
+            result["boundary_candles_excluded"]
+        )
+        output.at[index, "protection_intrabar_ambiguous_count"] = int(
+            result["intrabar_ambiguous_count"]
+        )
+        output.at[index, "protection_gap_through_count"] = int(
+            result["gap_through_count"]
+        )
 
-        if result["path_complete"]:
-            aggregate["path_complete_trade_count"] += 1
-        else:
-            aggregate["path_missing_trade_count"] += 1
-        if result["stop_hit"]:
-            aggregate["stop_hit_trade_count"] += 1
-        aggregate["boundary_candles_excluded"] += int(result["boundary_candles_excluded"])
-        aggregate["intrabar_ambiguous_count"] += int(result["intrabar_ambiguous_count"])
+        aggregate["path_complete_trade_count"] += int(bool(result["path_complete"]))
+        aggregate["path_missing_trade_count"] += int(not bool(result["path_complete"]))
+        aggregate["stop_hit_trade_count"] += int(bool(result["stop_hit"]))
+        aggregate["boundary_candles_excluded"] += int(
+            result["boundary_candles_excluded"]
+        )
+        aggregate["intrabar_ambiguous_count"] += int(
+            result["intrabar_ambiguous_count"]
+        )
         aggregate["gap_through_stop_count"] += int(result["gap_through_count"])
+        aggregate["unattainable_floor_skip_count"] += int(
+            result["unattainable_floor_skip_count"]
+        )
         if observed is not None:
-            aggregate["gross_pnl_improvement"] += float(candidate_net) - observed
-            if observed < 0 and candidate_net > observed:
+            aggregate["net_pnl_delta_total"] += candidate_net - observed
+            if _observed_winner_to_loser(trade) and candidate_net > observed:
                 aggregate["winner_to_loser_saved_count"] += 1
             if observed > 0 and candidate_net < observed:
                 aggregate["winner_harmed_count"] += 1
 
     aggregate["path_coverage_ratio"] = (
-        float(aggregate["path_complete_trade_count"]) / len(output) if len(output) else 0.0
+        float(aggregate["path_complete_trade_count"]) / len(output)
+        if len(output)
+        else 0.0
     )
     return output, aggregate
 
@@ -298,14 +297,14 @@ def simulate_trade_path(
     trigger_mfe_pct: float,
     retention_fraction: float,
 ) -> dict[str, Any]:
-    """Simulate one trailing policy with adverse-first OHLC ordering."""
+    """Simulate one trailing policy using only fully observed completed candles."""
     observed_net = finite_or_none(trade.get("net_pnl"))
     entry = finite_or_none(trade.get("entry_price"))
     quantity = finite_or_none(trade.get("quantity"))
     contract_size = finite_or_none(trade.get("contract_size"))
     open_time = _timestamp_or_none(trade.get("open_time_utc"))
     close_time = _timestamp_or_none(trade.get("close_time_utc"))
-    side = str(trade.get("side") or "").casefold()
+    side = _normalized_side(trade.get("side"))
     if (
         observed_net is None
         or entry is None
@@ -316,7 +315,7 @@ def simulate_trade_path(
         or contract_size <= 0
         or open_time is None
         or close_time is None
-        or side not in {"long", "short"}
+        or side is None
         or path is None
         or path.empty
     ):
@@ -341,6 +340,7 @@ def simulate_trade_path(
     running_favorable = entry
     ambiguous_count = 0
     gap_count = 0
+    unattainable_floor_skips = 0
 
     for _, candle in candles.iterrows():
         open_price = float(candle["open"])
@@ -352,53 +352,71 @@ def simulate_trade_path(
             multiplier=multiplier,
             side=side,
         )
-        armed = prior_mfe_pct >= trigger_mfe_pct and prior_mfe_gross > 0.0
-        if armed:
-            reference_notional = entry * multiplier
-            slippage_cost = reference_notional * EXIT_SLIPPAGE_BPS / 10000.0
+        if prior_mfe_pct >= trigger_mfe_pct and prior_mfe_gross > 0.0:
+            slippage_reserve = (
+                entry * multiplier * EXIT_SLIPPAGE_BPS / 10000.0
+            )
             floor_gross = max(
-                fee_cost + funding_cost + slippage_cost,
+                fee_cost + funding_cost + slippage_reserve,
                 prior_mfe_gross * retention_fraction,
             )
-            floor_price = _floor_price(
-                entry=entry,
-                floor_gross=floor_gross,
-                multiplier=multiplier,
-                side=side,
-            )
-            adverse_cross = low <= floor_price if side == "long" else high >= floor_price
-            favorable_new_peak = high > running_favorable if side == "long" else low < running_favorable
-            if adverse_cross and favorable_new_peak:
-                ambiguous_count += 1
-            if adverse_cross:
-                fill_price, gap = _conservative_fill(
-                    open_price=open_price,
-                    floor_price=floor_price,
-                    side=side,
-                )
-                gap_count += int(gap)
-                gross = _gross_pnl(
+            if floor_gross <= prior_mfe_gross + 1e-12:
+                floor_price = _floor_price(
                     entry=entry,
-                    exit_price=fill_price,
+                    floor_gross=floor_gross,
                     multiplier=multiplier,
                     side=side,
                 )
-                exit_slippage = abs(fill_price) * multiplier * EXIT_SLIPPAGE_BPS / 10000.0
-                candidate_net = gross - fee_cost - funding_cost - exit_slippage
-                return {
-                    "candidate_net_pnl": float(candidate_net),
-                    "stop_hit": True,
-                    "exit_price": float(fill_price),
-                    "path_complete": True,
-                    "boundary_candles_excluded": boundary_excluded,
-                    "intrabar_ambiguous_count": ambiguous_count,
-                    "gap_through_count": gap_count,
-                }
+                adverse_cross = (
+                    low <= floor_price if side == "long" else high >= floor_price
+                )
+                favorable_new_peak = (
+                    high > running_favorable
+                    if side == "long"
+                    else low < running_favorable
+                )
+                if adverse_cross and favorable_new_peak:
+                    ambiguous_count += 1
+                if adverse_cross:
+                    fill_price, gap = _conservative_fill(
+                        open_price=open_price,
+                        floor_price=floor_price,
+                        side=side,
+                    )
+                    gap_count += int(gap)
+                    gross = _gross_pnl(
+                        entry=entry,
+                        exit_price=fill_price,
+                        multiplier=multiplier,
+                        side=side,
+                    )
+                    exit_slippage = (
+                        abs(fill_price)
+                        * multiplier
+                        * EXIT_SLIPPAGE_BPS
+                        / 10000.0
+                    )
+                    candidate_net = (
+                        gross - fee_cost - funding_cost - exit_slippage
+                    )
+                    return {
+                        "candidate_net_pnl": float(candidate_net),
+                        "stop_hit": True,
+                        "exit_price": float(fill_price),
+                        "path_complete": True,
+                        "boundary_candles_excluded": boundary_excluded,
+                        "intrabar_ambiguous_count": ambiguous_count,
+                        "gap_through_count": gap_count,
+                        "unattainable_floor_skip_count": unattainable_floor_skips,
+                    }
+            else:
+                unattainable_floor_skips += 1
 
-        if side == "long":
-            running_favorable = max(running_favorable, high)
-        else:
-            running_favorable = min(running_favorable, low)
+        running_favorable = (
+            max(running_favorable, high)
+            if side == "long"
+            else min(running_favorable, low)
+        )
 
     return {
         "candidate_net_pnl": float(observed_net),
@@ -408,6 +426,7 @@ def simulate_trade_path(
         "boundary_candles_excluded": boundary_excluded,
         "intrabar_ambiguous_count": ambiguous_count,
         "gap_through_count": gap_count,
+        "unattainable_floor_skip_count": unattainable_floor_skips,
     }
 
 
@@ -422,8 +441,8 @@ def _evaluate_development_candidate(
     trigger = float(candidate["trigger_mfe_pct"])
     retention = float(candidate["retention_fraction_of_mfe"])
     fold_reports: list[dict[str, Any]] = []
-    candidate_validation_frames: list[pd.DataFrame] = []
-    baseline_validation_frames: list[pd.DataFrame] = []
+    candidate_frames: list[pd.DataFrame] = []
+    baseline_frames: list[pd.DataFrame] = []
 
     for fold in folds:
         start = int(fold["validation_start"])
@@ -438,7 +457,9 @@ def _evaluate_development_candidate(
         )
         baseline_metrics = profit_metrics(validation)
         candidate_metrics = profit_metrics(simulated)
-        delta = float(candidate_metrics["net_pnl"]) - float(baseline_metrics["net_pnl"])
+        delta = float(candidate_metrics["net_pnl"]) - float(
+            baseline_metrics["net_pnl"]
+        )
         fold_reports.append(
             {
                 **fold,
@@ -449,14 +470,16 @@ def _evaluate_development_candidate(
                 "path_diagnostics": diagnostics,
             }
         )
-        candidate_validation_frames.append(simulated)
-        baseline_validation_frames.append(validation)
+        candidate_frames.append(simulated)
+        baseline_frames.append(validation)
 
-    candidate_validation = pd.concat(candidate_validation_frames, ignore_index=True)
-    baseline_validation = pd.concat(baseline_validation_frames, ignore_index=True)
+    candidate_validation = pd.concat(candidate_frames, ignore_index=True)
+    baseline_validation = pd.concat(baseline_frames, ignore_index=True)
     candidate_metrics = profit_metrics(candidate_validation)
     baseline_metrics = profit_metrics(baseline_validation)
-    total_delta = float(candidate_metrics["net_pnl"]) - float(baseline_metrics["net_pnl"])
+    total_delta = float(candidate_metrics["net_pnl"]) - float(
+        baseline_metrics["net_pnl"]
+    )
     positive_folds = sum(bool(item["positive_delta"]) for item in fold_reports)
     path_complete = sum(
         int(item["path_diagnostics"]["path_complete_trade_count"])
@@ -489,7 +512,9 @@ def _evaluate_development_candidate(
         "walkforward_average_loss": candidate_metrics["average_loss"],
         "walkforward_maximum_drawdown": candidate_metrics["maximum_drawdown"],
         "walkforward_path_coverage_ratio": coverage,
-        "development_decision": "FREEZE_FOR_HOLDOUT" if freeze else "REJECT_PRE_HOLDOUT",
+        "development_decision": (
+            "FREEZE_FOR_HOLDOUT" if freeze else "REJECT_PRE_HOLDOUT"
+        ),
         "holdout_metrics_used_for_selection": False,
     }
 
@@ -508,7 +533,7 @@ def _development_freeze_gate(
         and float(metrics.get("expectancy", 0.0)) > 0
         and (profit_factor is None or profit_factor > 1.0)
         and total_delta > 0
-        and path_coverage_ratio >= 0.80
+        and path_coverage_ratio >= MIN_CAUSAL_PATH_COVERAGE_RATIO
     )
 
 
@@ -527,7 +552,7 @@ def _holdout_gate(
         and delta_pnl > 0
         and float(metrics.get("maximum_drawdown", math.inf))
         <= float(baseline.get("maximum_drawdown", math.inf))
-        and path_coverage_ratio >= 0.80
+        and path_coverage_ratio >= MIN_CAUSAL_PATH_COVERAGE_RATIO
     )
 
 
@@ -551,7 +576,9 @@ def _running_mfe(
     multiplier: float,
     side: str,
 ) -> tuple[float, float]:
-    favorable_delta = favorable_price - entry if side == "long" else entry - favorable_price
+    favorable_delta = (
+        favorable_price - entry if side == "long" else entry - favorable_price
+    )
     favorable_delta = max(favorable_delta, 0.0)
     return favorable_delta * multiplier, favorable_delta / entry
 
@@ -594,6 +621,22 @@ def _gross_pnl(
     )
 
 
+def _normalized_side(value: Any) -> str | None:
+    if value is None or value is pd.NA or bool(pd.isna(value)):
+        return None
+    side = str(value).strip().casefold()
+    return side if side in {"long", "short"} else None
+
+
+def _observed_winner_to_loser(trade: pd.Series) -> bool:
+    explicit = trade.get("winner_to_loser_conversion")
+    if explicit is not None and explicit is not pd.NA and not pd.isna(explicit):
+        return bool(explicit)
+    net = finite_or_none(trade.get("net_pnl"))
+    mfe = finite_or_none(trade.get("mfe_absolute"))
+    return bool(net is not None and net < 0 and mfe is not None and mfe > 0)
+
+
 def _annotate_partitions(
     prepared: pd.DataFrame,
     development: pd.DataFrame,
@@ -604,7 +647,9 @@ def _annotate_partitions(
     stable = output["stable_trade_id"].astype("string")
     development_ids = set(development["stable_trade_id"].astype("string"))
     holdout_ids = set(holdout["stable_trade_id"].astype("string"))
-    output.loc[stable.isin(development_ids), "path_faithful_partition"] = "development"
+    output.loc[stable.isin(development_ids), "path_faithful_partition"] = (
+        "development"
+    )
     output.loc[stable.isin(holdout_ids), "path_faithful_partition"] = "holdout"
     return output
 
@@ -625,13 +670,42 @@ def _timestamp_or_none(value: Any) -> pd.Timestamp | None:
 
 def _unchanged_trade(observed_net: float | None) -> dict[str, Any]:
     return {
-        "candidate_net_pnl": float(observed_net or 0.0),
+        "candidate_net_pnl": float(observed_net if observed_net is not None else 0.0),
         "stop_hit": False,
         "exit_price": None,
         "path_complete": False,
         "boundary_candles_excluded": 0,
         "intrabar_ambiguous_count": 0,
         "gap_through_count": 0,
+        "unattainable_floor_skip_count": 0,
+    }
+
+
+def _selection_contract() -> dict[str, Any]:
+    return {
+        "candidate_count": len(FIXED_PROTECTION_CANDIDATES),
+        "candidate_search_expanded": False,
+        "selection_uses_holdout": False,
+        "holdout_evaluated_after_champion_freeze": True,
+        "holdout_ratio": HOLDOUT_RATIO,
+        "walkforward_fold_count": WALKFORWARD_FOLD_COUNT,
+        "required_positive_walkforward_folds": MIN_WALKFORWARD_POSITIVE_FOLDS,
+        "minimum_causal_path_coverage_ratio": MIN_CAUSAL_PATH_COVERAGE_RATIO,
+    }
+
+
+def _execution_model() -> dict[str, Any]:
+    return {
+        "running_mfe_is_causal": True,
+        "intrabar_order": "adverse_first_then_favorable",
+        "partial_entry_exit_candles_excluded": True,
+        "unattainable_floor_is_rejected": True,
+        "gap_through_stop_fill": "candle_open_if_worse_than_floor",
+        "observed_fees_charged": True,
+        "positive_funding_cost_charged": True,
+        "funding_credit_ignored": True,
+        "exit_slippage_bps": EXIT_SLIPPAGE_BPS,
+        "slippage_optimized": False,
     }
 
 
@@ -650,6 +724,8 @@ def _blocked_report(
         "holdout_evaluation": None,
         "path_faithful_validation_passed": False,
         "ready_for_paper_wiring": False,
+        "selection_contract": _selection_contract(),
+        "execution_model": _execution_model(),
         "preparation": dict(preparation),
     }
 
