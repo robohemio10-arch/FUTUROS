@@ -28,9 +28,10 @@ FIXED_CANDIDATE_ARMS: Final[tuple[str, ...]] = (ARM_RET12, ARM_RET12_RET1)
 
 HOLDOUT_INDEPENDENCE: Final[dict[str, Any]] = {
     "isolated_inside_this_validation": True,
-    "historically_unseen_during_threshold_discovery": False,
+    "walkforward_historically_unseen_during_threshold_discovery": False,
+    "holdout_historically_unseen_during_threshold_discovery": False,
     "reason": "fixed_thresholds_were_discovered_before_this_branch_on_prior_available_history",
-    "interpretation": "chronological_frozen_evaluation_not_pristine_discovery_holdout",
+    "interpretation": "chronological_replay_stability_test_not_pristine_discovery_oos",
 }
 
 SAFETY_FLAGS: Final[dict[str, bool]] = {
