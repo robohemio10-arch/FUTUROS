@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9675b832f9d922b8445ed80bf7a859c56fd433033d6d5aaf20d579f86993e675",
+  "aggregate_sha256": "e8046b3f7b85803fdd227aefcd3cf73d9aa4090247d4096a084ef1d9a798b226",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 298,
-    "manifested_files_total": 1776,
-    "python_files": 1358,
+    "docs_files": 299,
+    "manifested_files_total": 1784,
+    "python_files": 1365,
     "runtime_excluded_files_total": 0,
-    "test_files": 367,
-    "tracked_files_total": 1777,
+    "test_files": 369,
+    "tracked_files_total": 1785,
     "workflows": 1
   },
   "deterministic": true,
@@ -1770,6 +1770,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MOMENTUM_FIXED_THRESHOLD_WALKFORWARD_HOLDOUT_V1.md",
       "sha256": "df08b2260dd9595de27f120f6f8ddff053bd63f952933f03f3925bf5748e3d41"
+    },
+    {
+      "bytes": 4663,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_MOMENTUM_FORWARD_OOS_OBSERVER_V1.md",
+      "sha256": "ddbd2c5a80ce3eb89cfc90abf2a87fb5e64e2177cccc35a74eed10c382b0028e"
     },
     {
       "bytes": 2777,
@@ -4350,6 +4356,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_momentum_fixed_threshold_walkforward_holdout_v1.py",
       "sha256": "204ba266cbe9df2820a0558bd109f97c3eabc8474d37d28615334342d998b17e"
+    },
+    {
+      "bytes": 1867,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_momentum_forward_oos_observer_v1.py",
+      "sha256": "ae4342e39eca4d1c294d05ee7bb071fa1d1fda836131c811415b4405311ca040"
     },
     {
       "bytes": 2422,
@@ -7844,6 +7856,30 @@
       "sha256": "9f547ac0273d49d7f43035fac936b5c109f7cf8807942e75d764b9bb60af381e"
     },
     {
+      "bytes": 546,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_forward_oos_observer/__init__.py",
+      "sha256": "3d67f81d20ca5abc707788c76e1885a0f14efd60b10a67a90452133bdac20fa4"
+    },
+    {
+      "bytes": 2094,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_forward_oos_observer/contracts.py",
+      "sha256": "9d1f71b71f75e307d8b7d82e457a04f9318b318fa2d6a13332a11be00bc292f7"
+    },
+    {
+      "bytes": 2250,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_forward_oos_observer/runner.py",
+      "sha256": "c0ee902f26ae90b9a4b167e19e98be0e2503f7997035917569bd4f6ffad977c5"
+    },
+    {
+      "bytes": 13347,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_forward_oos_observer/validation.py",
+      "sha256": "dd88da769063aff97ad2c38b8ef87e5941a350e232f7611a58df6743bbc70afa"
+    },
+    {
       "bytes": 689,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_only_candidate_strategy_ab_test/__init__.py",
@@ -9960,6 +9996,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_momentum_fixed_threshold_walkforward_holdout_v1.py",
       "sha256": "b826bd4c3b3b51b6f0290d0952363acd36813219f9fbec5beeb8278b785f9967"
+    },
+    {
+      "bytes": 696,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_momentum_forward_oos_observer_cli_v1.py",
+      "sha256": "d1b27501c495e135bac5f6a4f8344f0ab306ee6785a7ff8dc308a32a73542031"
+    },
+    {
+      "bytes": 9669,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_momentum_forward_oos_observer_v1.py",
+      "sha256": "dc234a299a461b2ae452c7fda1fb1d8c56e20137b0f613e1bfe9431d2fa4ff11"
     },
     {
       "bytes": 5530,
