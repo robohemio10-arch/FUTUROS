@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9609f009a15629be7decbca4546954226f48f8b89ef35f311e5a9301f0861418",
+  "aggregate_sha256": "9675b832f9d922b8445ed80bf7a859c56fd433033d6d5aaf20d579f86993e675",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 297,
-    "manifested_files_total": 1768,
-    "python_files": 1351,
+    "docs_files": 298,
+    "manifested_files_total": 1776,
+    "python_files": 1358,
     "runtime_excluded_files_total": 0,
-    "test_files": 365,
-    "tracked_files_total": 1769,
+    "test_files": 367,
+    "tracked_files_total": 1777,
     "workflows": 1
   },
   "deterministic": true,
@@ -1764,6 +1764,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MODEL_CANDIDATE_REGISTRY_GATE_V1.md",
       "sha256": "f65d81154100a591e43bd2585473cf04524358cc0ad33c01f511cc6be90b9f2b"
+    },
+    {
+      "bytes": 4520,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_MOMENTUM_FIXED_THRESHOLD_WALKFORWARD_HOLDOUT_V1.md",
+      "sha256": "df08b2260dd9595de27f120f6f8ddff053bd63f952933f03f3925bf5748e3d41"
     },
     {
       "bytes": 2777,
@@ -4338,6 +4344,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_financial_performance_metrics.py",
       "sha256": "d86784e7a13c81e8ec7605d13f3b71aec3b08a2ba47013048cef845e3c1981ef"
+    },
+    {
+      "bytes": 1902,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_paper_momentum_fixed_threshold_walkforward_holdout_v1.py",
+      "sha256": "204ba266cbe9df2820a0558bd109f97c3eabc8474d37d28615334342d998b17e"
     },
     {
       "bytes": 2422,
@@ -7808,6 +7820,30 @@
       "sha256": "76faec76c2b793b0cd3f9e57e97f90e4fa94b939e3bf223912a90effb3259acf"
     },
     {
+      "bytes": 740,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_fixed_threshold_walkforward_holdout/__init__.py",
+      "sha256": "8c81b13aec6b824899e3e3b044e5c68e76f371ad1881113d3ffa16ca7f92d559"
+    },
+    {
+      "bytes": 2258,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_fixed_threshold_walkforward_holdout/contracts.py",
+      "sha256": "1d3ac0a9bd63e74f9a3f8a5c36d814f3d009a17387f567ea68431adf49f26c83"
+    },
+    {
+      "bytes": 2313,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_fixed_threshold_walkforward_holdout/runner.py",
+      "sha256": "36b1dadca1caeea5c918b6ea1b0133cfea1d39cba8b3ed98ad046626d0d62848"
+    },
+    {
+      "bytes": 18422,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_momentum_fixed_threshold_walkforward_holdout/validation.py",
+      "sha256": "9f547ac0273d49d7f43035fac936b5c109f7cf8807942e75d764b9bb60af381e"
+    },
+    {
       "bytes": 689,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_only_candidate_strategy_ab_test/__init__.py",
@@ -9912,6 +9948,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_model_candidate_registry_gate_v1.py",
       "sha256": "dd46a84eae7f4c005bf23048931ec2ba57f5d34ce4ff78ffb62e372debaccd1d"
+    },
+    {
+      "bytes": 756,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_momentum_fixed_threshold_walkforward_holdout_cli_v1.py",
+      "sha256": "cac653d0f052b8d447346470ba778361b57eca81882fa49eb8d93e11a80c4ed0"
+    },
+    {
+      "bytes": 10192,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_momentum_fixed_threshold_walkforward_holdout_v1.py",
+      "sha256": "b826bd4c3b3b51b6f0290d0952363acd36813219f9fbec5beeb8278b785f9967"
     },
     {
       "bytes": 5530,
