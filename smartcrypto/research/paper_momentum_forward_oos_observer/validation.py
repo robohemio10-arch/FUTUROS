@@ -34,11 +34,7 @@ def observe_frozen_momentum_forward(
     """Observe only trades closed after the immutable freeze timestamp."""
     prepared, preparation = prepare_profit_dataset(frame)
     eligible = prepared.loc[prepared["profit_optimization_eligible"]].copy()
-    eligible["close_time_utc"] = pd.to_datetime(
-        eligible.get("close_time_utc"),
-        utc=True,
-        errors="coerce",
-    )
+    eligible["close_time_utc"] = _utc_timestamp_series(eligible, "close_time_utc")
     eligible = sort_trades(eligible).reset_index(drop=True)
     post_freeze = eligible.loc[
         eligible["close_time_utc"].gt(FORWARD_START_UTC)
@@ -255,7 +251,7 @@ def _annotate_candidate_eligibility(frame: pd.DataFrame) -> pd.DataFrame:
 def _cross_cutoff_trade_count(frame: pd.DataFrame) -> int:
     if frame.empty or "open_time_utc" not in frame.columns:
         return 0
-    opened = pd.to_datetime(frame["open_time_utc"], utc=True, errors="coerce")
+    opened = _utc_timestamp_series(frame, "open_time_utc")
     return int(opened.le(FORWARD_START_UTC).fillna(False).sum())
 
 
@@ -263,20 +259,30 @@ def _finite_numeric_series(frame: pd.DataFrame, column: str) -> pd.Series:
     if column not in frame.columns:
         return pd.Series(float("nan"), index=frame.index, dtype="float64")
     values = pd.to_numeric(frame[column], errors="coerce")
-    return values.where(values.map(lambda value: bool(pd.notna(value) and math.isfinite(float(value)))))
+    finite_mask = values.map(_is_finite_scalar)
+    return values.where(finite_mask)
+
+
+def _is_finite_scalar(value: Any) -> bool:
+    if pd.isna(value):
+        return False
+    parsed = finite_or_none(value)
+    return parsed is not None and math.isfinite(parsed)
+
+
+def _utc_timestamp_series(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(pd.NaT, index=frame.index, dtype="datetime64[ns, UTC]")
+    return pd.to_datetime(frame[column], utc=True, errors="coerce")
 
 
 def _max_timestamp(frame: pd.DataFrame, column: str) -> pd.Timestamp | None:
-    if frame.empty or column not in frame.columns:
-        return None
-    values = pd.to_datetime(frame[column], utc=True, errors="coerce").dropna()
+    values = _utc_timestamp_series(frame, column).dropna()
     return None if values.empty else pd.Timestamp(values.max())
 
 
 def _min_timestamp(frame: pd.DataFrame, column: str) -> pd.Timestamp | None:
-    if frame.empty or column not in frame.columns:
-        return None
-    values = pd.to_datetime(frame[column], utc=True, errors="coerce").dropna()
+    values = _utc_timestamp_series(frame, column).dropna()
     return None if values.empty else pd.Timestamp(values.min())
 
 
