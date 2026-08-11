@@ -334,23 +334,27 @@ def write_feedback_outputs(
     clean_events = [_public_event_columns(event) for event in final_events]
     frame = pd.DataFrame(clean_events, columns=OUTCOME_EVENT_COLUMNS)
     frame.to_parquet(outcome_events_path, index=False)
-    feedback_frame = frame[
-        [
-            "order_id",
-            "symbol",
-            "side",
-            "open_time_utc",
-            "close_time_utc",
-            "entry_price",
-            "exit_price",
-            "net_pnl",
-            "profit_ratio",
-            "exit_reason",
-            "source_file",
-            "created_at_utc",
-            "event_id",
-        ]
-    ].copy()
+    feedback_columns = [
+        "order_id",
+        "trade_id",
+        "symbol",
+        "side",
+        "open_time_utc",
+        "close_time_utc",
+        "entry_price",
+        "exit_price",
+        "net_pnl",
+        "profit_ratio",
+        "exit_reason",
+        "roi_hit",
+        "stoploss_hit",
+        "forced_exit",
+        "liquidation_flag",
+        "source_file",
+        "created_at_utc",
+        "event_id",
+    ]
+    feedback_frame = frame[feedback_columns].copy()
     feedback_frame.to_parquet(feedback_store_path, index=False)
     return {"outcome_events_rows": len(frame), "feedback_rows": len(feedback_frame)}
 
@@ -490,20 +494,23 @@ def _duration_seconds(open_time: str | None, close_time: str | None) -> float | 
 
 
 def _ratio_pct(numerator: float | None, denominator: float | None) -> float | None:
-    if numerator is None or denominator in (None, 0):
+    if numerator is None or denominator is None or denominator == 0:
         return None
     return round((numerator / abs(denominator)) * 100.0, 10)
 
 
 def _pnl_on_margin_pct(net_pnl: float | None, notional: float | None, leverage: float | None) -> float | None:
-    if net_pnl is None or notional in (None, 0):
+    if net_pnl is None or notional is None or notional == 0:
         return None
-    margin = abs(notional) / leverage if leverage not in (None, 0) else abs(notional)
+    if leverage is None or leverage == 0:
+        margin = abs(notional)
+    else:
+        margin = abs(notional) / leverage
     return _ratio_pct(net_pnl, margin)
 
 
 def _distance_to_liquidation(entry_price: float | None, liquidation_price: float | None, side: str) -> float | None:
-    if entry_price in (None, 0) or liquidation_price is None:
+    if entry_price is None or entry_price == 0 or liquidation_price is None:
         return None
     if side == "short":
         return round(((liquidation_price - entry_price) / entry_price) * 100.0, 10)

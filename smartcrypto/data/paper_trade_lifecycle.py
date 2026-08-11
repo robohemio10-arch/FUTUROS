@@ -184,9 +184,9 @@ def inspect_open_positions(config: PaperFeedbackConfig | None = None) -> dict[st
         report = {
             "status": "ok",
             "reason": "trades_table_empty",
-        "db_path": str(db_path),
-        "db_snapshot_used": True,
-        "rows": 0,
+            "db_path": str(db_path),
+            "db_snapshot_used": True,
+            "rows": 0,
             "open_rows": 0,
             "closed_rows": 0,
             "saturated": False,
@@ -251,39 +251,55 @@ def _side_from_is_short(value: Any) -> str:
         return "unknown"
 
 
+def _format_native_trade_id(value: Any) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
 def normalize_closed_trades(closed: pd.DataFrame) -> pd.DataFrame:
+    output_columns = [
+        "moeda",
+        "fechar_side",
+        "leverage",
+        "order_id",
+        "trade_id",
+        "pnl_fechado",
+        "taxa_lucros_perdas_fechados_pct",
+        "preco_abertura",
+        "preco_fechamento",
+        "volume_posicao",
+        "volume_fechado",
+        "horario_abertura",
+        "horario_fechamento",
+        "exit_reason",
+        "taxa_1",
+        "preco_transacao",
+        "volume_transacao",
+        "direcao_liquidez",
+        "taxa_2",
+        "horario_transacao",
+    ]
     if closed.empty:
-        return pd.DataFrame(
-            columns=[
-                "moeda",
-                "fechar_side",
-                "leverage",
-                "order_id",
-                "pnl_fechado",
-                "taxa_lucros_perdas_fechados_pct",
-                "preco_abertura",
-                "preco_fechamento",
-                "volume_posicao",
-                "volume_fechado",
-                "horario_abertura",
-                "horario_fechamento",
-                "taxa_1",
-                "preco_transacao",
-                "volume_transacao",
-                "direcao_liquidez",
-                "taxa_2",
-                "horario_transacao",
-            ]
-        )
+        return pd.DataFrame(columns=output_columns)
 
     pair = _safe_series(closed, "pair", "")
     is_short = _safe_series(closed, "is_short", 0)
+    native_trade_id = _safe_series(closed, "id", "").map(_format_native_trade_id)
 
     normalized = pd.DataFrame(index=closed.index)
     normalized["moeda"] = pair.map(_format_symbol)
     normalized["fechar_side"] = is_short.map(_side_from_is_short)
     normalized["leverage"] = _safe_series(closed, "leverage", 1).fillna(1)
-    normalized["order_id"] = _safe_series(closed, "id", "").map(lambda value: f"freqtrade-paper-{value}")
+    normalized["order_id"] = native_trade_id.map(lambda value: f"freqtrade-paper-{value}" if value else "")
+    normalized["trade_id"] = native_trade_id
     normalized["pnl_fechado"] = _safe_series(closed, "close_profit_abs", None)
     if normalized["pnl_fechado"].isna().all():
         normalized["pnl_fechado"] = _safe_series(closed, "realized_profit", None)
@@ -294,13 +310,14 @@ def normalize_closed_trades(closed: pd.DataFrame) -> pd.DataFrame:
     normalized["volume_fechado"] = _safe_series(closed, "amount", None)
     normalized["horario_abertura"] = _safe_series(closed, "open_date", None)
     normalized["horario_fechamento"] = _safe_series(closed, "close_date", None)
+    normalized["exit_reason"] = _safe_series(closed, "exit_reason", None)
     normalized["taxa_1"] = _safe_series(closed, "fee_open_cost", 0).fillna(0)
     normalized["preco_transacao"] = _safe_series(closed, "open_rate", None)
     normalized["volume_transacao"] = _safe_series(closed, "amount", None)
     normalized["direcao_liquidez"] = _safe_series(closed, "enter_tag", None)
     normalized["taxa_2"] = _safe_series(closed, "fee_close_cost", 0).fillna(0)
     normalized["horario_transacao"] = _safe_series(closed, "close_date", None)
-    return normalized
+    return normalized[output_columns]
 
 
 def collect_closed_feedback(config: PaperFeedbackConfig | None = None) -> dict[str, Any]:
