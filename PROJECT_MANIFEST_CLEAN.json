@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "15ce28f3fd35e75e882ac689d6e2b846b6113087858232cc2e094ca2dd5c0a1e",
+  "aggregate_sha256": "17809d4f2aea55f2853e9e8733d9c5beb5f3d4091c5e6bc068441c17be54bfea",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1741,
-    "python_files": 1327,
+    "manifested_files_total": 1742,
+    "python_files": 1328,
     "runtime_excluded_files_total": 0,
-    "test_files": 356,
-    "tracked_files_total": 1742,
+    "test_files": 357,
+    "tracked_files_total": 1743,
     "workflows": 1
   },
   "deterministic": true,
@@ -6926,10 +6926,10 @@
       "sha256": "e2c510e82fb70ece0486fe1cf58dc21ae44cd531b477580cc1d8c39275c4d9e9"
     },
     {
-      "bytes": 8535,
+      "bytes": 18477,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/grid_monitor_snapshot_builder.py",
-      "sha256": "72ba548daf670ff0ed71d9c44e4fe1f47e7c9055e7b0d835c01ca5a94e419dca"
+      "sha256": "c40e4b78ebfad84af809fad359e8ffb31bcac04492cd2fb6e610e5ac6b667b12"
     },
     {
       "bytes": 10253,
@@ -8862,6 +8862,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_grid_monitor_snapshot_builder_v2.py",
       "sha256": "7e3306420e2da65d34ca876f3eba3b5982fe0250271d48c478d947a2fbfc3f0e"
+    },
+    {
+      "bytes": 7612,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_grid_monitor_snapshot_contract_hardening_v1.py",
+      "sha256": "daa5d95c231ca822041488b65d31e9cd40c2644e2190758372dbb398da7f9c46"
     },
     {
       "bytes": 1930,
