@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b4275220fa962b63a5090ee39b910e78f4bf21a090a16c1eaa2165cf521d4121",
+  "aggregate_sha256": "a584aa615ce7e405f8f6543e5976bc5402feb326dcec78b313498acaf87014a9",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 293,
-    "manifested_files_total": 1737,
-    "python_files": 1324,
+    "docs_files": 294,
+    "manifested_files_total": 1741,
+    "python_files": 1327,
     "runtime_excluded_files_total": 0,
-    "test_files": 355,
-    "tracked_files_total": 1738,
+    "test_files": 356,
+    "tracked_files_total": 1742,
     "workflows": 1
   },
   "deterministic": true,
@@ -1836,6 +1836,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_SOAK_EVIDENCE_AND_NO_TRADE_READINESS_CONTINUATION.md",
       "sha256": "255197df0a5251f395d7ac35bc9f60271c85a6259f3a43031404910afd99540b"
+    },
+    {
+      "bytes": 4219,
+      "hash_mode": "text_lf",
+      "path": "docs/PHASE14_FEEDBACK_LINEAGE_COMPLETENESS_V1.md",
+      "sha256": "bb254bcfd8edacecf4c6bbbb21a808dc05094052921b24715ccde9832992bdc4"
     },
     {
       "bytes": 3758,
@@ -4100,6 +4106,12 @@
       "sha256": "2300537f5cdaa5722f70b4e99d4caf701c9bfc029e2197556e4bdd6b4c1ad60e"
     },
     {
+      "bytes": 1710,
+      "hash_mode": "text_lf",
+      "path": "scripts/reconcile_phase14_feedback_lineage_v1.py",
+      "sha256": "c12545d04254dacfbe8c92c47412920757668d4ce78cead3262cda6f6de21ab3"
+    },
+    {
       "bytes": 2275,
       "hash_mode": "text_lf",
       "path": "scripts/reconcile_trader_master_preview_v2.py",
@@ -5288,10 +5300,10 @@
       "sha256": "2a20a4a2900dc22ee62ac10091a2f117f43c86d1d16b1b633a91de7bb3695f0f"
     },
     {
-      "bytes": 17133,
+      "bytes": 17583,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/paper_trade_lifecycle.py",
-      "sha256": "ebe85efb087d8880a039cc4228fd44e382c8f4a65b1a7493b50d575bd0e87bda"
+      "sha256": "e9ea8f1df80cd13adfb9b8e85cf49bbc1d81bc4ce499ab03eeb5e1ae2df50fcd"
     },
     {
       "bytes": 2012,
@@ -6020,10 +6032,16 @@
       "sha256": "73adbca030cf081712011196007e2b340870a41baaa3c59b123aceef610d9ecb"
     },
     {
-      "bytes": 20522,
+      "bytes": 20687,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/feedback_store.py",
-      "sha256": "95367cfbf519043f3dcac13a59734c3f78b818040d9b921b60373d23f1e0741b"
+      "sha256": "8e0d83243427c752a486138c63f4f86341f58a48daf384274b2d08153a9a5301"
+    },
+    {
+      "bytes": 15246,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/lineage_reconciliation.py",
+      "sha256": "e533b237e637205887ba2b4c838b1f7ac2d7fb0936acd626c33276c4868f71ea"
     },
     {
       "bytes": 2501,
@@ -9912,6 +9930,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_phase14_atomic_snapshot_v1.py",
       "sha256": "477485e91141ae8cb8078ac4f86a6f649ba8284f0d0653a94cb2bb070ea98aac"
+    },
+    {
+      "bytes": 10262,
+      "hash_mode": "text_lf",
+      "path": "tests/test_phase14_feedback_lineage_completeness_v1.py",
+      "sha256": "0c1bc516e78d3071230d2f9fbd44a315b7fd498252a042786e0a59d1f24e88ed"
     },
     {
       "bytes": 8520,
