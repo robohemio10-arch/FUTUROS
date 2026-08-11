@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "17809d4f2aea55f2853e9e8733d9c5beb5f3d4091c5e6bc068441c17be54bfea",
+  "aggregate_sha256": "251936d6115eb1b08d0f81fcc4dff685ca0ff47b098d664348e7fca6fff0f573",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1742,
-    "python_files": 1328,
+    "manifested_files_total": 1743,
+    "python_files": 1329,
     "runtime_excluded_files_total": 0,
-    "test_files": 357,
-    "tracked_files_total": 1743,
+    "test_files": 358,
+    "tracked_files_total": 1744,
     "workflows": 1
   },
   "deterministic": true,
@@ -5072,10 +5072,10 @@
       "sha256": "fc11793081868d179768feda9fa59f3aae44b5249602e596ec37a5d0d1159c7d"
     },
     {
-      "bytes": 7621,
+      "bytes": 17179,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/ui/charts.py",
-      "sha256": "2e0fd2d4daa5d46a40cec5d80171ec4a99fb2ee28ef6e3a2e25e40298149ad3e"
+      "sha256": "f679e4bb5b7b1455783e17ec066ebe28c2bc570bd0e7af03c15bf02611e86114"
     },
     {
       "bytes": 1341,
@@ -9042,6 +9042,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_theme_tokens_v1.py",
       "sha256": "e01098bbf3e65c0303cb90a28fe1a407202b626647d31018c72621977f7f857a"
+    },
+    {
+      "bytes": 6110,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_ui_charts_data_driven_hardening_v1.py",
+      "sha256": "9e6dce2aadd7a07b384cb266371d72fe410d47c92d832c43838a7191e4560a13"
     },
     {
       "bytes": 2169,
