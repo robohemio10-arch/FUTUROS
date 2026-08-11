@@ -135,7 +135,7 @@ def test_runtime_lock_contains_exactly_one_safe_gitpython_pin() -> None:
         if line.lower().startswith("gitpython==")
     ]
 
-    assert gitpython == ["GitPython==3.1.57"]
+    assert gitpython == ["GitPython==3.1.58"]
     assert all("==" in requirement for requirement in requirements)
 
 
