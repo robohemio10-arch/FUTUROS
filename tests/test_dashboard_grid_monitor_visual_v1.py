@@ -8,6 +8,8 @@ from typing import Any
 
 import pytest
 
+from tests.dashboard_page_test_support import FakeUi, valid_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE_PATH = ROOT / "smartcrypto" / "dashboard" / "pages" / "03_grid_monitor.py"
@@ -191,6 +193,7 @@ def _disable_chrome(monkeypatch: pytest.MonkeyPatch, page: ModuleType) -> None:
         "render_page_title",
         "render_readonly_banner",
         "render_footer_audit_bar",
+        "_render_canonical_snapshot_details",
     ):
         monkeypatch.setattr(page, name, lambda *args, **kwargs: None)
 
@@ -374,10 +377,25 @@ def test_visual_semantics_remove_legacy_wrong_label_and_generic_placeholder() ->
     source = PAGE_PATH.read_text(encoding="utf-8")
     assert "Grids Vendidos" not in source
     assert "Níveis ausentes" in source
-    assert "render_snapshot_page" not in source
+    assert "render_snapshot_page" in source
+    assert "render_chrome=False" in source
+    assert "columns((1, 1))" not in source
+    assert source.count("columns(2)") == 2
     assert "Snapshot sem série visual suficiente" not in source
     assert "Histograma espacial de níveis por faixa de preço" in source
     assert "Não representa um heatmap temporal de mercado" in source
+
+
+def test_page_preserves_legacy_readonly_snapshot_contract_with_minimal_fixture(
+    page: ModuleType,
+) -> None:
+    ui = FakeUi()
+    minimal = valid_snapshot(page.EXPECTED_SCHEMA_VERSION, page.REQUIRED_SECTIONS)
+
+    page.render_page(minimal, ui=ui)
+
+    assert any(name == "title" for name, _value in ui.events)
+    assert any(name == "dataframe" for name, _value in ui.events)
 
 
 def test_page_is_read_only_and_has_no_operational_or_private_exchange_authority() -> None:

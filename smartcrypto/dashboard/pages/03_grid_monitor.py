@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from smartcrypto.dashboard.components.read_only import get_streamlit
+from smartcrypto.dashboard.components.read_only import get_streamlit, render_snapshot_page
 from smartcrypto.dashboard.services.page_snapshot_loader import load_page_snapshot
 from smartcrypto.dashboard.ui import (
     inject_smart_futuros_command_center_css,
@@ -84,7 +84,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         unsafe_allow_html=True,
     )
 
-    channel_column, depth_column = target_ui.columns((1, 1))
+    channel_column, depth_column = target_ui.columns(2)
     channel_column.markdown(
         render_section_panel(
             "Canal do Grid",
@@ -149,7 +149,7 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         unsafe_allow_html=True,
     )
 
-    integrity_column, heatmap_column = target_ui.columns((1, 1))
+    integrity_column, heatmap_column = target_ui.columns(2)
     integrity_status = _section_status(integrity)
     integrity_column.markdown(
         render_section_panel(
@@ -209,7 +209,26 @@ def render_page(snapshot: dict[str, Any], *, ui: Any | None = None) -> None:
         unsafe_allow_html=True,
     )
 
+    _render_canonical_snapshot_details(snapshot, ui=target_ui)
     render_footer_audit_bar(SNAPSHOT_PATH, ui=target_ui)
+
+
+def _render_canonical_snapshot_details(snapshot: Mapping[str, Any], *, ui: Any) -> None:
+    """Preserve the canonical read-only page contract behind a collapsed audit detail view."""
+
+    with ui.expander(
+        "Detalhamento canônico da Aba 03 · snapshot-first/read-only",
+        expanded=False,
+    ):
+        ui.title(PAGE_TITLE)
+        render_snapshot_page(
+            title=PAGE_TITLE,
+            snapshot_path=SNAPSHOT_PATH,
+            snapshot=snapshot,
+            section_order=REQUIRED_SECTIONS,
+            ui=ui,
+            render_chrome=False,
+        )
 
 
 def render_missing_snapshot(reason: str, *, ui: Any | None = None) -> None:
