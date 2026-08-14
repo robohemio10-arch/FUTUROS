@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "99dcdd436ba3215099c2526c0e4d510e6f46051d9a785fa3fde6864aafd8b25c",
+  "aggregate_sha256": "bbfb69a7aa9062ef84b3baf7edf29f35bfde4877136da641beb0258cbebcd997",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1744,
-    "python_files": 1330,
+    "manifested_files_total": 1745,
+    "python_files": 1331,
     "runtime_excluded_files_total": 0,
-    "test_files": 359,
-    "tracked_files_total": 1745,
+    "test_files": 360,
+    "tracked_files_total": 1746,
     "workflows": 1
   },
   "deterministic": true,
@@ -4952,10 +4952,10 @@
       "sha256": "62aaef96463140a5382bd2f3de2c9ce1235efb91868fdef1bc53384685eac714"
     },
     {
-      "bytes": 2634,
+      "bytes": 27823,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/04_opportunity_scanner.py",
-      "sha256": "6024bfbd6c43192edea6c1cdefbfacc379f34d08ead2fb89d9fb31494ab62e56"
+      "sha256": "f6f2febe16277c5c43dfd2a2e8fc42ef28853f098026a0b853157ff8428fdaea"
     },
     {
       "bytes": 3063,
@@ -8892,6 +8892,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_opportunity_scanner_snapshot_builder_v2.py",
       "sha256": "1d48b3face57559f51ca9dc77eb0f987a1b60d63366cb4ea08e660507a1d53e2"
+    },
+    {
+      "bytes": 10579,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_opportunity_scanner_visual_v1.py",
+      "sha256": "816f7dc32b82618be6f1aba4f5ac14e7d343c5e16792584ae74f913d4d6a0b19"
     },
     {
       "bytes": 2028,
