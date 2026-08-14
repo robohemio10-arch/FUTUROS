@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "bbfb69a7aa9062ef84b3baf7edf29f35bfde4877136da641beb0258cbebcd997",
+  "aggregate_sha256": "3cad81890f6231683697e5ffec3fda189803776b7b554ebdec9f34ae565f4287",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1745,
-    "python_files": 1331,
+    "manifested_files_total": 1746,
+    "python_files": 1332,
     "runtime_excluded_files_total": 0,
-    "test_files": 360,
-    "tracked_files_total": 1746,
+    "test_files": 361,
+    "tracked_files_total": 1747,
     "workflows": 1
   },
   "deterministic": true,
@@ -4958,10 +4958,10 @@
       "sha256": "f6f2febe16277c5c43dfd2a2e8fc42ef28853f098026a0b853157ff8428fdaea"
     },
     {
-      "bytes": 3063,
+      "bytes": 26873,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/05_ai_governance.py",
-      "sha256": "4eabedc50282a554453158d8162d0057d2086127bea79e0b0689b83c23f4e6c3"
+      "sha256": "81ff67d19e8e720f5c60c80e29c7246918b6c597f65d49246e463893f37eb2b0"
     },
     {
       "bytes": 7608,
@@ -8754,6 +8754,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_ai_governance_snapshot_builder_v2.py",
       "sha256": "ac689416d34be654b449c2413ef2fba719852c59d1f039b7d1702bf754b6a7be"
+    },
+    {
+      "bytes": 12194,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_ai_governance_visual_v1.py",
+      "sha256": "ef3048c1ff3d03cf053b56fe838f3b130f234b7ce1b3f644a275a146da2d0c38"
     },
     {
       "bytes": 13851,
