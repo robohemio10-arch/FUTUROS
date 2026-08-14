@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "3cad81890f6231683697e5ffec3fda189803776b7b554ebdec9f34ae565f4287",
+  "aggregate_sha256": "090694a3bd7ce1103d3d74543ed8fec6ce1e048a2f12b07f1b8c12a72d07f791",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1746,
-    "python_files": 1332,
+    "manifested_files_total": 1747,
+    "python_files": 1333,
     "runtime_excluded_files_total": 0,
-    "test_files": 361,
-    "tracked_files_total": 1747,
+    "test_files": 362,
+    "tracked_files_total": 1748,
     "workflows": 1
   },
   "deterministic": true,
@@ -4964,10 +4964,10 @@
       "sha256": "81ff67d19e8e720f5c60c80e29c7246918b6c597f65d49246e463893f37eb2b0"
     },
     {
-      "bytes": 7608,
+      "bytes": 28531,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/pages/06_active_controls.py",
-      "sha256": "36ca72777f0f5e0af8c5c6f9083fb12912295542b57db11187dd0d7ebf0da7fd"
+      "sha256": "772ac39b1abebbce41a75991179116bec2b58cd7f415ddeed183de5ebfc9b417"
     },
     {
       "bytes": 3639,
@@ -8742,6 +8742,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_active_controls_snapshot_builder_v2.py",
       "sha256": "78a924a1521b46cbfc44304fba87b8fdc3915aff4d5839272703f99f1dcb8c8d"
+    },
+    {
+      "bytes": 12503,
+      "hash_mode": "text_lf",
+      "path": "tests/test_dashboard_active_controls_visual_v1.py",
+      "sha256": "c7dda59326370b3bf4a548ded4a1cf7e3349cd353f8551e673510eade62837a3"
     },
     {
       "bytes": 14607,
