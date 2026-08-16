@@ -75,7 +75,7 @@
   "unfilledtimeout": {
     "entry": 10,
     "exit": 10,
-    "exit_timeout_count": 0,
+    "exit_timeout_count": 2,
     "unit": "minutes"
   },
   "minimal_roi": {
