@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
+from freqtrade.constants import CANCEL_REASON
 from freqtrade.strategy import IStrategy
+
+if TYPE_CHECKING:
+    from freqtrade.persistence import Trade
 
 
 class SmartCryptoSignalStrategy(IStrategy):
@@ -20,6 +25,20 @@ class SmartCryptoSignalStrategy(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
     trailing_stop = False
+
+    _paper_exit_retry_reason = "paper_exit_retry_latched"
+    _paper_exit_retry_source_tags = frozenset(
+        {
+            "roi",
+            "exit_signal",
+            "phase15_controlled_paper_exit",
+            "paper_exit_retry_latched",
+        }
+    )
+    _paper_exit_retry_cancel_states = frozenset(
+        {"cancelled", "canceled", "expired", "closed"}
+    )
+    _paper_exit_retry_timeout_reason = CANCEL_REASON["TIMEOUT"]
 
     _signal_paths = [
         Path("/freqtrade/user_data/data/runtime/active_freqtrade_signals.json"),
@@ -200,6 +219,124 @@ class SmartCryptoSignalStrategy(IStrategy):
         **kwargs: Any,
     ) -> float:
         return min(2.0, max_leverage)
+
+    def custom_exit(
+        self,
+        pair: str,
+        trade: Trade,
+        current_time: datetime,
+        current_rate: float,
+        current_profit: float,
+        **kwargs: Any,
+    ) -> str | None:
+        """Re-emit a proven, unfilled full-exit intent after cancellation."""
+        if getattr(trade, "is_open", None) is not True:
+            return None
+
+        exit_side = getattr(trade, "exit_side", None)
+        trade_amount = self._positive_finite_float(getattr(trade, "amount", None))
+        orders = getattr(trade, "orders", None)
+        if not isinstance(exit_side, str) or exit_side not in {"buy", "sell"}:
+            return None
+        if trade_amount is None:
+            return None
+        if not isinstance(orders, (list, tuple)):
+            return None
+
+        exit_orders = [
+            order
+            for order in orders
+            if getattr(order, "ft_order_side", None) == exit_side
+        ]
+        for order in exit_orders:
+            is_open = getattr(order, "ft_is_open", None)
+            if is_open is True:
+                return None
+            if is_open is not False:
+                return None
+
+        for order in reversed(exit_orders):
+            status = getattr(order, "status", None)
+            if (
+                not isinstance(status, str)
+                or status not in self._paper_exit_retry_cancel_states
+            ):
+                return None
+
+            tag = getattr(order, "ft_order_tag", None)
+            if (
+                not isinstance(tag, str)
+                or tag not in self._paper_exit_retry_source_tags
+            ):
+                return None
+
+            cancel_reason = getattr(order, "ft_cancel_reason", None)
+            if cancel_reason != self._paper_exit_retry_timeout_reason:
+                return None
+
+            order_amount = self._positive_finite_float(
+                getattr(order, "safe_amount", None)
+            )
+            raw_filled_amount = self._nonnegative_finite_float(
+                getattr(order, "filled", None)
+            )
+            safe_filled_amount = self._nonnegative_finite_float(
+                getattr(order, "safe_filled", None)
+            )
+            if (
+                order_amount is None
+                or raw_filled_amount is None
+                or safe_filled_amount is None
+            ):
+                return None
+            if not math.isclose(
+                raw_filled_amount,
+                0.0,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            ):
+                return None
+            if not math.isclose(
+                safe_filled_amount,
+                0.0,
+                rel_tol=0.0,
+                abs_tol=1e-12,
+            ):
+                return None
+            if not math.isclose(
+                order_amount,
+                trade_amount,
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            ):
+                return None
+            return self._paper_exit_retry_reason
+
+        return None
+
+    @staticmethod
+    def _positive_finite_float(value: Any) -> float | None:
+        if isinstance(value, bool):
+            return None
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        if not math.isfinite(parsed) or parsed <= 0.0:
+            return None
+        return parsed
+
+    @staticmethod
+    def _nonnegative_finite_float(value: Any) -> float | None:
+        if isinstance(value, bool):
+            return None
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        if not math.isfinite(parsed) or parsed < 0.0:
+            return None
+        return parsed
 
     def _find_signal_for_pair(self, pair: str) -> dict[str, Any]:
         symbol = self._symbol_from_pair(pair)

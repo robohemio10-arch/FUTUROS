@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "485dc4d08c821512a05b6f0199fd279ade5c84128c17c884cdd34fbc8493c992",
+  "aggregate_sha256": "c6f239a18d19125804b0c52c6eac0e085b626a9510e365501aa0570ce616121a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 294,
-    "manifested_files_total": 1747,
-    "python_files": 1333,
+    "manifested_files_total": 1748,
+    "python_files": 1334,
     "runtime_excluded_files_total": 0,
-    "test_files": 362,
-    "tracked_files_total": 1748,
+    "test_files": 363,
+    "tracked_files_total": 1749,
     "workflows": 1
   },
   "deterministic": true,
@@ -2339,13 +2339,13 @@
       "bytes": 2722,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/config.paper.json",
-      "sha256": "6dfa520e4b03338e8442428f51d1ccbe6167ded39c73c9031891e6eb9b8055f6"
+      "sha256": "d520204e581b84ae83b3ba209c2ab13fda9edf45d59a1c8209c1ebe7d49a3613"
     },
     {
-      "bytes": 15905,
+      "bytes": 20251,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/strategies/SmartCryptoSignalStrategy.py",
-      "sha256": "a926aa70e8d9b4f5589f2c4ebf034f5b04255033a66610d3646a4b046561e652"
+      "sha256": "b9d2396048d026325e88865eaad9bdbfbf05bfe588de32df35a4e0198dc35684"
     },
     {
       "bytes": 1117,
@@ -9276,6 +9276,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_paper_db_linux_volume_persistence.py",
       "sha256": "6d77edf13bd8d795dff6dcac95529111e56f88f4c0d2087bf469fe93ca936faf"
+    },
+    {
+      "bytes": 15479,
+      "hash_mode": "text_lf",
+      "path": "tests/test_freqtrade_paper_exit_lifecycle_hardening_v1.py",
+      "sha256": "1100c38ee0cc5b3ab41b8f52d2d16180252c97dae5b096903fabb79918096634"
     },
     {
       "bytes": 6640,
