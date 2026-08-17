@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "337355aaa2d1c66d783d13b4c6bd8332b21a431a279d51ff2be31f15b41c60ed",
+  "aggregate_sha256": "c6f239a18d19125804b0c52c6eac0e085b626a9510e365501aa0570ce616121a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4250,10 +4250,10 @@
       "sha256": "162c027440c78df558f54356f48fe9f4ca49c854787412e1bbf014ad7e0168d6"
     },
     {
-      "bytes": 3142,
+      "bytes": 3899,
       "hash_mode": "text_lf",
       "path": "scripts/run_market_data_health_audit.py",
-      "sha256": "12a64eeb153faa7873fa67de0f8ccba92277ceb913529a8a9216ad137d630465"
+      "sha256": "ae0efdcdd221a1ac180a0311d3c90c00352da8e0798e6bf5b29bb10e4ea05446"
     },
     {
       "bytes": 4118,

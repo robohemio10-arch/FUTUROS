@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
+from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -69,9 +71,29 @@ def main(argv: list[str] | None = None) -> int:
         ),
         strict=args.strict,
     )
-    print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    print(
+        json.dumps(report, ensure_ascii=False, sort_keys=True),
+        flush=True,
+    )
     return 1 if report.get("status") == "blocked" else 0
 
 
+def terminate_without_runtime_finalizers(exit_code: int) -> NoReturn:
+    """Terminate the standalone CLI after explicitly flushing its streams.
+
+    The audit can load native Arrow resources through ``pandas.read_parquet``.
+    Some Linux/Python/native-library combinations abort during interpreter
+    teardown after the audit and report have already completed. This boundary
+    is restricted to direct CLI execution; imports and in-process callers keep
+    normal Python finalization semantics through ``main``.
+    """
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+    finally:
+        os._exit(exit_code)
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    cli_exit_code = main()
+    terminate_without_runtime_finalizers(cli_exit_code)
