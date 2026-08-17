@@ -4,7 +4,7 @@ import json
 import math
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import pandas as pd
 from freqtrade.constants import CANCEL_REASON
@@ -12,6 +12,11 @@ from freqtrade.strategy import IStrategy
 
 if TYPE_CHECKING:
     from freqtrade.persistence import Trade
+
+
+class _PaperExitGuardDecision(NamedTuple):
+    allowed: bool
+    reason: str
 
 
 class SmartCryptoSignalStrategy(IStrategy):
@@ -39,6 +44,18 @@ class SmartCryptoSignalStrategy(IStrategy):
         {"cancelled", "canceled", "expired", "closed"}
     )
     _paper_exit_retry_timeout_reason = CANCEL_REASON["TIMEOUT"]
+    _paper_exit_guard_critical_reasons = frozenset(
+        {
+            "stop_loss",
+            "stoploss_on_exchange",
+            "trailing_stop_loss",
+            "liquidation",
+            "emergency_exit",
+            "force_exit",
+            "partial_exit",
+            "sold_on_exchange",
+        }
+    )
 
     _signal_paths = [
         Path("/freqtrade/user_data/data/runtime/active_freqtrade_signals.json"),
@@ -230,18 +247,124 @@ class SmartCryptoSignalStrategy(IStrategy):
         **kwargs: Any,
     ) -> str | None:
         """Re-emit a proven, unfilled full-exit intent after cancellation."""
+        decision = self._evaluate_paper_exit_retry(trade)
+        return self._paper_exit_retry_reason if decision.allowed else None
+
+    def confirm_trade_exit(
+        self,
+        pair: str,
+        trade: Trade,
+        order_type: str,
+        amount: float,
+        rate: float,
+        time_in_force: str,
+        exit_reason: str,
+        current_time: datetime,
+        **kwargs: Any,
+    ) -> bool:
+        """Deny duplicate regular full exits from the in-memory trade state."""
+        decision = self._evaluate_paper_full_exit_guard(
+            trade=trade,
+            requested_amount=amount,
+            exit_reason=exit_reason,
+        )
+        return decision.allowed
+
+    def _evaluate_paper_full_exit_guard(
+        self,
+        *,
+        trade: Trade,
+        requested_amount: Any,
+        exit_reason: Any,
+    ) -> _PaperExitGuardDecision:
+        if not isinstance(exit_reason, str) or not exit_reason:
+            return _PaperExitGuardDecision(False, "invalid_exit_reason")
+
+        if exit_reason in self._paper_exit_guard_critical_reasons:
+            return _PaperExitGuardDecision(True, "critical_exit_semantics_preserved")
+
         if getattr(trade, "is_open", None) is not True:
-            return None
+            return _PaperExitGuardDecision(False, "trade_not_proven_open")
+
+        exit_side = getattr(trade, "exit_side", None)
+        trade_amount = self._positive_finite_float(getattr(trade, "amount", None))
+        confirmed_amount = self._positive_finite_float(requested_amount)
+        orders = getattr(trade, "orders", None)
+        if not isinstance(exit_side, str) or exit_side not in {"buy", "sell"}:
+            return _PaperExitGuardDecision(False, "invalid_exit_side")
+        if trade_amount is None or confirmed_amount is None:
+            return _PaperExitGuardDecision(False, "invalid_full_exit_amount")
+        if not math.isclose(
+            confirmed_amount,
+            trade_amount,
+            rel_tol=1e-9,
+            abs_tol=1e-12,
+        ):
+            return _PaperExitGuardDecision(False, "requested_amount_not_full_exit")
+        if not isinstance(orders, (list, tuple)):
+            return _PaperExitGuardDecision(False, "orders_not_available")
+
+        exit_orders = [
+            order
+            for order in orders
+            if getattr(order, "ft_order_side", None) == exit_side
+        ]
+        if not exit_orders:
+            return _PaperExitGuardDecision(True, "first_regular_full_exit")
+
+        for order in exit_orders:
+            is_open = getattr(order, "ft_is_open", None)
+            if is_open is True:
+                return _PaperExitGuardDecision(False, "prior_exit_still_open")
+            if is_open is not False:
+                return _PaperExitGuardDecision(False, "prior_exit_open_state_unknown")
+
+            status = getattr(order, "status", None)
+            if not isinstance(status, str) or not status.strip():
+                return _PaperExitGuardDecision(False, "prior_exit_status_unknown")
+            if status.strip().lower() in {"open", "new"}:
+                return _PaperExitGuardDecision(
+                    False,
+                    "prior_exit_status_open_inconsistent",
+                )
+
+            raw_filled_amount = self._nonnegative_finite_float(
+                getattr(order, "filled", None)
+            )
+            safe_filled_amount = self._nonnegative_finite_float(
+                getattr(order, "safe_filled", None)
+            )
+            if raw_filled_amount is None or safe_filled_amount is None:
+                return _PaperExitGuardDecision(False, "prior_exit_fill_unknown")
+            if raw_filled_amount != safe_filled_amount:
+                return _PaperExitGuardDecision(False, "prior_exit_fill_inconsistent")
+            if raw_filled_amount > 0.0:
+                return _PaperExitGuardDecision(False, "prior_exit_has_fill")
+
+        if exit_reason != self._paper_exit_retry_reason:
+            return _PaperExitGuardDecision(
+                False,
+                "prior_exit_requires_controlled_retry",
+            )
+
+        return self._evaluate_paper_exit_retry(trade)
+
+    def _evaluate_paper_exit_retry(
+        self,
+        trade: Trade,
+    ) -> _PaperExitGuardDecision:
+        if getattr(trade, "is_open", None) is not True:
+            return _PaperExitGuardDecision(False, "trade_not_proven_open")
 
         exit_side = getattr(trade, "exit_side", None)
         trade_amount = self._positive_finite_float(getattr(trade, "amount", None))
         orders = getattr(trade, "orders", None)
         if not isinstance(exit_side, str) or exit_side not in {"buy", "sell"}:
-            return None
+            return _PaperExitGuardDecision(False, "invalid_exit_side")
         if trade_amount is None:
-            return None
+            return _PaperExitGuardDecision(False, "invalid_trade_amount")
         if not isinstance(orders, (list, tuple)):
-            return None
+            return _PaperExitGuardDecision(False, "orders_not_available")
 
         exit_orders = [
             order
@@ -251,9 +374,9 @@ class SmartCryptoSignalStrategy(IStrategy):
         for order in exit_orders:
             is_open = getattr(order, "ft_is_open", None)
             if is_open is True:
-                return None
+                return _PaperExitGuardDecision(False, "exit_still_open")
             if is_open is not False:
-                return None
+                return _PaperExitGuardDecision(False, "exit_open_state_unknown")
 
         for order in reversed(exit_orders):
             status = getattr(order, "status", None)
@@ -261,18 +384,18 @@ class SmartCryptoSignalStrategy(IStrategy):
                 not isinstance(status, str)
                 or status not in self._paper_exit_retry_cancel_states
             ):
-                return None
+                return _PaperExitGuardDecision(False, "ineligible_cancel_state")
 
             tag = getattr(order, "ft_order_tag", None)
             if (
                 not isinstance(tag, str)
                 or tag not in self._paper_exit_retry_source_tags
             ):
-                return None
+                return _PaperExitGuardDecision(False, "ineligible_exit_tag")
 
             cancel_reason = getattr(order, "ft_cancel_reason", None)
             if cancel_reason != self._paper_exit_retry_timeout_reason:
-                return None
+                return _PaperExitGuardDecision(False, "cancel_reason_not_timeout")
 
             order_amount = self._positive_finite_float(
                 getattr(order, "safe_amount", None)
@@ -288,31 +411,31 @@ class SmartCryptoSignalStrategy(IStrategy):
                 or raw_filled_amount is None
                 or safe_filled_amount is None
             ):
-                return None
+                return _PaperExitGuardDecision(False, "retry_evidence_incomplete")
             if not math.isclose(
                 raw_filled_amount,
                 0.0,
                 rel_tol=0.0,
                 abs_tol=1e-12,
             ):
-                return None
+                return _PaperExitGuardDecision(False, "raw_fill_not_zero")
             if not math.isclose(
                 safe_filled_amount,
                 0.0,
                 rel_tol=0.0,
                 abs_tol=1e-12,
             ):
-                return None
+                return _PaperExitGuardDecision(False, "safe_fill_not_zero")
             if not math.isclose(
                 order_amount,
                 trade_amount,
                 rel_tol=1e-9,
                 abs_tol=1e-12,
             ):
-                return None
-            return self._paper_exit_retry_reason
+                return _PaperExitGuardDecision(False, "retry_amount_not_full_exit")
+            return _PaperExitGuardDecision(True, "timeout_zero_fill_full_exit")
 
-        return None
+        return _PaperExitGuardDecision(False, "no_eligible_exit_to_retry")
 
     @staticmethod
     def _positive_finite_float(value: Any) -> float | None:
