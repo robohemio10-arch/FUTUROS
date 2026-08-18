@@ -23,6 +23,7 @@ from .fingerprint_spec import (
 )
 from .quarantine_forensics import (
     RECOVERED as FORENSIC_RECOVERED,
+    TARGET_TRADE_IDS as FORENSIC_TARGET_TRADE_IDS,
     build_targeted_quarantine_forensics_report,
 )
 from .quarantine_recovery import (
@@ -49,6 +50,9 @@ from .staging_validator import SAFETY_FLAGS, validate_staging_records
 
 ADAPTER_SCHEMA_VERSION = "freqtrade_paper_closed_trades_readonly_adapter_v2"
 ORDER_ID_PATTERN = re.compile(r"^freqtrade-paper-([1-9][0-9]*)$")
+HISTORICAL_FORENSIC_TARGET_TRADE_IDS = frozenset({141, 221, 234, 258, 561})
+HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS = frozenset({221, 234})
+HISTORICAL_EXPECTED_REMAINING_TRADE_IDS = frozenset({141, 258, 561})
 
 
 @dataclass(frozen=True)
@@ -224,26 +228,17 @@ def build_freqtrade_paper_closed_trades_adapter_report(
     quarantined_order_ids = sorted(
         set(adapted["quarantined_order_ids"] + validator_quarantined_ids)
     )
-    expected_remaining = {
-        "freqtrade-paper-141",
-        "freqtrade-paper-258",
-        "freqtrade-paper-561",
+    observed_order_ids = {
+        str(item["order_id"])
+        for item in adapted["adapter_row_results"]
+        if item.get("order_id")
     }
-    applied_order_ids = set(forensic_context["forensic_recovered_order_ids"])
-    closeout_complete = (
-        apply_authoritative_forensic_recovery
-        and applied_order_ids == {"freqtrade-paper-221", "freqtrade-paper-234"}
-        and set(quarantined_order_ids) == expected_remaining
+    historical_closeout = evaluate_historical_batch_closeout(
+        requested=apply_authoritative_forensic_recovery,
+        observed_order_ids=observed_order_ids,
+        recovered_order_ids=forensic_context["forensic_recovered_order_ids"],
+        quarantined_order_ids=quarantined_order_ids,
     )
-    if not apply_authoritative_forensic_recovery:
-        batch_closeout_status = "not_requested"
-        batch_closeout_reason = "authoritative_forensic_recovery_not_requested"
-    elif closeout_complete:
-        batch_closeout_status = "completed_with_quarantine"
-        batch_closeout_reason = "three_accounting_unexplained_rows_remain_quarantined"
-    else:
-        batch_closeout_status = "blocked"
-        batch_closeout_reason = "authoritative_forensic_recovery_contract_not_fully_satisfied"
     combined = {
         **report,
         **validator,
@@ -263,8 +258,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
             baseline_validator.get("accepted_row_count", 0)
         ),
         "pre_forensic_quarantined_row_count": baseline_quarantined_count,
-        "batch_closeout_status": batch_closeout_status,
-        "batch_closeout_reason": batch_closeout_reason,
+        **historical_closeout,
         "recovery_writes_performed": False,
         "recovery_changes_fingerprint_spec": False,
         "recovery_changes_epsilon": False,
@@ -307,6 +301,94 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         json_report=json_report,
         markdown_report=markdown_report,
     )
+
+
+def evaluate_historical_batch_closeout(
+    *,
+    requested: bool,
+    observed_order_ids: Sequence[str] | set[str],
+    recovered_order_ids: Sequence[str] | set[str],
+    quarantined_order_ids: Sequence[str] | set[str],
+) -> dict[str, Any]:
+    """Evaluate the fixed forensic cohort independently from current quarantine health."""
+
+    historical_targets = _order_ids(HISTORICAL_FORENSIC_TARGET_TRADE_IDS)
+    expected_recovered = _order_ids(HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS)
+    expected_remaining = _order_ids(HISTORICAL_EXPECTED_REMAINING_TRADE_IDS)
+    observed = set(observed_order_ids)
+    recovered = set(recovered_order_ids)
+    quarantined = set(quarantined_order_ids)
+    historical_quarantined = quarantined & historical_targets
+
+    contract_definition_errors: list[str] = []
+    if HISTORICAL_FORENSIC_TARGET_TRADE_IDS != FORENSIC_TARGET_TRADE_IDS:
+        contract_definition_errors.append("historical_target_scope_changed")
+    if HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS != RECOVERY_TRADE_IDS:
+        contract_definition_errors.append("historical_recovery_allowlist_changed")
+    if (
+        HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS
+        | HISTORICAL_EXPECTED_REMAINING_TRADE_IDS
+    ) != HISTORICAL_FORENSIC_TARGET_TRADE_IDS:
+        contract_definition_errors.append("historical_target_partition_invalid")
+
+    missing_targets = historical_targets - observed
+    missing_recovered = expected_recovered - recovered
+    unexpected_recovered = recovered - expected_recovered
+    missing_remaining = expected_remaining - historical_quarantined
+    unexpected_historical_quarantined = historical_quarantined - expected_remaining
+    additional_runtime_quarantined = quarantined - historical_targets
+    closeout_complete = bool(
+        requested
+        and not contract_definition_errors
+        and not missing_targets
+        and not missing_recovered
+        and not unexpected_recovered
+        and not missing_remaining
+        and not unexpected_historical_quarantined
+    )
+
+    if not requested:
+        closeout_status = "not_requested"
+        closeout_reason = "authoritative_forensic_recovery_not_requested"
+    elif closeout_complete:
+        closeout_status = "completed_with_quarantine"
+        closeout_reason = "fixed_historical_batch_recovered_with_expected_quarantine"
+    else:
+        closeout_status = "blocked"
+        closeout_reason = "historical_forensic_recovery_contract_not_fully_satisfied"
+
+    runtime_status = "blocked" if quarantined else "ok"
+    runtime_reason = (
+        "current_runtime_quarantines_present"
+        if quarantined
+        else "no_current_runtime_quarantines"
+    )
+    return {
+        # Backward-compatible fields retain their original historical-batch intent.
+        "batch_closeout_status": closeout_status,
+        "batch_closeout_reason": closeout_reason,
+        "historical_batch_closeout_status": closeout_status,
+        "historical_batch_closeout_reason": closeout_reason,
+        "historical_batch_closeout_complete": closeout_complete,
+        "historical_batch_contract_definition_errors": sorted(contract_definition_errors),
+        "historical_target_order_ids": sorted(historical_targets),
+        "historical_expected_recovered_order_ids": sorted(expected_recovered),
+        "historical_recovered_order_ids": sorted(recovered & historical_targets),
+        "historical_missing_recovered_order_ids": sorted(missing_recovered),
+        "historical_unexpected_recovered_order_ids": sorted(unexpected_recovered),
+        "historical_expected_remaining_quarantined_order_ids": sorted(expected_remaining),
+        "historical_remaining_quarantined_order_ids": sorted(
+            historical_quarantined & expected_remaining
+        ),
+        "historical_unexpected_quarantined_order_ids": sorted(
+            unexpected_historical_quarantined
+        ),
+        "historical_missing_expected_quarantined_order_ids": sorted(missing_remaining),
+        "historical_missing_target_order_ids": sorted(missing_targets),
+        "additional_runtime_quarantined_order_ids": sorted(additional_runtime_quarantined),
+        "runtime_quarantine_status": runtime_status,
+        "runtime_quarantine_reason": runtime_reason,
+    }
 
 
 def build_freqtrade_paper_closed_trades_adapter_bundle(
@@ -609,6 +691,10 @@ def parse_freqtrade_order_id(value: object) -> int | None:
         return None
     match = ORDER_ID_PATTERN.fullmatch(text)
     return int(match.group(1)) if match else None
+
+
+def _order_ids(trade_ids: Sequence[int] | set[int] | frozenset[int]) -> set[str]:
+    return {f"freqtrade-paper-{trade_id}" for trade_id in trade_ids}
 
 
 def _validate_adapted_records(
@@ -934,6 +1020,35 @@ def _base_report(
         "remaining_quarantined_order_ids": [],
         "batch_closeout_status": "not_requested",
         "batch_closeout_reason": "authoritative_forensic_recovery_not_requested",
+        "historical_batch_closeout_status": "not_requested",
+        "historical_batch_closeout_reason": "authoritative_forensic_recovery_not_requested",
+        "historical_batch_closeout_complete": False,
+        "historical_batch_contract_definition_errors": [],
+        "historical_target_order_ids": sorted(
+            _order_ids(HISTORICAL_FORENSIC_TARGET_TRADE_IDS)
+        ),
+        "historical_expected_recovered_order_ids": sorted(
+            _order_ids(HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS)
+        ),
+        "historical_recovered_order_ids": [],
+        "historical_missing_recovered_order_ids": sorted(
+            _order_ids(HISTORICAL_EXPECTED_RECOVERED_TRADE_IDS)
+        ),
+        "historical_unexpected_recovered_order_ids": [],
+        "historical_expected_remaining_quarantined_order_ids": sorted(
+            _order_ids(HISTORICAL_EXPECTED_REMAINING_TRADE_IDS)
+        ),
+        "historical_remaining_quarantined_order_ids": [],
+        "historical_unexpected_quarantined_order_ids": [],
+        "historical_missing_expected_quarantined_order_ids": sorted(
+            _order_ids(HISTORICAL_EXPECTED_REMAINING_TRADE_IDS)
+        ),
+        "historical_missing_target_order_ids": sorted(
+            _order_ids(HISTORICAL_FORENSIC_TARGET_TRADE_IDS)
+        ),
+        "additional_runtime_quarantined_order_ids": [],
+        "runtime_quarantine_status": "not_evaluated",
+        "runtime_quarantine_reason": "not_evaluated",
         "recovery_writes_performed": False,
         "recovery_changes_fingerprint_spec": False,
         "recovery_changes_epsilon": False,
