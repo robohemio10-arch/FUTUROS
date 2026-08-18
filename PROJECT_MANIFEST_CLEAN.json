@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "10e442c43dfecd8cada1e486418182945d2a2e7d981b5263d5e8ea0f93d7bb5a",
+  "aggregate_sha256": "1191e533643ce723520d964bc9687a39b08bdaa1e8d017c4f51d8e9c7235cf00",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 296,
-    "manifested_files_total": 1751,
-    "python_files": 1335,
+    "manifested_files_total": 1755,
+    "python_files": 1339,
     "runtime_excluded_files_total": 0,
-    "test_files": 364,
-    "tracked_files_total": 1752,
+    "test_files": 365,
+    "tracked_files_total": 1756,
     "workflows": 1
   },
   "deterministic": true,
@@ -3318,6 +3318,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_closed_trades_shadow_rule_attribution_v1.py",
       "sha256": "70e2ffb9a6c2e4df57c538ada5847c15c315b6f3503eff8ba35ff1b16dddc070"
+    },
+    {
+      "bytes": 2223,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_edge_foundation_v1.py",
+      "sha256": "e4a72b7d6e0e6ff038b10343162b1bf497e36d886730fe23cd90ae1a45e214e7"
     },
     {
       "bytes": 3331,
@@ -7718,6 +7724,18 @@
       "sha256": "11bd120d1dfad04bbcba1b48f1dde6e03b9fd523e42e06f7caa45acea79ab40f"
     },
     {
+      "bytes": 145,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_edge_foundation/__init__.py",
+      "sha256": "143c854cd3e79c1b02c9f0fc7621577e7e096c34dfd1b1498bc4cc31f8291927"
+    },
+    {
+      "bytes": 58486,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_edge_foundation/foundation.py",
+      "sha256": "c74c4c703fffbb6052e538d588e9ac4674420b31d4f65cb9d5f2a06d9801d80a"
+    },
+    {
       "bytes": 512,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_master_divergence_oos_causal_attribution/__init__.py",
@@ -9786,6 +9804,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_closed_trades_shadow_rule_attribution_v1.py",
       "sha256": "8a555414c9aa215748429f9d4984e997500b518fc97149e5e6f2c7c9f6dc1504"
+    },
+    {
+      "bytes": 30561,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_edge_foundation_v1.py",
+      "sha256": "f17f208e19688bcbec6b244c3f0d9afe4fc3ba3bb598843289bb4dee5a2f76c3"
     },
     {
       "bytes": 20470,
