@@ -100,8 +100,11 @@ def _profile_payload() -> dict[str, Any]:
     return payload
 
 
-def _csv_row(trade_id: int) -> dict[str, Any]:
-    blocked = trade_id in {141, 258, 561}
+def _csv_row(
+    trade_id: int, *, blocked_ids: set[int] | None = None
+) -> dict[str, Any]:
+    effective_blocked_ids = {141, 258, 561} if blocked_ids is None else blocked_ids
+    blocked = trade_id in effective_blocked_ids
     missing_exit = trade_id in RECOVERED_IDS
     return {
         "moeda": "BTCUSDT",
@@ -119,8 +122,11 @@ def _csv_row(trade_id: int) -> dict[str, Any]:
     }
 
 
-def _sqlite_row(trade_id: int) -> dict[str, Any]:
-    blocked = trade_id in {141, 258, 561}
+def _sqlite_row(
+    trade_id: int, *, blocked_ids: set[int] | None = None
+) -> dict[str, Any]:
+    effective_blocked_ids = {141, 258, 561} if blocked_ids is None else blocked_ids
+    blocked = trade_id in effective_blocked_ids
     missing_exit = trade_id in RECOVERED_IDS
     return {
         "id": trade_id,
@@ -154,7 +160,18 @@ def _frozen_558_ids() -> list[int]:
     return ids
 
 
-def _install_adapter_fixture(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+def test_fixture_helpers_distinguish_empty_blocked_ids_from_default() -> None:
+    assert _csv_row(141, blocked_ids=set())["pnl_fechado"] == 10
+    assert _sqlite_row(141, blocked_ids=set())["close_profit_abs"] == 10
+
+
+def _install_adapter_fixture(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    *,
+    extra_quarantined_ids: set[int] | None = None,
+    omitted_ids: set[int] | None = None,
+) -> Path:
     profile = tmp_path / "config" / "profile.json"
     primary = tmp_path / "data/trades/inbox/freqtrade_paper_closed_trades.csv"
     replica = tmp_path / "data/trades/freqtrade_paper_closed_smartcrypto.csv"
@@ -167,9 +184,16 @@ def _install_adapter_fixture(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     primary.write_text("frozen-fixture\n", encoding="utf-8")
     replica.write_bytes(primary.read_bytes())
     snapshot.write_bytes(b"fixture")
-    ids = _frozen_558_ids()
-    frame = pd.DataFrame([_csv_row(trade_id) for trade_id in ids])
-    sqlite_rows = [_sqlite_row(trade_id) for trade_id in ids]
+    extras = extra_quarantined_ids or set()
+    omitted = omitted_ids or set()
+    ids = sorted((set(_frozen_558_ids()) | extras) - omitted)
+    blocked_ids = {141, 258, 561} | extras
+    frame = pd.DataFrame(
+        [_csv_row(trade_id, blocked_ids=blocked_ids) for trade_id in ids]
+    )
+    sqlite_rows = [
+        _sqlite_row(trade_id, blocked_ids=blocked_ids) for trade_id in ids
+    ]
 
     monkeypatch.setattr(adapter_module, "read_trade_file", lambda _: frame.copy(deep=True))
 
@@ -240,6 +264,9 @@ def test_recovery_true_closes_frozen_batch_555_accepted_3_quarantined(
     assert report["accepted_row_count"] == 555
     assert report["quarantined_row_count"] == 3
     assert report["batch_closeout_status"] == "completed_with_quarantine"
+    assert report["historical_batch_closeout_status"] == "completed_with_quarantine"
+    assert report["runtime_quarantine_status"] == "blocked"
+    assert report["additional_runtime_quarantined_order_ids"] == []
 
 
 def test_only_221_and_234_receive_override(
@@ -265,6 +292,114 @@ def test_141_258_and_561_remain_quarantined(
         "freqtrade-paper-258",
         "freqtrade-paper-561",
     ]
+    assert report["historical_remaining_quarantined_order_ids"] == [
+        "freqtrade-paper-141",
+        "freqtrade-paper-258",
+        "freqtrade-paper-561",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("extra_ids", "expected_total", "expected_additional"),
+    [
+        ({653}, 4, ["freqtrade-paper-653"]),
+        (
+            {653, 669},
+            5,
+            ["freqtrade-paper-653", "freqtrade-paper-669"],
+        ),
+    ],
+)
+def test_additional_runtime_quarantines_do_not_invalidate_historical_closeout(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    extra_ids: set[int],
+    expected_total: int,
+    expected_additional: list[str],
+) -> None:
+    profile = _install_adapter_fixture(
+        monkeypatch,
+        tmp_path,
+        extra_quarantined_ids=extra_ids,
+    )
+    report = _build(tmp_path, profile, recovery=True)
+    assert report["historical_batch_closeout_status"] == "completed_with_quarantine"
+    assert report["batch_closeout_status"] == "completed_with_quarantine"
+    assert report["runtime_quarantine_status"] == "blocked"
+    assert report["status"] == "blocked"
+    assert report["quarantined_row_count"] == expected_total
+    assert report["additional_runtime_quarantined_order_ids"] == expected_additional
+
+
+def test_missing_historical_target_blocks_historical_closeout(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    profile = _install_adapter_fixture(
+        monkeypatch,
+        tmp_path,
+        omitted_ids={141},
+    )
+    report = _build(tmp_path, profile, recovery=True)
+    assert report["historical_batch_closeout_status"] == "blocked"
+    assert report["historical_missing_target_order_ids"] == ["freqtrade-paper-141"]
+    assert report["historical_missing_expected_quarantined_order_ids"] == [
+        "freqtrade-paper-141"
+    ]
+
+
+def test_missing_fixed_recovery_blocks_historical_closeout(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    profile = _install_adapter_fixture(monkeypatch, tmp_path)
+    forensic = _forensic_report()
+    forensic["trade_results"] = [
+        _forensic_row(trade_id, recovered=trade_id == 234)
+        for trade_id in sorted(TARGET_IDS)
+    ]
+    monkeypatch.setattr(
+        adapter_module,
+        "build_targeted_quarantine_forensics_report",
+        lambda **_: copy.deepcopy(forensic),
+    )
+    report = _build(tmp_path, profile, recovery=True)
+    assert report["historical_batch_closeout_status"] == "blocked"
+    assert report["historical_missing_recovered_order_ids"] == [
+        "freqtrade-paper-221"
+    ]
+    assert "freqtrade-paper-221" in report["historical_unexpected_quarantined_order_ids"]
+
+
+def test_additional_runtime_quarantines_never_become_accepted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    profile = _install_adapter_fixture(
+        monkeypatch,
+        tmp_path,
+        extra_quarantined_ids={653, 669},
+    )
+    report = _build(tmp_path, profile, recovery=True)
+    accepted = {
+        row["order_id"]
+        for row in report["row_results"]
+        if row["status"] == "accepted"
+    }
+    extras = {"freqtrade-paper-653", "freqtrade-paper-669"}
+    assert accepted.isdisjoint(extras)
+    assert extras <= set(report["quarantined_order_ids"])
+
+
+def test_source_hashes_are_preserved_with_additional_runtime_quarantines(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    profile = _install_adapter_fixture(
+        monkeypatch,
+        tmp_path,
+        extra_quarantined_ids={653, 669},
+    )
+    report = _build(tmp_path, profile, recovery=True)
+    assert report["snapshot_source_hashes_before"] == HASHES
+    assert report["snapshot_source_hashes_after"] == HASHES
+    assert report["snapshot_source_hashes_preserved"] is True
 
 
 def test_recovery_map_and_application_do_not_mutate_inputs() -> None:
@@ -539,6 +674,23 @@ def test_real_no_write_probe_closes_only_fixed_recoveries_when_sources_exist() -
     if not all(path.exists() for path in required):
         pytest.skip("authoritative paper evidence is not available")
     before = {path: path.read_bytes() for path in required}
+    baseline_report = build_freqtrade_paper_closed_trades_adapter_report(
+        project_root=ROOT,
+        source_profile_path=PROFILE,
+        account_scope_hash=ACCOUNT_HASH,
+        apply_authoritative_forensic_recovery=False,
+    )
+    historical_target_order_ids = {
+        "freqtrade-paper-141",
+        "freqtrade-paper-221",
+        "freqtrade-paper-234",
+        "freqtrade-paper-258",
+        "freqtrade-paper-561",
+    }
+    baseline_quarantined_order_ids = set(baseline_report["quarantined_order_ids"])
+    baseline_additional_runtime_quarantined_order_ids = (
+        baseline_quarantined_order_ids - historical_target_order_ids
+    )
     report = build_freqtrade_paper_closed_trades_adapter_report(
         project_root=ROOT,
         source_profile_path=PROFILE,
@@ -547,13 +699,37 @@ def test_real_no_write_probe_closes_only_fixed_recoveries_when_sources_exist() -
     )
     after = {path: path.read_bytes() for path in required}
     assert report["accepted_row_count"] == report["pre_forensic_accepted_row_count"] + 2
-    assert report["quarantined_row_count"] == 3
-    assert report["forensic_recovered_order_ids"] == [
+    assert set(report["forensic_recovered_order_ids"]) == {
         "freqtrade-paper-221",
         "freqtrade-paper-234",
-    ]
+    }
+    assert report["historical_batch_closeout_status"] == "completed_with_quarantine"
+    historical_remaining_quarantined_order_ids = {
+        "freqtrade-paper-141",
+        "freqtrade-paper-258",
+        "freqtrade-paper-561",
+    }
+    assert set(report["historical_remaining_quarantined_order_ids"]) == (
+        historical_remaining_quarantined_order_ids
+    )
+    assert report["historical_unexpected_recovered_order_ids"] == []
+    assert report["historical_missing_target_order_ids"] == []
+    assert set(report["additional_runtime_quarantined_order_ids"]) == (
+        baseline_additional_runtime_quarantined_order_ids
+    )
+    expected_current_quarantined_order_ids = (
+        historical_remaining_quarantined_order_ids
+        | baseline_additional_runtime_quarantined_order_ids
+    )
+    assert set(report["quarantined_order_ids"]) == expected_current_quarantined_order_ids
+    assert report["quarantined_row_count"] == len(report["quarantined_order_ids"])
+    assert report["runtime_quarantine_status"] == "blocked"
+    assert report["status"] == "blocked"
+    assert baseline_report["snapshot_source_hashes_preserved"] is True
     assert report["observed_fingerprint_collision_count"] == 0
     assert report["snapshot_source_hashes_preserved"] is True
+    assert report["write_performed"] is False
+    assert report["recovery_writes_performed"] is False
     assert before == after
 
 
