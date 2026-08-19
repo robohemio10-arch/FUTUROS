@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1191e533643ce723520d964bc9687a39b08bdaa1e8d017c4f51d8e9c7235cf00",
+  "aggregate_sha256": "8c0d14e9e57e186d3723db69ddb55e11b924178ca87d1db715aa853e4f2c302d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 296,
-    "manifested_files_total": 1755,
-    "python_files": 1339,
+    "manifested_files_total": 1762,
+    "python_files": 1346,
     "runtime_excluded_files_total": 0,
-    "test_files": 365,
-    "tracked_files_total": 1756,
+    "test_files": 366,
+    "tracked_files_total": 1763,
     "workflows": 1
   },
   "deterministic": true,
@@ -3474,6 +3474,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_sanitized_evidence_bundle_v1.py",
       "sha256": "f6792816d28aef955a13499e85b369820e8a25639a02a175e2586ad37213bbc4"
+    },
+    {
+      "bytes": 6647,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_shadow_opportunity_engine_v1.py",
+      "sha256": "87462d44950cfbc9a931b157172a7511953de4ad8e68da9eb491f75319be00d4"
     },
     {
       "bytes": 751,
@@ -8018,6 +8024,36 @@
       "sha256": "424caf4ac63e264e756922134dd5e7bb2f11485763c2467448eff476eedb961d"
     },
     {
+      "bytes": 466,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/shadow_opportunity_engine/__init__.py",
+      "sha256": "c5d12be873d7e9aad0bb224103b18983ebb893d01a08c44dc2e7408b10e9c252"
+    },
+    {
+      "bytes": 6442,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/shadow_opportunity_engine/contracts.py",
+      "sha256": "4b3171c104a91f665342e58ce718d19b2be6112c1eaed6ab109f436466ef8bd5"
+    },
+    {
+      "bytes": 39139,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/shadow_opportunity_engine/engine.py",
+      "sha256": "f76504387a70fd9c8723c39a11e8df832c8cc3e312f2a89b62adb05898b0bb54"
+    },
+    {
+      "bytes": 14308,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/shadow_opportunity_engine/exit_efficiency.py",
+      "sha256": "68d215b2ace632bae8b53a142c2e13b989ed8e26e58b590e773878d87e40d915"
+    },
+    {
+      "bytes": 3282,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/shadow_opportunity_engine/persistence.py",
+      "sha256": "1da3fe6482f10760551232568c3a02e91bb57b5facc9d7cf2bb93b76c359d3ab"
+    },
+    {
       "bytes": 39787,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/tp_sl_simulator.py",
@@ -10386,6 +10422,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_sanitize_market_features_lookahead.py",
       "sha256": "f82cbb3b53f9abe7a794d3697967b2d83a7ba6686bf24af91cb06ff512667616"
+    },
+    {
+      "bytes": 31521,
+      "hash_mode": "text_lf",
+      "path": "tests/test_shadow_opportunity_engine_v1.py",
+      "sha256": "b7b906dffb266ab57ba1a953b9d277eaa93de122482e39cc2813f9d2b1430640"
     },
     {
       "bytes": 5145,
