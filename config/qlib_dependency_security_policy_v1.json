@@ -1,0 +1,114 @@
+{
+  "approved_security_clean_resolution_found": false,
+  "certified_evidence": {
+    "cryptography_50_fallback": {
+      "finding_summary": {
+        "mlflow": 25,
+        "pyarrow": 1
+      },
+      "known_vulnerability_count": 26,
+      "package_count": 181,
+      "packages": {
+        "cryptography": "50.0.0",
+        "mlflow": "3.2.0",
+        "mlflow-skinny": "3.2.0",
+        "mlflow-tracing": "3.2.0",
+        "pyarrow": "21.0.0",
+        "pyqlib": "0.9.7"
+      },
+      "pip_audit_exit_code": 1,
+      "required_findings": [
+        {
+          "fix_versions": [
+            "23.0.1"
+          ],
+          "id": "PYSEC-2026-113",
+          "package": "pyarrow",
+          "version": "21.0.0"
+        }
+      ],
+      "resolver_status": "resolved",
+      "security_status": "blocked",
+      "vulnerable_package_count": 2
+    },
+    "current_resolution": {
+      "findings": [
+        {
+          "fix_versions": [
+            "50.0.0"
+          ],
+          "id": "PYSEC-2026-3552",
+          "package": "cryptography",
+          "version": "49.0.0"
+        }
+      ],
+      "known_vulnerability_count": 1,
+      "package_count": 193,
+      "packages": {
+        "cryptography": "49.0.0",
+        "mlflow": "3.15.1",
+        "mlflow-skinny": "3.15.1",
+        "mlflow-tracing": "3.15.1",
+        "pyarrow": "25.0.1",
+        "pyqlib": "0.9.7"
+      },
+      "pip_audit_exit_code": 1,
+      "resolver_status": "resolved",
+      "security_status": "blocked",
+      "vulnerable_package_count": 1
+    },
+    "modern_mlflow_crypto50": {
+      "packages": {
+        "cryptography": "50.0.0",
+        "mlflow": "3.15.0",
+        "pyarrow": "25.0.0",
+        "pyqlib": "0.9.7"
+      },
+      "reason": "mlflow_3_15_0_requires_cryptography_lt_50",
+      "resolver_exit_code": 1,
+      "resolver_status": "incompatible",
+      "security_status": "blocked"
+    },
+    "platform": {
+      "observed_date": "2026-08-20",
+      "pip": "26.1.2",
+      "python": "3.12.10"
+    }
+  },
+  "decision": "MANTER_EM_RESEARCH",
+  "expected_direct_requirements": [
+    "pyqlib==0.9.7"
+  ],
+  "expected_requirements_sha256": "0e525c4fd951e46f16aafb6019c36f36e5c5e588b2fc7502fdf637e16eb4239c",
+  "policy_status": "active_fail_closed",
+  "policy_version": "2026-08-20.v1",
+  "qlib_security_gate_passed": false,
+  "requirements_file": "requirements-qlib.lock",
+  "safety": {
+    "canary_release_allowed": false,
+    "changes_risk": false,
+    "exchange_private_access": false,
+    "live_release_allowed": false,
+    "live_trading_enabled": false,
+    "model_promotion_performed": false,
+    "models_changed": false,
+    "operational_authority": false,
+    "order_submission_enabled": false,
+    "paper_only": true,
+    "real_order_submission_enabled": false,
+    "research_only": true,
+    "runtime_updated": false,
+    "sends_orders": false,
+    "shadow_only": true
+  },
+  "schema_version": "qlib_dependency_security_policy_v1",
+  "scope": "research_only_qlib_dependency_security",
+  "semantic_invariants": {
+    "dependency_downgrade_requires_full_graph_audit": true,
+    "missing_evidence_is_blocking": true,
+    "no_approved_security_clean_resolution_is_blocking": true,
+    "resolver_success_does_not_imply_security_gate_pass": true,
+    "single_package_fixed_does_not_imply_dependency_graph_secure": true,
+    "unknown_finding_is_blocking": true
+  }
+}

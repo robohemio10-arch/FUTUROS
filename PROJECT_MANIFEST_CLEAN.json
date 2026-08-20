@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "931a2441814d44665f119c5f0d6cc0cc8087fd04f034421e272d765641ceab8e",
+  "aggregate_sha256": "8e58f8bb42006553b4e68865b85606de2d7bff0295c3e9ef29b42190f538ec52",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 296,
-    "manifested_files_total": 1770,
-    "python_files": 1354,
+    "docs_files": 297,
+    "manifested_files_total": 1776,
+    "python_files": 1358,
     "runtime_excluded_files_total": 0,
-    "test_files": 367,
-    "tracked_files_total": 1771,
+    "test_files": 368,
+    "tracked_files_total": 1777,
     "workflows": 1
   },
   "deterministic": true,
@@ -486,6 +486,12 @@
       "hash_mode": "text_lf",
       "path": "config/phase22_historical_backfill.yml",
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
+    },
+    {
+      "bytes": 3340,
+      "hash_mode": "text_lf",
+      "path": "config/qlib_dependency_security_policy_v1.json",
+      "sha256": "13a11e41f7bff4a8489338a933393daa021b48551fd03fd3b8a94326323c03c7"
     },
     {
       "bytes": 2036,
@@ -1964,6 +1970,12 @@
       "sha256": "0667e014cccf06e92c658dfc5bf6c816c10aa38d4ba1fba286171adf3e8048ee"
     },
     {
+      "bytes": 4080,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_DEPENDENCY_SECURITY_HARDENING_V1.md",
+      "sha256": "cd2850e141109442ff48d4c240c07bacb496e91f472b94dccea7576ec3c0dd8d"
+    },
+    {
       "bytes": 2704,
       "hash_mode": "text_lf",
       "path": "docs/QLIB_FRESH_PREDICTION_RUNNER.md",
@@ -2736,6 +2748,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_qlib_24x7_integration_mode_v1.py",
       "sha256": "01ebd2f55476c41885441059e19afeec379e2edda34e173ac624b6d05ad10543"
+    },
+    {
+      "bytes": 3129,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_qlib_dependency_security_hardening_v1.py",
+      "sha256": "96e29fac44c1c3b3d6783d2f3b5ed90cd0f8c23c3f8a296d1561fdde97e85536"
     },
     {
       "bytes": 1601,
@@ -6360,6 +6378,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_backend_gate/runtime_isolation.py",
       "sha256": "810cebc919c552f184e55518b5fcaf6bfe9992fa8b100937ce033818730f7209"
+    },
+    {
+      "bytes": 270,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_dependency_security_hardening/__init__.py",
+      "sha256": "22bdc5d7ff41e8574a0bed1ce2b453634e4be0fc6e38c5ec0c938ba829b4b5b4"
+    },
+    {
+      "bytes": 19274,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_dependency_security_hardening/audit.py",
+      "sha256": "0c85ff9067de136d0ee0b001de04560509338eac85bad19f824fe8e6ff26f5ec"
     },
     {
       "bytes": 211,
@@ -10218,6 +10248,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_24x7_integration_mode_v1.py",
       "sha256": "b3fa308efbd31c8d6e3e45133279faf1c9a46544b4e356f8d1dafe9f7189068a"
+    },
+    {
+      "bytes": 16345,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_dependency_security_hardening_v1.py",
+      "sha256": "34c045e0b2051bb3164362a73f42f854d20f6d2b6376266c7b17c401e55fb057"
     },
     {
       "bytes": 7567,
