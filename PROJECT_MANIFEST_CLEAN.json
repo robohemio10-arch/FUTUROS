@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8c0d14e9e57e186d3723db69ddb55e11b924178ca87d1db715aa853e4f2c302d",
+  "aggregate_sha256": "931a2441814d44665f119c5f0d6cc0cc8087fd04f034421e272d765641ceab8e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 296,
-    "manifested_files_total": 1762,
-    "python_files": 1346,
+    "manifested_files_total": 1770,
+    "python_files": 1354,
     "runtime_excluded_files_total": 0,
-    "test_files": 366,
-    "tracked_files_total": 1763,
+    "test_files": 367,
+    "tracked_files_total": 1771,
     "workflows": 1
   },
   "deterministic": true,
@@ -3078,6 +3078,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_finance_grade_sidecar_input.py",
       "sha256": "1b11e54579615410489993d9b7499bdc8c9bf57d4f00b0c72c50eaddeadb672b"
+    },
+    {
+      "bytes": 4060,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_financial_ai_research_engine_v1.py",
+      "sha256": "626228fdf7e6175c4885c04428b8e4db676a0f01adb38f3b296ab3848371ce98"
     },
     {
       "bytes": 3006,
@@ -7454,6 +7460,42 @@
       "sha256": "f8f56cdb05631ead69acd01707cb997533f3713288f9e00c0481c38630fcc89a"
     },
     {
+      "bytes": 566,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/__init__.py",
+      "sha256": "ce06b872792cbda878b47ce7543b8b6b5a0efe4e1e77807da0d13308c59d2a4f"
+    },
+    {
+      "bytes": 13462,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/calibration.py",
+      "sha256": "5e75b21aadc3db809542485c8fc9763a488333897a23494391d321ede3677998"
+    },
+    {
+      "bytes": 6289,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/contracts.py",
+      "sha256": "1e6f51e7a42afb796fe0873e481da62b45641c4750ada008d1fc6acefd24dce6"
+    },
+    {
+      "bytes": 45049,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/dataset.py",
+      "sha256": "fa3aca418f186a35561dd649045695ac63eede1090349842f5632acc06d4b5fe"
+    },
+    {
+      "bytes": 51793,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/engine.py",
+      "sha256": "5e009d8b17df1279bb5b8a689f9cdf6107e270e2fdb77b67ef3e7e369b2dfafe"
+    },
+    {
+      "bytes": 4638,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/financial_ai_research_engine/persistence.py",
+      "sha256": "866d29a1108869626a7bae0e4acd5394aab6856ded9bddee4741d46d402a9f09"
+    },
+    {
       "bytes": 25756,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/freqtrade_paper_ai_selector_integration.py",
@@ -9282,6 +9324,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_finance_grade_filter.py",
       "sha256": "fc10d3f3a3b94348aa3fcee00182117d119ac1eb1f647f1cc07f3cc1527ff0c9"
+    },
+    {
+      "bytes": 33227,
+      "hash_mode": "text_lf",
+      "path": "tests/test_financial_ai_research_engine_v1.py",
+      "sha256": "049f40fcab60bfbe2c44c29cef96f24068ccb4248b8dbedb1525fb9c499a6de0"
     },
     {
       "bytes": 3572,
