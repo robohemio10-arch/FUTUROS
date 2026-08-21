@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8e58f8bb42006553b4e68865b85606de2d7bff0295c3e9ef29b42190f538ec52",
+  "aggregate_sha256": "cf5e9c4b446c67bdbcb39c983b9eb0a91eb912159502c61935c8e875620ae58a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 297,
-    "manifested_files_total": 1776,
-    "python_files": 1358,
+    "docs_files": 298,
+    "manifested_files_total": 1784,
+    "python_files": 1365,
     "runtime_excluded_files_total": 0,
-    "test_files": 368,
-    "tracked_files_total": 1777,
+    "test_files": 369,
+    "tracked_files_total": 1785,
     "workflows": 1
   },
   "deterministic": true,
@@ -1554,6 +1554,12 @@
       "hash_mode": "text_lf",
       "path": "docs/P0_4C_SANDBOX_INTEGRATION_HARNESS_V1.md",
       "sha256": "143c7afcac92be3fa5c28ef32f6eb4e15fcb60ee1f3944f872d869bb3fcfd39d"
+    },
+    {
+      "bytes": 7793,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_AB_EDGE_SELECTOR_V1.md",
+      "sha256": "0052aeb55140eb356cbe4c0d78304c63f35a784710b509194efc13c2e0b65052"
     },
     {
       "bytes": 7615,
@@ -3228,6 +3234,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
       "sha256": "86727eb02763b6f720a5e43555ef1965df79ffba897720588283bc0a850b405d"
+    },
+    {
+      "bytes": 5692,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_ab_edge_selector_v1.py",
+      "sha256": "153fd9ae5cc84b95587eac0afbc9573f31e895d005d25afc4a443830497026e3"
     },
     {
       "bytes": 2252,
@@ -7712,6 +7724,36 @@
       "sha256": "87d4f43d8846d50c36efea805c52a54dae2b573ef5a309c1685ef8605edd3a4c"
     },
     {
+      "bytes": 946,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_edge_selector/__init__.py",
+      "sha256": "3e93f92c696021d6c0aca96b806073a57a023df845ae9e7e02076e0b972edcbe"
+    },
+    {
+      "bytes": 5970,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_edge_selector/assignment.py",
+      "sha256": "c88a0172e24167660c8f882ca5ee119a453b1b5cd5473158a4c20f3235cad13e"
+    },
+    {
+      "bytes": 6154,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_edge_selector/contracts.py",
+      "sha256": "a16d53c40a4b2bcea559ce89b829c4f252654ce066277f7f8daaed9a841d2c2d"
+    },
+    {
+      "bytes": 41381,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_edge_selector/engine.py",
+      "sha256": "6c238cc7132e06a89c5c6a779b34accf3e388d317bced3c8529a378158d7e8ae"
+    },
+    {
+      "bytes": 4210,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_ab_edge_selector/persistence.py",
+      "sha256": "8586d3dd106786f26b8a66de6387c37e543b2e04b5898f3c71caae635273a03c"
+    },
+    {
       "bytes": 1540,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_ab_testnet_chaos_readiness/__init__.py",
@@ -9756,6 +9798,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_pair_contract.py",
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
+    },
+    {
+      "bytes": 23657,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_ab_edge_selector_v1.py",
+      "sha256": "4370fdb9b0d92b7070aec239c36b0d6f702fd30a308e13b6e0a626f69822f418"
     },
     {
       "bytes": 22573,
