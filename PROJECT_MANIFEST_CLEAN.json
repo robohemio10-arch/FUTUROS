@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "cf5e9c4b446c67bdbcb39c983b9eb0a91eb912159502c61935c8e875620ae58a",
+  "aggregate_sha256": "9306aeac61f78f4e2df717e603942e8484272e409163114e7e946bfe1b1fd1c0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 298,
-    "manifested_files_total": 1784,
-    "python_files": 1365,
+    "docs_files": 299,
+    "manifested_files_total": 1800,
+    "python_files": 1380,
     "runtime_excluded_files_total": 0,
-    "test_files": 369,
-    "tracked_files_total": 1785,
+    "test_files": 376,
+    "tracked_files_total": 1801,
     "workflows": 1
   },
   "deterministic": true,
@@ -1694,6 +1694,12 @@
       "sha256": "4182f88e0c587538e04311f4c7438a5be639122c74c7f0bcb05c17cba692e0b2"
     },
     {
+      "bytes": 22820,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_CANDIDATE_TRADE_LINEAGE_PROPAGATION_V1.md",
+      "sha256": "ccaeb2de9145ba7071a5eabb12aa770e5db57cd71ad4fdbd48f80633ed944063"
+    },
+    {
       "bytes": 4329,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CLOSED_TRADES_READONLY_SOURCE_CONTRACT_V1.md",
@@ -2471,7 +2477,7 @@
       "bytes": 1772,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "13528000a923df408e5d3fb1774e0a5da3c05ab353ac8914566850ff220f65d7"
+      "sha256": "9f6f39527c5fcd1d609a475cfe1eeba8c0896c69b15c470e963337f476250840"
     },
     {
       "bytes": 92,
@@ -5768,6 +5774,54 @@
       "sha256": "c7bf7349c2b7b435465a5613bec176a5e1d6cc1ec8c1c2fc7242135bd902d9fa"
     },
     {
+      "bytes": 2949,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/__init__.py",
+      "sha256": "708e558fbf1f541680f67cd58d7efe0a3d607be2522ffa7826f8a8fb4fe21d4e"
+    },
+    {
+      "bytes": 12459,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/adapter.py",
+      "sha256": "e1106adbb871ff65601f6b7818792d8d5d5f2fc030274894003598257b17729b"
+    },
+    {
+      "bytes": 11902,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/contracts.py",
+      "sha256": "b50d83ab424b4984f94e04ab41ed4a78d0e8bcd0f3d3daa2bb6c49e9b78918ce"
+    },
+    {
+      "bytes": 20828,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/decision_projection.py",
+      "sha256": "d7386fe3db849610cfe7ff6f3eacec151af3a2f7280f4dc3abf60d7f5e3dd8c2"
+    },
+    {
+      "bytes": 7303,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/mapper.py",
+      "sha256": "cbd3ce8de11dc3324682a0046d192285d85316d99f43c2de6711bf46a497599b"
+    },
+    {
+      "bytes": 14122,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/producer_materialization.py",
+      "sha256": "554821c30b4798557619feb112cbdb158c093409f29291527379a11c1e1944db"
+    },
+    {
+      "bytes": 13967,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/publication.py",
+      "sha256": "8daf3391c60248ac6861301f1a8545071006148c96880ddd058e6b740cbc2c2f"
+    },
+    {
+      "bytes": 14189,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/trade_projection.py",
+      "sha256": "fc4837a6d294a0b0ee8500bd157312f015d045d6da21c7b472ea3b28028007ee"
+    },
+    {
       "bytes": 11215,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/paper_cycle_reset.py",
@@ -5798,10 +5852,10 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 23701,
+      "bytes": 28975,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "4402be5f355a86e077d656b600a20587d5e8f6ba589174311870e70ce705e56d"
+      "sha256": "400b66674e98ca83addb7e0bf00d1b976602734bd7d14f20565478514464f6ac"
     },
     {
       "bytes": 10881,
@@ -9948,6 +10002,48 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_candidate_filter_runtime_wiring_v1.py",
       "sha256": "1e47a18c2d89904671d99ccc56b35f052615c3b805166ae143c854c5fbf6d5d6"
+    },
+    {
+      "bytes": 13405,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_closed_trade_projection_v1.py",
+      "sha256": "4b02d8a44719f5db61b9ba2fb97fb20265057049c466bdbbf23b1dbfa5f3f346"
+    },
+    {
+      "bytes": 8824,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_freqtrade_enter_tag_propagation_v1.py",
+      "sha256": "0abd36dfc15bb51463cddb3c039efe50adbcbe35a2b0ac4044c0b97cbc5c3c0a"
+    },
+    {
+      "bytes": 27709,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_propagation_v1.py",
+      "sha256": "1262d1f15aa28e51b5219bc4df6a848c5c2ccb7c31ea10d0a8ec8c7ea3f5dffd"
+    },
+    {
+      "bytes": 11825,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_publication_v1.py",
+      "sha256": "c5c4ebce3123f6b22f772dc5d17903250cda94aaa492ae1a452eaa48aa18dbbb"
+    },
+    {
+      "bytes": 14745,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_signal_producer_materialization_v1.py",
+      "sha256": "ecef1ea066471175d8cf4557e9163f299a438ff8573b22a90fa6611e709a768b"
+    },
+    {
+      "bytes": 13171,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_signal_producer_wiring_v1.py",
+      "sha256": "1b43cbe6ce3f3266518706bfd083d8fa6fcba4f62c999c95334fdf01b831b2c6"
+    },
+    {
+      "bytes": 9510,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_candidate_trade_lineage_strict_decision_projection_v1.py",
+      "sha256": "1b8e9669bcce9042a2bf4e981933576c7d0472d3bb8149f7216bc089c42b9bbe"
     },
     {
       "bytes": 10293,
