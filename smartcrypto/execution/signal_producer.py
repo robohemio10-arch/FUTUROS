@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -13,6 +14,12 @@ import yaml
 from smartcrypto.execution.paper_candidate_filter_runtime_wiring import (
     apply_paper_candidate_filter_to_signals,
     summarize_runtime_wiring,
+)
+from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1 import (
+    PaperLineagePublicationResultV1,
+    materialize_signal_batch_from_explicit_provenance,
+    project_strict_decision_envelopes_in_memory,
+    select_non_blocking_paper_publication_signals,
 )
 from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
@@ -29,6 +36,41 @@ from smartcrypto.runtime.integrity_traceability_v2 import (
 
 
 DEFAULT_CONFIG_PATH = "config/signal_producer.yml"
+
+
+@dataclass(frozen=True)
+class _NonBlockingObservabilityReport:
+    status: str
+    reason: str
+    publication_blocked: bool
+    writer_invoked: bool = False
+    writes_runtime: bool = False
+    paper_behavior_changed: bool = False
+    attribution_evidence_blocked: bool = True
+    error_type: str | None = None
+
+    def model_dump(self, *, mode: str = "json") -> dict[str, Any]:
+        del mode
+        return {
+            "status": self.status,
+            "reason": self.reason,
+            "publication_blocked": self.publication_blocked,
+            "writer_invoked": self.writer_invoked,
+            "writes_runtime": self.writes_runtime,
+            "paper_behavior_changed": self.paper_behavior_changed,
+            "attribution_evidence_blocked": self.attribution_evidence_blocked,
+            "error_type": self.error_type,
+            "lineage_is_operational_authority": False,
+            "publication_blocked_by_lineage": False,
+            "changes_risk": False,
+            "sends_orders": False,
+        }
+
+
+@dataclass(frozen=True)
+class _NonBlockingObservabilityOutcome:
+    active_signals: tuple[dict[str, Any], ...]
+    report: _NonBlockingObservabilityReport
 
 
 def utc_now() -> datetime:
@@ -75,6 +117,8 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
                 "summary": "data/reports/phase13_summary.json",
                 "decision_log": "data/runtime/freqtrade_signal_decisions.jsonl",
                 "risk_limits": str(DEFAULT_RISK_LIMITS_PATH),
+                "lineage_research_candidates": "data/reports/paper_ai_signal_candidate_producer_v1.json",
+                "lineage_registry_candidates": "data/reports/paper_model_candidate_registry_gate_v1.json",
             },
             "policy": {
                 "validity_minutes": 30,
@@ -326,6 +370,64 @@ def safe_float(value: Any, default: float | None = 0.0) -> float | None:
         return default
 
 
+def _observability_failure(
+    stage: str,
+    exc: Exception,
+) -> _NonBlockingObservabilityOutcome:
+    error_type = type(exc).__name__
+    return _NonBlockingObservabilityOutcome(
+        active_signals=(),
+        report=_NonBlockingObservabilityReport(
+            status="blocked",
+            reason=f"lineage_{stage}_failed:{error_type}",
+            publication_blocked=True,
+            error_type=error_type,
+        ),
+    )
+
+
+def _observability_skipped_by_risk_gate() -> _NonBlockingObservabilityOutcome:
+    return _NonBlockingObservabilityOutcome(
+        active_signals=(),
+        report=_NonBlockingObservabilityReport(
+            status="skipped",
+            reason="risk_gate_not_ok_observability_not_finalized",
+            publication_blocked=False,
+            attribution_evidence_blocked=True,
+        ),
+    )
+
+
+def _safe_select_paper_lineage_publication(
+    *,
+    risk_gate: Any,
+    observability: Any,
+) -> PaperLineagePublicationResultV1:
+    try:
+        return select_non_blocking_paper_publication_signals(
+            risk_gate=risk_gate,
+            observability=observability,
+        )
+    except Exception as exc:
+        approved = tuple(
+            dict(item)
+            for item in getattr(risk_gate, "approved_signals", ())
+            if isinstance(item, Mapping)
+        )
+        return PaperLineagePublicationResultV1(
+            active_signals=approved,
+            status="baseline_preserved",
+            reason=f"lineage_publication_boundary_failed:{type(exc).__name__}",
+            baseline_approved_count=len(approved),
+            observability_active_count=0,
+            published_signal_count=len(approved),
+            lineage_envelope_count=0,
+            attribution_evidence_blocked=True,
+            baseline_execution_preserved=True,
+            risk_decision_preserved=True,
+        )
+
+
 def build_active_signals(
     config_path: str | os.PathLike[str] | Mapping[str, Any] | None = None,
     force_from_predictions: bool = False,
@@ -409,32 +511,79 @@ def build_active_signals(
     frame = load_predictions(predictions_path)
     selected = select_prediction_rows(frame, config)
 
+    selected_rows = selected.to_dict(orient="records")
     candidate_signals = [
         row_to_signal(row, config, generated_at, valid_until)
-        for row in selected.to_dict(orient="records")
+        for row in selected_rows
     ]
+
+    lineage_research_path = paths.get(
+        "lineage_research_candidates",
+        "data/reports/paper_ai_signal_candidate_producer_v1.json",
+    )
+    lineage_registry_path = paths.get(
+        "lineage_registry_candidates",
+        "data/reports/paper_model_candidate_registry_gate_v1.json",
+    )
+    lineage_materialization = materialize_signal_batch_from_explicit_provenance(
+        signals=candidate_signals,
+        source_rows=selected_rows,
+        research_report=read_json(lineage_research_path),
+        registry_report=read_json(lineage_registry_path),
+        producer_id="phase13-signal-producer",
+    )
+    candidate_signals = list(lineage_materialization.signals)
+    lineage_materialization_summary = lineage_materialization.report.to_dict()
 
     runtime_mode = str(config.get("runtime_mode") or "paper")
     paper_candidate_wiring = apply_paper_candidate_filter_to_signals(candidate_signals, runtime_mode=runtime_mode)
     candidate_signals = list(paper_candidate_wiring["allowed_signals"])
     paper_candidate_wiring_summary = summarize_runtime_wiring(paper_candidate_wiring)
 
-    observability_preparation = prepare_before_risk_manager(
+    # Observability preparation remains before RiskManager only to preserve the
+    # established coordinator lifecycle and evidence contract. Its output is
+    # explicitly NOT the RiskManager input. Preparation failure is contained and
+    # cannot suppress RiskManager evaluation of the operational candidate batch.
+    observability_preparation = None
+    observability: Any = None
+    try:
+        observability_preparation = prepare_before_risk_manager(
+            candidate_signals,
+            producer_id="phase13-signal-producer",
+        )
+    except Exception as exc:
+        observability = _observability_failure("preparation", exc)
+
+    # Final authorization gate: RiskManager receives the operational candidate
+    # batch directly. Lineage/observability metadata is not an authority input.
+    # Signals RiskManager rejects are never written as active signals.
+    risk_gate = apply_risk_manager_gate(
         candidate_signals,
+        risk_limits_path=risk_limits_path,
+    )
+
+    if risk_gate.status == "ok":
+        if observability is None:
+            try:
+                observability = finalize_after_risk_manager(
+                    observability_preparation,
+                    risk_gate=risk_gate,
+                )
+            except Exception as exc:
+                observability = _observability_failure("finalization", exc)
+    elif observability is None:
+        observability = _observability_skipped_by_risk_gate()
+
+    strict_decision_projection = project_strict_decision_envelopes_in_memory(
+        approved_signals=risk_gate.approved_signals,
+        source_rows=selected_rows,
+        decision_timestamp_utc=utc_now(),
         producer_id="phase13-signal-producer",
     )
 
-    # Final authorization gate: RiskManager is the last word before any
-    # signal can be considered "active". Signals RiskManager rejects are
-    # never written as active signals; they only appear, for evidence, in
-    # risk_manager_gate.rejected_signal_reasons in the report below.
-    risk_gate = apply_risk_manager_gate(
-        observability_preparation.signals,
-        risk_limits_path=risk_limits_path,
-    )
-    observability = finalize_after_risk_manager(
-        observability_preparation,
+    publication = _safe_select_paper_lineage_publication(
         risk_gate=risk_gate,
+        observability=strict_decision_projection,
     )
 
     if risk_gate.status != "ok":
@@ -456,38 +605,20 @@ def build_active_signals(
             "valid_until_min": None,
             "valid_until_max": None,
             "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
+            "paper_candidate_lineage_materialization": lineage_materialization_summary,
             "risk_manager_gate": risk_gate.to_dict(),
             "decision_ledger_observability": observability.report.model_dump(mode="json"),
+            "paper_candidate_strict_decision_projection": strict_decision_projection.report.model_dump(mode="json"),
+            "paper_lineage_publication": publication.to_dict(),
         }
         atomic_write_json(report_path, report)
         return report
 
-    if observability.report.publication_blocked:
-        report = {
-            "status": "blocked",
-            "reason": observability.report.reason,
-            "created_at": generated_at.isoformat(),
-            "predictions_path": str(predictions_path),
-            "primary_signals_path": str(primary_path),
-            "pinned_signals_path": str(pinned_path),
-            "signals_before_primary": len(before_primary),
-            "signals_before_pinned": len(before_pinned),
-            "signals_after": 0,
-            "written_primary": False,
-            "written_pinned": False,
-            "prediction_rows": int(len(frame)),
-            "prediction_freshness": freshness,
-            "generated_at": generated_at.isoformat(),
-            "valid_until_min": None,
-            "valid_until_max": None,
-            "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
-            "risk_manager_gate": risk_gate.to_dict(),
-            "decision_ledger_observability": observability.report.model_dump(mode="json"),
-        }
-        atomic_write_json(report_path, report)
-        return report
-
-    signals = observability.active_signals
+    # Lineage is evidence-only at this boundary. A blocked/invalid observability
+    # result may block attribution, but it never turns a RiskManager ALLOW into
+    # a Paper publication BLOCK. The Stage-3A boundary returns either the exact
+    # approved baseline or that baseline plus a verified decision_ledger envelope.
+    signals = list(publication.active_signals)
     signal_payload = {
         "generated_at": generated_at.isoformat(),
         "source": "phase13_signal_producer_hardening",
@@ -529,8 +660,11 @@ def build_active_signals(
         "valid_until_min": min([item["valid_until"] for item in signals], default=None),
         "valid_until_max": max([item["valid_until"] for item in signals], default=None),
         "paper_candidate_filter_runtime_wiring": paper_candidate_wiring_summary,
+        "paper_candidate_lineage_materialization": lineage_materialization_summary,
         "risk_manager_gate": risk_gate.to_dict(),
         "decision_ledger_observability": observability.report.model_dump(mode="json"),
+        "paper_candidate_strict_decision_projection": strict_decision_projection.report.model_dump(mode="json"),
+        "paper_lineage_publication": publication.to_dict(),
     }
 
     atomic_write_json(report_path, report)
