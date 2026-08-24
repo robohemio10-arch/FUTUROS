@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9306aeac61f78f4e2df717e603942e8484272e409163114e7e946bfe1b1fd1c0",
+  "aggregate_sha256": "d9d695fb4aab38e5041a47ea2cc790f302eae7d6840cd356d956c9fa5cbd5afc",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 299,
-    "manifested_files_total": 1800,
-    "python_files": 1380,
+    "docs_files": 300,
+    "manifested_files_total": 1807,
+    "python_files": 1386,
     "runtime_excluded_files_total": 0,
-    "test_files": 376,
-    "tracked_files_total": 1801,
+    "test_files": 377,
+    "tracked_files_total": 1808,
     "workflows": 1
   },
   "deterministic": true,
@@ -1700,6 +1700,12 @@
       "sha256": "ccaeb2de9145ba7071a5eabb12aa770e5db57cd71ad4fdbd48f80633ed944063"
     },
     {
+      "bytes": 2537,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_CAPACITY_SCALEOUT_V1.md",
+      "sha256": "33ece5a50e956f34c649a15e307d4d7ede806b644618e9655de33137a6c8403a"
+    },
+    {
       "bytes": 4329,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CLOSED_TRADES_READONLY_SOURCE_CONTRACT_V1.md",
@@ -3348,6 +3354,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_candidate_filter_runtime_observation_pack_v1.py",
       "sha256": "c9528cbda77b8ce510c533c7264432f3ca8c0dacc253e63d6da2695aed778362"
+    },
+    {
+      "bytes": 5047,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_capacity_scaleout_v1.py",
+      "sha256": "3ea7b014cc5950996dbf430eb209597771dc3ed1a6d3f6630184d9a9190c132a"
     },
     {
       "bytes": 2227,
@@ -7874,6 +7886,30 @@
       "sha256": "aed2f3fcd55744e0af6553d3b376d56ca757acc83f28a78096cebfd0079ce958"
     },
     {
+      "bytes": 745,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_capacity_scaleout/__init__.py",
+      "sha256": "c3d2d36c48da2e267ffa3d7591f85a2b82d51294676b768c60644655ffac05ff"
+    },
+    {
+      "bytes": 4380,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_capacity_scaleout/contracts.py",
+      "sha256": "19669f34c2532c475a46ab4bb53db2cad30a9805176a0810158be2667efdb032"
+    },
+    {
+      "bytes": 31477,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_capacity_scaleout/engine.py",
+      "sha256": "8d78fb52822ffff99f737f4249e95b692e37c09d0a15332762ce8f7b24aab2de"
+    },
+    {
+      "bytes": 3718,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/paper_capacity_scaleout/persistence.py",
+      "sha256": "a24bf880a945b6ac4b827b6f4fb05fd20fae170237eed13c62c6fae46dfc38dc"
+    },
+    {
       "bytes": 668,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_closed_trades_readonly_source_contract/__init__.py",
@@ -10044,6 +10080,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_candidate_trade_lineage_strict_decision_projection_v1.py",
       "sha256": "1b8e9669bcce9042a2bf4e981933576c7d0472d3bb8149f7216bc089c42b9bbe"
+    },
+    {
+      "bytes": 7594,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_capacity_scaleout_v1.py",
+      "sha256": "6c56dee018e8f29525b2fda9bd5151a84dd68812ebcfe7ae4e093855e68ba3b9"
     },
     {
       "bytes": 10293,
