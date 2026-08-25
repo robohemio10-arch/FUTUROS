@@ -347,11 +347,22 @@ def export_latest_qlib_predictions(
             "tf": latest["tf"].astype(str).values,
             "prob_up": probabilities.astype(float),
             "score": (probabilities * 2 - 1).astype(float),
-            "predicted_direction": (probabilities >= 0.5).astype(int),
+            "confidence": np.abs(probabilities - 0.5).astype(float),
+            "predicted_direction": np.select(
+                [
+                    probabilities >= config.prediction_threshold,
+                    probabilities <= (1.0 - config.prediction_threshold),
+                ],
+                [1, -1],
+                default=0,
+            ).astype(int),
             "model_version": config.model_version,
             "model_backend": payload.get("model_backend"),
         }
     )
+    if "market_regime" in latest.columns:
+        predictions["market_regime"] = latest["market_regime"].astype(str).values
+        predictions["market_regime_status"] = "point_in_time"
 
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)

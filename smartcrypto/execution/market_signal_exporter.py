@@ -7,6 +7,7 @@ from typing import Any
 
 import pandas as pd
 
+from smartcrypto.execution.paper_profitability_policy_v1 import decide_direction
 from smartcrypto.ml.market_dataset import load_market_model_config
 
 
@@ -53,15 +54,18 @@ def export_market_signals(
 
     signals: list[dict[str, Any]] = []
     for row in predictions.to_dict(orient="records"):
-        prob_up = float(row.get("prob_up", 0.5))
-        side = None
-        if prob_up >= long_threshold:
-            side = "long"
-        elif allow_short and prob_up <= short_threshold:
-            side = "short"
-
-        if side is None:
+        direction = decide_direction(
+            row.get("prob_up"),
+            long_probability=long_threshold,
+            short_probability=short_threshold,
+        )
+        if (
+            direction.status != "ok"
+            or direction.proposed_side == "no_trade"
+            or (direction.proposed_side == "short" and not allow_short)
+        ):
             continue
+        side = direction.proposed_side
 
         pair = str(row.get("pair") or _symbol_to_freqtrade_pair(str(row.get("symbol", ""))))
         signals.append(
@@ -69,17 +73,18 @@ def export_market_signals(
                 "pair": pair,
                 "symbol": str(row.get("symbol", "")),
                 "side": side,
-                "score": float(row.get("score", 0.0)),
-                "prob_up": prob_up,
-                "confidence": abs(prob_up - 0.5) * 2.0,
+                "proposed_side": side,
+                "score": direction.score,
+                "prob_up": direction.prob_up,
+                "confidence": direction.confidence,
                 "timeframe": str(row.get("tf", model_config.get("timeframe", "5m"))),
                 "generated_at": now.isoformat(),
                 "valid_until": valid_until.isoformat(),
-                "risk_approved": True,
+                "risk_approved": False,
                 "max_position_usdt": max_position_usdt,
                 "leverage": leverage,
                 "model_version": str(row.get("model_version", model_config.get("version", "market_direction_rf_v1"))),
-                "reason": "market_direction_probability_threshold",
+                "reason": direction.reason,
             }
         )
 

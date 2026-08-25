@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 
 from smartcrypto.execution.signal_risk_gate import RiskGateResult
 from smartcrypto.execution.signal_producer import build_active_signals
@@ -13,6 +14,7 @@ from smartcrypto.execution.signal_producer import build_active_signals
 @dataclass(frozen=True)
 class _Prepared:
     signals: tuple[dict[str, Any], ...]
+    enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -52,10 +54,10 @@ def _config() -> dict[str, Any]:
             "risk_limits": "risk.yml",
         },
         "policy": {
-            "min_abs_score": 0.0,
+            "long_probability": 0.55,
+            "short_probability": 0.45,
             "min_confidence": 0.0,
             "max_signals": 2,
-            "include_top_n_when_threshold_empty": 2,
             "never_overwrite_with_empty": False,
             "max_prediction_age_minutes": 90,
             "max_input_data_age_minutes": 15,
@@ -73,9 +75,7 @@ def _frame() -> pd.DataFrame:
             {
                 "symbol": "BTCUSDT",
                 "pair": "BTC/USDT:USDT",
-                "side": "long",
-                "score": 0.90,
-                "confidence": 0.85,
+                "prob_up": 0.95,
             }
         ]
     )
@@ -176,18 +176,17 @@ def _install_common(monkeypatch):
     return writes
 
 
-def test_risk_manager_receives_operational_candidates_not_observability_mutation(
+def test_risk_manager_receives_lineage_prepared_candidates(
     monkeypatch,
 ) -> None:
     writes = _install_common(monkeypatch)
     seen: dict[str, Any] = {}
 
-    def prepare(signals, *, producer_id):
-        del producer_id
+    def prepare(signals, *, producer_id, config_source=None):
+        del producer_id, config_source
         mutated = []
         for item in signals:
             changed = dict(item)
-            changed["score"] = 0.01
             changed["synthetic_observability_field"] = True
             mutated.append(changed)
         return _Prepared(signals=tuple(mutated))
@@ -217,23 +216,23 @@ def test_risk_manager_receives_operational_candidates_not_observability_mutation
 
     submitted = seen["submitted"]
     assert len(submitted) == 1
-    assert submitted[0]["score"] == 0.90
-    assert "synthetic_observability_field" not in submitted[0]
+    assert submitted[0]["score"] == pytest.approx(0.90)
+    assert submitted[0]["synthetic_observability_field"] is True
 
     assert report["status"] == "ok"
     assert report["signals_after"] == 1
-    assert writes["primary.json"]["signals"][0]["score"] == 0.90
-    assert "synthetic_observability_field" not in writes["primary.json"]["signals"][0]
+    assert writes["primary.json"]["signals"][0]["score"] == pytest.approx(0.90)
+    assert writes["primary.json"]["signals"][0]["synthetic_observability_field"] is True
 
 
-def test_observability_publication_block_does_not_cancel_riskmanager_allow(
+def test_enabled_observability_publication_block_is_fail_closed(
     monkeypatch,
 ) -> None:
     writes = _install_common(monkeypatch)
 
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.prepare_before_risk_manager",
-        lambda signals, *, producer_id: _Prepared(
+        lambda signals, *, producer_id, config_source=None: _Prepared(
             signals=tuple(dict(item) for item in signals)
         ),
     )
@@ -255,17 +254,53 @@ def test_observability_publication_block_does_not_cancel_riskmanager_allow(
 
     report = build_active_signals(_config(), force_from_predictions=True)
 
-    assert report["status"] == "ok"
-    assert report["signals_after"] == 1
+    assert report["status"] == "blocked"
+    assert report["signals_after"] == 0
     assert report["decision_ledger_observability"]["publication_blocked"] is True
-    assert report["paper_lineage_publication"]["status"] == "baseline_preserved"
-    assert report["paper_lineage_publication"]["attribution_evidence_blocked"] is True
-    assert report["paper_lineage_publication"]["publication_blocked_by_lineage"] is False
-    assert len(writes["primary.json"]["signals"]) == 1
-    assert writes["primary.json"]["signals"][0]["risk_approved"] is True
+    assert report["written_primary"] is False
+    assert report["written_pinned"] is False
+    assert "primary.json" not in writes
+    assert "pinned.json" not in writes
 
 
-def test_observability_preparation_exception_blocks_attribution_not_execution(
+def test_required_decision_ledger_disabled_blocks_signal_publication(
+    monkeypatch,
+) -> None:
+    writes = _install_common(monkeypatch)
+    config = _config()
+    config["policy"]["decision_ledger_enabled"] = True
+
+    monkeypatch.setattr(
+        "smartcrypto.execution.signal_producer.prepare_before_risk_manager",
+        lambda signals, *, producer_id, config_source=None: _Prepared(
+            signals=tuple(dict(item) for item in signals),
+            enabled=False,
+        ),
+    )
+    monkeypatch.setattr(
+        "smartcrypto.execution.signal_producer.apply_risk_manager_gate",
+        lambda signals, *, risk_limits_path: _approve(list(signals)),
+    )
+    monkeypatch.setattr(
+        "smartcrypto.execution.signal_producer.finalize_after_risk_manager",
+        lambda prepared, *, risk_gate: _Observability(
+            active_signals=tuple(risk_gate.approved_signals),
+            report=_ObservabilityReport(publication_blocked=False, status="disabled"),
+        ),
+    )
+
+    report = build_active_signals(config, force_from_predictions=True)
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "decision_ledger_required_but_disabled"
+    assert report["signals_after"] == 0
+    assert report["written_primary"] is False
+    assert report["written_pinned"] is False
+    assert "primary.json" not in writes
+    assert "pinned.json" not in writes
+
+
+def test_observability_preparation_exception_is_fail_closed(
     monkeypatch,
 ) -> None:
     writes = _install_common(monkeypatch)
@@ -296,27 +331,23 @@ def test_observability_preparation_exception_blocks_attribution_not_execution(
         finalize,
     )
 
-    report = build_active_signals(_config(), force_from_predictions=True)
+    with pytest.raises(RuntimeError, match="simulated_preparation_failure"):
+        build_active_signals(_config(), force_from_predictions=True)
 
-    assert seen["risk_called"] is True
+    assert seen["risk_called"] is False
     assert seen["finalize_called"] is False
-    assert report["status"] == "ok"
-    assert report["signals_after"] == 1
-    assert report["decision_ledger_observability"]["reason"] == (
-        "lineage_preparation_failed:RuntimeError"
-    )
-    assert report["paper_lineage_publication"]["status"] == "baseline_preserved"
-    assert len(writes["primary.json"]["signals"]) == 1
+    assert "primary.json" not in writes
+    assert "pinned.json" not in writes
 
 
-def test_observability_finalization_exception_blocks_attribution_not_execution(
+def test_observability_finalization_exception_is_fail_closed(
     monkeypatch,
 ) -> None:
     writes = _install_common(monkeypatch)
 
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.prepare_before_risk_manager",
-        lambda signals, *, producer_id: _Prepared(
+        lambda signals, *, producer_id, config_source=None: _Prepared(
             signals=tuple(dict(item) for item in signals)
         ),
     )
@@ -333,15 +364,11 @@ def test_observability_finalization_exception_blocks_attribution_not_execution(
         finalize,
     )
 
-    report = build_active_signals(_config(), force_from_predictions=True)
+    with pytest.raises(ValueError, match="simulated_finalization_failure"):
+        build_active_signals(_config(), force_from_predictions=True)
 
-    assert report["status"] == "ok"
-    assert report["signals_after"] == 1
-    assert report["decision_ledger_observability"]["reason"] == (
-        "lineage_finalization_failed:ValueError"
-    )
-    assert report["paper_lineage_publication"]["status"] == "baseline_preserved"
-    assert len(writes["pinned.json"]["signals"]) == 1
+    assert "primary.json" not in writes
+    assert "pinned.json" not in writes
 
 
 def test_risk_gate_failure_remains_fail_closed_and_lineage_cannot_override(
@@ -352,7 +379,7 @@ def test_risk_gate_failure_remains_fail_closed_and_lineage_cannot_override(
 
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.prepare_before_risk_manager",
-        lambda signals, *, producer_id: _Prepared(
+        lambda signals, *, producer_id, config_source=None: _Prepared(
             signals=tuple(dict(item) for item in signals)
         ),
     )
@@ -384,7 +411,7 @@ def test_risk_gate_failure_remains_fail_closed_and_lineage_cannot_override(
     assert "report.json" in writes
 
 
-def test_signal_producer_keeps_shared_coordinator_order_but_removes_lineage_veto() -> None:
+def test_signal_producer_keeps_shared_coordinator_order_and_enabled_ledger_veto() -> None:
     source = Path("smartcrypto/execution/signal_producer.py").read_text(encoding="utf-8")
 
     prepare = source.index("prepare_before_risk_manager(")
@@ -392,7 +419,7 @@ def test_signal_producer_keeps_shared_coordinator_order_but_removes_lineage_veto
     finalize = source.index("finalize_after_risk_manager(", risk)
 
     assert prepare < risk < finalize
-    assert "apply_risk_manager_gate(\n        candidate_signals," in source
-    assert "observability.report.publication_blocked" not in source
-    assert "select_non_blocking_paper_publication_signals" in source
+    assert "apply_risk_manager_gate(\n        observability_preparation.signals," in source
+    assert "observability.report.publication_blocked" in source
+    assert "ledger_publication_blocked" in source
     assert '"paper_lineage_publication": publication.to_dict()' in source

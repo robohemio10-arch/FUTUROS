@@ -28,8 +28,6 @@ class RiskLimits:
     runtime_mode: str = "paper"
     max_position_usdt: float = 50.0
     max_leverage: float = 2.0
-    min_score_long: float = 0.6
-    max_score_short: float = 0.4
     signal_ttl_seconds: int = 300
     kill_switch_enabled: bool = False
     allowed_pairs: tuple[str, ...] = ()
@@ -84,15 +82,15 @@ class RiskManager:
         if self.limits.allowed_pairs and pair not in self.limits.allowed_pairs:
             reasons.append(f"pair_not_allowed:{pair}")
 
-        score = _safe_float(output.get("score"))
-        if score is None:
-            reasons.append("score_missing_or_invalid")
-        elif score >= float(self.limits.min_score_long):
-            output["side"] = "long"
-        elif score <= float(self.limits.max_score_short):
-            output["side"] = "short"
+        proposed_side = str(output.get("proposed_side") or "").strip().lower()
+        supplied_side = str(output.get("side") or "").strip().lower()
+        if proposed_side not in {"long", "short"}:
+            reasons.append("proposed_side_missing_or_invalid")
+        elif supplied_side and supplied_side != proposed_side:
+            reasons.append("side_does_not_match_proposed_side")
         else:
-            reasons.append("score_inside_neutral_zone")
+            output["proposed_side"] = proposed_side
+            output["side"] = proposed_side
 
         if self.limits.max_position_usdt <= 0:
             reasons.append("max_position_usdt_invalid")
@@ -104,6 +102,7 @@ class RiskManager:
         output["max_position_usdt"] = float(self.limits.max_position_usdt)
         output["max_leverage"] = float(self.limits.max_leverage)
         output["runtime_mode"] = runtime_mode
+        output["final_decision"] = "ALLOW" if approved else "BLOCK"
         if reasons:
             output["risk_reasons"] = reasons
 
@@ -264,8 +263,6 @@ def risk_limits_from_config(
         runtime_mode=runtime_mode,
         max_position_usdt=float(_lookup(config, "max_position_usdt", 50.0)),
         max_leverage=float(_lookup(config, "max_leverage", 2.0)),
-        min_score_long=float(_lookup(config, "min_score_long", 0.6)),
-        max_score_short=float(_lookup(config, "max_score_short", 0.4)),
         signal_ttl_seconds=int(_lookup(config, "signal_ttl_seconds", 300)),
         kill_switch_enabled=_config_bool(
             config,

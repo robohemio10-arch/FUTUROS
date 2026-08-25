@@ -268,7 +268,7 @@ def test_existing_service_profiles_remain_nominal_and_restricted() -> None:
     )
 
 
-def test_qlib_service_preserves_paper_only_flags_and_decision_ledger_disabled() -> None:
+def test_qlib_service_preserves_paper_flags_with_ledger_preflight_only() -> None:
     environment = services()[
         bootstrap.QLIB_REFRESH_SERVICE
     ]["environment"]
@@ -299,8 +299,8 @@ def test_qlib_service_preserves_paper_only_flags_and_decision_ledger_disabled() 
         ]
         == "false"
     )
-    assert ledger["enabled"] is False
-    assert ledger["writer_enabled"] is False
+    assert ledger["enabled"] is True
+    assert ledger["writer_enabled"] is True
     assert ledger["trade_link_enabled"] is False
     assert (
         bootstrap.SAFE_FLAGS["sends_orders"]

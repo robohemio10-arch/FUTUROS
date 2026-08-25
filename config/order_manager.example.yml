@@ -14,8 +14,6 @@ paths:
 risk:
   max_position_usdt: 50.0
   max_leverage: 2.0
-  min_score_long: 0.60
-  max_score_short: 0.40
   signal_ttl_seconds: 300
   kill_switch_enabled: false
   allowed_pairs:

@@ -10,6 +10,7 @@ from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import 
     finalize_after_risk_manager,
     prepare_before_risk_manager,
 )
+from smartcrypto.execution.paper_profitability_policy_v1 import decide_direction
 from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
@@ -65,16 +66,14 @@ def export_qlib_freqtrade_signals(
     candidate_signals: list[dict[str, Any]] = []
 
     for row in predictions.to_dict("records"):
-        prob_up = float(row["prob_up"])
-        score = float(row["score"])
-        confidence = abs(score)
-
-        if prob_up >= config.prediction_threshold:
-            side = "long"
-        elif prob_up <= 1 - config.prediction_threshold:
-            side = "short"
-        else:
+        direction = decide_direction(
+            row.get("prob_up"),
+            long_probability=config.prediction_threshold,
+            short_probability=1.0 - config.prediction_threshold,
+        )
+        if direction.status != "ok" or direction.proposed_side == "no_trade":
             continue
+        side = direction.proposed_side
 
         pair = _freqtrade_pair(str(row.get("pair", "")), str(row.get("symbol", "")))
 
@@ -83,9 +82,17 @@ def export_qlib_freqtrade_signals(
                 "pair": pair,
                 "symbol": str(row["symbol"]),
                 "side": side,
-                "score": score,
-                "prob_up": prob_up,
-                "confidence": confidence,
+                "proposed_side": side,
+                "score": direction.score,
+                "prob_up": direction.prob_up,
+                "calibrated_probability": direction.prob_up,
+                "confidence": direction.confidence,
+                "market_regime": str(row.get("market_regime") or "unknown"),
+                "market_regime_status": str(
+                    row.get("market_regime_status") or "unknown"
+                ),
+                "regime_block": False,
+                "cooldown_block": False,
                 "timeframe": str(row.get("tf", config.timeframe)),
                 "generated_at": generated_at.isoformat(),
                 "valid_until": valid_until.isoformat(),
@@ -93,7 +100,7 @@ def export_qlib_freqtrade_signals(
                 "leverage": float(config.leverage),
                 "model_version": str(row.get("model_version", config.model_version)),
                 "source": "phase8_qlib_prediction_engine",
-                "reason": "qlib_probability_threshold",
+                "reason": direction.reason,
             }
         )
 

@@ -150,10 +150,10 @@ def test_signal_producer_calls_wiring_before_payload_write(monkeypatch, tmp_path
     report_path = tmp_path / "phase13_signal_producer_report.json"
     pd.DataFrame(
         [
-            {"symbol": "ETHUSDT", "side": "long", "score": 0.9, "confidence": 0.9},
-            {"symbol": "ETHUSDT", "side": "short", "score": -0.8, "confidence": 0.8},
-            {"symbol": "BTCUSDT", "side": "long", "score": 0.7, "confidence": 0.7},
-            {"symbol": "BTCUSDT", "side": "short", "score": -0.6, "confidence": 0.6},
+            {"symbol": "ETHUSDT", "prob_up": 0.95},
+            {"symbol": "ETHUSDT", "prob_up": 0.05},
+            {"symbol": "BTCUSDT", "prob_up": 0.85},
+            {"symbol": "BTCUSDT", "prob_up": 0.15},
         ]
     ).to_parquet(predictions_path)
 
@@ -171,10 +171,10 @@ def test_signal_producer_calls_wiring_before_payload_write(monkeypatch, tmp_path
                 "report": str(report_path),
             },
             "policy": {
-                "min_abs_score": 0.0,
+                "long_probability": 0.55,
+                "short_probability": 0.45,
                 "min_confidence": 0.0,
                 "max_signals": 4,
-                "include_top_n_when_threshold_empty": 4,
                 "never_overwrite_with_empty": False,
             },
             "risk": {"max_position_usdt": 50.0, "leverage": 2.0},

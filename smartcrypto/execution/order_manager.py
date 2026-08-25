@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -210,6 +209,7 @@ class OrderManager:
                 "pair": clean_symbol,
                 "symbol": clean_symbol,
                 "side": clean_side.lower(),
+                "proposed_side": clean_side.lower(),
                 "score": clean_score,
                 "notional": clean_notional,
                 "client_order_id": clean_client_order_id,
