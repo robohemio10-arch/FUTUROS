@@ -3,8 +3,6 @@ max_open_trades: 2
 max_position_usdt: 50
 max_total_exposure_usdt: 100
 max_leverage: 2
-min_score_long: 0.60
-max_score_short: 0.40
 signal_ttl_seconds: 300
 block_if_stale: true
 block_if_missing_prediction: true

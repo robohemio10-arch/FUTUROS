@@ -65,7 +65,7 @@ def test_reader_strategy_is_wired_to_risk_gate() -> None:
     assert check.wired is True
 
 
-def test_market_signal_exporter_is_documented_known_limitation() -> None:
+def test_market_signal_exporter_remains_out_of_scope_but_cannot_forge_approval() -> None:
     # NOT part of this branch's fix scope (see smartcrypto/ops/
     # paper_signal_riskmanager_runtime_wiring_audit/audit.py module
     # docstring): it is not wired into docker-compose.paper.yml's
@@ -75,7 +75,7 @@ def test_market_signal_exporter_is_documented_known_limitation() -> None:
     assert KNOWN_OUT_OF_SCOPE_WRITERS == ("smartcrypto/execution/market_signal_exporter.py",)
     check = audit_writer_source(PROJECT_ROOT, KNOWN_OUT_OF_SCOPE_WRITERS[0])
     assert check.exists is True
-    assert check.hardcoded_risk_approved_true_found is True
+    assert check.hardcoded_risk_approved_true_found is False
     assert check.wired is False
 
 
@@ -167,6 +167,7 @@ def test_gate_forces_risk_approved_false_even_if_candidate_forged_true() -> None
             "pair": "DOGE/USDT:USDT",
             "symbol": "DOGEUSDT",
             "side": "long",
+            "proposed_side": "long",
             "score": 0.99,
             "risk_approved": True,
         }
@@ -180,20 +181,28 @@ def test_gate_forces_risk_approved_false_even_if_candidate_forged_true() -> None
     assert any("pair_not_allowed" in reason for reason in result.rejected_signals[0]["risk_reasons"])
 
 
-def test_gate_rejects_signal_in_neutral_score_zone_with_real_risk_manager() -> None:
-    # config/risk_limits.yml: min_score_long=0.60, max_score_short=0.40.
-    # A score of 0.5 is inside the neutral zone and must be rejected.
-    candidates = [{"pair": "BTC/USDT:USDT", "symbol": "BTCUSDT", "side": "long", "score": 0.5}]
+def test_gate_rejects_signal_without_proposed_side() -> None:
+    candidates = [
+        {"pair": "BTC/USDT:USDT", "symbol": "BTCUSDT", "side": "long"}
+    ]
     result = apply_risk_manager_gate(candidates, risk_limits_path=REAL_RISK_LIMITS_PATH)
 
     assert result.status == "ok"
     assert result.signals_approved == 0
     assert result.rejected_signals[0]["risk_approved"] is False
-    assert "score_inside_neutral_zone" in result.rejected_signals[0]["risk_reasons"]
+    assert "proposed_side_missing_or_invalid" in result.rejected_signals[0]["risk_reasons"]
 
 
 def test_gate_approves_allowed_pair_with_real_risk_manager() -> None:
-    candidates = [{"pair": "BTC/USDT:USDT", "symbol": "BTCUSDT", "side": "long", "score": 0.9}]
+    candidates = [
+        {
+            "pair": "BTC/USDT:USDT",
+            "symbol": "BTCUSDT",
+            "side": "long",
+            "proposed_side": "long",
+            "score": -0.9,
+        }
+    ]
     result = apply_risk_manager_gate(candidates, risk_limits_path=REAL_RISK_LIMITS_PATH)
 
     assert result.status == "ok"
@@ -222,9 +231,9 @@ def test_signal_producer_end_to_end_only_writes_risk_approved_signals(monkeypatc
 
     pd.DataFrame(
         [
-            {"symbol": "ETHUSDT", "score": 0.9},  # allowed pair, long -> approved
-            {"symbol": "BTCUSDT", "score": -0.8},  # allowed pair, short -> approved
-            {"symbol": "DOGEUSDT", "score": 0.95},  # not in allowed_pairs -> rejected
+            {"symbol": "ETHUSDT", "prob_up": 0.9},
+            {"symbol": "BTCUSDT", "prob_up": 0.1},
+            {"symbol": "DOGEUSDT", "prob_up": 0.95},
         ]
     ).to_csv(predictions_path, index=False)
 
@@ -244,10 +253,11 @@ def test_signal_producer_end_to_end_only_writes_risk_approved_signals(monkeypatc
                 "risk_limits": str(REAL_RISK_LIMITS_PATH),
             },
             "policy": {
-                "min_abs_score": 0.0,
+                "long_probability": 0.55,
+                "short_probability": 0.45,
                 "min_confidence": 0.0,
                 "max_signals": 5,
-                "include_top_n_when_threshold_empty": 5,
+                "top_n_telemetry": 5,
                 "never_overwrite_with_empty": False,
             },
             "risk": {"max_position_usdt": 50.0, "leverage": 2.0},
@@ -281,7 +291,9 @@ def test_signal_producer_never_overwrites_with_empty_when_all_rejected(monkeypat
     }
     primary_path.write_text(json.dumps(previous_payload), encoding="utf-8")
 
-    pd.DataFrame([{"symbol": "DOGEUSDT", "score": 0.95}]).to_csv(predictions_path, index=False)
+    pd.DataFrame([{"symbol": "DOGEUSDT", "prob_up": 0.95}]).to_csv(
+        predictions_path, index=False
+    )
 
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.inspect_qlib_prediction_freshness",
@@ -299,10 +311,11 @@ def test_signal_producer_never_overwrites_with_empty_when_all_rejected(monkeypat
                 "risk_limits": str(REAL_RISK_LIMITS_PATH),
             },
             "policy": {
-                "min_abs_score": 0.0,
+                "long_probability": 0.55,
+                "short_probability": 0.45,
                 "min_confidence": 0.0,
                 "max_signals": 5,
-                "include_top_n_when_threshold_empty": 5,
+                "top_n_telemetry": 5,
                 "never_overwrite_with_empty": True,
             },
             "risk": {"max_position_usdt": 50.0, "leverage": 2.0},

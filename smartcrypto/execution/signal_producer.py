@@ -15,6 +15,11 @@ from smartcrypto.execution.paper_candidate_filter_runtime_wiring import (
     apply_paper_candidate_filter_to_signals,
     summarize_runtime_wiring,
 )
+from smartcrypto.execution.paper_profitability_policy_v1 import (
+    build_minimum_decision_ledger_context,
+    decide_direction,
+    evaluate_candidate_policy,
+)
 from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1 import (
     PaperLineagePublicationResultV1,
     materialize_signal_batch_from_explicit_provenance,
@@ -117,15 +122,22 @@ def load_config(config_path: str | os.PathLike[str] | Mapping[str, Any] | None =
                 "summary": "data/reports/phase13_summary.json",
                 "decision_log": "data/runtime/freqtrade_signal_decisions.jsonl",
                 "risk_limits": str(DEFAULT_RISK_LIMITS_PATH),
+                "decision_ledger_observability_config": None,
                 "lineage_research_candidates": "data/reports/paper_ai_signal_candidate_producer_v1.json",
                 "lineage_registry_candidates": "data/reports/paper_model_candidate_registry_gate_v1.json",
             },
             "policy": {
+                "profile_id": "paper-profitability-candidate-v1",
                 "validity_minutes": 30,
-                "min_abs_score": 0.0,
+                "long_probability": 0.55,
+                "short_probability": 0.45,
+                "regime_gate_enabled": True,
+                "cooldown_minutes": 0,
+                "top_n_can_authorize_trade": False,
+                "decision_ledger_enabled": False,
                 "min_confidence": 0.0,
                 "max_signals": 2,
-                "include_top_n_when_threshold_empty": 2,
+                "top_n_telemetry": 2,
                 "never_overwrite_with_empty": True,
                 "require_risk_approved": True,
                 "max_prediction_age_minutes": 90,
@@ -229,6 +241,8 @@ def load_predictions(path: str | os.PathLike[str]) -> pd.DataFrame:
 
     if frame.empty:
         return frame
+    if "prob_up" not in frame.columns:
+        return frame.iloc[0:0].copy()
 
     frame = frame.copy()
 
@@ -238,36 +252,13 @@ def load_predictions(path: str | os.PathLike[str]) -> pd.DataFrame:
     if "symbol" not in frame.columns and "pair" in frame.columns:
         frame["symbol"] = frame["pair"].map(pair_to_symbol)
 
-    if "score" not in frame.columns:
-        for candidate in ("prediction", "pred", "pred_score", "prob_up", "probability", "confidence"):
-            if candidate in frame.columns:
-                frame["score"] = pd.to_numeric(frame[candidate], errors="coerce")
-                if candidate in {"prob_up", "probability"}:
-                    frame["score"] = frame["score"] - 0.5
-                break
-
-    if "score" not in frame.columns:
-        frame["score"] = 0.0
-
-    frame["score"] = pd.to_numeric(frame["score"], errors="coerce").fillna(0.0)
-
-    if "confidence" not in frame.columns:
-        if "prob_up" in frame.columns:
-            prob = pd.to_numeric(frame["prob_up"], errors="coerce")
-            frame["confidence"] = (prob - 0.5).abs().fillna(frame["score"].abs())
-        else:
-            frame["confidence"] = frame["score"].abs()
-
-    frame["confidence"] = pd.to_numeric(frame["confidence"], errors="coerce").fillna(0.0)
-
-    if "side" not in frame.columns:
-        if "predicted_direction" in frame.columns:
-            direction = pd.to_numeric(frame["predicted_direction"], errors="coerce").fillna(0)
-            frame["side"] = direction.map(lambda value: "long" if value > 0 else "short")
-        else:
-            frame["side"] = frame["score"].map(lambda value: "long" if value > 0 else "short")
-
-    frame["side"] = frame["side"].astype(str).str.lower().replace({"buy": "long", "sell": "short"})
+    frame["prob_up"] = pd.to_numeric(frame["prob_up"], errors="coerce")
+    valid_probability = frame["prob_up"].between(0.0, 1.0, inclusive="both")
+    frame.loc[~valid_probability, "prob_up"] = float("nan")
+    frame["score"] = (2.0 * frame["prob_up"]) - 1.0
+    frame["confidence"] = (frame["prob_up"] - 0.5).abs()
+    frame["side"] = "no_trade"
+    frame["proposed_side"] = "no_trade"
     return frame
 
 
@@ -295,24 +286,84 @@ def pair_to_symbol(value: Any) -> str:
 
 def select_prediction_rows(frame: pd.DataFrame, config: Mapping[str, Any]) -> pd.DataFrame:
     policy = config.get("policy", {})
-    min_abs_score = float(policy.get("min_abs_score", 0.0) or 0.0)
+    long_probability = float(policy.get("long_probability", 0.55) or 0.55)
+    short_probability = float(policy.get("short_probability", 0.45) or 0.45)
     min_confidence = float(policy.get("min_confidence", 0.0) or 0.0)
     max_signals = int(policy.get("max_signals", 2) or 2)
-    include_top_n = int(policy.get("include_top_n_when_threshold_empty", max_signals) or max_signals)
 
     if frame.empty:
         return frame
+    if "prob_up" not in frame.columns:
+        return frame.iloc[0:0].copy()
+    if bool(policy.get("top_n_can_authorize_trade", False)):
+        return frame.iloc[0:0].copy()
+    if int(policy.get("cooldown_minutes", 0) or 0) != 0:
+        return frame.iloc[0:0].copy()
 
     clean = frame.copy()
-    clean = clean[clean["side"].isin(["long", "short"])]
+    decisions = [
+        decide_direction(
+            value,
+            long_probability=long_probability,
+            short_probability=short_probability,
+        )
+        for value in clean["prob_up"].tolist()
+    ]
+    clean["side"] = [decision.proposed_side for decision in decisions]
+    clean["proposed_side"] = clean["side"]
+    clean["direction_reason"] = [decision.reason for decision in decisions]
+    clean["score"] = [decision.score for decision in decisions]
+    clean["confidence"] = [decision.confidence for decision in decisions]
+    regimes = (
+        clean["market_regime"]
+        if "market_regime" in clean.columns
+        else pd.Series("unknown", index=clean.index)
+    )
+    regime_statuses = (
+        clean["market_regime_status"]
+        if "market_regime_status" in clean.columns
+        else pd.Series("unknown", index=clean.index)
+    )
+    regime_gate_enabled = bool(policy.get("regime_gate_enabled", False))
+    policy_decisions = [
+        evaluate_candidate_policy(
+            proposed_side=decision.proposed_side,
+            market_regime=regime,
+            market_regime_status=regime_status,
+            regime_gate_enabled=regime_gate_enabled,
+            observed_at=datetime(1970, 1, 1, tzinfo=timezone.utc),
+            cooldown_until=None,
+        )
+        for decision, regime, regime_status in zip(
+            decisions,
+            regimes.tolist(),
+            regime_statuses.tolist(),
+            strict=True,
+        )
+    ]
+    clean["market_regime"] = [decision.market_regime for decision in policy_decisions]
+    clean["market_regime_status"] = [
+        decision.market_regime_status for decision in policy_decisions
+    ]
+    clean["regime_block"] = [decision.regime_block for decision in policy_decisions]
+    clean["regime_block_reason"] = [
+        decision.regime_block_reason for decision in policy_decisions
+    ]
+    clean["cooldown_block"] = [
+        decision.cooldown_block for decision in policy_decisions
+    ]
+    clean["candidate_policy_decision"] = [
+        decision.final_decision for decision in policy_decisions
+    ]
+    clean = clean[clean["proposed_side"].isin(["long", "short"])]
+    clean = clean[clean["candidate_policy_decision"].eq("ALLOW_CANDIDATE")]
     clean = clean[(clean.get("pair", "") != "") | (clean.get("symbol", "") != "")]
-
-    filtered = clean[(clean["score"].abs() >= min_abs_score) & (clean["confidence"] >= min_confidence)]
-
-    if filtered.empty and include_top_n > 0:
-        filtered = clean.reindex(clean["score"].abs().sort_values(ascending=False).index).head(include_top_n)
-
-    filtered = filtered.reindex(filtered["score"].abs().sort_values(ascending=False).index).head(max_signals)
+    filtered = clean[clean["confidence"] >= min_confidence]
+    filtered = filtered.sort_values(
+        ["confidence", "symbol"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).head(max_signals)
     return filtered.reset_index(drop=True)
 
 
@@ -328,11 +379,20 @@ def row_to_signal(
     pair = str(row.get("pair") or symbol_to_pair(row.get("symbol"))).strip()
     symbol = str(row.get("symbol") or pair_to_symbol(pair)).strip()
 
-    raw_score = safe_float(row.get("score"), 0.0)
-    score = float(raw_score if raw_score is not None else 0.0)
-
-    side = str(row.get("side") or ("long" if score > 0 else "short")).lower()
-    confidence = safe_float(row.get("confidence"), abs(score))
+    policy = config.get("policy", {})
+    direction = decide_direction(
+        row.get("prob_up"),
+        long_probability=float(policy.get("long_probability", 0.55) or 0.55),
+        short_probability=float(policy.get("short_probability", 0.45) or 0.45),
+    )
+    if direction.status != "ok" or direction.proposed_side == "no_trade":
+        raise ValueError(f"prediction_not_tradeable:{direction.reason}")
+    side = direction.proposed_side
+    market_regime = str(row.get("market_regime") or "unknown").strip().lower()
+    market_regime_status = str(
+        row.get("market_regime_status")
+        or ("fresh" if market_regime != "unknown" else "unknown")
+    ).strip().lower()
 
     # NOTE: this candidate signal is intentionally built WITHOUT a
     # "risk_approved" claim. The only place allowed to set that field is
@@ -343,10 +403,21 @@ def row_to_signal(
         "pair": pair,
         "symbol": symbol,
         "side": side,
-        "score": score,
-        "confidence": confidence,
-        "prob_up": safe_float(row.get("prob_up"), None),
+        "proposed_side": side,
+        "score": direction.score,
+        "confidence": direction.confidence,
+        "prob_up": direction.prob_up,
+        "calibrated_probability": direction.prob_up,
         "predicted_direction": int(1 if side == "long" else -1),
+        "direction_reason": direction.reason,
+        "market_regime": market_regime,
+        "market_regime_status": market_regime_status,
+        "regime_block": bool(row.get("regime_block", False)),
+        "regime_block_reason": row.get("regime_block_reason"),
+        "cooldown_block": bool(row.get("cooldown_block", False)),
+        "candidate_policy_decision": row.get(
+            "candidate_policy_decision", "ALLOW_CANDIDATE"
+        ),
         "leverage": safe_float(risk.get("leverage"), 2.0),
         "max_position_usdt": safe_float(risk.get("max_position_usdt"), 50.0),
         "model_version": str(row.get("model_version") or model_version),
@@ -442,6 +513,7 @@ def build_active_signals(
     pinned_path = paths.get("pinned_signals", "data/runtime/active_freqtrade_signals.json")
     report_path = paths.get("report", "data/reports/phase13_signal_producer_report.json")
     risk_limits_path = paths.get("risk_limits", str(DEFAULT_RISK_LIMITS_PATH))
+    observability_config_source = paths.get("decision_ledger_observability_config")
 
     generated_at = utc_now()
     minutes = int(validity_minutes or policy.get("validity_minutes", 30) or 30)
@@ -540,38 +612,22 @@ def build_active_signals(
     candidate_signals = list(paper_candidate_wiring["allowed_signals"])
     paper_candidate_wiring_summary = summarize_runtime_wiring(paper_candidate_wiring)
 
-    # Observability preparation remains before RiskManager only to preserve the
-    # established coordinator lifecycle and evidence contract. Its output is
-    # explicitly NOT the RiskManager input. Preparation failure is contained and
-    # cannot suppress RiskManager evaluation of the operational candidate batch.
-    observability_preparation = None
-    observability: Any = None
-    try:
-        observability_preparation = prepare_before_risk_manager(
-            candidate_signals,
-            producer_id="phase13-signal-producer",
-        )
-    except Exception as exc:
-        observability = _observability_failure("preparation", exc)
-
-    # Final authorization gate: RiskManager receives the operational candidate
-    # batch directly. Lineage/observability metadata is not an authority input.
-    # Signals RiskManager rejects are never written as active signals.
-    risk_gate = apply_risk_manager_gate(
+    observability_preparation = prepare_before_risk_manager(
         candidate_signals,
+        producer_id="phase13-signal-producer",
+        config_source=observability_config_source,
+    )
+    risk_gate = apply_risk_manager_gate(
+        observability_preparation.signals,
         risk_limits_path=risk_limits_path,
     )
 
     if risk_gate.status == "ok":
-        if observability is None:
-            try:
-                observability = finalize_after_risk_manager(
-                    observability_preparation,
-                    risk_gate=risk_gate,
-                )
-            except Exception as exc:
-                observability = _observability_failure("finalization", exc)
-    elif observability is None:
+        observability = finalize_after_risk_manager(
+            observability_preparation,
+            risk_gate=risk_gate,
+        )
+    else:
         observability = _observability_skipped_by_risk_gate()
 
     strict_decision_projection = project_strict_decision_envelopes_in_memory(
@@ -586,10 +642,28 @@ def build_active_signals(
         observability=strict_decision_projection,
     )
 
-    if risk_gate.status != "ok":
+    ledger_publication_blocked = (
+        (
+            bool(policy.get("decision_ledger_enabled", False))
+            and not observability_preparation.enabled
+        )
+        or (
+            observability_preparation.enabled
+            and observability.report.publication_blocked
+        )
+    )
+    if risk_gate.status != "ok" or ledger_publication_blocked:
         report = {
             "status": "blocked",
-            "reason": risk_gate.reason,
+            "reason": (
+                risk_gate.reason
+                if risk_gate.status != "ok"
+                else (
+                    "decision_ledger_required_but_disabled"
+                    if not observability_preparation.enabled
+                    else observability.report.reason
+                )
+            ),
             "created_at": generated_at.isoformat(),
             "predictions_path": str(predictions_path),
             "primary_signals_path": str(primary_path),
@@ -614,11 +688,17 @@ def build_active_signals(
         atomic_write_json(report_path, report)
         return report
 
-    # Lineage is evidence-only at this boundary. A blocked/invalid observability
-    # result may block attribution, but it never turns a RiskManager ALLOW into
-    # a Paper publication BLOCK. The Stage-3A boundary returns either the exact
-    # approved baseline or that baseline plus a verified decision_ledger envelope.
-    signals = list(publication.active_signals)
+    signals = list(
+        observability.active_signals
+        if observability_preparation.enabled
+        else publication.active_signals
+    )
+    for signal in signals:
+        signal["decision_ledger_context"] = build_minimum_decision_ledger_context(
+            signal,
+            final_decision=str(signal.get("final_decision") or "ALLOW"),
+            risk_approved=signal.get("risk_approved") is True,
+        )
     signal_payload = {
         "generated_at": generated_at.isoformat(),
         "source": "phase13_signal_producer_hardening",

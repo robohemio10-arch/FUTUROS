@@ -51,9 +51,12 @@ def build_audit_report(project_root: Path, config_path: Path) -> dict[str, Any]:
         all(item["wiring_order_valid"] for item in producer_checks)
         and all(strategy_checks.values())
         and all(phase14_checks.values())
-        and not config.enabled
-        and not config.writer_enabled
+        and config.enabled
+        and config.writer_enabled
         and not config.trade_link_enabled
+        and config.writer_profile.enabled
+        and config.writer_profile.activation_state == "preflight_only"
+        and config.model_hash is not None
     )
     safety = config.safety_flags.model_dump(mode="json")
     return {

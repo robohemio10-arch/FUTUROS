@@ -15,6 +15,7 @@ from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import 
     finalize_after_risk_manager,
     prepare_before_risk_manager,
 )
+from smartcrypto.execution.paper_profitability_policy_v1 import decide_direction
 from smartcrypto.execution.signal_risk_gate import (
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
@@ -45,7 +46,7 @@ def load_config(path: Path = Path("config/ops_loop.yml")) -> SignalGuardConfig:
         signals_path=Path(paths.get("signals", "data/freqtrade_signals.json")),
         predictions_path=Path(paths.get("qlib_predictions", "data/predictions/latest_qlib_predictions.parquet")),
         long_threshold=float(contract.get("long_threshold", 0.50)),
-        short_threshold=float(contract.get("short_threshold", 0.50)),
+        short_threshold=float(contract.get("short_threshold", 0.45)),
         min_confidence=float(contract.get("min_confidence", 0.0)),
         valid_for_minutes=int(contract.get("valid_for_minutes", 15)),
         max_position_usdt=float(risk.get("max_position_usdt", 50)),
@@ -128,18 +129,19 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
     for _, row in latest.iterrows():
         symbol = str(row.get("symbol", "")).upper()
         pair = _to_pair(symbol, row.get("pair", ""))
-        prob_up = _safe_float(row.get("prob_up"), 0.5)
-        score = _safe_float(row.get("score"), prob_up - 0.5)
-        confidence = abs(prob_up - 0.5) * 2 if abs(score) <= 1 else abs(score)
-
-        side: str | None = None
-        if prob_up >= config.long_threshold:
-            side = "long"
-        elif prob_up <= (1.0 - config.short_threshold):
-            side = "short"
-
-        if side is None or confidence < config.min_confidence:
+        direction = decide_direction(
+            row.get("prob_up"),
+            long_probability=config.long_threshold,
+            short_probability=config.short_threshold,
+        )
+        if (
+            direction.status != "ok"
+            or direction.proposed_side == "no_trade"
+            or direction.confidence is None
+            or direction.confidence < config.min_confidence
+        ):
             continue
+        side = direction.proposed_side
 
         # NOTE: no "risk_approved" claim is made here. RiskManager is the
         # only authority allowed to set that field, via
@@ -149,16 +151,24 @@ def build_signals_from_predictions(config: SignalGuardConfig) -> dict[str, Any]:
                 "pair": pair,
                 "symbol": symbol,
                 "side": side,
-                "score": score,
-                "prob_up": prob_up,
-                "confidence": confidence,
+                "proposed_side": side,
+                "score": direction.score,
+                "prob_up": direction.prob_up,
+                "calibrated_probability": direction.prob_up,
+                "confidence": direction.confidence,
+                "market_regime": str(row.get("market_regime") or "unknown"),
+                "market_regime_status": str(
+                    row.get("market_regime_status") or "unknown"
+                ),
+                "regime_block": False,
+                "cooldown_block": False,
                 "timeframe": str(row.get("tf", "5m")),
                 "generated_at": now.isoformat(),
                 "valid_until": valid_until.isoformat(),
                 "max_position_usdt": config.max_position_usdt,
                 "leverage": config.leverage,
                 "model_version": str(row.get("model_version", "qlib_lgbm_v1")),
-                "reason": "phase11_repaired_from_latest_qlib_predictions",
+                "reason": direction.reason,
             }
         )
 

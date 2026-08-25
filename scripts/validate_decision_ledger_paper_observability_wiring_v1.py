@@ -17,7 +17,7 @@ from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validate disabled Decision Ledger paper observability wiring."
+        description="Validate Decision Ledger paper observability wiring statically."
     )
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
@@ -29,22 +29,25 @@ def build_report(*, project_root: Path, config_path: Path) -> dict[str, Any]:
     root = project_root.expanduser().resolve(strict=False)
     resolved = config_path if config_path.is_absolute() else root / config_path
     config = load_observability_config(resolved)
-    disabled_contract_valid = (
-        config.enabled is False
-        and config.writer_enabled is False
+    configured_contract_valid = (
+        config.enabled is True
+        and config.writer_enabled is True
         and config.trade_link_enabled is False
-        and config.writer_profile.enabled is False
+        and config.writer_profile.enabled is True
+        and config.writer_profile.activation_state == "preflight_only"
+        and config.writer_profile.runtime_write_authorized is True
+        and config.model_hash is not None
     )
     safety = config.safety_flags.model_dump(mode="json")
     return {
         "schema_version": "decision_ledger_paper_observability_validator_v1",
-        "status": "ok" if disabled_contract_valid else "blocked",
+        "status": "ok" if configured_contract_valid else "blocked",
         "reason": (
-            "paper_observability_profile_valid_disabled_by_default"
-            if disabled_contract_valid
-            else "paper_observability_profile_not_disabled"
+            "paper_observability_profile_valid_enabled_preflight_only"
+            if configured_contract_valid
+            else "paper_observability_profile_invalid"
         ),
-        "decision": "KEEP_DISABLED_NO_RUNTIME_EXECUTION",
+        "decision": "PAPER_OBSERVABILITY_CONFIGURED_FAIL_CLOSED",
         "config_path": str(resolved),
         "enabled": config.enabled,
         "writer_enabled": config.writer_enabled,
@@ -70,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
             "schema_version": "decision_ledger_paper_observability_validator_v1",
             "status": "blocked",
             "reason": f"profile_validation_failed:{type(exc).__name__}",
-            "decision": "KEEP_DISABLED_NO_RUNTIME_EXECUTION",
+            "decision": "PAPER_OBSERVABILITY_CONFIGURATION_BLOCKED",
             "enabled": False,
             "writer_enabled": False,
             "trade_link_enabled": False,

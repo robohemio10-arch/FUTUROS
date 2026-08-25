@@ -31,7 +31,7 @@ risk:
   require_risk_approved: true
 
 signal_contract:
-  long_threshold: 0.50
-  short_threshold: 0.50
+  long_threshold: 0.55
+  short_threshold: 0.45
   min_confidence: 0.0
   valid_for_minutes: 15

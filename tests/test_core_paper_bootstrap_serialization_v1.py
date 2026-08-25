@@ -93,17 +93,17 @@ def test_phase14_has_specific_healthcheck() -> None:
     assert "--snapshot" in command
 
 
-def test_optional_profiles_and_decision_ledger_remain_disabled() -> None:
+def test_optional_profiles_and_decision_ledger_is_fail_closed_preflight_only() -> None:
     payload = services()
     ledger = yaml.safe_load(LEDGER_CONFIG.read_text(encoding="utf-8"))
 
     assert payload["paper-autolearning-scheduler"]["profiles"] == ["autolearning"]
     assert payload["trade-event-notifications-paper"]["profiles"] == ["notifications"]
-    assert ledger["enabled"] is False
-    assert ledger["writer_enabled"] is False
+    assert ledger["enabled"] is True
+    assert ledger["writer_enabled"] is True
     assert ledger["trade_link_enabled"] is False
-    assert ledger["writer_profile"]["activation_state"] == "disabled"
-    assert ledger["writer_profile"]["runtime_write_authorized"] is False
+    assert ledger["writer_profile"]["activation_state"] == "preflight_only"
+    assert ledger["writer_profile"]["runtime_write_authorized"] is True
 
 
 class FakeLock:

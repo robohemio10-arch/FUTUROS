@@ -25,8 +25,6 @@ def build_manager(tmp_path: Path, risk_limits: RiskLimits | None = None) -> Orde
                 runtime_mode="paper",
                 max_position_usdt=100.0,
                 max_leverage=2.0,
-                min_score_long=0.6,
-                max_score_short=0.4,
                 kill_switch_enabled=False,
                 allowed_pairs=("BTCUSDT", "ETHUSDT"),
             )
@@ -109,9 +107,7 @@ def test_passes_through_risk_manager_before_capital_reservation(tmp_path: Path) 
             runtime_mode="paper",
             max_position_usdt=100.0,
             max_leverage=2.0,
-            min_score_long=0.8,
-            max_score_short=0.2,
-            allowed_pairs=("BTCUSDT",),
+            allowed_pairs=("ETHUSDT",),
         ),
     )
 

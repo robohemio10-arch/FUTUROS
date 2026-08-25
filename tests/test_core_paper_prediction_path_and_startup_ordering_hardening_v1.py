@@ -98,15 +98,15 @@ def test_core_services_preserve_paper_only_environment() -> None:
         assert environment["SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS"] == "false"
 
 
-def test_decision_ledger_remains_disabled() -> None:
+def test_decision_ledger_is_enabled_fail_closed_without_trade_link() -> None:
     payload = yaml.safe_load(LEDGER_CONFIG_PATH.read_text(encoding="utf-8"))
 
-    assert payload["enabled"] is False
-    assert payload["writer_enabled"] is False
+    assert payload["enabled"] is True
+    assert payload["writer_enabled"] is True
     assert payload["trade_link_enabled"] is False
-    assert payload["writer_profile"]["activation_state"] == "disabled"
-    assert payload["writer_profile"]["enabled"] is False
-    assert payload["writer_profile"]["runtime_write_authorized"] is False
+    assert payload["writer_profile"]["activation_state"] == "preflight_only"
+    assert payload["writer_profile"]["enabled"] is True
+    assert payload["writer_profile"]["runtime_write_authorized"] is True
 
 
 def test_legacy_prediction_name_is_absent_from_core_paper_contract() -> None:

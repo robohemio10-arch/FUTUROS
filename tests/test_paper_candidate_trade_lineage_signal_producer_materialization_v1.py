@@ -89,8 +89,9 @@ def _source_row(**overrides: Any) -> dict[str, Any]:
         "pair": "BTC/USDT:USDT",
         "symbol": "BTCUSDT",
         "side": "long",
+        "prob_up": 0.95,
         "score": 0.90,
-        "confidence": 0.85,
+        "confidence": 0.45,
         "model_version": "qlib-test-v1",
         "source_candidate_id": candidate["source_candidate_id"],
         "signal_candidate_id": candidate["signal_candidate_id"],
@@ -237,6 +238,7 @@ def test_post_outcome_source_field_blocks_lineage_not_execution() -> None:
 @dataclass(frozen=True)
 class _Prepared:
     signals: tuple[dict[str, Any], ...]
+    enabled: bool = False
 
 
 @dataclass(frozen=True)
@@ -305,10 +307,10 @@ def _producer_config() -> dict[str, Any]:
             "lineage_registry_candidates": "registry.json",
         },
         "policy": {
-            "min_abs_score": 0.0,
+            "long_probability": 0.55,
+            "short_probability": 0.45,
             "min_confidence": 0.0,
             "max_signals": 1,
-            "include_top_n_when_threshold_empty": 1,
             "never_overwrite_with_empty": False,
             "max_prediction_age_minutes": 90,
             "max_input_data_age_minutes": 15,
@@ -357,7 +359,7 @@ def _install_stubs(monkeypatch, row: dict[str, Any]):
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.prepare_before_risk_manager",
-        lambda signals, *, producer_id: _Prepared(
+        lambda signals, *, producer_id, config_source=None: _Prepared(
             signals=tuple(dict(item) for item in signals)
         ),
     )

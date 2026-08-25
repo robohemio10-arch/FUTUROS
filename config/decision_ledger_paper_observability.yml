@@ -1,20 +1,20 @@
 schema_version: decision_ledger_paper_observability_wiring_v1
-enabled: false
-writer_enabled: false
+enabled: true
+writer_enabled: true
 trade_link_enabled: false
 fail_closed: true
 index_path: data/runtime/decision_ledger_paper_v1/idempotency_projection_index_v1.json
 feature_contract_version: paper-signal-observation-lineage-v1
-model_id: null
-model_hash: null
+model_id: qlib_lgbm_v1
+model_hash: bb99861006c7c3c424b7ef9e01027fcf9447a90ae297caea5f15931e4af1cadd
 
 writer_profile:
   schema_version: decision_ledger_paper_runtime_writer_profile_v1
   profile_id: paper-decision-ledger-writer-v1
   runtime_mode: paper
-  activation_state: disabled
-  enabled: false
-  runtime_write_authorized: false
+  activation_state: preflight_only
+  enabled: true
+  runtime_write_authorized: true
   fail_closed: true
   allowed_root: data/runtime/decision_ledger_paper_v1
   ledger_path: data/runtime/decision_ledger_paper_v1/decision_ledger_v4_2.jsonl

@@ -464,7 +464,7 @@ def test_strategy_preserves_correlation_without_changing_trading_policy() -> Non
     assert "return min(2.0, max_leverage)" in source
 
 
-def test_validator_and_auditor_report_default_disabled(tmp_path: Path) -> None:
+def test_validator_and_auditor_report_enabled_preflight_only(tmp_path: Path) -> None:
     config_path = tmp_path / "decision_ledger.yml"
     config_path.write_text(
         (ROOT / "config/decision_ledger_paper_observability.yml").read_text(
@@ -482,7 +482,7 @@ def test_validator_and_auditor_report_default_disabled(tmp_path: Path) -> None:
     )
 
     assert validator["status"] == "ok"
-    assert validator["enabled"] is False
+    assert validator["enabled"] is True
     assert validator["writer_invoked"] is False
     assert validator["writes_runtime"] is False
     assert validator["paper_behavior_changed"] is False
@@ -490,15 +490,16 @@ def test_validator_and_auditor_report_default_disabled(tmp_path: Path) -> None:
     assert all(item["wiring_order_valid"] for item in auditor["producer_checks"])
 
 
-def test_versioned_config_loads_without_enabling_any_writer() -> None:
+def test_versioned_config_enables_fail_closed_preflight_writer() -> None:
     config = load_observability_config(
         ROOT / "config/decision_ledger_paper_observability.yml"
     )
 
-    assert config.enabled is False
-    assert config.writer_enabled is False
+    assert config.enabled is True
+    assert config.writer_enabled is True
     assert config.trade_link_enabled is False
-    assert config.writer_profile.enabled is False
+    assert config.writer_profile.enabled is True
+    assert config.writer_profile.activation_state == "preflight_only"
 
 
 def _create_trade_db(path: Path, *, enter_tag: str) -> Path:

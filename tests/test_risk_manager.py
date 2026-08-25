@@ -11,8 +11,6 @@ def write_risk_yaml(path: Path, extra: str = "") -> Path:
 runtime_mode: paper
 max_position_usdt: 50
 max_leverage: 2
-min_score_long: 0.60
-max_score_short: 0.40
 signal_ttl_seconds: 300
 kill_switch_enabled: false
 allowed_pairs:
@@ -32,15 +30,20 @@ def test_approves_long_signal() -> None:
             runtime_mode="paper",
             max_position_usdt=50,
             max_leverage=2,
-            min_score_long=0.6,
-            max_score_short=0.4,
             signal_ttl_seconds=300,
             kill_switch_enabled=False,
             allowed_pairs=("BTC/USDT:USDT",),
         )
     )
 
-    decision = manager.approve({"pair": "BTC/USDT:USDT", "score": 0.7})
+    decision = manager.approve(
+        {
+            "pair": "BTC/USDT:USDT",
+            "side": "long",
+            "proposed_side": "long",
+            "score": -0.9,
+        }
+    )
 
     assert decision.approved
     assert decision.signal["side"] == "long"
@@ -52,7 +55,13 @@ def test_from_yaml_loads_valid_paper_config(tmp_path: Path) -> None:
     assert manager.limits.runtime_mode == "paper"
     assert manager.limits.max_position_usdt == 50.0
     assert manager.limits.allowed_pairs == ("BTC/USDT:USDT", "ETH/USDT:USDT")
-    decision = manager.approve({"pair": "BTC/USDT:USDT", "score": 0.7})
+    decision = manager.approve(
+        {
+            "pair": "BTC/USDT:USDT",
+            "side": "long",
+            "proposed_side": "long",
+        }
+    )
     assert decision.approved
 
 
@@ -124,8 +133,18 @@ def test_bot_caller_compatibility_from_yaml_and_approve_many(tmp_path: Path) -> 
 
     decisions = manager.approve_many(
         [
-            {"pair": "BTC/USDT:USDT", "score": 0.7, "model_version": "unit"},
-            {"pair": "ETH/USDT:USDT", "score": 0.3, "model_version": "unit"},
+            {
+                "pair": "BTC/USDT:USDT",
+                "side": "long",
+                "proposed_side": "long",
+                "model_version": "unit",
+            },
+            {
+                "pair": "ETH/USDT:USDT",
+                "side": "short",
+                "proposed_side": "short",
+                "model_version": "unit",
+            },
         ]
     )
 
