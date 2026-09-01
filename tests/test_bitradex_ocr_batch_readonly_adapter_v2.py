@@ -329,6 +329,23 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
     registrations = {
         item["relative_path"]: item for item in policy["registered_consumers"]
     }
+    expected_registered_consumers = {
+        "smartcrypto/data/trader_master_fingerprint_v2/legacy_master_governance.py",
+        "smartcrypto/data/trader_master_fingerprint_v2/master_adapter.py",
+        "smartcrypto/data/trader_master_fingerprint_v2/master_reconciliation.py",
+        "smartcrypto/data/trader_master_fingerprint_v2/legacy_lineage_profile.py",
+        "smartcrypto/data/trader_master_fingerprint_v2/authoritative_evidence_inventory.py",
+        "scripts/reconcile_trader_master_preview_v2.py",
+        "scripts/profile_trader_master_legacy_lineage_v2.py",
+        "scripts/inventory_trader_master_authoritative_evidence_v2.py",
+        "scripts/audit_trader_master_legacy_research_only_boundary_v1.py",
+        "smartcrypto/data/trader_master_fingerprint_v2/bitradex_ocr_adapter.py",
+        "smartcrypto/research/profit_research/paper_analysis.py",
+        "smartcrypto/data/canonical_data_foundation_v2/lineage.py",
+        "smartcrypto/data/canonical_data_foundation_v2/pipeline.py",
+        "scripts/build_canonical_data_foundation_v2.py",
+        "smartcrypto/research/aibot_parity/trader_master_loader.py",
+    }
     expected_readers = {
         "smartcrypto/data/trader_master_fingerprint_v2/bitradex_ocr_adapter.py",
         "smartcrypto/research/profit_research/paper_analysis.py",
@@ -336,9 +353,9 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
         "smartcrypto/data/canonical_data_foundation_v2/pipeline.py",
     }
     expected_cli = "scripts/build_canonical_data_foundation_v2.py"
+    aibot_loader = "smartcrypto/research/aibot_parity/trader_master_loader.py"
 
-    assert expected_readers | {expected_cli} <= registrations.keys()
-    assert len(registrations) == 14
+    assert set(registrations) == expected_registered_consumers
     for path in expected_readers:
         registration = registrations[path]
         assert registration["consumer_classification"] == "registered_readonly_consumer"
@@ -354,7 +371,7 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
         "diagnostic_metrics"
     ]
     assert registrations[expected_cli]["operational_authority"] is False
-    assert policy["prohibited_capabilities"] == [
+    prohibited_capabilities = [
         "write",
         "import",
         "fingerprint_generation",
@@ -367,6 +384,23 @@ def test_legacy_master_policy_registers_new_readonly_consumers() -> None:
         "model_promotion",
         "operational_release",
     ]
+    assert policy["prohibited_capabilities"] == prohibited_capabilities
+
+    loader_registration = registrations[aibot_loader]
+    assert loader_registration["consumer_classification"] == (
+        "registered_readonly_consumer"
+    )
+    assert loader_registration["allowed_access_mode"] == "read_only"
+    assert loader_registration["allowed_capabilities"] == [
+        "read_rows",
+        "read_schema",
+        "compute_hash",
+        "diagnostic_metrics",
+    ]
+    assert loader_registration["operational_authority"] is False
+    assert set(loader_registration["allowed_capabilities"]).isdisjoint(
+        prohibited_capabilities
+    )
 
 
 def test_cli_executes_without_writing(tmp_path: Path) -> None:
