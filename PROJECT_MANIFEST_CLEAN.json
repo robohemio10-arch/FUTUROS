@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8f3ec215996f8db25587bf98f64df48974ebd02524b1fc87bab4aeadc2fb5635",
+  "aggregate_sha256": "af4f9442549285add6791f06354849f7b02c92d4ebe19e64f1bb277be06860ea",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1813,
-    "python_files": 1391,
+    "manifested_files_total": 1828,
+    "python_files": 1406,
     "runtime_excluded_files_total": 0,
-    "test_files": 378,
-    "tracked_files_total": 1814,
+    "test_files": 382,
+    "tracked_files_total": 1829,
     "workflows": 1
   },
   "deterministic": true,
@@ -572,10 +572,10 @@
       "sha256": "f71b0d5f91368cfbf5f9c820cd0562b16178f7dd9e7e798b22e5c25280907e61"
     },
     {
-      "bytes": 11532,
+      "bytes": 12299,
       "hash_mode": "text_lf",
       "path": "config/trader_master_legacy_research_only_policy_v1.json",
-      "sha256": "b6723f604e51559a96cc3f71032d74145d38214f5fa0ba772fb4a00262203751"
+      "sha256": "6c81df43f594f063c4e0aa346a2e7d1ef5ff8088463fbe5a4d1c07cd8606967e"
     },
     {
       "bytes": 168,
@@ -2570,6 +2570,12 @@
       "sha256": "ab4ce3dcf211138da1a31242a169b850326c6dad5ea34b4d939fe1170a20d88d"
     },
     {
+      "bytes": 1894,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_aibot_trader_master_v2.py",
+      "sha256": "916742e59d1d06fe8191357d63562560e7a4cb75a722d2c665d01db39cfd26af"
+    },
+    {
       "bytes": 531,
       "hash_mode": "text_lf",
       "path": "scripts/audit_binance_vs_bitradex_1m.py",
@@ -2940,6 +2946,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_unified_feature_contract_v1.py",
       "sha256": "e9c283ea77805ea6466c91f9873b4f0fbc410f2e6d91b8e2cfbe386fd7faa46f"
+    },
+    {
+      "bytes": 1883,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_aibot_behavior_fingerprint_v1.py",
+      "sha256": "7ee1c361d73dcb5599861a6134699fde4b26300bbb6577935667a57aa38669da"
     },
     {
       "bytes": 1655,
@@ -4194,6 +4206,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/rebuild_phase5_datasets.py",
       "sha256": "2300537f5cdaa5722f70b4e99d4caf701c9bfc029e2197556e4bdd6b4c1ad60e"
+    },
+    {
+      "bytes": 1906,
+      "hash_mode": "text_lf",
+      "path": "scripts/reconcile_aibot_account_performance_v1.py",
+      "sha256": "8012a5aaa0d34bbfe054074d541a2fb75685c2220ddaf5100d74c9ae3efb8b66"
     },
     {
       "bytes": 1710,
@@ -7484,6 +7502,54 @@
       "sha256": "1494910b63aa3f0b992968a66bc9ec3b05a9913fcea4cbeb766721c97fb35f73"
     },
     {
+      "bytes": 1488,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/__init__.py",
+      "sha256": "d7fb9c975e0c921edaf267b8ae847fd49ba7b3bcb705a4411b19413bfe6f5c76"
+    },
+    {
+      "bytes": 6547,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/benchmark_engine.py",
+      "sha256": "dc1dbaefafdfbfe221c232277036eb2dafb74aca455e86c33e991bbce005d560"
+    },
+    {
+      "bytes": 4819,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/contracts.py",
+      "sha256": "81cc203b22f741f218573f0cd73e08168357f50b7006f527ceb696a7f7b3c4cf"
+    },
+    {
+      "bytes": 2125,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/performance_reconciliation.py",
+      "sha256": "38ad6659011682fe113817d92913ab4eef5e1dcf419b22fffcbde56bcf1700e2"
+    },
+    {
+      "bytes": 3866,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/persistence.py",
+      "sha256": "05f8333343d39ae964a6a878a945ca7ea8dc061866ce1899527ce50df66f8c46"
+    },
+    {
+      "bytes": 3875,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/source_registry.py",
+      "sha256": "949b875709e45990e6ff837bfaffda3fa9119212b7fe07253d7f925ea5c0fab8"
+    },
+    {
+      "bytes": 11296,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/trade_behavior_fingerprint.py",
+      "sha256": "125702104f0ac73f1f028349208e6a5a8693ae4176e1e44313a9e5d14bf236f3"
+    },
+    {
+      "bytes": 18860,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/trader_master_loader.py",
+      "sha256": "76c650fb3c9e2acf459108380a57bb6baeedc3bb8752c4b271c4eb994e5c1b74"
+    },
+    {
       "bytes": 22548,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/binance_futures_15s_redownload.py",
@@ -8768,6 +8834,30 @@
       "sha256": "2c38811d8669ee951dcd51c263df8df95df978acaef170e3009952a2816b5cd2"
     },
     {
+      "bytes": 3470,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_behavior_fingerprint_v1.py",
+      "sha256": "d23dd9cf31b0a1dc40853097203a7399217842631befa6f855ee723aa0f69d44"
+    },
+    {
+      "bytes": 3282,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_performance_reconciliation_v1.py",
+      "sha256": "5dbf83fac2aaf8b940ae72649dcb3583d830bad3c7901ba862e1f8720bab5adb"
+    },
+    {
+      "bytes": 2347,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_source_registry_v1.py",
+      "sha256": "b4f81187deae2b86733c86b306b11aca4c74e93e91ec625c740e4a64516e9790"
+    },
+    {
+      "bytes": 3628,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_trader_master_loader_v2.py",
+      "sha256": "8051d907cca384b38239fbd58959589b99b726e657b33ada3c5b4f8ef6b58b20"
+    },
+    {
       "bytes": 2753,
       "hash_mode": "text_lf",
       "path": "tests/test_anti_leakage_audit.py",
@@ -8816,10 +8906,10 @@
       "sha256": "188b283884245c120e3c486acf3fda31c3b77d29ce1fd7da602c8c8fee278145"
     },
     {
-      "bytes": 15206,
+      "bytes": 17006,
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_batch_readonly_adapter_v2.py",
-      "sha256": "1e8927f1d6defa0ee33810c2c959cce9ca008b87dda4f12d7aa0e9b125269018"
+      "sha256": "bcb62815e4613f6eb4b9ff724cb8eff2c2fd4115b2e6cd6bb8b4bee5bfa9e3da"
     },
     {
       "bytes": 35567,
@@ -10823,13 +10913,13 @@
       "bytes": 7559,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_reverification_closeout_v1.py",
-      "sha256": "0cecab6b0534dd72ae3b3e9da9ddfcda1d8db1b2e9f0fa20ef125552e6375fff"
+      "sha256": "32c1b9181ebb3d83ba432a34429306766bb91c182a6ed5052ecb305633980d9d"
     },
     {
       "bytes": 7110,
       "hash_mode": "text_lf",
       "path": "tests/test_trader_master_boundary_writer_callsite_removal_v1.py",
-      "sha256": "b666507ad990ad50e9675790a4713542f61881abc5dfa394d2ecd1a9259e827d"
+      "sha256": "202eebeb43c0657fd3b599120f7018001b3896c1fc73a2c43b44db9ca9689746"
     },
     {
       "bytes": 13692,

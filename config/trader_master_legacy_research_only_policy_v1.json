@@ -101,6 +101,15 @@
       "operational_authority": false
     },
     {
+      "relative_path": "smartcrypto/research/aibot_parity/trader_master_loader.py",
+      "consumer_classification": "registered_readonly_consumer",
+      "allowed_purposes": ["historical_readonly_research", "lineage_diagnostics", "read_only_data_quality_analysis"],
+      "allowed_access_mode": "read_only",
+      "allowed_capabilities": ["read_rows", "read_schema", "compute_hash", "diagnostic_metrics"],
+      "justification": "AIBOT parity research-only loader for the legacy non-Fingerprint-V2 dataset through the institutional temporary-copy adapter, with no import, no deduplication, no fingerprint identity generation, no operational training, no signal authority, no risk authority and no order execution.",
+      "operational_authority": false
+    },
+    {
       "relative_path": "smartcrypto/data/trader_master_fingerprint_v2/master_reconciliation.py",
       "consumer_classification": "registered_readonly_consumer",
       "allowed_purposes": ["lineage_diagnostics", "read_only_data_quality_analysis"],
