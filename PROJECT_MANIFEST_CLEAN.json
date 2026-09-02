@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8609c6bab2670dde8e60069e993ca3a2e45ceab12482c2a07b495290a1e72223",
+  "aggregate_sha256": "ac5dffc9867ac48e4beefb1b783818ace751892fdbe1e3beb427e2db7cd45dc3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1887,
-    "python_files": 1461,
+    "manifested_files_total": 1897,
+    "python_files": 1470,
     "runtime_excluded_files_total": 0,
-    "test_files": 392,
-    "tracked_files_total": 1888,
+    "test_files": 394,
+    "tracked_files_total": 1898,
     "workflows": 1
   },
   "deterministic": true,
@@ -540,6 +540,12 @@
       "hash_mode": "text_lf",
       "path": "config/research/portfolio_allocator.yaml",
       "sha256": "47b247a50e9f0f97f4e6af06d6816a9e061cb4404245c652243e578853055b1b"
+    },
+    {
+      "bytes": 482,
+      "hash_mode": "text_lf",
+      "path": "config/research/portfolio_of_alphas.yaml",
+      "sha256": "168a526c8edcd603b7d52c06b33efede42bae0bc52bac87869efc36ede338778"
     },
     {
       "bytes": 625,
@@ -3170,6 +3176,12 @@
       "sha256": "2657cf17e5e7b50adedcf18c3a4c558234678b13c719e04b3a18599e319689ee"
     },
     {
+      "bytes": 6037,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_fleet_control_readonly_snapshot_v1.py",
+      "sha256": "c91c9399df55da2f2580cf6f20e6a976c3141e416eab227ae38b94f522168f82"
+    },
+    {
       "bytes": 2379,
       "hash_mode": "text_lf",
       "path": "scripts/build_freqtrade_paper_ai_selector_e2e_dryrun_v1.py",
@@ -3510,6 +3522,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_phase22_market_features.py",
       "sha256": "191403f950facae9969132eb00c1213d45f856195777ad458a18f21088fa2b60"
+    },
+    {
+      "bytes": 4851,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_portfolio_of_alphas_snapshot_v1.py",
+      "sha256": "1b10e6208a542e4d4ec851670f266384d6537eebcdc9de1ffa4066e29f80c6f3"
     },
     {
       "bytes": 1977,
@@ -8390,6 +8408,36 @@
       "sha256": "25a1a9720f83926be807a41be8ab1a7035fd02ef08432d92961a161776ba443c"
     },
     {
+      "bytes": 1184,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/__init__.py",
+      "sha256": "8e55f5c8ecabb4635a23ab4e2862dd41d6ece40a782fa605dd7f66d7c9a87610"
+    },
+    {
+      "bytes": 2224,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/compose_discovery.py",
+      "sha256": "ef41d02769fab65b636e8c41b8a68f43d37d02d59536cbd9ae34e19d26aacb85"
+    },
+    {
+      "bytes": 14172,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/contracts.py",
+      "sha256": "d26d86c16a297fb4509471d239b39e701a6af659ce39f56d20322333c372976a"
+    },
+    {
+      "bytes": 5093,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/fleet.py",
+      "sha256": "58472e51188a11d75d41201c0d9ca2104db6d30fe0815c122a4b35830601d769"
+    },
+    {
+      "bytes": 6779,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/portfolio.py",
+      "sha256": "11850dfb86a3d1973cd098bdc736c919a19d26dd02c5e28fc0d59830041ed35f"
+    },
+    {
       "bytes": 357,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/profit_research/__init__.py",
@@ -9938,6 +9986,12 @@
       "sha256": "71a58a871f778017209db9164e7f4acdb0e78fe7702423405facca1a8ab62c71"
     },
     {
+      "bytes": 5660,
+      "hash_mode": "text_lf",
+      "path": "tests/test_fleet_control_readonly_v1.py",
+      "sha256": "fccb2fa08e608acad690fa7b25a105a707c2a73736acf54b0cec99f0d621d389"
+    },
+    {
       "bytes": 7594,
       "hash_mode": "text_lf",
       "path": "tests/test_freqtrade_image_pin_digest_policy_v1.py",
@@ -10854,6 +10908,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_portfolio_allocator_shadow_v1.py",
       "sha256": "26e9bb0bfc1132ac59827ffa508d28370c83ed5afbcd43478fe80c9a95fab3fe"
+    },
+    {
+      "bytes": 5101,
+      "hash_mode": "text_lf",
+      "path": "tests/test_portfolio_of_alphas_v1.py",
+      "sha256": "a1bcb46485f693045e4dd018b54e7bf062977623cdba1b59edc423f15d2a5906"
     },
     {
       "bytes": 4242,
