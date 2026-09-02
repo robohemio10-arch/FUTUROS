@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "eeecc164a22e6b40c5206a7aab4be230fd2b22d0c478bb71c0307eed0e089103",
+  "aggregate_sha256": "374c1e0a5c05fe0c76e593a8d5071414128583c4b77074c65ce949b4296cd18e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1921,
-    "python_files": 1492,
+    "manifested_files_total": 1933,
+    "python_files": 1503,
     "runtime_excluded_files_total": 0,
-    "test_files": 398,
-    "tracked_files_total": 1922,
+    "test_files": 402,
+    "tracked_files_total": 1934,
     "workflows": 1
   },
   "deterministic": true,
@@ -564,6 +564,12 @@
       "hash_mode": "text_lf",
       "path": "config/research/research_council.yaml",
       "sha256": "8e3f6183cb07a1d00c2f2f11d9f79bb6c000998860ffa94381ddf8098c62bd56"
+    },
+    {
+      "bytes": 1116,
+      "hash_mode": "text_lf",
+      "path": "config/research/risk_intelligence.yaml",
+      "sha256": "54719c58479025ba56a4e3b13b2b28692379a35703bc8348d4e74a89e4fac92f"
     },
     {
       "bytes": 263,
@@ -4620,6 +4626,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_restore_dry_run.py",
       "sha256": "6d87683942025856dca4e367ef8c5175b3282ac4274921682c11e19c9abbed39"
+    },
+    {
+      "bytes": 6476,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_risk_budget_treasury_simulator_v1.py",
+      "sha256": "52fdc6caee020bd68226f8641c1ba48bc98b2d85f28c6228f51b6e1cc3c231e1"
     },
     {
       "bytes": 2914,
@@ -8786,6 +8798,42 @@
       "sha256": "fbbacecbaef04975a0464cc7e9c682647763abe756721b140772024cfe377cbc"
     },
     {
+      "bytes": 3106,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/__init__.py",
+      "sha256": "038093cb330867dc06471ce1550ee6ce61ec17517a970bee32fe4e867d9df827"
+    },
+    {
+      "bytes": 3234,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/circuit_breaker.py",
+      "sha256": "1632ac6fcf8978d6fe92b7527f8c8fdbbfcb1efef9f05c9274dad1bd736bed7d"
+    },
+    {
+      "bytes": 11985,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/contracts.py",
+      "sha256": "fbf9defb6c6b1e6b4d0c5b084ebf19f502417626a9ab338dde455a3d9e5449a8"
+    },
+    {
+      "bytes": 2689,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/daily_budget.py",
+      "sha256": "cc2edd93ca07fff1f6e649449955f0beef94b4901014cf23e4568c60996376c3"
+    },
+    {
+      "bytes": 8802,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/stress.py",
+      "sha256": "20210c109e7b268b93f2e6e99b3dbec6318362a5784e5abb33113cf25bd4ce66"
+    },
+    {
+      "bytes": 1496,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/risk_intelligence/treasury_reserve.py",
+      "sha256": "60427b7b0e659e607b894450f9231bb6949e8cf22df9d1ba96d61dfbbcceef9e"
+    },
+    {
       "bytes": 466,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/shadow_opportunity_engine/__init__.py",
@@ -9576,6 +9624,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_daily_pattern_mining_research_v1.py",
       "sha256": "09eabf9c8087743a89d377a9737633d9ed405d7a4325cb16e3d139d9de923222"
+    },
+    {
+      "bytes": 2552,
+      "hash_mode": "text_lf",
+      "path": "tests/test_daily_risk_budget_v1.py",
+      "sha256": "1bc8822745219906e90e0f913c3b29e50dc7f0888491b1d091a3a159ec5a6758"
     },
     {
       "bytes": 17199,
@@ -11258,6 +11312,12 @@
       "sha256": "41d9d4d9e83389dec4d73b13166be1ea9c40d2cddab7ba12e0e6bb8459b8513e"
     },
     {
+      "bytes": 2756,
+      "hash_mode": "text_lf",
+      "path": "tests/test_risk_circuit_breaker_v1.py",
+      "sha256": "e5b386b76fd607ae0b37ef06b1f4011bb8873b98fcf98adc70c3a467d8377921"
+    },
+    {
       "bytes": 3936,
       "hash_mode": "text_lf",
       "path": "tests/test_risk_manager.py",
@@ -11274,6 +11334,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_risk_recovery_refresh_source_parity.py",
       "sha256": "60c84e84663c644f288d13b54bb370eebdae222b7dcf9560cba5ba9b8b103d2f"
+    },
+    {
+      "bytes": 2634,
+      "hash_mode": "text_lf",
+      "path": "tests/test_risk_stress_v1.py",
+      "sha256": "8c5f8a3a7a4825d3c4f8816547b2ba1b3aeb2ea8bb48a6d6e93bb37930c46c0a"
     },
     {
       "bytes": 863,
@@ -11520,6 +11586,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_transitive_lock_docker_runtime_reproducibility.py",
       "sha256": "6135c560d2f961353e88c3078e603d6f3c7dd07fa2da703a196149b1fa2c2847"
+    },
+    {
+      "bytes": 1541,
+      "hash_mode": "text_lf",
+      "path": "tests/test_treasury_reserve_v1.py",
+      "sha256": "7ef36de44f6abf91913d2c97884f5b34696252f09f8d8e5f151a2867c531dcb1"
     },
     {
       "bytes": 14553,
