@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0433ea6ffdc72c4cd70af783d8b42a06a3fef9b23b1e4a174f3d94df0cf1876a",
+  "aggregate_sha256": "8609c6bab2670dde8e60069e993ca3a2e45ceab12482c2a07b495290a1e72223",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1869,
-    "python_files": 1444,
+    "manifested_files_total": 1887,
+    "python_files": 1461,
     "runtime_excluded_files_total": 0,
-    "test_files": 387,
-    "tracked_files_total": 1870,
+    "test_files": 392,
+    "tracked_files_total": 1888,
     "workflows": 1
   },
   "deterministic": true,
@@ -534,6 +534,12 @@
       "hash_mode": "text_lf",
       "path": "config/research/market_intelligence.yaml",
       "sha256": "34d697f2b19d64362547dd5d11bf1d5b1e4f27407c0d2e98c74bbb54948e19ce"
+    },
+    {
+      "bytes": 671,
+      "hash_mode": "text_lf",
+      "path": "config/research/portfolio_allocator.yaml",
+      "sha256": "47b247a50e9f0f97f4e6af06d6816a9e061cb4404245c652243e578853055b1b"
     },
     {
       "bytes": 625,
@@ -3284,6 +3290,12 @@
       "sha256": "9f87bcb3b3ab0c2484fe00363598e952a7816adfb26e183ea9fc71198a06e34f"
     },
     {
+      "bytes": 4891,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_opportunity_book_v2.py",
+      "sha256": "cc0c90c1936e096746fa0d1746e513faf8b7cda6efb4f951bf61872cc1d6f444"
+    },
+    {
       "bytes": 2848,
       "hash_mode": "text_lf",
       "path": "scripts/build_outcome_sidecar.py",
@@ -4518,6 +4530,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_phase2_data_pipeline.py",
       "sha256": "f002494e5305a484a2dccc5e3af0770693c580f02d7cf6a4ffda7569cb437dfc"
+    },
+    {
+      "bytes": 5256,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_portfolio_allocator_shadow_v1.py",
+      "sha256": "e55f6eb211c5b68668faba2e1ed365233af7303016b9bb281f655f80a60c3ae2"
     },
     {
       "bytes": 1775,
@@ -8312,6 +8330,66 @@
       "sha256": "d1ffe019f07e07aaf73ae799ca84b9640807dabd52e8f480824469d90684e758"
     },
     {
+      "bytes": 1521,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/__init__.py",
+      "sha256": "7333384a7f8dedab0bd650d34158bd178dd0d07d56ef27b8108b34cf2fb6d288"
+    },
+    {
+      "bytes": 15799,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/allocator.py",
+      "sha256": "d6cd3d7a217fb9eb75ba54b18a58b9d59784f2e2801960d1a84bd06352714d7a"
+    },
+    {
+      "bytes": 1054,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/alpha_registry.py",
+      "sha256": "b7efe9af2e976223931655ced16586047d6fcc4f85cf14762e63bef5ca1c0d03"
+    },
+    {
+      "bytes": 1999,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/capacity.py",
+      "sha256": "5d4d0c8acf1c9adde010ca9860d17e6a9c4b4635d753c8404cef34c882bc2949"
+    },
+    {
+      "bytes": 479,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/capital_hours.py",
+      "sha256": "dd6b6490f391d23d292cb08ff0d00490b9bd1926870d5e048c80d7f77fe297ea"
+    },
+    {
+      "bytes": 23982,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/contracts.py",
+      "sha256": "49a3b14849186845dfeffab1a28a9dcc5ef35f8ffd93feb2755c97495830baed"
+    },
+    {
+      "bytes": 1350,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/correlation.py",
+      "sha256": "06c7bfdee6236ec969c53f9baba4122e89d11bdef489e76161b74f3633b6592a"
+    },
+    {
+      "bytes": 5043,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/opportunity_book.py",
+      "sha256": "e75875599a417ac922ac3fac623aaf24521a2f0d2f9173c48a98594b922073aa"
+    },
+    {
+      "bytes": 1374,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/remaining_edge.py",
+      "sha256": "0976d6c4de03a9d6f2a605d704acf03f935b0801ab99b8efebef1ac75d17659c"
+    },
+    {
+      "bytes": 4124,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_intelligence/replacement_policy.py",
+      "sha256": "25a1a9720f83926be807a41be8ab1a7035fd02ef08432d92961a161776ba443c"
+    },
+    {
       "bytes": 357,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/profit_research/__init__.py",
@@ -9072,6 +9150,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_trader_master_loader_v2.py",
       "sha256": "8051d907cca384b38239fbd58959589b99b726e657b33ada3c5b4f8ef6b58b20"
+    },
+    {
+      "bytes": 1268,
+      "hash_mode": "text_lf",
+      "path": "tests/test_alpha_registry_v1.py",
+      "sha256": "588389b104a1f60b74c38ebd06274288fead8a85ed46ed916b44ae7975fb7d73"
     },
     {
       "bytes": 2753,
@@ -10220,6 +10304,12 @@
       "sha256": "0228531524f04ac7acc43fad2e6efad3846baa90d6af147bd042631fc54c898d"
     },
     {
+      "bytes": 5386,
+      "hash_mode": "text_lf",
+      "path": "tests/test_opportunity_book_v2.py",
+      "sha256": "bfefab9802cb9ee0176d682aead30faa3c4afca464630c77f0d3100b745e02fe"
+    },
+    {
       "bytes": 7229,
       "hash_mode": "text_lf",
       "path": "tests/test_order_manager_idempotency.py",
@@ -10760,6 +10850,12 @@
       "sha256": "9cf6768507a48af927f079f7add4a77ca820c4385cb66890d5a6d0f9b37599b4"
     },
     {
+      "bytes": 10143,
+      "hash_mode": "text_lf",
+      "path": "tests/test_portfolio_allocator_shadow_v1.py",
+      "sha256": "26e9bb0bfc1132ac59827ffa508d28370c83ed5afbcd43478fe80c9a95fab3fe"
+    },
+    {
       "bytes": 4242,
       "hash_mode": "text_lf",
       "path": "tests/test_post_roadmap_final_snapshot.py",
@@ -10920,6 +11016,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_reconciliation_guard.py",
       "sha256": "3413e9814673a246bbec790e77f2d7659c498225111772d8b7a44e4cedbccda3"
+    },
+    {
+      "bytes": 2138,
+      "hash_mode": "text_lf",
+      "path": "tests/test_remaining_edge_v1.py",
+      "sha256": "b1173c88e6ae5d9da1d5512dde90763a547c30bca736d5c392ef1ea08846e540"
+    },
+    {
+      "bytes": 4269,
+      "hash_mode": "text_lf",
+      "path": "tests/test_replacement_policy_v1.py",
+      "sha256": "d165c343bff52cb18a8854631fbee56019c71feb46096caa4d35964158992664"
     },
     {
       "bytes": 3863,
