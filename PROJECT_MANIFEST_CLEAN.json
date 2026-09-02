@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "af4f9442549285add6791f06354849f7b02c92d4ebe19e64f1bb277be06860ea",
+  "aggregate_sha256": "0433ea6ffdc72c4cd70af783d8b42a06a3fef9b23b1e4a174f3d94df0cf1876a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1828,
-    "python_files": 1406,
+    "manifested_files_total": 1869,
+    "python_files": 1444,
     "runtime_excluded_files_total": 0,
-    "test_files": 382,
-    "tracked_files_total": 1829,
+    "test_files": 387,
+    "tracked_files_total": 1870,
     "workflows": 1
   },
   "deterministic": true,
@@ -522,6 +522,24 @@
       "hash_mode": "text_lf",
       "path": "config/reconciliation_guard.example.yml",
       "sha256": "35385cf3dfeaf327458927ad1144b3fa1bac35bd529c7209caabae9b2e26889a"
+    },
+    {
+      "bytes": 757,
+      "hash_mode": "text_lf",
+      "path": "config/research/aibot_parity.yaml",
+      "sha256": "82ee25e79fdb4ff7b20731e77b2d5bfefdf3289fe50c7692594ca3373615849f"
+    },
+    {
+      "bytes": 1019,
+      "hash_mode": "text_lf",
+      "path": "config/research/market_intelligence.yaml",
+      "sha256": "34d697f2b19d64362547dd5d11bf1d5b1e4f27407c0d2e98c74bbb54948e19ce"
+    },
+    {
+      "bytes": 625,
+      "hash_mode": "text_lf",
+      "path": "config/research/research_council.yaml",
+      "sha256": "8e3f6183cb07a1d00c2f2f11d9f79bb6c000998860ffa94381ddf8098c62bd56"
     },
     {
       "bytes": 263,
@@ -3176,6 +3194,12 @@
       "sha256": "14f6850bd1cc8a5f6a77634c9116fb553f71cb44b8ffabb503887dd44f79cc1f"
     },
     {
+      "bytes": 3425,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_market_intelligence_snapshot_v1.py",
+      "sha256": "1e8c20e813a0aed9cb061a2676bf52a1e95f2d5a80fbd03a958ca9e344680334"
+    },
+    {
       "bytes": 296,
       "hash_mode": "text_lf",
       "path": "scripts/build_market_training_dataset.py",
@@ -4334,6 +4358,12 @@
       "sha256": "94cb4aa266abbcaee691ac8a82f1ec220de9c0e3bc8f95de94a7bb06282fa132"
     },
     {
+      "bytes": 3188,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_ensemble_abstention_shadow_v1.py",
+      "sha256": "ae4355469fb95c7a80278d52716be2c96ad5c8c4d7d1cccb628af85a54bcab5e"
+    },
+    {
       "bytes": 2561,
       "hash_mode": "text_lf",
       "path": "scripts/run_event_driven_backtest.py",
@@ -4362,6 +4392,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_market_data_health_audit.py",
       "sha256": "ae0efdcdd221a1ac180a0311d3c90c00352da8e0798e6bf5b29bb10e4ea05446"
+    },
+    {
+      "bytes": 5215,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_market_intelligence_ablation_v1.py",
+      "sha256": "146f886af40296e3691f40106827eae7de09d748ae02b23b534f54f7074173ed"
     },
     {
       "bytes": 4118,
@@ -4512,6 +4548,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_readiness_gate_audit.py",
       "sha256": "ebe692bcf9616d92a369b1eb996ddcc92bc6d0f94768a428f808f86dff1553b4"
+    },
+    {
+      "bytes": 3216,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_research_council_shadow_v1.py",
+      "sha256": "d71cd612f2176dd6d83507c2894ac4afdbec8809710bd1ad037e5980359e17b7"
     },
     {
       "bytes": 1194,
@@ -7646,6 +7688,42 @@
       "sha256": "3b604751c61b9a70d4a5fde7f35a6f01adb55a8446aa5012376a577fe0979dbe"
     },
     {
+      "bytes": 1234,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/__init__.py",
+      "sha256": "34d8b99a816ad5796a1b37d44eda3c62f293f6d1d8201ab581985487668a60e3"
+    },
+    {
+      "bytes": 13740,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/contracts.py",
+      "sha256": "455038ef4a92ab2c6b4df9d89052bb824eacdd9f7f3c104ee01da569122c3ed2"
+    },
+    {
+      "bytes": 12933,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/ensemble.py",
+      "sha256": "7199868a710992f5c44a383604048ad9401213ec948651f1d32829beb843bf05"
+    },
+    {
+      "bytes": 4234,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/persistence.py",
+      "sha256": "994d5304e92b60df9dccffbd0252d421c47b9c18efd8fa6bb4b8e73ca4400700"
+    },
+    {
+      "bytes": 7847,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/regime_router.py",
+      "sha256": "0b2ad00610db4172f064921acd02297433dc12ee274cebd715d475ff075fc984"
+    },
+    {
+      "bytes": 4577,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/ensemble_abstention/service.py",
+      "sha256": "89cb50e5acfd01761c7bd0eec91869febb48592619309c2c68659a03f6f47e16"
+    },
+    {
       "bytes": 16298,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_costs.py",
@@ -7764,6 +7842,66 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/historical_validation_15s.py",
       "sha256": "39f0f3d4a4048f1ade34fadd769402230743126307a8d5fc4b121aa3d36ac924"
+    },
+    {
+      "bytes": 1034,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/__init__.py",
+      "sha256": "c7ded991e33d02ccc79c25dc26d88c4e6a3897bc1c65bfc68547a4dffed3b4cf"
+    },
+    {
+      "bytes": 6820,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/ablation.py",
+      "sha256": "ddb2c941aa55ef1b6abd18c661a896a1494a4e0b159222fe569503dcf4be1238"
+    },
+    {
+      "bytes": 17048,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/contracts.py",
+      "sha256": "e11ab03db2064a867c739266e521f99b6a998bdf719827cf8a9c226d32b3931e"
+    },
+    {
+      "bytes": 11351,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/feature_builder.py",
+      "sha256": "23d0345c6559cffc3f4011d34c7b6deceb3ea38ff969a39efc9bb0ec0b02bdcc"
+    },
+    {
+      "bytes": 4838,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/funding_basis.py",
+      "sha256": "808e9c985648dec02a3ed608648bafc5368e85fbda74020db86697977724b5cf"
+    },
+    {
+      "bytes": 2461,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/liquidations.py",
+      "sha256": "9b4b6ae91754cad224aa0e86cd98e7e7d5ddcf45bec6027c84ef05c57abcdba8"
+    },
+    {
+      "bytes": 1801,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/news_context.py",
+      "sha256": "b29e21d60b3f55a00c3e33b0dec4ec6a8e21ee40819373f1f10dfff69ab2fc00"
+    },
+    {
+      "bytes": 2548,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/open_interest.py",
+      "sha256": "1da3f66769a12aebd647516b97387349358dbecb1376e04434a2ab5bc4929da6"
+    },
+    {
+      "bytes": 5299,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/orderflow.py",
+      "sha256": "ecabfaa91635c37b5f88100db903b0cc7c699f127921fc8d87f38a34cfc0f749"
+    },
+    {
+      "bytes": 15054,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_intelligence/snapshot.py",
+      "sha256": "2b497057fec166f108f1c9630b6521293269ca4d4bce39ad76017e1927048b7a"
     },
     {
       "bytes": 7766,
@@ -8322,6 +8460,84 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/reporting.py",
       "sha256": "424caf4ac63e264e756922134dd5e7bb2f11485763c2467448eff476eedb961d"
+    },
+    {
+      "bytes": 1199,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/__init__.py",
+      "sha256": "f19f4561a399b4e33e382edd4631958e95218e1f23467bbff04d0cf2416a0bce"
+    },
+    {
+      "bytes": 2353,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/consensus.py",
+      "sha256": "7290550b7a83791886d3355bb3e162c542a9998056a383e10eac4c59795dc77a"
+    },
+    {
+      "bytes": 14268,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/contracts.py",
+      "sha256": "47ceab64c404382493435b85616b8f04d17043b0c7db64a034883ac48a49950f"
+    },
+    {
+      "bytes": 3959,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/debate.py",
+      "sha256": "d90726c82800fdc0a7219ff473c884402e0b82a136925bf3365076aabce33870"
+    },
+    {
+      "bytes": 1418,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/macro_analyst.py",
+      "sha256": "e3f51b452254dae1e15565876502dd24e9cc11392fdbc58ef960a6cd4da5d33a"
+    },
+    {
+      "bytes": 1418,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/market_analyst.py",
+      "sha256": "3c52d692c595723680c725142bdd626d6fcae4ad10a43520636ef350b2bb40a7"
+    },
+    {
+      "bytes": 1536,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/microstructure_analyst.py",
+      "sha256": "b4597e94e6d5b54da442356ab678b9f6642bb17228d402c2d2cfaff73c185a2f"
+    },
+    {
+      "bytes": 1433,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/news_analyst.py",
+      "sha256": "0e5d29f747e10096b5e645e0a5cde87faec6fbfc34ec1226773b29e857afa10b"
+    },
+    {
+      "bytes": 4012,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/persistence.py",
+      "sha256": "738906ca4e41c1d283a1d09227845d4328bbe4705c62734d537cd5ab57aee489"
+    },
+    {
+      "bytes": 10170,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/provider_adapter.py",
+      "sha256": "496269148ccfc87aa7aebfa54eec441014b43a1c7f4a9cbd1aeb44e10f2deeba"
+    },
+    {
+      "bytes": 1156,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/provider_registry.py",
+      "sha256": "0ad4e18e0636d73d85ba5a4ed5975d2faec6b308edb570092adef4e921853ba2"
+    },
+    {
+      "bytes": 1423,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/regime_analyst.py",
+      "sha256": "7197e4ff8d13768fe733ba87e5a3c6a7982699fdc8f3747932b53cff74e82426"
+    },
+    {
+      "bytes": 12614,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/service.py",
+      "sha256": "fbbacecbaef04975a0464cc7e9c682647763abe756721b140772024cfe377cbc"
     },
     {
       "bytes": 466,
@@ -9566,6 +9782,12 @@
       "sha256": "71e9b46e39b05a37fccb8c9a5a86556db0fc863430a83ff3f0384b461b872eed"
     },
     {
+      "bytes": 15013,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ensemble_abstention_v1.py",
+      "sha256": "02bddc26aae6831f9ce04571c4eff8fa04d9c99b3fe2c1a1ae8c84a55e831c07"
+    },
+    {
       "bytes": 10503,
       "hash_mode": "text_lf",
       "path": "tests/test_event_driven_backtest.py",
@@ -9816,6 +10038,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_market_features_runtime_writer_audit.py",
       "sha256": "20db566a322fb8147fe3873c27833901e08b1a904bdf8305f09924a5f697cfbe"
+    },
+    {
+      "bytes": 4380,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_ablation_v1.py",
+      "sha256": "76b77c2619c49c25e86651e48c920a098b5c84c3009e51278b7d1b512aee4c7c"
+    },
+    {
+      "bytes": 17132,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_contract_v1.py",
+      "sha256": "9348f27c1c466ae8ab3bc2f63fe0a13c93f993d3acb7b3bb0c0318b01a5febb0"
     },
     {
       "bytes": 5476,
@@ -10692,6 +10926,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_reproducible_dev_environment_ci_makefile.py",
       "sha256": "0968219424f1eac1693ebdc7464bb7067309dd879ce36639e2968f97369df9b8"
+    },
+    {
+      "bytes": 16410,
+      "hash_mode": "text_lf",
+      "path": "tests/test_research_council_contracts_v1.py",
+      "sha256": "c6ff07a42323867d7783d27cd548e433b56e21feca7a2a8c32acf0a22733936e"
+    },
+    {
+      "bytes": 6481,
+      "hash_mode": "text_lf",
+      "path": "tests/test_research_council_no_order_authority_v1.py",
+      "sha256": "e74d32bb2dc956ef49c9df1682b93df7b1787ec65455e30c7775948a432ff704"
     },
     {
       "bytes": 4782,
