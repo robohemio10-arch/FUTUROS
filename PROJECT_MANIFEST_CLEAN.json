@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ac5dffc9867ac48e4beefb1b783818ace751892fdbe1e3beb427e2db7cd45dc3",
+  "aggregate_sha256": "ca39380db9eec59d2a58cae46c1ae1b0bd583daf956db362bb1c54ea36146556",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1897,
-    "python_files": 1470,
+    "manifested_files_total": 1908,
+    "python_files": 1480,
     "runtime_excluded_files_total": 0,
-    "test_files": 394,
-    "tracked_files_total": 1898,
+    "test_files": 396,
+    "tracked_files_total": 1909,
     "workflows": 1
   },
   "deterministic": true,
@@ -546,6 +546,12 @@
       "hash_mode": "text_lf",
       "path": "config/research/portfolio_of_alphas.yaml",
       "sha256": "168a526c8edcd603b7d52c06b33efede42bae0bc52bac87869efc36ede338778"
+    },
+    {
+      "bytes": 692,
+      "hash_mode": "text_lf",
+      "path": "config/research/relative_value.yaml",
+      "sha256": "8e48e9fab65f8a4717960b83d02eaa610ebe681262810361aa3cca8196e5db60"
     },
     {
       "bytes": 625,
@@ -4586,6 +4592,12 @@
       "sha256": "ebe692bcf9616d92a369b1eb996ddcc92bc6d0f94768a428f808f86dff1553b4"
     },
     {
+      "bytes": 5655,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_relative_value_research_v1.py",
+      "sha256": "f1317ea76e2a85bee8f25509e0960507fdc344d9aadbc0baf8cc2dbd63d843e6"
+    },
+    {
       "bytes": 3216,
       "hash_mode": "text_lf",
       "path": "scripts/run_research_council_shadow_v1.py",
@@ -8582,6 +8594,48 @@
       "sha256": "d7b29d8d9543ba5a072f99362f42a483f3f7e11d192a97bf9a52178f9a0ee94a"
     },
     {
+      "bytes": 1697,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/__init__.py",
+      "sha256": "a5934d8ad4ec9870514c863adabff10c7b72a3542a152ed239d01860cda57c94"
+    },
+    {
+      "bytes": 1228,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/basis.py",
+      "sha256": "c3302e5463938da31188490764be282ab0de1c331ea93525593e42dbc83b2473"
+    },
+    {
+      "bytes": 12711,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/contracts.py",
+      "sha256": "d92ba448ab6fb341f6b04e22a57e6f479973489058f9fbe8a15301cca33aa6d4"
+    },
+    {
+      "bytes": 10779,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/evaluator.py",
+      "sha256": "76e1fa198af5ba10f675fda209449608de62ed087f159b84b1ca9b8847d8fb8f"
+    },
+    {
+      "bytes": 2541,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/funding.py",
+      "sha256": "eade2f5acaf9a119a20410700da118e1548a7fae4e68c8786643ae1669203f60"
+    },
+    {
+      "bytes": 1856,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/hedging.py",
+      "sha256": "2fdd7362533774d55fe2f8864199618a4f7f8bdc2d10d2d6f55e918113856601"
+    },
+    {
+      "bytes": 1180,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/relative_value/pairs.py",
+      "sha256": "b3cd0b03ce4407e2853367299c575486ac19198f1443ceeb746762e32692b8fd"
+    },
+    {
       "bytes": 11416,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/reporting.py",
@@ -11076,6 +11130,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_reconciliation_guard.py",
       "sha256": "3413e9814673a246bbec790e77f2d7659c498225111772d8b7a44e4cedbccda3"
+    },
+    {
+      "bytes": 3871,
+      "hash_mode": "text_lf",
+      "path": "tests/test_relative_value_contracts_v1.py",
+      "sha256": "a46cc504463c5db7e49fbdf497a8ea1a7accd8b6314176b28bc1276e0e1fb5d9"
+    },
+    {
+      "bytes": 5997,
+      "hash_mode": "text_lf",
+      "path": "tests/test_relative_value_evaluator_v1.py",
+      "sha256": "4bc3c6a955d812a7174e44d06e5688cda6bfc1162252424b9232acffd8dbab56"
     },
     {
       "bytes": 2138,
