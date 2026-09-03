@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "9806dcf6ccf0e093eae52058ddb094d037f97ef8fa12a59a4f3fbdca733245b7",
+  "aggregate_sha256": "bf4c54de90230eca6c65f0f464ea7072a2b7a106f0b3741afeb296e039716e1a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -7736,10 +7736,10 @@
       "sha256": "7d7fd0deb40adf3ca03ddf6740e9512c4b024bcec6b29a11963b713dbe9348ef"
     },
     {
-      "bytes": 8822,
+      "bytes": 8966,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity_v2_closeout/auditor.py",
-      "sha256": "dff78d2f490d572a3760f10d82f2c3464ea67c723dcfb71015ab9024122924f6"
+      "sha256": "3bcc969b09583fd810eb9853936b5719ffadd83166ada7abaaa4a7277a9b7bd4"
     },
     {
       "bytes": 22548,
