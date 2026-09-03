@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "75462e1a16a2bdbf4e370d05f11224aeafdc70be9e84496b1dee0224c957a17c",
+  "aggregate_sha256": "270fa7c31ed7a927c97ee765184195247f0b8736c1f99772c2d83434ac55e93f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 305,
-    "manifested_files_total": 1959,
-    "python_files": 1524,
+    "docs_files": 306,
+    "manifested_files_total": 1964,
+    "python_files": 1528,
     "runtime_excluded_files_total": 0,
-    "test_files": 408,
-    "tracked_files_total": 1960,
+    "test_files": 409,
+    "tracked_files_total": 1965,
     "workflows": 1
   },
   "deterministic": true,
@@ -696,6 +696,12 @@
       "hash_mode": "text_lf",
       "path": "docs/ADR_001_QLIB_24X7_INTEGRATION_MODE_V1.md",
       "sha256": "2b181c43aa52483d271283c9f66d49256381ed221ab8a6df9067e5842efc0183"
+    },
+    {
+      "bytes": 5904,
+      "hash_mode": "text_lf",
+      "path": "docs/AIBOT_PARITY_PAPER_AB_PROSPECTIVE_COLLECTOR_V1.md",
+      "sha256": "0407a3d1b0024423adb32e185ea7a8731bac49aa26aa67c5bbcc5b91d22e4de2"
     },
     {
       "bytes": 5297,
@@ -4424,6 +4430,12 @@
       "sha256": "93a715d6f638c5f1eb8c87414091ee98b7668dfa3ff6220e7926d1404299e048"
     },
     {
+      "bytes": 9719,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_aibot_parity_paper_ab_prospective_collector_v1.py",
+      "sha256": "626b708446de983abf69edfbdc6591d32ae7c724ca444dc42095df6e3e4c89f8"
+    },
+    {
       "bytes": 5764,
       "hash_mode": "text_lf",
       "path": "scripts/run_aibot_parity_paper_ab_soak_v1.py",
@@ -7748,6 +7760,18 @@
       "sha256": "096b9c23a349d07e10e2243503b9b87da10c3bee2c1317a975f89e34bf21dbb1"
     },
     {
+      "bytes": 982,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/__init__.py",
+      "sha256": "30c83860b3d119f65b142a19660cfc8549e21bb4e6e12994d27a60b38b2e74d6"
+    },
+    {
+      "bytes": 25769,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/collector.py",
+      "sha256": "f294e2145812652f010bf2ca768885cd69d604803cc014d9d03da411669beee6"
+    },
+    {
       "bytes": 342,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity_paper_ab_soak/__init__.py",
@@ -9480,6 +9504,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_parity_local_pipeline_v1.py",
       "sha256": "682d4c31086cf421852698aa2206d1e1edec185f34d7694ce6f75c35c230092a"
+    },
+    {
+      "bytes": 11979,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_parity_paper_ab_prospective_collector_v1.py",
+      "sha256": "ae4c6485d4c606220d275ac0e41fc86293ecda20464d462f047d02039c771950"
     },
     {
       "bytes": 9459,
