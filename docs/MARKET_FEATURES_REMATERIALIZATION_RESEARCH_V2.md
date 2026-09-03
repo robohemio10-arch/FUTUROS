@@ -75,12 +75,14 @@ rematerialização point-in-time em si está válida.
 
 ## CLI
 
-Default no-write:
+O CLI é no-write por default, mas **não assume nenhum dataset de trades legado**.
+`--trades-path` é obrigatório e deve apontar explicitamente para uma fonte read-only
+autorizada para a pesquisa atual.
 
 ```powershell
 python scripts/run_market_features_rematerialization_research_v2.py `
   --project-root . `
-  --trades-path data/trades/trades_master.parquet `
+  --trades-path <research_trade_dataset> `
   --candles-path data/features/market_features_60d.parquet `
   --json
 ```
@@ -90,7 +92,7 @@ Challenger efêmero opcional:
 ```powershell
 python scripts/run_market_features_rematerialization_research_v2.py `
   --project-root . `
-  --trades-path data/trades/trades_master.parquet `
+  --trades-path <research_trade_dataset> `
   --candles-path data/features/market_features_60d.parquet `
   --run-challenger `
   --json
