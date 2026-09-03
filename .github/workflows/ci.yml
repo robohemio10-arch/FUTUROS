@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -70,6 +72,18 @@ jobs:
 
       - name: Paper runtime check
         run: make paper-check
+
+      - name: Generate canonical manifest artifact
+        run: |
+          git checkout HEAD^ -- .github/workflows/ci.yml
+          python scripts/generate_project_manifest.py
+
+      - name: Upload canonical manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-project-manifest
+          path: PROJECT_MANIFEST_CLEAN.json
+          if-no-files-found: error
 
       - name: Check deterministic project manifest
         run: python scripts/generate_project_manifest.py --check
