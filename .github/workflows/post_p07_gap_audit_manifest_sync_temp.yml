@@ -1,0 +1,36 @@
+name: Post-P07 gap audit manifest sync temp
+
+on:
+  push:
+    branches:
+      - codex/post-p07-independent-readiness-gap-audit-v1
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Remove one-shot helper and regenerate manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/post_p07_gap_audit_manifest_sync_temp.yml
+          python scripts/generate_project_manifest.py
+          python scripts/generate_project_manifest.py --check
+          git add -A
+          git diff --cached --check
+          git commit -m "Sincroniza manifesto do gap audit"
+          git push origin HEAD:codex/post-p07-independent-readiness-gap-audit-v1
