@@ -1,0 +1,35 @@
+name: AIBOT W14 Manifest Finalize Temp
+
+on:
+  push:
+    branches:
+      - codex/aibot-parity-v2-final-dod-audit-v1
+    paths:
+      - .github/workflows/aibot_w14_manifest_finalize_temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aibot-parity-v2-final-dod-audit-v1
+          fetch-depth: 0
+      - name: Finalize canonical manifest and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/aibot_w14_manifest_finalize_temp.yml
+          python scripts/generate_project_manifest.py
+          python scripts/generate_project_manifest.py --check
+          git add PROJECT_MANIFEST_CLEAN.json
+          git diff --cached --check
+          git status --short
+          git commit -m "Atualiza manifesto canonico do W14 AIBOT"
+          git push origin HEAD:codex/aibot-parity-v2-final-dod-audit-v1
