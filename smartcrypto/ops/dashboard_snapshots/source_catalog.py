@@ -104,6 +104,7 @@ SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
         _source(DashboardPageId.opportunity_scanner, "data/reports/triangular_arbitrage_snapshot.json", SourceKind.FUTURE_SOURCE),
         _source(DashboardPageId.opportunity_scanner, "data/reports/order_flow_imbalance_snapshot.json", SourceKind.FUTURE_SOURCE),
         _source(DashboardPageId.opportunity_scanner, "data/reports/launch_radar_snapshot.json", SourceKind.FUTURE_SOURCE),
+        _source(DashboardPageId.opportunity_scanner, "data/reports/aibot_parity/aibot_parity_e2e_snapshot_v1.json", SourceKind.FUTURE_SOURCE),
         _generated(DashboardPageId.opportunity_scanner),
     ),
     DashboardPageId.ai_governance: (
@@ -135,6 +136,7 @@ SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
         _source(DashboardPageId.ai_governance, "data/reports/qlib_ocr_v11_shadow_model_candidate_registry_report.json"),
         _source(DashboardPageId.ai_governance, "data/reports/ai_shadow_online_feedback_learning_loop_report.json"),
         _source(DashboardPageId.ai_governance, "data/reports/freqtrade_paper_ai_selector_integration_report.json"),
+        _source(DashboardPageId.ai_governance, "data/reports/aibot_parity/aibot_parity_e2e_snapshot_v1.json", SourceKind.FUTURE_SOURCE),
         _generated(DashboardPageId.ai_governance),
     ),
     DashboardPageId.active_controls: (
@@ -178,6 +180,7 @@ SOURCE_CATALOG: dict[DashboardPageId, tuple[DashboardSourceContract, ...]] = {
         _source(DashboardPageId.quantitative_reports, "data/reports/training_dataset_summary.json"),
         _source(DashboardPageId.quantitative_reports, "data/reports/ai_shadow_filter_incremental_daily_summary.json"),
         _source(DashboardPageId.quantitative_reports, "data/reports/financial_event_log.jsonl"),
+        _source(DashboardPageId.quantitative_reports, "data/reports/aibot_parity/aibot_parity_e2e_snapshot_v1.json", SourceKind.FUTURE_SOURCE),
         _generated(DashboardPageId.quantitative_reports),
     ),
     DashboardPageId.alerts_messaging: (
