@@ -87,3 +87,17 @@ def test_audit_result_is_deterministic_for_same_tree(tmp_path: Path) -> None:
 
     assert first == second
     assert first["audit_sha256"] == second["audit_sha256"]
+
+
+def test_repository_tree_satisfies_software_dod_without_paper_release() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+
+    result = auditor.audit_aibot_parity_v2(project_root)
+
+    assert result["aibot_parity_v2_software_dod"] == "PASS"
+    assert result["waves"]["W10"]["status"] == "BLOCKED_EXTERNAL"
+    assert result["waves"]["W11"]["status"] == "CONDITIONAL_NOT_RUN"
+    assert result["waves"]["W14"]["status"] == "PASS"
+    assert result["ready_for_paper_candidate_evaluation"] is True
+    assert result["paper_treatment_release_allowed"] is False
+    assert result["paper_activation_performed"] is False
