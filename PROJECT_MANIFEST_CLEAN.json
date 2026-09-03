@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ddc5c3f74b19616c1922102786be46781bbe2be9e88cf98d9b049fd0c950de86",
+  "aggregate_sha256": "9579576b658b8f69ef2817e5e996a3752f744ce88dc388c79df46221b1efc08e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 302,
-    "manifested_files_total": 1935,
-    "python_files": 1504,
+    "docs_files": 303,
+    "manifested_files_total": 1940,
+    "python_files": 1508,
     "runtime_excluded_files_total": 0,
-    "test_files": 403,
-    "tracked_files_total": 1936,
+    "test_files": 404,
+    "tracked_files_total": 1941,
     "workflows": 1
   },
   "deterministic": true,
@@ -1422,6 +1422,12 @@
       "hash_mode": "text_lf",
       "path": "docs/MARKET_FEATURES_LOOKAHEAD_CLEANUP.md",
       "sha256": "456f34bdda28f6368216e775451a3762ffe796f9fd58b7ec0570b4db6ae3016b"
+    },
+    {
+      "bytes": 3991,
+      "hash_mode": "text_lf",
+      "path": "docs/MARKET_FEATURES_REMATERIALIZATION_RESEARCH_V2.md",
+      "sha256": "c9e4f7e86ef230d4c07b23a153e840f9fe78e98d468e05287344b65470effa92"
     },
     {
       "bytes": 3926,
@@ -4452,6 +4458,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/run_market_data_health_audit.py",
       "sha256": "ae0efdcdd221a1ac180a0311d3c90c00352da8e0798e6bf5b29bb10e4ea05446"
+    },
+    {
+      "bytes": 4548,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_market_features_rematerialization_research_v2.py",
+      "sha256": "3b2608f374981d142523664c5cee30f32c742c63d7ac5e6e834f7bfc13d6d4a4"
     },
     {
       "bytes": 5215,
@@ -7976,6 +7988,18 @@
       "sha256": "39f0f3d4a4048f1ade34fadd769402230743126307a8d5fc4b121aa3d36ac924"
     },
     {
+      "bytes": 378,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_features_rematerialization_research_v2/__init__.py",
+      "sha256": "57ad964189a9abf1c5f9830a421dc43c2de682a989de013bb70521c94b62c420"
+    },
+    {
+      "bytes": 23617,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/market_features_rematerialization_research_v2/engine.py",
+      "sha256": "fac8b459deaec04caa11150e6eb0678b3900f3d56fbf6c7cbfd238f100bb4528"
+    },
+    {
       "bytes": 1034,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/market_intelligence/__init__.py",
@@ -10362,6 +10386,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_market_features_no_lookahead_schema_contract.py",
       "sha256": "719de299af2775a1b566699cf1d396dee818d9b4aa49b38829801a2860495ea5"
+    },
+    {
+      "bytes": 7696,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_features_rematerialization_research_v2.py",
+      "sha256": "90600a2452ea171e60da53ddc6106f83874cf8777da60fb6f0ca0c957ce5290f"
     },
     {
       "bytes": 4795,
