@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1fb32dc830ae96eb00d993f66e19e63f5e6322e426c7d801214cfd6c5ebcef70",
+  "aggregate_sha256": "ddc5c3f74b19616c1922102786be46781bbe2be9e88cf98d9b049fd0c950de86",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 301,
-    "manifested_files_total": 1934,
+    "docs_files": 302,
+    "manifested_files_total": 1935,
     "python_files": 1504,
     "runtime_excluded_files_total": 0,
     "test_files": 403,
-    "tracked_files_total": 1935,
+    "tracked_files_total": 1936,
     "workflows": 1
   },
   "deterministic": true,
@@ -1998,6 +1998,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PHASE5_INCREMENTAL_OCR_IMPORTER.md",
       "sha256": "44e83e741cef88157d06a736656526a6b3abbfa7d7caaea3269a894c3cc8db61"
+    },
+    {
+      "bytes": 6649,
+      "hash_mode": "text_lf",
+      "path": "docs/POST_P07_INDEPENDENT_READINESS_GAP_AUDIT_V1.md",
+      "sha256": "cef623144ecb56832d5e315e1b6ba178c85753ad01a13d6f6602413170877431"
     },
     {
       "bytes": 3071,
