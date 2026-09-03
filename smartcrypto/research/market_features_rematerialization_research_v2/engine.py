@@ -287,7 +287,7 @@ def align_point_in_time_features(
     for symbol in sorted(output.loc[eligible, "symbol"].dropna().unique()):
         left_indices = output.index[output.index.isin(eligible) & output["symbol"].eq(symbol)]
         left = output.loc[left_indices, ["open_time_utc"]].copy()
-        left["_source_index"] = left.index
+        left["source_index"] = left.index
         right = features.loc[features["symbol"].eq(symbol)].copy()
         if right.empty:
             continue
@@ -300,7 +300,7 @@ def align_point_in_time_features(
             allow_exact_matches=True,
         )
         for row in merged.itertuples(index=False):
-            index = int(row._source_index)
+            index = int(row.source_index)
             output.at[index, "feature_timestamp_utc"] = row.candle_timestamp_utc
             output.at[index, "feature_available_at_utc"] = row.available_at_utc
             if pd.notna(row.available_at_utc):
