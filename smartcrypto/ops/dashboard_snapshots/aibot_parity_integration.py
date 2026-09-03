@@ -32,6 +32,8 @@ def build_aibot_parity_dashboard_section(
             projection_key=projection_key,
             operational_authority=False,
             writes_active_signals=False,
+            signal_published=False,
+            riskmanager_final_authority=True,
         )
 
     dashboard = payload.get("dashboard")
@@ -48,11 +50,15 @@ def build_aibot_parity_dashboard_section(
             projection_key=projection_key,
             operational_authority=False,
             writes_active_signals=False,
+            signal_published=False,
+            riskmanager_final_authority=True,
         )
 
     normalized = dict(projection)
+    projection_status = normalized.pop("status", None)
+    normalized["projection_status"] = projection_status
     normalized["cycle_id"] = payload.get("cycle_id", normalized.get("cycle_id"))
-    normalized["pipeline_status"] = payload.get("status", normalized.get("status"))
+    normalized["pipeline_status"] = payload.get("status", projection_status)
     normalized["pipeline_reason"] = payload.get("reason")
     normalized["qlib_status"] = payload.get(
         "qlib_status", normalized.get("qlib_status", "BLOCKED_EXTERNAL")
@@ -62,7 +68,7 @@ def build_aibot_parity_dashboard_section(
     normalized["signal_published"] = False
     normalized["riskmanager_final_authority"] = True
     return section(
-        _dashboard_status(normalized.get("status") or payload.get("status")),
+        _dashboard_status(projection_status or payload.get("status")),
         "aibot_parity_e2e_readonly_projection",
         **normalized,
     )
