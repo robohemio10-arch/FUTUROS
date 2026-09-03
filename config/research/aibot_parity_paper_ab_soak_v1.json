@@ -1,0 +1,20 @@
+{
+  "schema_version": "aibot_parity_paper_ab_soak_preregistration_v1",
+  "experiment_id": "aibot-parity-paper-ab-soak-v1",
+  "preregistered_start_utc": "2026-09-03T19:55:50Z",
+  "software_dod_merge_sha": "2daa54c47b033b5951ebf6f2ff7fa615beab3ee8",
+  "assignment_salt_version": "sha256-v1",
+  "minimum_observations_per_arm": 200,
+  "minimum_observation_days": 45,
+  "minimum_profit_factor": 1.1,
+  "bootstrap_iterations": 5000,
+  "bootstrap_seed": 20260820,
+  "confidence_level": 0.95,
+  "control_definition": "FREQTRADE_PAPER_BASELINE_OBSERVED_ONLY",
+  "treatment_definition": "AIBOT_PARITY_SHADOW_COUNTERFACTUAL_ONLY",
+  "traffic_split_performed": false,
+  "paper_behavior_changed": false,
+  "paper_treatment_release_allowed": false,
+  "paper_activation_performed": false,
+  "operational_authority": false
+}
