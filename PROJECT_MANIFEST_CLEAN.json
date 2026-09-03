@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "aac927439ccd388c784d324ecac025331a7088fa006cff8760af6315cb77250a",
+  "aggregate_sha256": "9806dcf6ccf0e093eae52058ddb094d037f97ef8fa12a59a4f3fbdca733245b7",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 303,
-    "manifested_files_total": 1948,
-    "python_files": 1516,
+    "docs_files": 304,
+    "manifested_files_total": 1953,
+    "python_files": 1520,
     "runtime_excluded_files_total": 0,
-    "test_files": 406,
-    "tracked_files_total": 1949,
+    "test_files": 407,
+    "tracked_files_total": 1954,
     "workflows": 1
   },
   "deterministic": true,
@@ -690,6 +690,12 @@
       "hash_mode": "text_lf",
       "path": "docs/ADR_001_QLIB_24X7_INTEGRATION_MODE_V1.md",
       "sha256": "2b181c43aa52483d271283c9f66d49256381ed221ab8a6df9067e5842efc0183"
+    },
+    {
+      "bytes": 2843,
+      "hash_mode": "text_lf",
+      "path": "docs/AIBOT_PARITY_V2_FINAL_DOD_V1.md",
+      "sha256": "5ec8446fd47aebaf129b84f6b324493322fff125af781841e9b468dc2cb216b0"
     },
     {
       "bytes": 4419,
@@ -2628,6 +2634,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_ai_unified_feature_contract.py",
       "sha256": "ab4ce3dcf211138da1a31242a169b850326c6dad5ea34b4d939fe1170a20d88d"
+    },
+    {
+      "bytes": 857,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_aibot_parity_v2_dod.py",
+      "sha256": "79316dacae601a10e49e5e79a7518f8c5fe10f76f09685f5d39bf5d53599a15b"
     },
     {
       "bytes": 1894,
@@ -7718,6 +7730,18 @@
       "sha256": "096b9c23a349d07e10e2243503b9b87da10c3bee2c1317a975f89e34bf21dbb1"
     },
     {
+      "bytes": 204,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_v2_closeout/__init__.py",
+      "sha256": "7d7fd0deb40adf3ca03ddf6740e9512c4b024bcec6b29a11963b713dbe9348ef"
+    },
+    {
+      "bytes": 8822,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_v2_closeout/auditor.py",
+      "sha256": "dff78d2f490d572a3760f10d82f2c3464ea67c723dcfb71015ab9024122924f6"
+    },
+    {
       "bytes": 22548,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/binance_futures_15s_redownload.py",
@@ -9426,6 +9450,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_parity_local_pipeline_v1.py",
       "sha256": "682d4c31086cf421852698aa2206d1e1edec185f34d7694ce6f75c35c230092a"
+    },
+    {
+      "bytes": 4015,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_parity_v2_final_dod_audit_v1.py",
+      "sha256": "364a0de24bfae88bb246b0247d1f75531a208b4b4cd94ec7b841cc7ec4d8bb13"
     },
     {
       "bytes": 3282,
