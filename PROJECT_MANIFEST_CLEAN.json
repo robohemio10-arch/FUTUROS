@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "380cc9b53b9bc4c4fa39af7fae1ad1b63d36f3c00a267a204e330365ee7188dc",
+  "aggregate_sha256": "9579576b658b8f69ef2817e5e996a3752f744ce88dc388c79df46221b1efc08e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1424,10 +1424,10 @@
       "sha256": "456f34bdda28f6368216e775451a3762ffe796f9fd58b7ec0570b4db6ae3016b"
     },
     {
-      "bytes": 3822,
+      "bytes": 3991,
       "hash_mode": "text_lf",
       "path": "docs/MARKET_FEATURES_REMATERIALIZATION_RESEARCH_V2.md",
-      "sha256": "72411ddfc794996f2805c5588613ddb95c654b6218c7b80f28492a2f73ff46e0"
+      "sha256": "c9e4f7e86ef230d4c07b23a153e840f9fe78e98d468e05287344b65470effa92"
     },
     {
       "bytes": 3926,
@@ -4460,10 +4460,10 @@
       "sha256": "ae0efdcdd221a1ac180a0311d3c90c00352da8e0798e6bf5b29bb10e4ea05446"
     },
     {
-      "bytes": 4497,
+      "bytes": 4548,
       "hash_mode": "text_lf",
       "path": "scripts/run_market_features_rematerialization_research_v2.py",
-      "sha256": "3ccd86959bd743b3c1d7ebaeef80b2d044454929f8570ec8404c258008f49cc2"
+      "sha256": "3b2608f374981d142523664c5cee30f32c742c63d7ac5e6e834f7bfc13d6d4a4"
     },
     {
       "bytes": 5215,
