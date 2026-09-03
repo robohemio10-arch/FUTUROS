@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "15ff4ccacb0ab4791cd21015a5ef5bcd18198e39d62368cbb06fc5a0793824a1",
+  "aggregate_sha256": "6952c4eccc15e030fbb228ebfba7491e695dc09ad761a4edc05a9fac271a1baf",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -2531,7 +2531,7 @@
       "bytes": 1767,
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
-      "sha256": "93a001e6cf07e8600975d02d6b97044c9c6f1195a3c30a7756d418fb378166a5"
+      "sha256": "4b4fa92b92bd2899f9cb3d9792683b92f2a85cd98b361fdfad59f4d626ae69ef"
     },
     {
       "bytes": 1771,
