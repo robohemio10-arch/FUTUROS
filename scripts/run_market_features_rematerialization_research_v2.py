@@ -15,7 +15,6 @@ from smartcrypto.research.market_features_rematerialization_research_v2 import (
     write_research_report,
 )
 
-DEFAULT_TRADES = Path("data/trades/trades_master.parquet")
 DEFAULT_CANDLES = Path("data/features/market_features_60d.parquet")
 DEFAULT_REPORT = Path("data/reports/market_features_rematerialization_research_v2.json")
 
@@ -25,7 +24,11 @@ def parse_args() -> argparse.Namespace:
         description="Rematerialize point-in-time 5m features for research only."
     )
     parser.add_argument("--project-root", default=".")
-    parser.add_argument("--trades-path", default=str(DEFAULT_TRADES))
+    parser.add_argument(
+        "--trades-path",
+        required=True,
+        help="Explicit read-only research trade dataset path; no legacy Master default is assumed.",
+    )
     parser.add_argument("--candles-path", default=str(DEFAULT_CANDLES))
     parser.add_argument("--run-challenger", action="store_true")
     parser.add_argument("--write-report", action="store_true")
