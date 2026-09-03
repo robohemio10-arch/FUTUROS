@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "6952c4eccc15e030fbb228ebfba7491e695dc09ad761a4edc05a9fac271a1baf",
+  "aggregate_sha256": "1fb32dc830ae96eb00d993f66e19e63f5e6322e426c7d801214cfd6c5ebcef70",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 301,
-    "manifested_files_total": 1933,
-    "python_files": 1503,
+    "manifested_files_total": 1934,
+    "python_files": 1504,
     "runtime_excluded_files_total": 0,
-    "test_files": 402,
-    "tracked_files_total": 1934,
+    "test_files": 403,
+    "tracked_files_total": 1935,
     "workflows": 1
   },
   "deterministic": true,
@@ -8858,10 +8858,10 @@
       "sha256": "68d215b2ace632bae8b53a142c2e13b989ed8e26e58b590e773878d87e40d915"
     },
     {
-      "bytes": 3282,
+      "bytes": 4568,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/shadow_opportunity_engine/persistence.py",
-      "sha256": "1da3fe6482f10760551232568c3a02e91bb57b5facc9d7cf2bb93b76c359d3ab"
+      "sha256": "e78cb956d87ec1b0f99852d0dd78dd766aa2e3863a9e3d5015e6d76f8fcb486c"
     },
     {
       "bytes": 39787,
@@ -11448,6 +11448,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_shadow_opportunity_engine_v1.py",
       "sha256": "b7b906dffb266ab57ba1a953b9d277eaa93de122482e39cc2813f9d2b1430640"
+    },
+    {
+      "bytes": 1705,
+      "hash_mode": "text_lf",
+      "path": "tests/test_shadow_opportunity_ledger_concurrency_path_hardening_v1.py",
+      "sha256": "83b522dee499e5277724d8c4c9e26870f5ef65809677aad61728758beb22cfc3"
     },
     {
       "bytes": 5145,
