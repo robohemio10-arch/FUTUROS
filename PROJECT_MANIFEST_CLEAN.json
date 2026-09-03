@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9579576b658b8f69ef2817e5e996a3752f744ce88dc388c79df46221b1efc08e",
+  "aggregate_sha256": "40654708c0891103da1bf6f3826bc9863045c58ec4d6819fc30a6542da0fc197",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 303,
-    "manifested_files_total": 1940,
-    "python_files": 1508,
+    "manifested_files_total": 1948,
+    "python_files": 1516,
     "runtime_excluded_files_total": 0,
-    "test_files": 404,
-    "tracked_files_total": 1941,
+    "test_files": 406,
+    "tracked_files_total": 1949,
     "workflows": 1
   },
   "deterministic": true,
@@ -4394,6 +4394,12 @@
       "sha256": "958143d4bbcfcbf8971e3aec1cea547d38ec9b46d2de26bd61ac57bc0438a000"
     },
     {
+      "bytes": 4574,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_aibot_parity_local_pipeline_v1.py",
+      "sha256": "93a715d6f638c5f1eb8c87414091ee98b7668dfa3ff6220e7926d1404299e048"
+    },
+    {
       "bytes": 1408,
       "hash_mode": "text_lf",
       "path": "scripts/run_backup_snapshot.py",
@@ -5030,10 +5036,10 @@
       "sha256": "0550311e0492480244149d832b2dde095acc253bb427df976d99f6f79f0d3352"
     },
     {
-      "bytes": 4002,
+      "bytes": 4972,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/components/read_only.py",
-      "sha256": "532fadf3a843cb98bcb8fc69f5732a3028d8b080cf677c11c9ccdc892cc72724"
+      "sha256": "2e2f8b9d650c632cc1fd24d323546a19af968ece02a188167c4e26b3be75902a"
     },
     {
       "bytes": 2649,
@@ -7184,16 +7190,22 @@
       "sha256": "fbde1809d82cf20a3f7b0937f9550447efcadd3bb934a025fe26fc0d07151357"
     },
     {
-      "bytes": 9078,
+      "bytes": 9339,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/ai_governance_snapshot_builder.py",
-      "sha256": "67705d4bcb9a42852871b72adeff1d7c9ab386eaebf67eaed2b70419ac8a842a"
+      "sha256": "9556016c949872f302a47f84837162e692e5c16a3c90049417810edd8591ae17"
     },
     {
       "bytes": 15537,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/ai_training_research_command_center.py",
       "sha256": "4f67736504f9425c46ee1471b2de1b8efc6341844f1a12b5e609d28bfeaa2fec"
+    },
+    {
+      "bytes": 2888,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dashboard_snapshots/aibot_parity_integration.py",
+      "sha256": "c805a1493cb8b582be996d8492c0813f4ef2396b8e144d0b6545285d215ad633"
     },
     {
       "bytes": 7333,
@@ -7244,10 +7256,10 @@
       "sha256": "3f694607451737d9e7f7ecfa0c499dd25ecb0a9b4e3926025eecbc715b2734dc"
     },
     {
-      "bytes": 5673,
+      "bytes": 5928,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/opportunity_scanner_snapshot_builder.py",
-      "sha256": "6dfb8edb4c7de1de7b3300760f6ba33852f6a3af26bdef3c503c92719e3de183"
+      "sha256": "fdd0b7130e7182196c92389aec026ceb5e9c24a92e07aee5f4fb2170495ea8d2"
     },
     {
       "bytes": 7278,
@@ -7256,10 +7268,10 @@
       "sha256": "b6f4fa9470d2e84f73db54c00cbe3f6274fb95ab288eb4e612acec0d752cbaa8"
     },
     {
-      "bytes": 10980,
+      "bytes": 11236,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/quantitative_reports_snapshot_builder.py",
-      "sha256": "7f6f547a6dabe800f9e8cec5ea52581c30ff4b5b6670b06716b11593783cbb62"
+      "sha256": "a7d741344e05a672cafdb1d246e49651d4c01a06176b8748cf93e58c0ebf7de4"
     },
     {
       "bytes": 23797,
@@ -7322,10 +7334,10 @@
       "sha256": "9edc93e546b9e143ad63aa4fc9f6fe4da6a5ba9fff2a1b5f0ea4ecaa7071f191"
     },
     {
-      "bytes": 17567,
+      "bytes": 17991,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/source_catalog.py",
-      "sha256": "097cbd142e28ebbe5e1c204e729660816bbe99604680971290b467a32d16da77"
+      "sha256": "84d8ecb298f9d1e258c24632b1f6f183a99abcede1fb411e6f6b56649e4c5b30"
     },
     {
       "bytes": 34362,
@@ -7680,6 +7692,30 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/trader_master_loader.py",
       "sha256": "76c650fb3c9e2acf459108380a57bb6baeedc3bb8752c4b271c4eb994e5c1b74"
+    },
+    {
+      "bytes": 922,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_orchestrator/__init__.py",
+      "sha256": "21cb23ecadad1d67ab31f3fb0bcc952a7e9163fda1f4590d87e1b80fd8f7402a"
+    },
+    {
+      "bytes": 5312,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_orchestrator/contracts.py",
+      "sha256": "70c378f77b9bf1fc058f85d2ff30c890794750ff170ee5106f207bd8ec438780"
+    },
+    {
+      "bytes": 12731,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_orchestrator/orchestrator.py",
+      "sha256": "98a36bc119a65246c73eafbdaf3e2e68dd5167c04f622e917c29413aa5af33d2"
+    },
+    {
+      "bytes": 2672,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_orchestrator/persistence.py",
+      "sha256": "096b9c23a349d07e10e2243503b9b87da10c3bee2c1317a975f89e34bf21dbb1"
     },
     {
       "bytes": 22548,
@@ -9378,6 +9414,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_behavior_fingerprint_v1.py",
       "sha256": "d23dd9cf31b0a1dc40853097203a7399217842631befa6f855ee723aa0f69d44"
+    },
+    {
+      "bytes": 5264,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_parity_dashboard_and_orchestrator_v1.py",
+      "sha256": "a5b33be698ae02ed9c549ed08696ed7975b58a3451f871ecdb6fe71083d42e2b"
+    },
+    {
+      "bytes": 7008,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_parity_local_pipeline_v1.py",
+      "sha256": "682d4c31086cf421852698aa2206d1e1edec185f34d7694ce6f75c35c230092a"
     },
     {
       "bytes": 3282,
