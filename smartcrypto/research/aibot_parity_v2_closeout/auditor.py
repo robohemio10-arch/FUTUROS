@@ -13,26 +13,28 @@ SCHEMA_VERSION = "aibot_parity_v2_final_dod_v1"
 # any subsystem, provider, model, exchange adapter, runtime service or builder.
 WAVE_EVIDENCE: dict[str, tuple[str, ...]] = {
     "W1": (
-        "smartcrypto/research/aibot_parity/trader_master_benchmark.py",
-        "smartcrypto/research/aibot_parity/metrics.py",
-        "smartcrypto/research/aibot_parity/schemas.py",
+        "smartcrypto/research/aibot_parity/benchmark_engine.py",
+        "smartcrypto/research/aibot_parity/contracts.py",
+        "smartcrypto/research/aibot_parity/performance_reconciliation.py",
+        "smartcrypto/research/aibot_parity/trader_master_loader.py",
     ),
     "W2": (
         "smartcrypto/research/research_council/contracts.py",
-        "smartcrypto/research/research_council/engine.py",
+        "smartcrypto/research/research_council/consensus.py",
         "smartcrypto/research/research_council/persistence.py",
+        "smartcrypto/research/research_council/service.py",
     ),
     "W3": (
         "smartcrypto/research/market_intelligence/contracts.py",
-        "smartcrypto/research/market_intelligence/engine.py",
-        "smartcrypto/research/market_intelligence/snapshot_store.py",
+        "smartcrypto/research/market_intelligence/feature_builder.py",
+        "smartcrypto/research/market_intelligence/snapshot.py",
         "smartcrypto/research/market_features_rematerialization_research_v2/engine.py",
     ),
     "W4": (
-        "smartcrypto/research/aibot_parity/market_segmentation.py",
         "smartcrypto/research/ensemble_abstention/contracts.py",
         "smartcrypto/research/ensemble_abstention/ensemble.py",
         "smartcrypto/research/ensemble_abstention/regime_router.py",
+        "smartcrypto/research/ensemble_abstention/service.py",
     ),
     "W5": (
         "smartcrypto/research/portfolio_intelligence/opportunity_book.py",
