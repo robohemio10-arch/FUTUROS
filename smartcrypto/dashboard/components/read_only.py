@@ -96,12 +96,48 @@ def render_snapshot_page(
         render_missing_snapshot_state(snapshot_path, ui=target_ui)
     render_metric_cards(snapshot, metric_specs, ui=target_ui)
     sections = snapshot.get("sections")
+    effective_section_order = _section_order_with_aibot_parity(
+        sections,
+        section_order,
+    )
     target_ui.subheader("Status das seções")
-    render_section_status_table(sections, ui=target_ui, section_order=section_order)
-    render_section_details(sections, ui=target_ui, section_order=section_order)
+    render_section_status_table(
+        sections,
+        ui=target_ui,
+        section_order=effective_section_order,
+    )
+    render_section_details(
+        sections,
+        ui=target_ui,
+        section_order=effective_section_order,
+    )
     if render_chrome:
         render_audit_footer(snapshot.get("audit"), ui=target_ui)
         render_footer_audit_bar(snapshot_path, ui=target_ui)
+
+
+def _section_order_with_aibot_parity(
+    sections: Any,
+    section_order: Sequence[str],
+) -> tuple[str, ...]:
+    """Expose W12/W13 projection only when a builder materializes it.
+
+    Existing pages keep their canonical order and behavior when the E2E projection is
+    absent.  The dashboard remains a read-only presenter and never creates the section.
+    """
+
+    ordered = list(section_order)
+    if not isinstance(sections, Mapping) or "aibot_parity" not in sections:
+        return tuple(ordered)
+    if "aibot_parity" in ordered:
+        return tuple(ordered)
+    try:
+        audit_index = ordered.index("audit")
+    except ValueError:
+        ordered.append("aibot_parity")
+    else:
+        ordered.insert(audit_index, "aibot_parity")
+    return tuple(ordered)
 
 
 def render_snapshot_header_metadata(snapshot: Mapping[str, Any], *, ui: Any) -> None:
