@@ -1,14 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
+from smartcrypto.dashboard.components.read_only import _section_order_with_aibot_parity
 from smartcrypto.ops.dashboard_snapshots.aibot_parity_integration import (
     AIBOT_PARITY_REPORT_PATH,
     build_aibot_parity_dashboard_section,
 )
-from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId
+from smartcrypto.ops.dashboard_snapshots.ai_governance_snapshot_builder import (
+    REQUIRED_SECTIONS as AI_GOVERNANCE_SECTIONS,
+)
+from smartcrypto.ops.dashboard_snapshots.contracts import DashboardPageId, SourceKind
+from smartcrypto.ops.dashboard_snapshots.opportunity_scanner_snapshot_builder import (
+    REQUIRED_SECTIONS as OPPORTUNITY_SECTIONS,
+)
+from smartcrypto.ops.dashboard_snapshots.quantitative_reports_snapshot_builder import (
+    REQUIRED_SECTIONS as QUANTITATIVE_SECTIONS,
+)
 from smartcrypto.ops.dashboard_snapshots.source_catalog import sources_for_page
 
 
@@ -35,8 +44,13 @@ def test_source_catalog_registers_e2e_report_for_pages_04_05_07() -> None:
         DashboardPageId.ai_governance,
         DashboardPageId.quantitative_reports,
     ):
-        paths = {source.path for source in sources_for_page(page_id)}
-        assert AIBOT_PARITY_REPORT_PATH in paths
+        matches = [
+            source
+            for source in sources_for_page(page_id)
+            if source.path == AIBOT_PARITY_REPORT_PATH
+        ]
+        assert len(matches) == 1
+        assert matches[0].source_kind is SourceKind.FUTURE_SOURCE
 
 
 def test_projection_missing_is_unknown_and_fail_closed() -> None:
@@ -115,14 +129,22 @@ def test_page_07_projection_exposes_e2e_coverage_without_authority() -> None:
     assert section["operational_authority"] is False
 
 
-def test_pages_declare_aibot_parity_section() -> None:
-    root = Path(__file__).resolve().parents[1]
-    paths = (
-        root / "smartcrypto/dashboard/pages/04_opportunity_scanner.py",
-        root / "smartcrypto/dashboard/pages/05_ai_governance.py",
-        root / "smartcrypto/dashboard/pages/07_quantitative_reports.py",
+def test_builders_and_readonly_renderer_expose_aibot_parity_section() -> None:
+    for sections in (
+        OPPORTUNITY_SECTIONS,
+        AI_GOVERNANCE_SECTIONS,
+        QUANTITATIVE_SECTIONS,
+    ):
+        assert "aibot_parity" in sections
+
+    rendered = _section_order_with_aibot_parity(
+        {"status": {}, "aibot_parity": {}, "audit": {}},
+        ("status", "audit"),
     )
-    for path in paths:
-        source = path.read_text(encoding="utf-8")
-        assert '"aibot_parity"' in source
-        assert "writes_active_signals" in source
+    assert rendered == ("status", "aibot_parity", "audit")
+
+    unchanged = _section_order_with_aibot_parity(
+        {"status": {}, "audit": {}},
+        ("status", "audit"),
+    )
+    assert unchanged == ("status", "audit")
