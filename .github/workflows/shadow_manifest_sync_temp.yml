@@ -32,10 +32,10 @@ jobs:
 
       - name: Remove one-shot helper and regenerate manifest
         run: |
-          rm .github/workflows/shadow_manifest_sync_temp.yml
+          git rm .github/workflows/shadow_manifest_sync_temp.yml
           python scripts/generate_project_manifest.py
           python scripts/generate_project_manifest.py --check
-          git add -A
+          git add PROJECT_MANIFEST_CLEAN.json
           git diff --cached --check
-          git commit -m "Sincroniza shadow hardening com dev e manifesto" || true
+          git commit -m "Sincroniza shadow hardening com dev e manifesto"
           git push origin HEAD:codex/shadow-opportunity-ledger-concurrency-path-hardening-v1
