@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from smartcrypto.ops.dashboard_snapshots.aibot_parity_integration import (
+    build_aibot_parity_dashboard_section,
+)
 from smartcrypto.ops.dashboard_snapshots.build_context import DashboardBuildContext
 from smartcrypto.ops.dashboard_snapshots.builder_common import (
     build_snapshot_envelope,
@@ -28,6 +31,7 @@ REQUIRED_SECTIONS = (
     "opportunity_ranking",
     "events",
     "governance",
+    "aibot_parity",
     "audit",
 )
 
@@ -125,6 +129,9 @@ def build_opportunity_scanner_snapshot(context: DashboardBuildContext) -> dict[s
         "opportunity_ranking": section(DashboardSectionStatus.OK if ranking else DashboardSectionStatus.UNKNOWN, ranking=ranking),
         "events": section(DashboardSectionStatus.OK, events=records(first_payload(sources, "financial_event_log"))[-50:]),
         "governance": section(DashboardSectionStatus.OK, **governance),
+        "aibot_parity": build_aibot_parity_dashboard_section(
+            sources, "opportunity_scanner"
+        ),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True),
     }
     return build_snapshot_envelope(

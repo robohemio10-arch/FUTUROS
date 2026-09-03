@@ -4,6 +4,9 @@ import math
 from itertools import accumulate
 from typing import Any
 
+from smartcrypto.ops.dashboard_snapshots.aibot_parity_integration import (
+    build_aibot_parity_dashboard_section,
+)
 from smartcrypto.ops.dashboard_snapshots.build_context import DashboardBuildContext
 from smartcrypto.ops.dashboard_snapshots.builder_common import (
     all_source_payloads,
@@ -34,6 +37,7 @@ REQUIRED_SECTIONS = (
     "soak_gap_accounting",
     "exports",
     "institutional_score",
+    "aibot_parity",
     "audit",
 )
 
@@ -197,6 +201,9 @@ def build_quantitative_reports_snapshot(context: DashboardBuildContext) -> dict[
         ),
         "exports": section(DashboardSectionStatus.OK, readonly=True, writes_training_dataset=False, writes_trades_master=False),
         "institutional_score": section(DashboardSectionStatus.OK, score=institutional, weights={"robustness": 0.25, "risk": 0.25, "tca": 0.20, "recovery": 0.15, "consistency": 0.10, "winrate": 0.05}),
+        "aibot_parity": build_aibot_parity_dashboard_section(
+            sources, "quantitative_reports"
+        ),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True),
     }
     return build_snapshot_envelope(
