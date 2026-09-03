@@ -3,6 +3,9 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from smartcrypto.ops.dashboard_snapshots.aibot_parity_integration import (
+    build_aibot_parity_dashboard_section,
+)
 from smartcrypto.ops.dashboard_snapshots.build_context import DashboardBuildContext
 from smartcrypto.ops.dashboard_snapshots.ai_training_research_command_center import (
     RESEARCH_SOURCE_PATHS,
@@ -37,6 +40,7 @@ REQUIRED_SECTIONS = (
     "reward_research",
     "model_governance",
     "ai_training_research_command_center",
+    "aibot_parity",
     "audit",
 )
 
@@ -166,6 +170,9 @@ def build_ai_governance_snapshot(context: DashboardBuildContext) -> dict[str, An
         "shadow_classification_metrics": section(DashboardSectionStatus.OK if tp + fp + tn + fn else DashboardSectionStatus.UNKNOWN, **metrics),
         "reward_research": section(DashboardSectionStatus.UNKNOWN, research_only=True),
         "model_governance": section(DashboardSectionStatus.OK, auto_promotion_allowed=False, live_model_promotion_allowed=False, model_promotion_allowed_from_dashboard=False, accuracy_is_primary_metric=False, promotion_status=HardBlockStatus.HARD_BLOCKED.value),
+        "aibot_parity": build_aibot_parity_dashboard_section(
+            operational_sources, "ai_governance"
+        ),
         "audit": section(DashboardSectionStatus.OK, dashboard_reads_only=True, trains_model=False, promotes_model=False),
     }
     snapshot = build_snapshot_envelope(
