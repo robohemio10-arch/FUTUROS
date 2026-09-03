@@ -1,0 +1,41 @@
+name: Shadow branch manifest sync temp
+
+on:
+  push:
+    branches:
+      - codex/shadow-opportunity-ledger-concurrency-path-hardening-v1
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Merge certified dev without rebase
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin dev
+          git merge --no-edit origin/dev
+
+      - name: Remove one-shot helper and regenerate manifest
+        run: |
+          rm .github/workflows/shadow_manifest_sync_temp.yml
+          python scripts/generate_project_manifest.py
+          python scripts/generate_project_manifest.py --check
+          git add -A
+          git diff --cached --check
+          git commit -m "Sincroniza shadow hardening com dev e manifesto" || true
+          git push origin HEAD:codex/shadow-opportunity-ledger-concurrency-path-hardening-v1
