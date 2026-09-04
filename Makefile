@@ -7,9 +7,8 @@ BANDIT_TARGETS ?= smartcrypto/runtime smartcrypto/ops/backup_restore.py smartcry
 .PHONY: install test test-fast compile lint typecheck security audit paper-check clean-cache
 
 install:
-	$(PIP) install --upgrade pip setuptools wheel
-	$(PIP) install -r requirements-dev.lock
-	$(PIP) install --no-deps -e .
+	$(PIP) install --require-hashes -r requirements-dev.lock
+	$(PIP) install --no-build-isolation --no-deps -e .
 
 compile:
 	$(PYTHON) -m compileall scripts smartcrypto tests

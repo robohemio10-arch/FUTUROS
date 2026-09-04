@@ -261,7 +261,7 @@ def scan_dockerfile(
         requirement_files = REQUIREMENT_OPTION_PATTERN.findall(line)
         if not requirement_files or "--no-deps -e ." in line:
             continue
-        protected = any(name.lower().endswith(".lock") for name in requirement_files) or "-c " in line or "--constraint " in line
+        protected = "--require-hashes" in line or any(name.lower().endswith(".lock") for name in requirement_files) or "-c " in line or "--constraint " in line
         if not protected:
             severity = "medium" if temporary_exception_allowed else "high"
             findings.append(

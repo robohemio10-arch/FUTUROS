@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "3fee9225ce662669e9d34b1f5aecf39ee5d6baf8c54edf4fb408ba4e3ea58094",
+  "aggregate_sha256": "8c54637133fb820ceda5ce089d80a035e9019f79246e97d8ec1267782e33cae1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 1981,
+    "manifested_files_total": 1983,
     "python_files": 1538,
     "runtime_excluded_files_total": 0,
     "test_files": 411,
-    "tracked_files_total": 1982,
+    "tracked_files_total": 1984,
     "workflows": 2
   },
   "deterministic": true,
@@ -32,16 +32,16 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 4022,
+      "bytes": 4327,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "120a1bfd3a6ae45d5f2c5df217b4d50b6584bcbed73f19e1566b14e2fd8a37ce"
+      "sha256": "9e805709c6b409d3794ab61043c819e5dd842cd77268d64bf606815ae28caa74"
     },
     {
-      "bytes": 3719,
+      "bytes": 3879,
       "hash_mode": "text_lf",
       "path": ".github/workflows/security-resolution.yml",
-      "sha256": "cbeda44dccf23536954f9a1879ac62867b44d11df666a1bc7407db0c2484a122"
+      "sha256": "d1d3977e31ce135d69b8409838447b5178932c1c4941483aa9c50d1d58c3f0fd"
     },
     {
       "bytes": 2294,
@@ -62,10 +62,10 @@
       "sha256": "508599ae25c910119dfbb13f034e0271992269942cfdf90f4882dfaee7eade14"
     },
     {
-      "bytes": 4202,
+      "bytes": 4193,
       "hash_mode": "text_lf",
       "path": "Makefile",
-      "sha256": "a08e3b491ae9f0efcbd155e4000a10cca91a18447cf25db204c275849c9d2424"
+      "sha256": "1b293f8437e56d1ee8f130cb363e63425ede686a267d7944237af93a9e219a2f"
     },
     {
       "bytes": 1675,
@@ -98,10 +98,10 @@
       "sha256": "31e653c153662db36f97c1e2f5633716167a597f7fc14b7a9e317078c6b0e8be"
     },
     {
-      "bytes": 1633,
+      "bytes": 1703,
       "hash_mode": "text_lf",
       "path": "bitradex_realtime_candle_collector_v1/Dockerfile",
-      "sha256": "173edc71ed33802bdbd5b9641c07bbeaf212d131bf856013bdd0a08cdb2eb93e"
+      "sha256": "9ea686d041daeea4a7bf3b0aa41027dbdfdfca41ec75553ae204674b4504fb09"
     },
     {
       "bytes": 2700,
@@ -122,10 +122,10 @@
       "sha256": "4f05767c6dfbb5895dac913cbea1d67c6049f97790181c1f6faa449c4ae7ee72"
     },
     {
-      "bytes": 85,
+      "bytes": 23216,
       "hash_mode": "text_lf",
       "path": "bitradex_realtime_candle_collector_v1/requirements.txt",
-      "sha256": "22db91904af8d07817bd3f508af1f97d6f67b736964a18e86188a28e1a233042"
+      "sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652"
     },
     {
       "bytes": 631,
@@ -506,10 +506,10 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
-      "bytes": 3340,
+      "bytes": 3177,
       "hash_mode": "text_lf",
       "path": "config/qlib_dependency_security_policy_v1.json",
-      "sha256": "13a11e41f7bff4a8489338a933393daa021b48551fd03fd3b8a94326323c03c7"
+      "sha256": "a6d28ee9153d410f61201bb0c9183c33cc492c0d694adf75fa0422f3afdc14e3"
     },
     {
       "bytes": 2036,
@@ -626,6 +626,12 @@
       "sha256": "53382c7c76b10a0810306ebe81818060adf3792c085cc77e41d11e2e794b5994"
     },
     {
+      "bytes": 2871,
+      "hash_mode": "text_lf",
+      "path": "config/security_resolution_evidence_v1.json",
+      "sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8"
+    },
+    {
       "bytes": 1027,
       "hash_mode": "text_lf",
       "path": "config/signal_producer.yml",
@@ -641,7 +647,7 @@
       "bytes": 626,
       "hash_mode": "text_lf",
       "path": "config/state_execution_boundary_review_registry_v1.json",
-      "sha256": "a9143122d962fc0915257dfd8e0588c3ced3b53b78173461ecf6e5b367017f9f"
+      "sha256": "fd8884a4dfb61a6237af28cfa769a0983c15ae0344d57638e10dc316a59ed7e4"
     },
     {
       "bytes": 381,
@@ -668,28 +674,28 @@
       "sha256": "0c3b56391467617da214d39e8b31ae5a14bb2d78c8471aa046dd011358f2f0de"
     },
     {
-      "bytes": 146,
+      "bytes": 150,
       "hash_mode": "text_lf",
       "path": "constraints.txt",
-      "sha256": "62ca6d80b735dc9fea44f6bdbe5864f0abef7aa0d66908bb8c13f4b146a0ba2f"
+      "sha256": "51ff46fa2ee652c3a2cb48149d3263a9dbe3aefec4ed00ddbc80c48ee2cb53f6"
     },
     {
-      "bytes": 1256,
+      "bytes": 1328,
       "hash_mode": "text_lf",
       "path": "docker-compose.live.example.yml",
-      "sha256": "9f12f033fc0b50a932b33619830f1bbe15712268e8656170e0c68d5af751b351"
+      "sha256": "ecea4bb38a7854b9655f2614b4b587e3ced1ea49337b2dd73e03918671809ba7"
     },
     {
-      "bytes": 10858,
+      "bytes": 10930,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "244ae9fa94d187123b308006b291139173c81ed44cb684d11a9c188469ae5cb6"
+      "sha256": "9349b7a2780406ea67d78f44acf317cda91fe14406ddde898c2e881f9477881d"
     },
     {
-      "bytes": 1156,
+      "bytes": 1204,
       "hash_mode": "text_lf",
       "path": "docker/dashboard/Dockerfile",
-      "sha256": "ded7a6a28cdf1149732ca9947f6e6c5eb541c14177253e3286b0228e3dfe3aed"
+      "sha256": "1fd24dfd495293cbed020235d27d0c17bbf8188c33bb1b8a457b31e20c288ee0"
     },
     {
       "bytes": 506,
@@ -704,22 +710,22 @@
       "sha256": "a40d67892ebeb310a326ab769a3e7b0a220de459889045b04cd8a8bcec31b81d"
     },
     {
-      "bytes": 1432,
+      "bytes": 1410,
       "hash_mode": "text_lf",
       "path": "docker/qlib/Dockerfile",
-      "sha256": "1a36c49cda57c56bd3791ed73c866365b19a91d7e399da86ddec0c47bbf8f0a9"
+      "sha256": "da3f0361273713f55589496996cb966307d7b19a449cbaa5a52336b1407433a2"
     },
     {
-      "bytes": 159,
+      "bytes": 86,
       "hash_mode": "text_lf",
       "path": "docker/qlib/requirements.txt",
-      "sha256": "aef6987b6e9a1cd6e71aec4f89d41c25d24fa6d1f69dd3410122ff4f5ca76134"
+      "sha256": "c6dccf87d5df08d8d459e4434c5ce5dff5404dfef9d3110701b26b41ecd33b65"
     },
     {
-      "bytes": 1183,
+      "bytes": 1231,
       "hash_mode": "text_lf",
       "path": "docker/smartcrypto/Dockerfile",
-      "sha256": "faf82418f29e7890f2a6b56dc919c7264d3164fce66ec358af7955468f7edb18"
+      "sha256": "796e9ba3321fd27588d20069b819182aad152b0f75a9e2facc3b8585bc0e2923"
     },
     {
       "bytes": 11015,
@@ -1238,10 +1244,10 @@
       "sha256": "7658af74c27787d6f4710a10a9f0cc59e6cf4cfe38b2d296653bd737b301f8ce"
     },
     {
-      "bytes": 1204,
+      "bytes": 2456,
       "hash_mode": "text_lf",
       "path": "docs/DEV_SECURITY_GOVERNANCE_HARDENING_CLOSEOUT_V1.md",
-      "sha256": "334ba44bfbf453416a696e490b4065721ef5d97dc84638c8bcdf9850dcd1a6a2"
+      "sha256": "b1b64270fffd940062de03a42de8a041bfe369e7743d4a53215c148c67fcd7ae"
     },
     {
       "bytes": 3122,
@@ -2606,10 +2612,10 @@
       "sha256": "4b4fa92b92bd2899f9cb3d9792683b92f2a85cd98b361fdfad59f4d626ae69ef"
     },
     {
-      "bytes": 1771,
+      "bytes": 120502,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "1e2c2561244b7f49158198c925c60b130e89a5fe94f3653de04bb014fe505d3d"
+      "sha256": "239dcd5b6ac80c18a96963ede1d62e544b9ac788ef6bcb7ce960a6f7de034257"
     },
     {
       "bytes": 66,
@@ -2618,16 +2624,22 @@
       "sha256": "a17966b03a3abe038d7ce70dce84695c3ee8d53f4d38bd16ef3ba0163e7592c0"
     },
     {
-      "bytes": 92,
+      "bytes": 254817,
       "hash_mode": "text_lf",
-      "path": "requirements-qlib.lock",
-      "sha256": "0e525c4fd951e46f16aafb6019c36f36e5c5e588b2fc7502fdf637e16eb4239c"
+      "path": "requirements-qlib-security.lock",
+      "sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57"
     },
     {
-      "bytes": 1209,
+      "bytes": 189,
+      "hash_mode": "text_lf",
+      "path": "requirements-qlib.lock",
+      "sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9"
+    },
+    {
+      "bytes": 96801,
       "hash_mode": "text_lf",
       "path": "requirements-runtime.lock",
-      "sha256": "6871515083964b24476c3f581fd10edc5bf5c10de1c076ec087077cde486451a"
+      "sha256": "1c636f288549f933727161491e00b5fb772daeee2a0335fee31efe3d3e7d2da8"
     },
     {
       "bytes": 1286,
@@ -2822,10 +2834,10 @@
       "sha256": "7a32d0d9b7f8c17c389986a8c7e3ced13322f4de7e7bf7707b21cd0865e478d3"
     },
     {
-      "bytes": 15373,
+      "bytes": 15403,
       "hash_mode": "text_lf",
       "path": "scripts/audit_lockfile_hash_integrity.py",
-      "sha256": "392395cc6720ef85a9671ecaae8e9691515775b8190482efdcc643812dd40656"
+      "sha256": "b95f668710bc060a008e7b073054e39ab0a863ffc08c5369b44308e35d2ca6e9"
     },
     {
       "bytes": 1920,
@@ -6758,10 +6770,10 @@
       "sha256": "22bdc5d7ff41e8574a0bed1ce2b453634e4be0fc6e38c5ec0c938ba829b4b5b4"
     },
     {
-      "bytes": 19274,
+      "bytes": 19510,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_dependency_security_hardening/audit.py",
-      "sha256": "0c85ff9067de136d0ee0b001de04560509338eac85bad19f824fe8e6ff26f5ec"
+      "sha256": "2440af8cd61278a23802f60e21d4ab4c1ceb5edd4254892ef6d8fc469044a990"
     },
     {
       "bytes": 211,
@@ -9746,10 +9758,10 @@
       "sha256": "06ebd86407a97f535e8af2e04293a007a560d2a55f2fb5ccd6919be743663281"
     },
     {
-      "bytes": 9242,
+      "bytes": 9259,
       "hash_mode": "text_lf",
       "path": "tests/test_complete_ci_security_typecheck_runtime_readiness.py",
-      "sha256": "8bbb532e33f9b09b495e0cdcbf87a6a2abea902f07b6f944fd1eb6d159fab534"
+      "sha256": "a2dc888d5fe40ca6ccf0d8f9d1f2622ea5503684e45c67343e1296ded89f44bc"
     },
     {
       "bytes": 4423,
@@ -10334,10 +10346,10 @@
       "sha256": "be6e9bdd951d6bf508306229dc2c1897e4b5aee9766f30b4823df26cda5ca2cf"
     },
     {
-      "bytes": 5223,
+      "bytes": 5550,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_paper_runtime_permissions_and_runtime_lock_v1.py",
-      "sha256": "244decc6947dd4d7e1fa9e3ea7273e26f5e6c2a1c6cb192b3ea5a914c1e550b0"
+      "sha256": "5f2f3a9d79fe75b630e709b151e6d8c7cc9262a620f676849c2b9b4e5335ab92"
     },
     {
       "bytes": 9072,
@@ -10592,10 +10604,10 @@
       "sha256": "f6f24e9cda43cbeff8965bdda92b4121adf86d07a504336c95e753adfd10ccc8"
     },
     {
-      "bytes": 7861,
+      "bytes": 8466,
       "hash_mode": "text_lf",
       "path": "tests/test_lockfile_hash_integrity_hardening_v1.py",
-      "sha256": "e5fcc50b0621c38d46b8711a7bf6fb4f6aa8efb788071395ec1b84a6bd8b0c08"
+      "sha256": "d67a08e0ea87c70625be08dd7e61a5822940b3b664715a549a6770413b2f3640"
     },
     {
       "bytes": 7142,
@@ -11414,10 +11426,10 @@
       "sha256": "b3fa308efbd31c8d6e3e45133279faf1c9a46544b4e356f8d1dafe9f7189068a"
     },
     {
-      "bytes": 16345,
+      "bytes": 11365,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_dependency_security_hardening_v1.py",
-      "sha256": "34c045e0b2051bb3164362a73f42f854d20f6d2b6376266c7b17c401e55fb057"
+      "sha256": "b68b72a8c26cb924e23610917153319e4e8afde1599d4dd6c54acb7450a48963"
     },
     {
       "bytes": 7567,
@@ -11720,10 +11732,10 @@
       "sha256": "f82cbb3b53f9abe7a794d3697967b2d83a7ba6686bf24af91cb06ff512667616"
     },
     {
-      "bytes": 3005,
+      "bytes": 5715,
       "hash_mode": "text_lf",
       "path": "tests/test_security_governance_hardening_closeout_v1.py",
-      "sha256": "7ad37fff03a41198d3b0649227f890b25318c58f8fcd168c5ef91b3f15bc68f5"
+      "sha256": "6314b5c177ad450c96dbc59b068e4f38fef8f786fed1583a418b78a9ba8ff785"
     },
     {
       "bytes": 31521,
@@ -11870,10 +11882,10 @@
       "sha256": "8fc62c8747b9f17383f7d7d7a2ba6bc956a0b8a370ac4262f1cf98d983c5ad39"
     },
     {
-      "bytes": 5485,
+      "bytes": 5967,
       "hash_mode": "text_lf",
       "path": "tests/test_transitive_lock_docker_runtime_reproducibility.py",
-      "sha256": "6135c560d2f961353e88c3078e603d6f3c7dd07fa2da703a196149b1fa2c2847"
+      "sha256": "6af8919edfed294ea4d0259dd917f1b2e0abf4dacd09238b50b307cfab65ec4a"
     },
     {
       "bytes": 1541,

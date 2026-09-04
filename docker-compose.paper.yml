@@ -57,7 +57,7 @@ services:
     command: streamlit run smartcrypto/dashboard/app.py --server.address 0.0.0.0 --server.port 8501
 
   freqtrade-paper:
-    image: freqtradeorg/freqtrade:stable
+    image: freqtradeorg/freqtrade:stable@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db
     restart: unless-stopped
     env_file:
       - .env

@@ -60,3 +60,64 @@ def test_ci_actions_are_pinned_to_full_shas() -> None:
     assert "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065" in text
     assert "actions/checkout@v4" not in text
     assert "actions/setup-python@v5" not in text
+
+
+def test_security_resolution_evidence_closes_qlib_dependency_vulnerability_without_authority() -> None:
+    evidence = json.loads((ROOT / "config/security_resolution_evidence_v1.json").read_text())
+    qlib = evidence["qlib"]
+    assert evidence["evidence_status"] == "certified_clean"
+    assert qlib["resolver_status"] == "resolved"
+    assert qlib["pip_audit_exit_code"] == 0
+    assert qlib["known_vulnerability_count"] == 0
+    assert qlib["resolved_package_count"] == 190
+    assert qlib["packages"]["cryptography"] == "50.0.0"
+    assert qlib["packages"]["mlflow"] == "3.16.0"
+    assert qlib["packages"]["pyarrow"] == "25.0.1"
+    assert evidence["safety"]["operational_authority"] is False
+    assert evidence["safety"]["runtime_updated"] is False
+    assert evidence["safety"]["model_promotion_performed"] is False
+
+
+def test_all_primary_python_and_freqtrade_images_are_immutable() -> None:
+    expected = {
+        "python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
+        "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+        "freqtradeorg/freqtrade:stable@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
+    }
+    docker_text = "\n".join(
+        (ROOT / path).read_text()
+        for path in (
+            "docker/smartcrypto/Dockerfile",
+            "docker/dashboard/Dockerfile",
+            "docker/qlib/Dockerfile",
+            "bitradex_realtime_candle_collector_v1/Dockerfile",
+            "docker-compose.paper.yml",
+            "docker-compose.live.example.yml",
+        )
+    )
+    for image in expected:
+        assert image in docker_text
+    assert "FROM python:3.11-slim\n" not in docker_text
+    assert "FROM python:3.12-slim\n" not in docker_text
+    assert "freqtradeorg/freqtrade:stable\n" not in docker_text
+
+
+def test_runtime_dependency_installs_are_require_hashes_and_no_upgrade() -> None:
+    paths = (
+        "docker/smartcrypto/Dockerfile",
+        "docker/dashboard/Dockerfile",
+        "docker/qlib/Dockerfile",
+        "bitradex_realtime_candle_collector_v1/Dockerfile",
+        ".github/workflows/ci.yml",
+    )
+    text = "\n".join((ROOT / path).read_text() for path in paths)
+    assert "--require-hashes" in text
+    assert "pip install --upgrade" not in text
+    assert "pip install -r requirements-runtime.lock" not in text
+
+
+def test_ci_does_not_short_circuit_feature_branch_on_external_h01() -> None:
+    text = (ROOT / ".github/workflows/ci.yml").read_text()
+    assert "Audit dev branch protection governance" in text
+    assert "Enforce dev branch protection governance on dev" in text
+    assert "if: github.ref == 'refs/heads/dev'" in text

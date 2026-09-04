@@ -1,10 +1,1 @@
-numpy==2.2.6
-pandas==2.2.3
-pyarrow==23.0.1
-scikit-learn==1.7.0
-lightgbm==4.6.0
-joblib==1.5.1
-PyYAML==6.0.3
-pydantic==2.13.3
-python-dotenv==1.2.2
-pyqlib==0.9.7
+# Compatibility marker only. Qlib installs from /app/requirements-qlib-security.lock.

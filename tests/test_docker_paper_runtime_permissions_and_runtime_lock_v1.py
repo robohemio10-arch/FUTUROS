@@ -124,19 +124,22 @@ def test_runtime_services_preserve_paper_only_environment() -> None:
 
 
 def test_runtime_lock_contains_exactly_one_safe_gitpython_pin() -> None:
-    requirements = [
-        line.strip()
-        for line in RUNTIME_LOCK.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.startswith("#")
-    ]
-    gitpython = [
-        line
-        for line in requirements
-        if line.lower().startswith("gitpython==")
-    ]
+    requirements: list[str] = []
+    buffer: list[str] = []
+    for raw in RUNTIME_LOCK.read_text(encoding="utf-8").splitlines():
+        stripped = raw.strip()
+        if not buffer and (not stripped or stripped.startswith("#")):
+            continue
+        buffer.append(stripped.rstrip("\\").strip())
+        if stripped.endswith("\\"):
+            continue
+        requirements.append(" ".join(buffer).split(" --hash=", 1)[0].strip())
+        buffer = []
+    gitpython = [line for line in requirements if line.lower().startswith("gitpython==")]
 
     assert gitpython == ["GitPython==3.1.58"]
     assert all("==" in requirement for requirement in requirements)
+    assert "--hash=sha256:" in RUNTIME_LOCK.read_text(encoding="utf-8")
 
 
 def test_no_world_writable_mode_or_generic_data_authority() -> None:

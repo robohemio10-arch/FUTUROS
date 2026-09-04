@@ -19,7 +19,7 @@ services:
     command: python -m smartcrypto.runtime.healthcheck
 
   freqtrade-live:
-    image: freqtradeorg/freqtrade:stable
+    image: freqtradeorg/freqtrade:stable@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db
     restart: "no"
     env_file:
       - .env

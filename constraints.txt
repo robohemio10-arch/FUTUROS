@@ -1,3 +1,2 @@
-# Additional Docker constraints for optional workers that install a direct
-# requirements file on top of requirements-runtime.lock.
-pyqlib==0.9.7
+# Shared constraints retired in favor of fully hashed lockfiles.
+# Qlib uses requirements-qlib-security.lock; runtime uses requirements-runtime.lock.

@@ -1,0 +1,67 @@
+{
+  "bitradex": {
+    "hashed_lock_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
+    "resolved_package_count": 11,
+    "resolver_report_sha256": "b4aca35b3c6b1a5b188482ed8f2376ffbaa1f0a94bc052ed239a9c87305413f5",
+    "resolver_status": "resolved"
+  },
+  "container_digests": {
+    "freqtrade_stable": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
+    "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
+    "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
+  },
+  "evidence_status": "certified_clean",
+  "locks": {
+    "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
+    "requirements_dev_sha256": "239dcd5b6ac80c18a96963ede1d62e544b9ac788ef6bcb7ce960a6f7de034257",
+    "requirements_qlib_security_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+    "requirements_runtime_sha256": "1c636f288549f933727161491e00b5fb772daeee2a0335fee31efe3d3e7d2da8"
+  },
+  "qlib": {
+    "audited_dependency_count": 188,
+    "hashed_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+    "known_vulnerability_count": 0,
+    "packages": {
+      "cryptography": "50.0.0",
+      "mlflow": "3.16.0",
+      "mlflow-skinny": "3.16.0",
+      "mlflow-tracing": "3.16.0",
+      "pyarrow": "25.0.1",
+      "pyqlib": "0.9.7"
+    },
+    "pip_audit_exit_code": 0,
+    "pip_audit_report_sha256": "f45009431f3819934ce49d77c6bb82f4566fd7efa48da8ff599f61c307b98c62",
+    "python_version": "3.12",
+    "resolved_package_count": 190,
+    "resolver_report_sha256": "eac458203563777b0592b246a8c62771cc1563596e37469a73bc7b86c4d0977c",
+    "resolver_status": "resolved",
+    "security_status": "clean"
+  },
+  "safety": {
+    "canary_release_allowed": false,
+    "changes_risk": false,
+    "exchange_private_access": false,
+    "live_release_allowed": false,
+    "live_trading_enabled": false,
+    "model_promotion_performed": false,
+    "operational_authority": false,
+    "order_submission_enabled": false,
+    "paper_only": true,
+    "real_order_submission_enabled": false,
+    "research_only": true,
+    "runtime_updated": false,
+    "sends_orders": false,
+    "shadow_only": true
+  },
+  "schema_version": "dev_security_resolution_evidence_v1",
+  "workflow": {
+    "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
+    "artifact_id": 9953246950,
+    "artifact_name": "security-resolution-evidence",
+    "branch": "codex/dev-security-governance-hardening-closeout-v1",
+    "downloaded_zip_sha256": "af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
+    "head_sha": "452c6d953cac21634aaf6ce004eef4d392b1a3b2",
+    "repository": "robohemio10-arch/FUTUROS",
+    "run_id": 33916166319
+  }
+}

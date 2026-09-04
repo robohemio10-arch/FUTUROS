@@ -21,44 +21,44 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Pin resolver toolchain
-        run: python -m pip install pip==26.2.1 setuptools==82.0.1 wheel==0.48.0 pip-audit==2.9.0
+      - name: Install hermetic audit environment
+        run: |
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --no-build-isolation --no-deps -e .
 
-      - name: Generate hashed locks for existing exact graphs
+      - name: Verify checked-in hashed locks
         run: |
           mkdir -p security-resolution
-          python scripts/generate_hashed_lock_v1.py requirements-dev.lock security-resolution/requirements-dev.hashed.lock
-          python scripts/generate_hashed_lock_v1.py requirements-runtime.lock security-resolution/requirements-runtime.hashed.lock
+          python -m pip install --dry-run --ignore-installed --require-hashes --report security-resolution/dev-resolver-report.json -r requirements-dev.lock
+          python -m pip install --dry-run --ignore-installed --require-hashes --report security-resolution/runtime-resolver-report.json -r requirements-runtime.lock
+          cp requirements-dev.lock security-resolution/requirements-dev.hashed.lock
+          cp requirements-runtime.lock security-resolution/requirements-runtime.hashed.lock
 
-      - name: Resolve Bitradex graph and hashes
+      - name: Verify Bitradex graph and hashes
         run: |
-          python -m pip install --dry-run --ignore-installed --report security-resolution/bitradex-resolver-report.json -r bitradex_realtime_candle_collector_v1/requirements.txt
-          python scripts/pip_report_to_lock_v1.py security-resolution/bitradex-resolver-report.json security-resolution/bitradex.lock
-          python scripts/generate_hashed_lock_v1.py security-resolution/bitradex.lock security-resolution/bitradex.hashed.lock
+          python -m pip install --dry-run --ignore-installed --require-hashes --report security-resolution/bitradex-resolver-report.json -r bitradex_realtime_candle_collector_v1/requirements.txt
+          cp bitradex_realtime_candle_collector_v1/requirements.txt security-resolution/bitradex.hashed.lock
 
-      - name: Resolve and audit Qlib security candidate
+      - name: Verify and audit Qlib security lock
         run: |
-          python -m pip install --dry-run --ignore-installed --report security-resolution/qlib-resolver-report.json -r requirements-qlib-security-candidate.in
-          python scripts/pip_report_to_lock_v1.py security-resolution/qlib-resolver-report.json security-resolution/requirements-qlib-security.lock
-          python scripts/generate_hashed_lock_v1.py security-resolution/requirements-qlib-security.lock security-resolution/requirements-qlib-security.hashed.lock
+          python -m pip install --dry-run --ignore-installed --require-hashes --report security-resolution/qlib-resolver-report.json -r requirements-qlib-security.lock
+          cp requirements-qlib-security.lock security-resolution/requirements-qlib-security.hashed.lock
           set +e
-          python -m pip_audit -r security-resolution/requirements-qlib-security.lock --format json --output security-resolution/qlib-pip-audit.json --progress-spinner off
+          python -m pip_audit -r requirements-qlib-security.lock --format json --output security-resolution/qlib-pip-audit.json --progress-spinner off
           code=$?
           set -e
           echo "$code" > security-resolution/qlib-pip-audit.exitcode
           test "$code" -eq 0
+          python scripts/audit_qlib_dependency_security_hardening_v1.py             --project-root .             --resolver-report security-resolution/qlib-resolver-report.json             --pip-audit-report security-resolution/qlib-pip-audit.json             --json
 
-      - name: Resolve immutable container digests
+      - name: Verify immutable container digests
         run: |
-          docker buildx imagetools inspect python:3.11-slim | tee security-resolution/python-3.11-slim.inspect.txt
-          docker buildx imagetools inspect python:3.12-slim | tee security-resolution/python-3.12-slim.inspect.txt
-          docker buildx imagetools inspect freqtradeorg/freqtrade:stable | tee security-resolution/freqtrade-stable.inspect.txt
-          grep -m1 '^Digest:' security-resolution/python-3.11-slim.inspect.txt | awk '{print $2}' > security-resolution/python-3.11-slim.digest
-          grep -m1 '^Digest:' security-resolution/python-3.12-slim.inspect.txt | awk '{print $2}' > security-resolution/python-3.12-slim.digest
-          grep -m1 '^Digest:' security-resolution/freqtrade-stable.inspect.txt | awk '{print $2}' > security-resolution/freqtrade-stable.digest
-          grep -Eq '^sha256:[0-9a-f]{64}$' security-resolution/python-3.11-slim.digest
-          grep -Eq '^sha256:[0-9a-f]{64}$' security-resolution/python-3.12-slim.digest
-          grep -Eq '^sha256:[0-9a-f]{64}$' security-resolution/freqtrade-stable.digest
+          docker buildx imagetools inspect python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534 | tee security-resolution/python-3.11-slim.inspect.txt
+          docker buildx imagetools inspect python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea | tee security-resolution/python-3.12-slim.inspect.txt
+          docker buildx imagetools inspect freqtradeorg/freqtrade:stable@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db | tee security-resolution/freqtrade-stable.inspect.txt
+          printf '%s\n' 'sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534' > security-resolution/python-3.11-slim.digest
+          printf '%s\n' 'sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea' > security-resolution/python-3.12-slim.digest
+          printf '%s\n' 'sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db' > security-resolution/freqtrade-stable.digest
 
       - name: Upload resolution evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

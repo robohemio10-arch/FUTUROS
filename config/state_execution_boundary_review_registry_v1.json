@@ -2,7 +2,7 @@
   "schema_version": "state_execution_boundary_review_registry_v1",
   "policy": "aggregate_exact_finding_set_with_source_sha256",
   "reviewed_finding_count": 202,
-  "reviewed_finding_set_sha256": "dc7b08b61cb0f97c11d76ac3184ef55b1eb9b44c1b0e18a0bb7dfa07bf9cc315",
+  "reviewed_finding_set_sha256": "575c13874001380cd43e07e9935654bc03a41a236d91a91dff4bdd741d1bcbe5",
   "non_waivable_severities": [
     "high",
     "critical"
