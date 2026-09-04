@@ -8,7 +8,7 @@ on:
       - "codex/**"
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   SMARTCRYPTO_RUNTIME_MODE: paper
@@ -36,22 +36,6 @@ jobs:
           python -m pip install --require-hashes -r requirements-dev.lock
           python -m pip install --require-hashes --no-deps -r requirements-build.lock
           python -m pip install --no-build-isolation --no-deps -e .
-
-      - name: Refresh manifest and restore canonical CI on audit branch
-        if: github.ref == 'refs/heads/codex/dev-branch-protection-ruleset-audit-v2'
-        run: |
-          git fetch origin dev --depth=1
-          git show FETCH_HEAD:.github/workflows/ci.yml > .github/workflows/ci.yml
-          python scripts/generate_project_manifest.py
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/ci.yml PROJECT_MANIFEST_CLEAN.json
-          if git diff --cached --quiet; then
-            echo "manifest already current"
-            exit 0
-          fi
-          git commit -m "chore: atualiza manifesto da auditoria de rulesets"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Audit dev branch protection governance
         env:
@@ -83,7 +67,7 @@ jobs:
               if os.environ.get(key, "false").lower() in {"1", "true", "yes", "on"}
           ]
           if unsafe:
-            raise SystemExit("unsafe runtime flags enabled: " + ",".join(unsafe))
+              raise SystemExit("unsafe runtime flags enabled: " + ",".join(unsafe))
           print("paper/shadow only safety flags ok")
           PY
 
@@ -123,7 +107,7 @@ jobs:
               if path.startswith(forbidden_prefixes) or path.endswith(forbidden_suffixes)
           ]
           if bad:
-            raise SystemExit("runtime artifacts are versioned: " + ",".join(bad))
+              raise SystemExit("runtime artifacts are versioned: " + ",".join(bad))
           print("no runtime artifacts versioned")
           PY
 
