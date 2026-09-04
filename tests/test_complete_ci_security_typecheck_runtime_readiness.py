@@ -91,7 +91,7 @@ def test_pyproject_exposes_tools_in_test_and_dev_extras() -> None:
 def test_ci_contains_lint_typecheck_security_secret_scan_docker_and_healthcheck() -> None:
     text = read(".github/workflows/ci.yml")
 
-    assert "python -m pip install -r requirements-dev.lock" in text
+    assert "python -m pip install --require-hashes -r requirements-dev.lock" in text
     assert "make lint" in text
     assert "make typecheck" in text
     assert "make security" in text

@@ -1,2 +1,2 @@
-# Research-only Qlib backend lock. Do not install in runtime executor images.
-pyqlib==0.9.7
+# Research-only direct Qlib contract; full transitive graph is requirements-qlib-security.lock.
+pyqlib==0.9.7 --hash=sha256:0935778655d471e8e7cf9efc58f942cc0b58b495fc03d98e80bb5b97e17d54cb

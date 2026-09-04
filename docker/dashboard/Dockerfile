@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534
 
 WORKDIR /app
 
@@ -21,9 +21,8 @@ COPY pyproject.toml README.md requirements-runtime.lock ./
 COPY smartcrypto ./smartcrypto
 COPY config ./config
 
-RUN python -m pip install --upgrade pip setuptools wheel \
-    && python -m pip install -r requirements-runtime.lock \
-    && python -m pip install --no-deps -e .
+RUN python -m pip install --require-hashes -r requirements-runtime.lock \
+    && python -m pip install --no-build-isolation --no-deps -e .
 
 RUN mkdir -p /app/data /app/data/reports /app/data/runtime /app/logs \
     && chown -R smartcrypto:smartcrypto /app

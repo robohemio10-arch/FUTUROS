@@ -157,6 +157,24 @@ def test_dockerfile_install_without_lock_is_blocked_without_policy(tmp_path: Pat
     assert any(item["pattern"] == "docker_install_without_lock_or_constraint" for item in report["findings"])
 
 
+
+def test_dockerfile_require_hashes_protects_hashed_requirements_file(tmp_path: Path) -> None:
+    module = load_auditor()
+    digest = hashlib.sha256(b"controlled-resolver-fixture").hexdigest()
+    write_policy(tmp_path)
+    write_text(tmp_path, "requirements.txt", f"pandas==2.2.3 --hash=sha256:{digest}\n")
+    write_text(
+        tmp_path,
+        "Dockerfile",
+        "FROM python:3.12-slim\n"
+        "RUN python -m pip install --require-hashes -r requirements.txt\n",
+    )
+
+    report = module.audit_project(tmp_path)
+
+    assert report["status"] == "ok"
+    assert report["finding_count"] == 0
+
 def test_auditor_output_is_deterministic(tmp_path: Path) -> None:
     module = load_auditor()
     write_policy(tmp_path)

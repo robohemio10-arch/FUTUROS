@@ -20,11 +20,19 @@ def read(path: str) -> str:
 
 
 def requirement_lines(path: str) -> list[str]:
-    return [
-        line.strip()
-        for line in read(path).splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
+    rows: list[str] = []
+    buffer: list[str] = []
+    for raw in read(path).splitlines():
+        stripped = raw.strip()
+        if not buffer and (not stripped or stripped.startswith("#")):
+            continue
+        buffer.append(stripped.rstrip("\\").strip())
+        if stripped.endswith("\\"):
+            continue
+        row = " ".join(buffer)
+        rows.append(row.split(" --hash=", 1)[0].strip())
+        buffer = []
+    return rows
 
 
 def pip_audit_lines() -> list[str]:
@@ -47,23 +55,25 @@ def test_transitive_lockfiles_exist_and_are_substantial() -> None:
 
 
 def test_lockfiles_do_not_contain_placeholders_or_open_ranges() -> None:
-    forbidden_tokens = ("todo", "placeholder", "<", ">", ">=", "<=", "~=", "!=")
+    forbidden_tokens = ("todo", "placeholder", ">=", "<=", "~=", "!=")
     for path in ("requirements-runtime.lock", "requirements-dev.lock"):
         text = read(path).lower()
         assert not any(token in text for token in forbidden_tokens)
+        assert "--hash=sha256:" in text
         for line in requirement_lines(path):
             assert re.match(r"^[A-Za-z0-9_.-]+==[A-Za-z0-9_.!+:-]+$", line), line
 
 
-def test_qlib_direct_requirements_are_pinned_and_constrained() -> None:
-    qlib_requirements = requirement_lines("docker/qlib/requirements.txt")
-    assert qlib_requirements
-    assert all("==" in line for line in qlib_requirements)
-    assert "pyqlib==0.9.7" in {line.lower() for line in qlib_requirements}
-
-    constraints = read("constraints.txt")
-    assert "-r requirements-runtime.lock" not in constraints
-    assert "pyqlib==0.9.7" in constraints
+def test_qlib_direct_and_transitive_security_locks_are_hashed() -> None:
+    direct = requirement_lines("requirements-qlib.lock")
+    full = requirement_lines("requirements-qlib-security.lock")
+    assert direct == ["pyqlib==0.9.7"]
+    assert len(full) == 190
+    assert "pyqlib==0.9.7" in {line.lower() for line in full}
+    assert "mlflow==3.16.0" in {line.lower() for line in full}
+    assert "cryptography==50.0.0" in {line.lower() for line in full}
+    assert "--hash=sha256:" in read("requirements-qlib.lock")
+    assert "--hash=sha256:" in read("requirements-qlib-security.lock")
 
 
 def test_dockerfiles_install_by_lock_or_constraints_before_local_package() -> None:
@@ -73,18 +83,15 @@ def test_dockerfiles_install_by_lock_or_constraints_before_local_package() -> No
 
     for dockerfile in (smartcrypto, dashboard):
         assert "COPY pyproject.toml README.md requirements-runtime.lock ./" in dockerfile
-        assert "python -m pip install -r requirements-runtime.lock" in dockerfile
-        assert "python -m pip install --no-deps -e ." in dockerfile
+        assert "python -m pip install --require-hashes -r requirements-runtime.lock" in dockerfile
+        assert "python -m pip install --no-build-isolation --no-deps -e ." in dockerfile
         assert 'pip install -e ".' not in dockerfile
         assert "HEALTHCHECK" in dockerfile
         assert "USER smartcrypto" in dockerfile
 
-    assert "COPY requirements-runtime.lock constraints.txt ./" in qlib
-    assert (
-        "python -m pip install --no-cache-dir -r docker/qlib/requirements.txt "
-        "-c requirements-runtime.lock -c constraints.txt"
-    ) in qlib
-    assert "python -m pip install --no-deps -e ." in qlib
+    assert "COPY requirements-qlib-security.lock ./" in qlib
+    assert "python -m pip install --require-hashes -r requirements-qlib-security.lock" in qlib
+    assert "python -m pip install --no-build-isolation --no-deps -e ." in qlib
     assert "HEALTHCHECK" in qlib
     assert "USER smartcrypto" in qlib
 
@@ -94,8 +101,8 @@ def test_ci_installs_from_lock_and_preserves_paper_shadow_only() -> None:
     payload = yaml.safe_load(workflow)
     env = payload["env"]
 
-    assert "python -m pip install -r requirements-dev.lock" in workflow
-    assert "python -m pip install --no-deps -e ." in workflow
+    assert "python -m pip install --require-hashes -r requirements-dev.lock" in workflow
+    assert "python -m pip install --no-build-isolation --no-deps -e ." in workflow
     assert "docker build -f docker/smartcrypto/Dockerfile" in workflow
     for flag in SAFETY_FALSE_FLAGS:
         assert str(env[flag]).lower() == "false"

@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea
 
 ARG BITRADEX_UID=10001
 ARG BITRADEX_GID=10001
@@ -43,7 +43,7 @@ RUN groupadd --system --gid "${BITRADEX_GID}" bitradex \
     && useradd --system --uid "${BITRADEX_UID}" --gid bitradex --home-dir /app --shell /usr/sbin/nologin bitradex
 
 COPY requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && pip install -r /app/requirements.txt && python -m playwright install chromium
+RUN python -m pip install --require-hashes -r /app/requirements.txt && python -m playwright install chromium
 
 COPY src /app/src
 COPY README_RUNBOOK.md /app/README_RUNBOOK.md
