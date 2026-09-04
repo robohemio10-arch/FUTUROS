@@ -29,8 +29,11 @@ services:
       ORDER_SUBMISSION_ENABLED: "false"
       REAL_ORDER_SUBMISSION_ENABLED: "false"
       SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+    tmpfs:
+      - /freqtrade/user_data
     volumes:
-      - ./freqtrade/user_data:/freqtrade/user_data
+      - ./freqtrade/user_data/config.live.example.json:/freqtrade/user_data/config.live.example.json:ro
+      - ./freqtrade/user_data/strategies:/freqtrade/user_data/strategies:ro
       - ./data:/freqtrade/user_data/data:ro
     command: >
       trade

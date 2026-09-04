@@ -1,0 +1,20 @@
+{
+  "schema_version": "state_execution_boundary_review_registry_v1",
+  "policy": "aggregate_exact_finding_set_with_source_sha256",
+  "reviewed_finding_count": 202,
+  "reviewed_finding_set_sha256": "dc7b08b61cb0f97c11d76ac3184ef55b1eb9b44c1b0e18a0bb7dfa07bf9cc315",
+  "non_waivable_severities": [
+    "high",
+    "critical"
+  ],
+  "safety": {
+    "runtime_authority": false,
+    "operational_state_authority": false,
+    "financial_ledger_authority": false,
+    "paper_restart_authority": false,
+    "changes_risk": false,
+    "sends_orders": false,
+    "live_release_allowed": false,
+    "canary_release_allowed": false
+  }
+}

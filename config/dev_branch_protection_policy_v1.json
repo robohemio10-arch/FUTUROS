@@ -1,0 +1,17 @@
+{
+  "schema_version": "dev_branch_protection_policy_v1",
+  "branch": "dev",
+  "required": {
+    "protected": true,
+    "required_status_checks_enforcement": "non_off",
+    "allow_force_pushes": false,
+    "allow_deletions": false
+  },
+  "safety": {
+    "changes_runtime": false,
+    "changes_risk": false,
+    "sends_orders": false,
+    "live_release_allowed": false,
+    "canary_release_allowed": false
+  }
+}

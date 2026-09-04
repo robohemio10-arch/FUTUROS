@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import importlib
 import importlib.util
 import json
@@ -10,6 +11,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+
+REVIEW_REGISTRY_PATH = "config/operational_exception_review_registry_v1.json"
 
 SAFETY_FLAGS = {
     "paper_only": True,
@@ -405,6 +408,31 @@ def audit_python_file(path: Path, relative_path: str) -> tuple[list[dict[str, An
     return visitor.findings, visitor.ignored_false_positive_count, None
 
 
+def _load_review_registry(project_root: Path) -> dict[str, Any]:
+    path = project_root / REVIEW_REGISTRY_PATH
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    if payload.get("schema_version") != "operational_exception_review_registry_v1":
+        raise ValueError("unexpected_operational_exception_review_registry_schema")
+    return payload
+
+
+def _source_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _finding_set_sha256(findings: list[dict[str, Any]], root: Path) -> str:
+    rows = []
+    cache: dict[str, str] = {}
+    for item in findings:
+        file_name = item["file"]
+        source_hash = cache.setdefault(file_name, _source_sha256(root / file_name))
+        rows.append({key: item.get(key) for key in ("file", "line", "function_or_class", "pattern", "severity")} | {"source_sha256": source_hash})
+    payload = json.dumps(rows, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def audit_project(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     discovery = discover_versioned_files(root)
@@ -419,6 +447,16 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         parse_error_count += int(parse_error is not None)
 
     findings.sort(key=lambda item: (-SEVERITY_RANK[item["severity"]], item["file"], item["line"], item["pattern"]))
+    review_registry = _load_review_registry(root)
+    reviewed_findings: list[dict[str, Any]] = []
+    if findings and not any(item.get("severity") in {"high", "critical"} for item in findings):
+        current_digest = _finding_set_sha256(findings, root)
+        if (
+            review_registry.get("reviewed_finding_count") == len(findings)
+            and review_registry.get("reviewed_finding_set_sha256") == current_digest
+        ):
+            reviewed_findings = [dict(item) for item in findings]
+            findings = []
     counts = {severity: sum(item["severity"] == severity for item in findings) for severity in SEVERITY_RANK}
     if counts["critical"] or counts["high"]:
         status = "blocked"
@@ -437,6 +475,9 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         "file_discovery_source": discovery.source,
         "findings": findings,
         "finding_count": len(findings),
+        "reviewed_findings": reviewed_findings,
+        "reviewed_finding_count": len(reviewed_findings),
+        "review_registry_path": REVIEW_REGISTRY_PATH,
         "critical_count": counts["critical"],
         "high_count": counts["high"],
         "medium_count": counts["medium"],

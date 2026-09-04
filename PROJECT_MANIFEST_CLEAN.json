@@ -1,15 +1,15 @@
 {
-  "aggregate_sha256": "2b62bd0e05935c00dfb38fe668a38c7dfa1cf136685e2819bd768220c42a266b",
+  "aggregate_sha256": "3fee9225ce662669e9d34b1f5aecf39ee5d6baf8c54edf4fb408ba4e3ea58094",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 306,
-    "manifested_files_total": 1971,
-    "python_files": 1534,
+    "docs_files": 307,
+    "manifested_files_total": 1981,
+    "python_files": 1538,
     "runtime_excluded_files_total": 0,
-    "test_files": 410,
-    "tracked_files_total": 1972,
-    "workflows": 1
+    "test_files": 411,
+    "tracked_files_total": 1982,
+    "workflows": 2
   },
   "deterministic": true,
   "files": [
@@ -32,10 +32,16 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 3632,
+      "bytes": 4022,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "4f8417632f03233abad5c259c235081de5d620b22695ed670caa63980432ce52"
+      "sha256": "120a1bfd3a6ae45d5f2c5df217b4d50b6584bcbed73f19e1566b14e2fd8a37ce"
+    },
+    {
+      "bytes": 3719,
+      "hash_mode": "text_lf",
+      "path": ".github/workflows/security-resolution.yml",
+      "sha256": "cbeda44dccf23536954f9a1879ac62867b44d11df666a1bc7407db0c2484a122"
     },
     {
       "bytes": 2294,
@@ -332,6 +338,12 @@
       "sha256": "bf4721c7a167679efa0ac343e848600b0911938260124f2f78f74a4863f8340e"
     },
     {
+      "bytes": 410,
+      "hash_mode": "text_lf",
+      "path": "config/dev_branch_protection_policy_v1.json",
+      "sha256": "a2e98f5fde20ae17990f4332204d5ff58b32e38dfe055fefb34e408e218227fe"
+    },
+    {
       "bytes": 289,
       "hash_mode": "text_lf",
       "path": "config/drift_monitor.example.yml",
@@ -396,6 +408,12 @@
       "hash_mode": "text_lf",
       "path": "config/model_registry.example.yml",
       "sha256": "0aa088679a1f5d5b8347f932a16ec1200c614f365f619979cb2bbd99671fc6f9"
+    },
+    {
+      "bytes": 508,
+      "hash_mode": "text_lf",
+      "path": "config/operational_exception_review_registry_v1.json",
+      "sha256": "8fdb9fb641e0212f6efde969de8eebd733b942659caf8687fb0ec8292fa09dfd"
     },
     {
       "bytes": 1059,
@@ -620,6 +638,12 @@
       "sha256": "16e8bba9d5d64591e11301b116d1a0a75686ded453931b71c5b683ec1988a013"
     },
     {
+      "bytes": 626,
+      "hash_mode": "text_lf",
+      "path": "config/state_execution_boundary_review_registry_v1.json",
+      "sha256": "a9143122d962fc0915257dfd8e0588c3ced3b53b78173461ecf6e5b367017f9f"
+    },
+    {
       "bytes": 381,
       "hash_mode": "text_lf",
       "path": "config/state_repository.example.yml",
@@ -650,10 +674,10 @@
       "sha256": "62ca6d80b735dc9fea44f6bdbe5864f0abef7aa0d66908bb8c13f4b146a0ba2f"
     },
     {
-      "bytes": 1087,
+      "bytes": 1256,
       "hash_mode": "text_lf",
       "path": "docker-compose.live.example.yml",
-      "sha256": "cde5dc6f6fe97381bc2eab8621a15d15f41a825cfce0d00036d62a34ba4e0be3"
+      "sha256": "9f12f033fc0b50a932b33619830f1bbe15712268e8656170e0c68d5af751b351"
     },
     {
       "bytes": 10858,
@@ -1212,6 +1236,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DECISION_LEDGER_RUNTIME_PROFILE_V1_SANDBOX_ONLY.md",
       "sha256": "7658af74c27787d6f4710a10a9f0cc59e6cf4cfe38b2d296653bd737b301f8ce"
+    },
+    {
+      "bytes": 1204,
+      "hash_mode": "text_lf",
+      "path": "docs/DEV_SECURITY_GOVERNANCE_HARDENING_CLOSEOUT_V1.md",
+      "sha256": "334ba44bfbf453416a696e490b4065721ef5d97dc84638c8bcdf9850dcd1a6a2"
     },
     {
       "bytes": 3122,
@@ -2474,10 +2504,10 @@
       "sha256": "e5aec428d325726c1ba18c91f34353d0d325ea4098d14de7aa45132e88388d00"
     },
     {
-      "bytes": 2722,
+      "bytes": 2851,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/config.paper.json",
-      "sha256": "d520204e581b84ae83b3ba209c2ab13fda9edf45d59a1c8209c1ebe7d49a3613"
+      "sha256": "a1ee6755f8a99ff65fa93e0ec49593e1c8c11771de05a2631d44db7bc999a0d9"
     },
     {
       "bytes": 25619,
@@ -2580,6 +2610,12 @@
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
       "sha256": "1e2c2561244b7f49158198c925c60b130e89a5fe94f3653de04bb014fe505d3d"
+    },
+    {
+      "bytes": 66,
+      "hash_mode": "text_lf",
+      "path": "requirements-qlib-security-candidate.in",
+      "sha256": "a17966b03a3abe038d7ce70dce84695c3ee8d53f4d38bd16ef3ba0163e7592c0"
     },
     {
       "bytes": 92,
@@ -2750,6 +2786,12 @@
       "sha256": "ac293f95b722030b514b61fd99e97e1dbc26fdd1cb56299579f783dc15f9a44b"
     },
     {
+      "bytes": 3661,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_dev_branch_protection_v1.py",
+      "sha256": "578acfa7b5a59d0375441e0eabd57cad82094d37b555c561db49d0e1cdbbbb44"
+    },
+    {
       "bytes": 7231,
       "hash_mode": "text_lf",
       "path": "scripts/audit_diagnostic_common.py",
@@ -2810,10 +2852,10 @@
       "sha256": "a9f8f735b0928ec916b36a4b4389ca6642a685bff199daa02f1c7ea0a06e58d0"
     },
     {
-      "bytes": 18450,
+      "bytes": 20309,
       "hash_mode": "text_lf",
       "path": "scripts/audit_operational_exception_swallowing.py",
-      "sha256": "d5d3b3ba2063067539d20a1fe171a1dfce7fa5394ec5fc953eed52ec5025b0b9"
+      "sha256": "32dbb1489d33ffa5ec95dfe512c3b7f6bd89693bb07735c4bab00327d2d3444a"
     },
     {
       "bytes": 1511,
@@ -2954,10 +2996,10 @@
       "sha256": "9e55183481576b080631822f72c046cd6def11cd00930d3ea60adc50c7647816"
     },
     {
-      "bytes": 30273,
+      "bytes": 32751,
       "hash_mode": "text_lf",
       "path": "scripts/audit_state_execution_ledger_boundary.py",
-      "sha256": "094660874e6bf8a6d4c1397f6454b01820588a342e5772f0fd5c0078ec54f6d6"
+      "sha256": "81ecba610caf5e87e5cbc15f958fdb3817a8f13b1b6572c89c6fa384bcf7a883"
     },
     {
       "bytes": 2144,
@@ -3998,6 +4040,12 @@
       "sha256": "4d7c3272e8811683eeb1adb93d5a5cfd0e45d6616593e5b94392b5e758c304fb"
     },
     {
+      "bytes": 2583,
+      "hash_mode": "text_lf",
+      "path": "scripts/generate_hashed_lock_v1.py",
+      "sha256": "8ef3d11deaf1aa0e2cf15ea2a1f49c9d3fb716ff065c0f3ada20c2fe7e971cc4"
+    },
+    {
       "bytes": 639,
       "hash_mode": "text_lf",
       "path": "scripts/generate_phase15_exit_signal.py",
@@ -4314,6 +4362,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/pin_phase12_signal_contract.py",
       "sha256": "46685afcf496c57ee3728929a2bb05553568eed4df97e95745bd56d4f4b6479a"
+    },
+    {
+      "bytes": 1210,
+      "hash_mode": "text_lf",
+      "path": "scripts/pip_report_to_lock_v1.py",
+      "sha256": "5f38697d4d0a2cf75f60bd74a4a1cc1b37ee7d4f9b9ed50f67494d56106c862a"
     },
     {
       "bytes": 2190,
@@ -11664,6 +11718,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_sanitize_market_features_lookahead.py",
       "sha256": "f82cbb3b53f9abe7a794d3697967b2d83a7ba6686bf24af91cb06ff512667616"
+    },
+    {
+      "bytes": 3005,
+      "hash_mode": "text_lf",
+      "path": "tests/test_security_governance_hardening_closeout_v1.py",
+      "sha256": "7ad37fff03a41198d3b0649227f890b25318c58f8fcd168c5ef91b3f15bc68f5"
     },
     {
       "bytes": 31521,

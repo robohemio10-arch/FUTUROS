@@ -1,0 +1,17 @@
+{
+  "schema_version": "operational_exception_review_registry_v1",
+  "policy": "aggregate_exact_finding_set_with_source_sha256",
+  "reviewed_finding_count": 137,
+  "reviewed_finding_set_sha256": "9eedbc21b7088502b3ffc76ce1b533425d491a2708e663432e8237b6dffce7da",
+  "non_waivable_severities": [
+    "high",
+    "critical"
+  ],
+  "safety": {
+    "changes_risk": false,
+    "sends_orders": false,
+    "exchange_private_access": false,
+    "live_release_allowed": false,
+    "canary_release_allowed": false
+  }
+}

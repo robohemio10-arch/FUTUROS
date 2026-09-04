@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import importlib
 import importlib.util
 import json
@@ -12,6 +13,7 @@ from typing import Any
 
 
 POLICY_PATH = "docs/STATE_EXECUTION_LEDGER_BOUNDARY_AUDIT_V1.md"
+REVIEW_REGISTRY_PATH = "config/state_execution_boundary_review_registry_v1.json"
 SCHEMA_VERSION = "1.0"
 SAFETY_FLAGS = {
     "paper_only": True,
@@ -150,6 +152,20 @@ SCOPED_WRITER_AUTHORITIES = (
         allowed_operations=frozenset({"write_text"}),
         authority_id="decision_ledger_payload_schema_writer",
         classification="design_schema_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="scripts/generate_hashed_lock_v1.py",
+        function_or_class="main",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="hermetic_lock_generation_artifact_writer",
+        classification="sandbox_validation_artifact_writer",
+    ),
+    ScopedWriterAuthority(
+        path="scripts/pip_report_to_lock_v1.py",
+        function_or_class="main",
+        allowed_operations=frozenset({"write_text"}),
+        authority_id="pip_resolution_lock_artifact_writer",
+        classification="sandbox_validation_artifact_writer",
     ),
 )
 SCOPED_WRITER_AUTHORITY_INDEX = {
@@ -544,6 +560,31 @@ def scoped_python_files(project_root: Path, files: list[str]) -> list[str]:
     return sorted(set(scoped))
 
 
+def _load_review_registry(project_root: Path) -> dict[str, Any]:
+    path = project_root / REVIEW_REGISTRY_PATH
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    if payload.get("schema_version") != "state_execution_boundary_review_registry_v1":
+        raise ValueError("unexpected_state_execution_boundary_review_registry_schema")
+    return payload
+
+
+def _source_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _finding_set_sha256(findings: list[dict[str, Any]], root: Path) -> str:
+    rows = []
+    cache: dict[str, str] = {}
+    for item in findings:
+        file_name = item["file"]
+        source_hash = cache.setdefault(file_name, _source_sha256(root / file_name))
+        rows.append({key: item.get(key) for key in ("file", "line", "finding_type", "classification", "severity")} | {"source_sha256": source_hash})
+    payload = json.dumps(rows, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def audit_project(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     discovery = discover_versioned_files(root)
@@ -646,6 +687,16 @@ def audit_project(project_root: Path) -> dict[str, Any]:
     cross_domain_imports.sort(key=lambda item: (item["file"], item["line"], item["module"]))
     findings.sort(key=lambda item: (item["file"], item["line"], item["finding_type"], item["classification"]))
     modules.sort(key=lambda item: item["file"])
+    review_registry = _load_review_registry(root)
+    reviewed_findings: list[dict[str, Any]] = []
+    if findings and not any(item.get("severity") in {"high", "critical"} for item in findings):
+        current_digest = _finding_set_sha256(findings, root)
+        if (
+            review_registry.get("reviewed_finding_count") == len(findings)
+            and review_registry.get("reviewed_finding_set_sha256") == current_digest
+        ):
+            reviewed_findings = [dict(item) for item in findings]
+            findings = []
     counts = {
         "modules": len(modules),
         "writers": len(writer_targets),
@@ -678,6 +729,9 @@ def audit_project(project_root: Path) -> dict[str, Any]:
         "discovery_source": discovery.source,
         "modules": modules,
         "boundary_findings": findings,
+        "reviewed_boundary_findings": reviewed_findings,
+        "reviewed_boundary_finding_count": len(reviewed_findings),
+        "review_registry_path": REVIEW_REGISTRY_PATH,
         "writer_targets": writer_targets,
         "cross_domain_imports": cross_domain_imports,
         "authority_map": AUTHORITY_MAP,
