@@ -298,12 +298,70 @@ def test_report_contract_and_safety_flags(tmp_path: Path) -> None:
 def test_scoped_authority_registry_contains_only_literal_exact_keys() -> None:
     module = load_auditor()
 
-    assert len(module.SCOPED_WRITER_AUTHORITIES) == 5
+    expected = {
+        (
+            "scripts/validate_decision_ledger_payload_v4_2.py",
+            "_atomic_write_json",
+            "decision_ledger_payload_validation_artifact_writer",
+            "sandbox_validation_artifact_writer",
+        ),
+        (
+            "scripts/validate_decision_ledger_runtime_integration_v1.py",
+            "write_json",
+            "decision_ledger_runtime_integration_validation_artifact_writer",
+            "sandbox_validation_artifact_writer",
+        ),
+        (
+            "scripts/validate_decision_ledger_runtime_profile_v1.py",
+            "atomic_write_json",
+            "decision_ledger_runtime_profile_validation_artifact_writer",
+            "sandbox_validation_artifact_writer",
+        ),
+        (
+            "smartcrypto/execution/decision_ledger_runtime_profile_v1/schema.py",
+            "write_runtime_profile_schema",
+            "decision_ledger_runtime_profile_schema_writer",
+            "design_schema_artifact_writer",
+        ),
+        (
+            "smartcrypto/execution/decision_ledger_v4_2/schema.py",
+            "write_payload_json_schema",
+            "decision_ledger_payload_schema_writer",
+            "design_schema_artifact_writer",
+        ),
+        (
+            "scripts/generate_hashed_lock_v1.py",
+            "main",
+            "hermetic_lock_generation_artifact_writer",
+            "sandbox_validation_artifact_writer",
+        ),
+        (
+            "scripts/pip_report_to_lock_v1.py",
+            "main",
+            "pip_resolution_lock_artifact_writer",
+            "sandbox_validation_artifact_writer",
+        ),
+    }
+    observed = {
+        (
+            authority.path,
+            authority.function_or_class,
+            authority.authority_id,
+            authority.classification,
+        )
+        for authority in module.SCOPED_WRITER_AUTHORITIES
+    }
+
+    assert observed == expected
     for authority in module.SCOPED_WRITER_AUTHORITIES:
         assert not any(marker in authority.path for marker in ("*", "?", "[", "]"))
         assert authority.function_or_class
         assert authority.allowed_operations == frozenset({"write_text"})
         assert authority.boundary == "sandbox_design_only"
+        assert authority.runtime_authority is False
+        assert authority.operational_state_authority is False
+        assert authority.financial_ledger_authority is False
+        assert authority.paper_restart_authority is False
 
 
 def test_auditor_does_not_import_or_execute_scanned_modules(tmp_path: Path) -> None:

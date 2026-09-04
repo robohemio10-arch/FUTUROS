@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "fadc518057e40966adaa33ea5ac93336c412e4f5965d23144ec9dc6b537c23aa",
+  "aggregate_sha256": "2a03d590085e193308b5cc2a5f3b6d5733f0682ef47ec3792847e3f71c85feb1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -11774,10 +11774,10 @@
       "sha256": "f9a9a598719984242b5fe5fafe5f583315f7957903ce54f96149721c78b810ee"
     },
     {
-      "bytes": 12646,
+      "bytes": 14725,
       "hash_mode": "text_lf",
       "path": "tests/test_state_execution_ledger_boundary_audit_v1.py",
-      "sha256": "a5757af6adc07d6beb951d7eb20f0ff819996b363db7ffc8bed078097c5be484"
+      "sha256": "8bf90d42af9518ba6cdb1caa77b7fa4195ab4835e2d0fe9e45b54261fb998579"
     },
     {
       "bytes": 5009,
