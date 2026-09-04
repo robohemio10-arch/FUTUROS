@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8c54637133fb820ceda5ce089d80a035e9019f79246e97d8ec1267782e33cae1",
+  "aggregate_sha256": "fadc518057e40966adaa33ea5ac93336c412e4f5965d23144ec9dc6b537c23aa",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 1983,
+    "manifested_files_total": 1984,
     "python_files": 1538,
     "runtime_excluded_files_total": 0,
     "test_files": 411,
-    "tracked_files_total": 1984,
+    "tracked_files_total": 1985,
     "workflows": 2
   },
   "deterministic": true,
@@ -32,16 +32,16 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 4327,
+      "bytes": 4413,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "9e805709c6b409d3794ab61043c819e5dd842cd77268d64bf606815ae28caa74"
+      "sha256": "36cce6b619f5ce46cb3893934887a9c845f6ff3f1192922644dd903adbf3cba7"
     },
     {
-      "bytes": 3879,
+      "bytes": 4224,
       "hash_mode": "text_lf",
       "path": ".github/workflows/security-resolution.yml",
-      "sha256": "d1d3977e31ce135d69b8409838447b5178932c1c4941483aa9c50d1d58c3f0fd"
+      "sha256": "7e9c667ca85f964bb5e3fc539e60cd056f567bb3484a3507d4d82eb3a5457497"
     },
     {
       "bytes": 2294,
@@ -2610,6 +2610,12 @@
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
       "sha256": "4b4fa92b92bd2899f9cb3d9792683b92f2a85cd98b361fdfad59f4d626ae69ef"
+    },
+    {
+      "bytes": 520,
+      "hash_mode": "text_lf",
+      "path": "requirements-build.lock",
+      "sha256": "636ed54fd7819d89ee081c5cc084a3c871bcb3412b375f28dd00a5cfbed8f68f"
     },
     {
       "bytes": 120502,
