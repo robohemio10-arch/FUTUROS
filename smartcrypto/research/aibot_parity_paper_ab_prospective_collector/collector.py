@@ -12,9 +12,11 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, cast
 
 from smartcrypto.execution.decision_ledger_v4_2.contracts import (
     DecisionRecordV42,
@@ -44,7 +46,8 @@ from smartcrypto.runtime.integrity_traceability_v2.atomic_writer import (
 )
 
 SCHEMA_VERSION = "aibot_parity_paper_ab_prospective_collector_v1"
-OBSERVATION_SCHEMA_VERSION = "aibot_parity_paper_ab_prospective_observation_v1"
+LEGACY_OBSERVATION_SCHEMA_VERSION = "aibot_parity_paper_ab_prospective_observation_v1"
+OBSERVATION_SCHEMA_VERSION = "aibot_parity_paper_ab_prospective_observation_v2"
 DEFAULT_OBSERVATIONS = Path(
     "data/reports/aibot_parity/aibot_parity_paper_ab_prospective_observations_v1.jsonl"
 )
@@ -127,7 +130,7 @@ def _finite_float(value: object) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
-        number = float(value)
+        number = float(cast(Any, value))
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
@@ -284,29 +287,90 @@ def _decision_index(
     return indexed
 
 
+def _iso_utc(value: datetime) -> str:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("timestamp_must_be_timezone_aware")
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _parse_utc(value: object, *, field: str) -> datetime:
+    text = _text(value)
+    if text is None:
+        raise ValueError(f"{field}_missing")
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"{field}_invalid") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{field}_must_be_timezone_aware")
+    return parsed.astimezone(UTC)
+
+
+def _new_collector_run_id() -> str:
+    return f"collector-run-{uuid.uuid4().hex}"
+
+
 def capture_observations(
     *,
     snapshots: Sequence[AibotParityPipelineSnapshot],
     decisions: Sequence[DecisionRecordV42],
     financial_config_unchanged: bool,
+    paper_financial_config_sha256: str | None = None,
+    expected_financial_config_sha256: str | None = None,
+    captured_at_utc: datetime | None = None,
+    collector_run_id: str | None = None,
+    existing_observations: Sequence[Mapping[str, Any]] = (),
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Capture immutable decision-time observations without outcome fields."""
 
     blockers: list[str] = []
     decision_by_candidate = _decision_index(decisions, blockers)
+    existing_ids = {str(row.get("observation_id")) for row in existing_observations}
+    captured_at = captured_at_utc or datetime.now(UTC)
+    if captured_at.tzinfo is None or captured_at.utcoffset() is None:
+        raise ValueError("captured_at_utc_must_be_timezone_aware")
+    captured_at = captured_at.astimezone(UTC)
+    run_id = _text(collector_run_id) or _new_collector_run_id()
+    current_fingerprint = _text(paper_financial_config_sha256)
+    expected_fingerprint = _text(expected_financial_config_sha256)
+
     observations: list[dict[str, Any]] = []
     for snapshot in snapshots:
         action = snapshot.ensemble_action.strip().upper()
         if action not in ALLOWED_ACTIONS:
             blockers.append(f"TREATMENT_ACTION_NOT_CANONICAL:{snapshot.cycle_id}")
             continue
+        if snapshot.status.value == "BLOCKED":
+            blockers.append(f"AIBOT_SNAPSHOT_BLOCKED:{snapshot.cycle_id}")
+            continue
+        if not _snapshot_point_in_time_valid(snapshot):
+            blockers.append(
+                f"AIBOT_SNAPSHOT_POINT_IN_TIME_NOT_VALID:{snapshot.cycle_id}"
+            )
+            continue
+        if captured_at < snapshot.decision_time_utc:
+            blockers.append(f"CAPTURE_BEFORE_DECISION:{snapshot.cycle_id}")
+            continue
         if not financial_config_unchanged:
-            blockers.append(f"FINANCIAL_CONFIG_PARITY_NOT_ASSERTED:{snapshot.cycle_id}")
+            blockers.append(f"FINANCIAL_CONFIG_PARITY_NOT_PROVEN:{snapshot.cycle_id}")
+            continue
+        if current_fingerprint is None or expected_fingerprint is None:
+            blockers.append(
+                f"FINANCIAL_CONFIG_FINGERPRINT_NOT_PROVIDED:{snapshot.cycle_id}"
+            )
+            continue
+        if current_fingerprint != expected_fingerprint:
+            blockers.append(f"FINANCIAL_CONFIG_FINGERPRINT_MISMATCH:{snapshot.cycle_id}")
             continue
         if not _snapshot_safety_valid(snapshot):
             blockers.append(f"AIBOT_SNAPSHOT_SAFETY_NOT_PROVEN:{snapshot.cycle_id}")
             continue
         for candidate_id in snapshot.selected_candidate_ids:
+            observation_id = "obs-" + hashlib.sha256(
+                f"{snapshot.cycle_id}|{candidate_id}".encode("utf-8")
+            ).hexdigest()
+            if observation_id in existing_ids:
+                continue
             decision = decision_by_candidate.get(candidate_id)
             if decision is None:
                 blockers.append(f"DECISION_LEDGER_CANDIDATE_MISSING:{candidate_id}")
@@ -319,26 +383,21 @@ def capture_observations(
                 continue
             observation_body: dict[str, Any] = {
                 "schema_version": OBSERVATION_SCHEMA_VERSION,
-                "observation_id": "obs-"
-                + hashlib.sha256(
-                    f"{snapshot.cycle_id}|{candidate_id}".encode("utf-8")
-                ).hexdigest(),
+                "observation_id": observation_id,
                 "candidate_id": candidate_id,
                 "cycle_id": snapshot.cycle_id,
-                "observed_at_utc": snapshot.decision_time_utc.isoformat().replace(
-                    "+00:00", "Z"
-                ),
+                "observed_at_utc": _iso_utc(snapshot.decision_time_utc),
+                "captured_at_utc": _iso_utc(captured_at),
+                "collector_run_id": run_id,
                 "treatment_action": action,
                 "riskmanager_shadow_decision": snapshot.riskmanager_shadow_decision,
                 "symbol": decision.symbol,
                 "side": decision.side.value,
                 "regime": decision.regime,
                 "qlib_status": snapshot.qlib_status,
-                "point_in_time_valid": bool(
-                    _snapshot_point_in_time_valid(snapshot)
-                    and snapshot.status.value != "BLOCKED"
-                ),
+                "point_in_time_valid": True,
                 "financial_config_unchanged": True,
+                "paper_financial_config_sha256": current_fingerprint,
                 "paper_only": True,
                 "shadow_only": True,
                 "operational_authority": False,
@@ -354,6 +413,7 @@ def capture_observations(
             }
             observation_body["observation_sha256"] = _stable_sha256(observation_body)
             observations.append(observation_body)
+            existing_ids.add(observation_id)
     return observations, list(dict.fromkeys(blockers))
 
 
@@ -362,9 +422,10 @@ def _validate_observation(row: Mapping[str, Any]) -> dict[str, Any]:
     seal = _text(payload.pop("observation_sha256", None))
     if seal is None or seal != _stable_sha256(payload):
         raise ValueError("observation_sha256_mismatch")
-    if payload.get("schema_version") != OBSERVATION_SCHEMA_VERSION:
+    schema_version = payload.get("schema_version")
+    if schema_version not in {OBSERVATION_SCHEMA_VERSION, LEGACY_OBSERVATION_SCHEMA_VERSION}:
         raise ValueError("observation_schema_version_invalid")
-    required_text = (
+    required_text = [
         "observation_id",
         "candidate_id",
         "cycle_id",
@@ -373,9 +434,25 @@ def _validate_observation(row: Mapping[str, Any]) -> dict[str, Any]:
         "riskmanager_shadow_decision",
         "decision_payload_sha256",
         "aibot_snapshot_sha256",
-    )
+    ]
+    if schema_version == OBSERVATION_SCHEMA_VERSION:
+        required_text.extend(
+            (
+                "captured_at_utc",
+                "collector_run_id",
+                "paper_financial_config_sha256",
+            )
+        )
     if any(_text(payload.get(field)) is None for field in required_text):
         raise ValueError("observation_required_field_missing")
+    observed = _parse_utc(payload.get("observed_at_utc"), field="observed_at_utc")
+    if schema_version == OBSERVATION_SCHEMA_VERSION:
+        captured = _parse_utc(payload.get("captured_at_utc"), field="captured_at_utc")
+        if captured < observed:
+            raise ValueError("captured_at_utc_before_observed_at_utc")
+        fingerprint = str(payload.get("paper_financial_config_sha256"))
+        if len(fingerprint) != 64 or any(char not in "0123456789abcdef" for char in fingerprint):
+            raise ValueError("paper_financial_config_sha256_invalid")
     payload["observation_sha256"] = seal
     return payload
 
@@ -444,11 +521,18 @@ def write_observations_idempotent(
     try:
         existing = read_observation_ledger(target)
         by_id: dict[str, dict[str, Any]] = {}
+        candidate_cycles: dict[str, str] = {}
         for row in [*existing, *incoming]:
             observation_id = str(row["observation_id"])
             prior = by_id.get(observation_id)
             if prior is not None and prior != row:
                 raise ValueError("observation_id_conflict")
+            candidate_id = str(row["candidate_id"])
+            cycle_id = str(row["cycle_id"])
+            prior_cycle = candidate_cycles.get(candidate_id)
+            if prior_cycle is not None and prior_cycle != cycle_id:
+                raise ValueError(f"candidate_id_reused_across_cycles:{candidate_id}")
+            candidate_cycles[candidate_id] = cycle_id
             by_id[observation_id] = row
         appended = len(by_id) - len({str(row["observation_id"]) for row in existing})
         if appended:
@@ -497,6 +581,31 @@ def merge_observations(
     return ordered, list(dict.fromkeys(blockers))
 
 
+
+_ASSIGNMENT_OUTCOME_FIELDS = frozenset(
+    {
+        "outcome_available_at_utc",
+        "realized_net_pnl_usdt",
+        "effective_arm_pnl_usdt",
+    }
+)
+
+
+def immutable_assignment_rows(
+    assignments: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project evaluator assignments onto their immutable analytical identity."""
+
+    return [
+        {
+            key: value
+            for key, value in dict(row).items()
+            if key not in _ASSIGNMENT_OUTCOME_FIELDS
+        }
+        for row in assignments
+    ]
+
+
 def _trade_link_index(
     trade_links: Sequence[TradeLinkRecordV42], blockers: list[str]
 ) -> dict[str, TradeLinkRecordV42]:
@@ -533,6 +642,7 @@ def materialize_candidate_rows(
     observations: Sequence[Mapping[str, Any]],
     trade_links: Sequence[TradeLinkRecordV42],
     closed_trades: Sequence[Mapping[str, Any]],
+    as_of_utc: datetime | None = None,
 ) -> tuple[list[dict[str, Any]], list[str], dict[str, int]]:
     """Attach later Paper outcomes only through the sealed trade-link contract."""
 
@@ -543,15 +653,22 @@ def materialize_candidate_rows(
     pending_trade_link_count = 0
     pending_closed_trade_count = 0
     completed_outcome_count = 0
+    legacy_observation_excluded_count = 0
 
     for raw in observations:
         observation = _validate_observation(raw)
+        if observation.get("schema_version") == LEGACY_OBSERVATION_SCHEMA_VERSION:
+            legacy_observation_excluded_count += 1
+            continue
         candidate_row = {
             key: observation.get(key)
             for key in (
                 "candidate_id",
                 "cycle_id",
                 "observed_at_utc",
+                "captured_at_utc",
+                "collector_run_id",
+                "paper_financial_config_sha256",
                 "treatment_action",
                 "riskmanager_shadow_decision",
                 "symbol",
@@ -598,8 +715,27 @@ def materialize_candidate_rows(
             blockers.append(f"OUTCOME_PAYLOAD_INCOMPLETE:{candidate_id}")
             rows.append(candidate_row)
             continue
+        try:
+            outcome_time = _parse_utc(close_time, field="outcome_available_at_utc")
+        except ValueError:
+            blockers.append(f"OUTCOME_AVAILABLE_AT_UTC_INVALID:{candidate_id}")
+            rows.append(candidate_row)
+            continue
+        if as_of_utc is not None:
+            as_of = as_of_utc.astimezone(UTC)
+            if outcome_time > as_of:
+                blockers.append(f"OUTCOME_AVAILABLE_AFTER_COLLECTION_RUN:{candidate_id}")
+                rows.append(candidate_row)
+                continue
+        captured_text = _text(observation.get("captured_at_utc"))
+        if captured_text is not None:
+            captured_time = _parse_utc(captured_text, field="captured_at_utc")
+            if outcome_time <= captured_time:
+                blockers.append(f"OUTCOME_NOT_AFTER_PROSPECTIVE_CAPTURE:{candidate_id}")
+                rows.append(candidate_row)
+                continue
         candidate_row["realized_net_pnl_usdt"] = pnl
-        candidate_row["outcome_available_at_utc"] = close_time
+        candidate_row["outcome_available_at_utc"] = _iso_utc(outcome_time)
         completed_outcome_count += 1
         rows.append(candidate_row)
 
@@ -608,6 +744,7 @@ def materialize_candidate_rows(
         "pending_trade_link_count": pending_trade_link_count,
         "pending_closed_trade_count": pending_closed_trade_count,
         "pending_outcome_count": pending_trade_link_count + pending_closed_trade_count,
+        "legacy_observation_excluded_count": legacy_observation_excluded_count,
     }
     return rows, list(dict.fromkeys(blockers)), counters
 
@@ -621,13 +758,24 @@ def collect_prospective_evidence(
     closed_trades: Sequence[Mapping[str, Any]],
     existing_observations: Sequence[Mapping[str, Any]] = (),
     financial_config_unchanged: bool,
+    paper_financial_config_sha256: str | None = None,
+    expected_financial_config_sha256: str | None = None,
+    captured_at_utc: datetime | None = None,
+    collector_run_id: str | None = None,
 ) -> CollectionResult:
     """Pure orchestration for capture, outcome materialization and A/B evaluation."""
 
+    run_id = _text(collector_run_id) or _new_collector_run_id()
+    captured_at = captured_at_utc or datetime.now(UTC)
     new_observations, capture_blockers = capture_observations(
         snapshots=snapshots,
         decisions=decisions,
         financial_config_unchanged=financial_config_unchanged,
+        paper_financial_config_sha256=paper_financial_config_sha256,
+        expected_financial_config_sha256=expected_financial_config_sha256,
+        captured_at_utc=captured_at,
+        collector_run_id=run_id,
+        existing_observations=existing_observations,
     )
     observations, merge_blockers = merge_observations(
         existing_observations, new_observations
@@ -636,16 +784,37 @@ def collect_prospective_evidence(
         observations=observations,
         trade_links=trade_links,
         closed_trades=closed_trades,
+        as_of_utc=captured_at,
     )
     ab_report, assignments = evaluate_prospective_ab_soak(
         preregistration, candidate_rows
     )
+    ab_integrity_blockers: list[str] = []
+    if ab_report.get("status") == "blocked":
+        soak_health = ab_report.get("soak_health")
+        if isinstance(soak_health, Mapping):
+            values = soak_health.get("integrity_blockers")
+            if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+                ab_integrity_blockers.extend(
+                    f"AB_SOAK_INTEGRITY:{str(value)}" for value in values
+                )
+        if not ab_integrity_blockers:
+            ab_integrity_blockers.append(
+                f"AB_SOAK_INTEGRITY:{str(ab_report.get('reason') or 'blocked')}"
+            )
     collector_blockers = list(
-        dict.fromkeys([*capture_blockers, *merge_blockers, *outcome_blockers])
+        dict.fromkeys(
+            [
+                *capture_blockers,
+                *merge_blockers,
+                *outcome_blockers,
+                *ab_integrity_blockers,
+            ]
+        )
     )
     candidate_start = (
-        min(str(row["observed_at_utc"]) for row in observations)
-        if observations
+        min(str(row["observed_at_utc"]) for row in candidate_rows)
+        if candidate_rows
         else None
     )
     status = "blocked" if collector_blockers else "ok"
@@ -655,6 +824,15 @@ def collect_prospective_evidence(
         "status": status,
         "reason": reason,
         "decision": "COLLECT_PROSPECTIVE_EVIDENCE",
+        "collector_run_id": run_id,
+        "captured_at_utc": _iso_utc(captured_at),
+        "paper_financial_config_sha256": _text(paper_financial_config_sha256),
+        "expected_financial_config_sha256": _text(expected_financial_config_sha256),
+        "financial_config_fingerprint_valid": bool(
+            paper_financial_config_sha256
+            and expected_financial_config_sha256
+            and paper_financial_config_sha256 == expected_financial_config_sha256
+        ),
         "new_observation_count": len(new_observations),
         "total_observation_count": len(observations),
         "candidate_row_count": len(candidate_rows),
@@ -667,7 +845,9 @@ def collect_prospective_evidence(
         "collection_clock_candidate_start_utc": candidate_start,
         "collection_clock_started": False,
         "prospective_collection_running_proven": False,
-        "collection_clock_reason": "software_execution_alone_does_not_prove_paper_host_recurring_collection",
+        "collection_clock_reason": (
+            "software_execution_alone_does_not_prove_paper_host_recurring_collection"
+        ),
         "ab_soak": ab_report,
         "safety_flags": dict(SAFETY_FLAGS),
         **SAFETY_FLAGS,
@@ -683,11 +863,13 @@ __all__ = [
     "CollectionResult",
     "DEFAULT_OBSERVATIONS",
     "DecisionLedgerRows",
+    "LEGACY_OBSERVATION_SCHEMA_VERSION",
     "OBSERVATION_SCHEMA_VERSION",
     "SAFETY_FLAGS",
     "SCHEMA_VERSION",
     "capture_observations",
     "collect_prospective_evidence",
+    "immutable_assignment_rows",
     "load_aibot_snapshots",
     "load_decision_ledger_jsonl",
     "load_normalized_closed_trades",

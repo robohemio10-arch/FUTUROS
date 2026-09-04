@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "270fa7c31ed7a927c97ee765184195247f0b8736c1f99772c2d83434ac55e93f",
+  "aggregate_sha256": "2b62bd0e05935c00dfb38fe668a38c7dfa1cf136685e2819bd768220c42a266b",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 306,
-    "manifested_files_total": 1964,
-    "python_files": 1528,
+    "manifested_files_total": 1971,
+    "python_files": 1534,
     "runtime_excluded_files_total": 0,
-    "test_files": 409,
-    "tracked_files_total": 1965,
+    "test_files": 410,
+    "tracked_files_total": 1972,
     "workflows": 1
   },
   "deterministic": true,
@@ -56,10 +56,10 @@
       "sha256": "508599ae25c910119dfbb13f034e0271992269942cfdf90f4882dfaee7eade14"
     },
     {
-      "bytes": 3112,
+      "bytes": 4202,
       "hash_mode": "text_lf",
       "path": "Makefile",
-      "sha256": "96feb190d8eda33a367ae210e06213357b55016bbc60c5f64705242bad1a88e8"
+      "sha256": "a08e3b491ae9f0efcbd155e4000a10cca91a18447cf25db204c275849c9d2424"
     },
     {
       "bytes": 1675,
@@ -536,6 +536,12 @@
       "sha256": "bdeed1cad254eb43e63558cf8600935f63fffede0f4331e794fce41e93cedcf9"
     },
     {
+      "bytes": 1915,
+      "hash_mode": "text_lf",
+      "path": "config/research/aibot_parity_prospective_runtime_foundation_v1.json",
+      "sha256": "8d9ccfbea11343b4512e17d506b16e19f175829b7c43a1e5fb5ff5921d13b42c"
+    },
+    {
       "bytes": 957,
       "hash_mode": "text_lf",
       "path": "config/research/execution_intelligence.yaml",
@@ -698,10 +704,10 @@
       "sha256": "2b181c43aa52483d271283c9f66d49256381ed221ab8a6df9067e5842efc0183"
     },
     {
-      "bytes": 5904,
+      "bytes": 9935,
       "hash_mode": "text_lf",
       "path": "docs/AIBOT_PARITY_PAPER_AB_PROSPECTIVE_COLLECTOR_V1.md",
-      "sha256": "0407a3d1b0024423adb32e185ea7a8731bac49aa26aa67c5bbcc5b91d22e4de2"
+      "sha256": "5ee64da8350a2c06adce52f13199afc62c9f02594e23f64a91b1b59e71c97fce"
     },
     {
       "bytes": 5297,
@@ -2654,6 +2660,12 @@
       "sha256": "ab4ce3dcf211138da1a31242a169b850326c6dad5ea34b4d939fe1170a20d88d"
     },
     {
+      "bytes": 8214,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_aibot_parity_prospective_runtime_activation_foundation_v1.py",
+      "sha256": "78dbeb5b0311d9296d64fdec080ff235773cb8d7f8013b0c91ebd8aed4a22eac"
+    },
+    {
       "bytes": 857,
       "hash_mode": "text_lf",
       "path": "scripts/audit_aibot_parity_v2_dod.py",
@@ -3710,6 +3722,12 @@
       "sha256": "d4a7763a0870ddb3c84d91002326502a66608b44f080b4f3f13f2fe15fab017c"
     },
     {
+      "bytes": 2008,
+      "hash_mode": "text_lf",
+      "path": "scripts/check_aibot_parity_prospective_runtime_health_v1.py",
+      "sha256": "b509a077f6163c002fbd2e0a2c17e61be92cd6dc32c1745a2c588a5c8c622b24"
+    },
+    {
       "bytes": 96,
       "hash_mode": "text_lf",
       "path": "scripts/clear_phase17_runtime_controls.py",
@@ -4430,16 +4448,22 @@
       "sha256": "93a715d6f638c5f1eb8c87414091ee98b7668dfa3ff6220e7926d1404299e048"
     },
     {
-      "bytes": 9719,
+      "bytes": 12227,
       "hash_mode": "text_lf",
       "path": "scripts/run_aibot_parity_paper_ab_prospective_collector_v1.py",
-      "sha256": "626b708446de983abf69edfbdc6591d32ae7c724ca444dc42095df6e3e4c89f8"
+      "sha256": "4b3b59316e32917bf02929f57a36ad4680cb8f0af1a530159d79fb2de8008375"
     },
     {
       "bytes": 5764,
       "hash_mode": "text_lf",
       "path": "scripts/run_aibot_parity_paper_ab_soak_v1.py",
       "sha256": "15e94184b8632de2b8c1867149c601785fee308a9f2d9e083bacdd9d1a2516a4"
+    },
+    {
+      "bytes": 3879,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_aibot_parity_prospective_runtime_cycle_v1.py",
+      "sha256": "1f32783ad83977855e789cac27ae7b510ab65dfcc6b24f0921a68cfc32e6a039"
     },
     {
       "bytes": 1408,
@@ -7760,16 +7784,28 @@
       "sha256": "096b9c23a349d07e10e2243503b9b87da10c3bee2c1317a975f89e34bf21dbb1"
     },
     {
-      "bytes": 982,
+      "bytes": 2379,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/__init__.py",
-      "sha256": "30c83860b3d119f65b142a19660cfc8549e21bb4e6e12994d27a60b38b2e74d6"
+      "sha256": "8cd8871092c225389eda878f84c755e7f91e86518b642614b6f1a329f48aeb22"
     },
     {
-      "bytes": 25769,
+      "bytes": 33634,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/collector.py",
-      "sha256": "f294e2145812652f010bf2ca768885cd69d604803cc014d9d03da411669beee6"
+      "sha256": "7dd414d5861b3cdcbea8e84f8b3f63ccebe45029282eca39fdb42add0a5c5d31"
+    },
+    {
+      "bytes": 8563,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/financial_fingerprint.py",
+      "sha256": "e9ebd73ab2180e8f1a760b305d47589a8be4e8dcf03ba3675a7e92b79275118f"
+    },
+    {
+      "bytes": 30912,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity_paper_ab_prospective_collector/runtime_foundation.py",
+      "sha256": "a65c87dfa02e4e87e37cc5ed62c974621e1eaa161bfe531b857c32a6c4b2eade"
     },
     {
       "bytes": 342,
@@ -9506,16 +9542,22 @@
       "sha256": "682d4c31086cf421852698aa2206d1e1edec185f34d7694ce6f75c35c230092a"
     },
     {
-      "bytes": 11979,
+      "bytes": 23209,
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_parity_paper_ab_prospective_collector_v1.py",
-      "sha256": "ae4c6485d4c606220d275ac0e41fc86293ecda20464d462f047d02039c771950"
+      "sha256": "73b5e9da2804a429c5d2744fb4f6fc65bfd5e22795050ba61c56806cdd1adf3f"
     },
     {
       "bytes": 9459,
       "hash_mode": "text_lf",
       "path": "tests/test_aibot_parity_paper_ab_soak_v1.py",
       "sha256": "f9bf5b4108d49c336307a021c2bcd4a2ea5373d28f24ea8e98ddae0167f614e2"
+    },
+    {
+      "bytes": 27529,
+      "hash_mode": "text_lf",
+      "path": "tests/test_aibot_parity_prospective_runtime_activation_foundation_v1.py",
+      "sha256": "b42d320ae91b3be403529968ce2179def64886b818bcb99f2b7847be32074f5e"
     },
     {
       "bytes": 4015,
