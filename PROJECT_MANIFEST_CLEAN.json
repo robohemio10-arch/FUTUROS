@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2a03d590085e193308b5cc2a5f3b6d5733f0682ef47ec3792847e3f71c85feb1",
+  "aggregate_sha256": "6e93e66726b9f79d4b73bb90a7f074d23d8c6a9b03363d35bedbe8b940d017ce",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 1984,
-    "python_files": 1538,
+    "manifested_files_total": 1985,
+    "python_files": 1539,
     "runtime_excluded_files_total": 0,
-    "test_files": 411,
-    "tracked_files_total": 1985,
+    "test_files": 412,
+    "tracked_files_total": 1986,
     "workflows": 2
   },
   "deterministic": true,
@@ -2804,10 +2804,10 @@
       "sha256": "ac293f95b722030b514b61fd99e97e1dbc26fdd1cb56299579f783dc15f9a44b"
     },
     {
-      "bytes": 3661,
+      "bytes": 10303,
       "hash_mode": "text_lf",
       "path": "scripts/audit_dev_branch_protection_v1.py",
-      "sha256": "578acfa7b5a59d0375441e0eabd57cad82094d37b555c561db49d0e1cdbbbb44"
+      "sha256": "6281e97ae28f7b36febdd1c733e9c97dccf779d32991a9ec51dfd352f85d54d9"
     },
     {
       "bytes": 7231,
@@ -9666,6 +9666,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_anti_leakage_audit.py",
       "sha256": "0b44fc07eb15db322c8d4fb3c0980d20ce84aafd14b26b84ce3232f59485c294"
+    },
+    {
+      "bytes": 6286,
+      "hash_mode": "text_lf",
+      "path": "tests/test_audit_dev_branch_protection_rulesets_v2.py",
+      "sha256": "5a3de17bdfa83d62b436c4d0844b3922b181682373fed8710384484b66133d62"
     },
     {
       "bytes": 2279,
