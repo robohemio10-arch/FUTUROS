@@ -24,7 +24,18 @@ MIN_NET_PNL = 0.0
 MIN_EXPECTANCY_UPLIFT = 0.0
 MAX_DRAWDOWN_RATIO_TO_BASELINE = 1.05
 
-_ALLOWED_SELECTOR_VALUES = {"1", "true", "allow", "allowed", "pass", "passed", "approve", "approved", "permit", "permitted"}
+_ALLOWED_SELECTOR_VALUES = {
+    "1",
+    "true",
+    "allow",
+    "allowed",
+    "pass",
+    "passed",
+    "approve",
+    "approved",
+    "permit",
+    "permitted",
+}
 
 
 def build_paper_autolearning_economic_challenger_scorecard_v1(
@@ -48,9 +59,10 @@ def build_paper_autolearning_economic_challenger_scorecard_v1(
 
     baseline_metrics = _metrics(normalized)
     selected_metrics = _metrics(selected)
+
     if selected_metrics["trade_count"] < MIN_SELECTED_TRADES:
         blockers.append("min_selected_trades_not_met")
-    if selected_metrics["profit_factor"] is None or selected_metrics["profit_factor"] < MIN_PROFIT_FACTOR:
+    if not _profit_factor_passes(selected_metrics):
         blockers.append("min_profit_factor_not_met")
     if selected_metrics["expectancy"] <= MIN_EXPECTANCY:
         blockers.append("positive_expectancy_not_met")
@@ -61,8 +73,13 @@ def build_paper_autolearning_economic_challenger_scorecard_v1(
     if expectancy_uplift <= MIN_EXPECTANCY_UPLIFT:
         blockers.append("expectancy_uplift_not_met")
 
-    drawdown_ratio = _safe_ratio(selected_metrics["max_drawdown_abs"], baseline_metrics["max_drawdown_abs"])
-    if drawdown_ratio is not None and drawdown_ratio > MAX_DRAWDOWN_RATIO_TO_BASELINE:
+    drawdown_ratio = _drawdown_ratio(
+        selected_metrics["max_drawdown_abs"],
+        baseline_metrics["max_drawdown_abs"],
+    )
+    if baseline_metrics["max_drawdown_abs"] == 0 and selected_metrics["max_drawdown_abs"] > 0:
+        blockers.append("drawdown_worse_than_zero_drawdown_baseline")
+    elif drawdown_ratio is not None and drawdown_ratio > MAX_DRAWDOWN_RATIO_TO_BASELINE:
         blockers.append("drawdown_ratio_to_baseline_exceeded")
 
     economically_promising = not blockers
@@ -70,7 +87,11 @@ def build_paper_autolearning_economic_challenger_scorecard_v1(
         "schema_version": SCHEMA_VERSION,
         "status": "ok" if economically_promising else "blocked",
         "reason": "economic_edge_research_only" if economically_promising else blockers[0],
-        "decision": "ECONOMICALLY_PROMISING_RESEARCH_ONLY" if economically_promising else "MANTER_EM_RESEARCH",
+        "decision": (
+            "ECONOMICALLY_PROMISING_RESEARCH_ONLY"
+            if economically_promising
+            else "MANTER_EM_RESEARCH"
+        ),
         "source_path": str(source),
         "selector_field": selector_field,
         "input_row_count": len(input_rows),
@@ -138,7 +159,12 @@ def _metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     count = len(pnls)
     gross_profit = sum(value for value in pnls if value > 0)
     gross_loss_abs = abs(sum(value for value in pnls if value < 0))
-    profit_factor = None if gross_loss_abs == 0 and gross_profit == 0 else (float("inf") if gross_loss_abs == 0 else gross_profit / gross_loss_abs)
+    profit_factor_infinite = gross_profit > 0 and gross_loss_abs == 0
+    profit_factor = (
+        None
+        if gross_loss_abs == 0
+        else round(gross_profit / gross_loss_abs, 10)
+    )
     net = sum(pnls)
     expectancy = net / count if count else 0.0
     wins = sum(1 for value in pnls if value > 0)
@@ -153,9 +179,17 @@ def _metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "gross_loss_abs": round(gross_loss_abs, 10),
         "net_pnl_total": round(net, 10),
         "expectancy": round(expectancy, 10),
-        "profit_factor": None if profit_factor is None else ("inf" if math.isinf(profit_factor) else round(profit_factor, 10)),
+        "profit_factor": profit_factor,
+        "profit_factor_infinite": profit_factor_infinite,
         "max_drawdown_abs": round(max_drawdown, 10),
     }
+
+
+def _profit_factor_passes(metrics: Mapping[str, Any]) -> bool:
+    if metrics.get("profit_factor_infinite") is True:
+        return True
+    value = metrics.get("profit_factor")
+    return isinstance(value, (int, float)) and float(value) >= MIN_PROFIT_FACTOR
 
 
 def _max_drawdown_abs(pnls: Sequence[float]) -> float:
@@ -195,10 +229,10 @@ def _sort_key(row: Mapping[str, Any]) -> tuple[int, str]:
         return (1, text)
 
 
-def _safe_ratio(numerator: float, denominator: float) -> float | None:
-    if denominator == 0:
-        return None if numerator == 0 else float("inf")
-    return round(numerator / denominator, 10)
+def _drawdown_ratio(selected: float, baseline: float) -> float | None:
+    if baseline == 0:
+        return None
+    return round(selected / baseline, 10)
 
 
 def _resolve(root: Path, value: str | Path) -> Path:
