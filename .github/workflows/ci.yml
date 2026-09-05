@@ -91,6 +91,9 @@ jobs:
       - name: Paper runtime check
         run: make paper-check
 
+      - name: Check deterministic project manifest
+        run: python scripts/generate_project_manifest.py --check
+
       - name: Ensure runtime artifacts are not versioned
         run: |
           python - <<'PY'
