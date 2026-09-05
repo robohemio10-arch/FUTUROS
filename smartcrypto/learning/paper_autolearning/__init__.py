@@ -1,5 +1,6 @@
 """Paper/shadow auto-learning foundation loop."""
 
+from .continuous_orchestrator import run_paper_autolearning_continuous_orchestrator_v1
 from .daily_foundation_runner import build_paper_autolearning_foundation_report
 from .live_feedback_loop import run_paper_autolearning_live_feedback_loop_v1
 from .outcome_schema import OUTCOME_EVENT_COLUMNS, SAFETY_FLAGS, SCHEMA_VERSION
@@ -13,5 +14,6 @@ __all__ = [
     "build_paper_autolearning_foundation_report",
     "build_paper_autolearning_scheduler_report",
     "load_authoritative_closed_paper_trades",
+    "run_paper_autolearning_continuous_orchestrator_v1",
     "run_paper_autolearning_live_feedback_loop_v1",
 ]
