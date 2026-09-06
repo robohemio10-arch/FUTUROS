@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "6d5f1aae9888a31029c42842f0d9bb518d95297bec3cf9b0f39b4a0176ce2fe2",
+  "aggregate_sha256": "57a082210632759ea851c00ecf3f153f97b05c09410d35fa0ec3ced5dff9e92a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 1994,
-    "python_files": 1548,
+    "manifested_files_total": 1997,
+    "python_files": 1551,
     "runtime_excluded_files_total": 0,
-    "test_files": 415,
-    "tracked_files_total": 1995,
+    "test_files": 416,
+    "tracked_files_total": 1998,
     "workflows": 2
   },
   "deterministic": true,
@@ -3476,6 +3476,12 @@
       "sha256": "50bdf02d4cc99f897eddeb938f45dedd653af7f2acec928a155da11e38d9c6f2"
     },
     {
+      "bytes": 1338,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autolearning_economic_oos_validation_v1.py",
+      "sha256": "1e1181daadeed6bf127e335159979999f1a7780c18fe01dddbcaee530e4dbdb6"
+    },
+    {
       "bytes": 2429,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_evidence_accumulation_window_v1.py",
@@ -6464,10 +6470,10 @@
       "sha256": "a576b319a3c92e04b0d8960335db977017bee504eeee2989d14055ac4c23f6c2"
     },
     {
-      "bytes": 1022,
+      "bytes": 1170,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/__init__.py",
-      "sha256": "f7f49396cf44bb0695bf178d6b2065295e5a92d3a94ac2f8672f0885f96bce35"
+      "sha256": "9aa3ed7bd51daa20953c9ecff09724f12a319525fbc0da88facab78c1afdff96"
     },
     {
       "bytes": 1734,
@@ -6492,6 +6498,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/economic_challenger_scorecard.py",
       "sha256": "7c47fb27bdb780763c265d69046d16b6ac3209d9896b7ef65d8b22ccde69fec1"
+    },
+    {
+      "bytes": 10531,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/economic_oos_validation.py",
+      "sha256": "d9c48f7e7647c7f82f323fab04e1f85e4f9c9b0423e25c57405a1c99b9d6104b"
     },
     {
       "bytes": 20687,
@@ -10950,6 +10962,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_economic_challenger_scorecard_v1.py",
       "sha256": "affa5596d0bd21da68d69171ba757519d6c82ef9e77eff028572e9fc2651a036"
+    },
+    {
+      "bytes": 3614,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autolearning_economic_oos_validation_v1.py",
+      "sha256": "773973494476e32e3a8a83eae33198e62f5838847ab3269d1467bdca9b26f61b"
     },
     {
       "bytes": 10716,
