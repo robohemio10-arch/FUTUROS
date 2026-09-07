@@ -88,6 +88,19 @@ jobs:
       - name: Institutional audit
         run: make audit
 
+      - name: Qlib dependency security policy audit
+        run: >-
+          python scripts/audit_qlib_dependency_security_hardening_v1.py
+          --project-root .
+          --json
+
+      - name: Qlib full-graph dependency audit
+        run: >-
+          python -m pip_audit
+          -r requirements-qlib-security.lock
+          --progress-spinner off
+          --strict
+
       - name: Paper runtime check
         run: make paper-check
 
@@ -124,6 +137,19 @@ jobs:
 
       - name: Build Qlib image
         run: docker build -f docker/qlib/Dockerfile -t smartcrypto-ci:qlib .
+
+      - name: Qlib locked functional security regression
+        run: |
+          docker run --rm \
+            --network none \
+            -e MLFLOW_ALLOW_PICKLE_DESERIALIZATION=false \
+            -e SMARTCRYPTO_QLIB_NETWORK_MODE=none \
+            -e SMARTCRYPTO_QLIB_REPOSITORY_MOUNT=readonly \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            smartcrypto-ci:qlib \
+            python /workspace/scripts/audit_qlib_security_functional_regression_v1.py \
+              --project-root /workspace \
+              --json
 
       - name: Container healthcheck smoke
         run: |

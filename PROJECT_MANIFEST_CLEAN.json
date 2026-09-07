@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "65d4270ea8a626a202bac1bb40fb49829adec431cc816d144d02a0c910f4636a",
+  "aggregate_sha256": "b07b84fed0bd1b47e737842d82082ee4b7898f77f4ad765df3879488f95e5718",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 2000,
-    "python_files": 1554,
+    "manifested_files_total": 2002,
+    "python_files": 1556,
     "runtime_excluded_files_total": 0,
-    "test_files": 417,
-    "tracked_files_total": 2001,
+    "test_files": 418,
+    "tracked_files_total": 2003,
     "workflows": 2
   },
   "deterministic": true,
@@ -32,10 +32,10 @@
       "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
     },
     {
-      "bytes": 4413,
+      "bytes": 5326,
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
-      "sha256": "36cce6b619f5ce46cb3893934887a9c845f6ff3f1192922644dd903adbf3cba7"
+      "sha256": "6b056a2f9da8ee4064e3a36cf0279c22251cdc82c0503715472c360f2ca6477f"
     },
     {
       "bytes": 4224,
@@ -506,10 +506,10 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
-      "bytes": 3177,
+      "bytes": 4563,
       "hash_mode": "text_lf",
       "path": "config/qlib_dependency_security_policy_v1.json",
-      "sha256": "a6d28ee9153d410f61201bb0c9183c33cc492c0d694adf75fa0422f3afdc14e3"
+      "sha256": "1c672fa4c657a0c5c8a5ebcb8013e7589bf63fe9a13318c04db0e6380bfc9611"
     },
     {
       "bytes": 2036,
@@ -2958,6 +2958,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_qlib_research_backend_gate_v1.py",
       "sha256": "6f958fac00f74dc1d322969cd7c3acfee7fabfd3f3b567cfc0ddd4a225aaa73e"
+    },
+    {
+      "bytes": 19795,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_qlib_security_functional_regression_v1.py",
+      "sha256": "e5b3a568a4867a14fa38237ca460b6e19905cd3693a0b6a3a9320f5754f99776"
     },
     {
       "bytes": 3520,
@@ -11610,6 +11616,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_research_backend_runtime_dependency_gate_v1.py",
       "sha256": "4548e3ecc38d9bd27a068c14a7df66ecaf6aa9c5216daabbdfa140aeeb76203b"
+    },
+    {
+      "bytes": 2234,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_security_functional_regression_v1.py",
+      "sha256": "dbd8162d20d5f23a4ab9bb814fd7d0b8911f170be817192be706f32de0efde80"
     },
     {
       "bytes": 9828,

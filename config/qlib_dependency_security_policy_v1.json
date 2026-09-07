@@ -40,8 +40,25 @@
   "expected_security_lock_package_count": 190,
   "expected_security_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
   "expected_security_resolution_evidence_sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8",
+  "p08_allowed": true,
+  "p08_functional_regression": {
+    "certified_proof_commit_sha": "eeb87895b9e9705990e905c51b8fcfd0c2c6046d",
+    "certified_workflow_run_id": 34157486425,
+    "exact_certified_graph_required": true,
+    "fallback_allowed": false,
+    "network_mode": "none",
+    "qlib_contrib_model_required": true,
+    "real_fit_predict_required": true,
+    "repository_mount": "readonly",
+    "required": true,
+    "schema_version": "qlib_security_functional_regression_v1",
+    "status": "ci_certified"
+  },
+  "p08_security_gate_bypassed": false,
+  "p08_security_gate_remains_blocked": false,
   "policy_status": "active_security_clean",
-  "policy_version": "2026-09-04.v2",
+  "policy_version": "2026-09-07.v4",
+  "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": true,
   "requirements_file": "requirements-qlib.lock",
   "safety": {
@@ -63,11 +80,33 @@
   },
   "schema_version": "qlib_dependency_security_policy_v1",
   "scope": "research_only_qlib_dependency_security",
+  "security_advisories": {
+    "CVE-2026-69247": {
+      "affected_spec": ">=44,<50",
+      "certified_version": "50.0.0",
+      "fixed_minimum": "50.0.0",
+      "package": "cryptography",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-gqvg-gmmx-x4hm": {
+      "affected_spec": ">=2.1.0,<3.15.0",
+      "certified_version": "3.16.0",
+      "control_impacted": "MLFLOW_ALLOW_PICKLE_DESERIALIZATION=False",
+      "cvss": 8.8,
+      "fixed_minimum": "3.15.0",
+      "package": "mlflow",
+      "published_date": "2026-09-01",
+      "severity": "HIGH",
+      "status": "remediated_by_certified_pin"
+    }
+  },
   "security_lock_file": "requirements-qlib-security.lock",
   "security_resolution_evidence_file": "config/security_resolution_evidence_v1.json",
   "semantic_invariants": {
     "dependency_downgrade_requires_full_graph_audit": true,
+    "functional_regression_required_before_p08": true,
     "missing_evidence_is_blocking": true,
+    "new_security_advisory_requires_explicit_policy_entry": true,
     "no_approved_security_clean_resolution_is_blocking": true,
     "resolver_success_does_not_imply_security_gate_pass": true,
     "single_package_fixed_does_not_imply_dependency_graph_secure": true,
