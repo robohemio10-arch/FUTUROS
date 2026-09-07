@@ -32,7 +32,7 @@
       "workflow_run_id": 33916166319
     }
   },
-  "decision": "MANTER_EM_RESEARCH",
+  "decision": "P08_ALLOWED_RESEARCH_ONLY",
   "expected_direct_requirements": [
     "pyqlib==0.9.7"
   ],
@@ -40,10 +40,10 @@
   "expected_security_lock_package_count": 190,
   "expected_security_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
   "expected_security_resolution_evidence_sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8",
-  "p08_allowed": false,
+  "p08_allowed": true,
   "p08_functional_regression": {
-    "certified_proof_commit_sha": null,
-    "certified_workflow_run_id": null,
+    "certified_proof_commit_sha": "eeb87895b9e9705990e905c51b8fcfd0c2c6046d",
+    "certified_workflow_run_id": 34157486425,
     "exact_certified_graph_required": true,
     "fallback_allowed": false,
     "network_mode": "none",
@@ -52,12 +52,12 @@
     "repository_mount": "readonly",
     "required": true,
     "schema_version": "qlib_security_functional_regression_v1",
-    "status": "pending_ci_certification"
+    "status": "ci_certified"
   },
   "p08_security_gate_bypassed": false,
-  "p08_security_gate_remains_blocked": true,
+  "p08_security_gate_remains_blocked": false,
   "policy_status": "active_security_clean",
-  "policy_version": "2026-09-07.v3",
+  "policy_version": "2026-09-07.v4",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": true,
   "requirements_file": "requirements-qlib.lock",
