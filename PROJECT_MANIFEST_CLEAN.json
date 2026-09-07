@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ba429e9a3788345ba133508c381d29253e20a7c9ce3b537ea4236ffe176b0cb6",
+  "aggregate_sha256": "025ef49059cdee053f97dc4c659b8290f66b6246acdaec6d8e2940f31d6ed399",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 1997,
-    "python_files": 1551,
+    "manifested_files_total": 2000,
+    "python_files": 1554,
     "runtime_excluded_files_total": 0,
-    "test_files": 416,
-    "tracked_files_total": 1998,
+    "test_files": 417,
+    "tracked_files_total": 2001,
     "workflows": 2
   },
   "deterministic": true,
@@ -3482,6 +3482,12 @@
       "sha256": "1e1181daadeed6bf127e335159979999f1a7780c18fe01dddbcaee530e4dbdb6"
     },
     {
+      "bytes": 1875,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_autolearning_economic_walkforward_cost_robustness_v1.py",
+      "sha256": "981e83e309bc319d445d767ffd04ab30a9a1f18c1a0af64b86cbabd5ff17d829"
+    },
+    {
       "bytes": 2429,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_evidence_accumulation_window_v1.py",
@@ -6504,6 +6510,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/economic_oos_validation.py",
       "sha256": "d9c48f7e7647c7f82f323fab04e1f85e4f9c9b0423e25c57405a1c99b9d6104b"
+    },
+    {
+      "bytes": 25545,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/economic_walkforward_cost_robustness.py",
+      "sha256": "124887b32468a39ade8445580afa08b827663fdd9fe7578af4331eb6a7a66976"
     },
     {
       "bytes": 20687,
@@ -10968,6 +10980,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_economic_oos_validation_v1.py",
       "sha256": "5813672db6a010c4680b462ce260fdc684304ff85be765fb11dbfb1fb1e8c287"
+    },
+    {
+      "bytes": 5042,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_autolearning_economic_walkforward_cost_robustness_v1.py",
+      "sha256": "79576820fa3a8c5fd6bd9703d6625a2d5c77520f7d5fae72e359886c52ec5948"
     },
     {
       "bytes": 10716,
