@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "025ef49059cdee053f97dc4c659b8290f66b6246acdaec6d8e2940f31d6ed399",
+  "aggregate_sha256": "65d4270ea8a626a202bac1bb40fb49829adec431cc816d144d02a0c910f4636a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -6524,16 +6524,16 @@
       "sha256": "8e0d83243427c752a486138c63f4f86341f58a48daf384274b2d08153a9a5301"
     },
     {
-      "bytes": 15246,
+      "bytes": 15996,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/lineage_reconciliation.py",
-      "sha256": "e533b237e637205887ba2b4c838b1f7ac2d7fb0936acd626c33276c4868f71ea"
+      "sha256": "ede93469f0c512f5a123935d80c300a71a73d23d99a9bd450aa17d522a5a4286"
     },
     {
-      "bytes": 5544,
+      "bytes": 13268,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/live_feedback_loop.py",
-      "sha256": "9bb1e7109d0bb1bed6bf9e1342b2caa518246915cd4fbcd3498ec5842af3d35a"
+      "sha256": "c6bf65629c8b8a34ede89f57017b8bdeba8216eee8fe0dc5b4396149174d952a"
     },
     {
       "bytes": 2501,
@@ -6554,10 +6554,10 @@
       "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
     },
     {
-      "bytes": 7352,
+      "bytes": 12369,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/runtime_source.py",
-      "sha256": "2841c5aad16fbb5e9d80798f0a1cfea0a6b4aceaabb6721b9b74931a9dbb6fb9"
+      "sha256": "b51bf28edd812c4967040098bdef5d52a0bb1ef81f062f2ea8459616ddc1d95d"
     },
     {
       "bytes": 6596,
@@ -10994,10 +10994,10 @@
       "sha256": "dd232faf1b45426c5dcbcc11ef0d0f2ea4150858759ef5277884d87462185b5a"
     },
     {
-      "bytes": 4957,
+      "bytes": 10968,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_live_feedback_loop_v1.py",
-      "sha256": "852867c50c7727c770595d2436cd331f34986669b12688376fc44ff6d0267084"
+      "sha256": "aa89a011f2e8c3c037ae0d44784f030d840263f6b147072f3892b403c49b029b"
     },
     {
       "bytes": 6367,
