@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b07b84fed0bd1b47e737842d82082ee4b7898f77f4ad765df3879488f95e5718",
+  "aggregate_sha256": "033347d14e160fde0c4961f28d95d0ff7ebc6be69bd538d8cccd4110b019c590",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 307,
-    "manifested_files_total": 2002,
-    "python_files": 1556,
+    "manifested_files_total": 2005,
+    "python_files": 1559,
     "runtime_excluded_files_total": 0,
-    "test_files": 418,
-    "tracked_files_total": 2003,
+    "test_files": 419,
+    "tracked_files_total": 2006,
     "workflows": 2
   },
   "deterministic": true,
@@ -3704,6 +3704,12 @@
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
     },
     {
+      "bytes": 1878,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_native_economic_challenger_v1.py",
+      "sha256": "f001e5b53cc0b7d3fe6ab3e5d14c755570ad6807d48f945a298809ede588d949"
+    },
+    {
       "bytes": 2394,
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_shadow_ensemble_threshold_calibration_v1.py",
@@ -6558,6 +6564,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/outcome_schema.py",
       "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
+    },
+    {
+      "bytes": 32487,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_native_economic_challenger.py",
+      "sha256": "0b92a4bf91d7d0a57789dd155fbc9d59c3fa3fbf8029abff78f4f399dc1aeb97"
     },
     {
       "bytes": 12369,
@@ -11562,6 +11574,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_market_features_refresh_runner.py",
       "sha256": "d6dea7a90af5f5cba39838e2e5c303585856552c4d928dcf630b7a34a9edd76e"
+    },
+    {
+      "bytes": 7107,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_native_economic_challenger_v1.py",
+      "sha256": "be15e60d19976254794dac6975198f90ce10d9ce94a1b330ea2912fe0e860afe"
     },
     {
       "bytes": 11027,
