@@ -521,59 +521,93 @@ def _select_calibration_threshold(
     scores: np.ndarray,
     stress_bps: float,
 ) -> dict[str, Any]:
+    """Select a past-only threshold that improves economic outcome.
+
+    Calibration is deliberately aligned with the canonical treatment semantics:
+    blocked trades contribute zero PnL and zero capital. A candidate threshold
+    therefore must improve total stressed Net PnL and expectancy versus executing
+    every calibration trade, not merely produce a profitable selected subset.
+
+    The unrounded threshold is retained for membership decisions. Rounding a
+    quantile boundary before application can change membership when scores are
+    discrete or tied, which would violate calibration/test parity.
+    """
+
+    baseline = _economic_metrics(rows, stress_bps)
     candidates: list[dict[str, Any]] = []
     for quantile in SCORE_QUANTILES:
         threshold = float(np.quantile(scores, quantile))
-        selected = [row for row, score in zip(rows, scores, strict=True) if score >= threshold]
+        selected = [
+  row
+  for row, score in zip(rows, scores, strict=True)
+  if score >= threshold
+        ]
         metrics = _economic_metrics(selected, stress_bps)
+        delta_net_pnl = metrics["net_pnl"] - baseline["net_pnl"]
+        expectancy_uplift = metrics["expectancy"] - baseline["expectancy"]
         passes = (
-            metrics["trade_count"] >= MIN_CALIBRATION_SELECTED_TRADES
-            and metrics["net_pnl"] > 0
-            and metrics["expectancy"] > 0
-            and metrics["profit_factor"] is not None
-            and metrics["profit_factor"] >= MIN_TREATMENT_PROFIT_FACTOR
+  metrics["trade_count"] >= MIN_CALIBRATION_SELECTED_TRADES
+  and metrics["net_pnl"] > 0
+  and metrics["expectancy"] > 0
+  and metrics["profit_factor"] is not None
+  and metrics["profit_factor"] >= MIN_TREATMENT_PROFIT_FACTOR
+  and delta_net_pnl > 0
+  and expectancy_uplift > 0
         )
         candidates.append(
-            {
-                "quantile": quantile,
-                "threshold": round(threshold, 12),
-                "selected_trade_count": metrics["trade_count"],
-                "stressed_net_pnl": metrics["net_pnl"],
-                "stressed_expectancy": metrics["expectancy"],
-                "stressed_profit_factor": metrics["profit_factor"],
-                "passes": passes,
-            }
+  {
+      "quantile": quantile,
+      "threshold": threshold,
+      "selected_trade_count": metrics["trade_count"],
+      "stressed_net_pnl": metrics["net_pnl"],
+      "stressed_expectancy": metrics["expectancy"],
+      "stressed_profit_factor": metrics["profit_factor"],
+      "delta_stressed_net_pnl": round(delta_net_pnl, 10),
+      "delta_stressed_expectancy": round(expectancy_uplift, 10),
+      "passes": passes,
+  }
         )
 
     passing = [candidate for candidate in candidates if candidate["passes"]]
+    baseline_public = {
+        "trade_count": baseline["trade_count"],
+        "stressed_net_pnl": baseline["net_pnl"],
+        "stressed_expectancy": baseline["expectancy"],
+        "stressed_profit_factor": baseline["profit_factor"],
+    }
     if not passing:
         return {
-            "status": "blocked",
-            "reason": "no_profitable_calibration_threshold",
-            "threshold": None,
-            "selected_quantile": None,
-            "candidates": candidates,
+  "status": "blocked",
+  "reason": "no_economic_uplift_calibration_threshold",
+  "threshold": None,
+  "selected_quantile": None,
+  "baseline": baseline_public,
+  "candidates": candidates,
         }
+
     winner = max(
         passing,
         key=lambda item: (
-            float(item["stressed_net_pnl"]),
-            float(item["stressed_expectancy"]),
-            float(item["quantile"]),
+  float(item["delta_stressed_net_pnl"]),
+  float(item["delta_stressed_expectancy"]),
+  int(item["selected_trade_count"]),
+  -float(item["quantile"]),
         ),
     )
     return {
         "status": "ok",
-        "reason": "profitable_threshold_selected_on_past_calibration_only",
+        "reason": "economic_uplift_threshold_selected_on_past_calibration_only",
         "threshold": winner["threshold"],
         "selected_quantile": winner["quantile"],
         "selected_trade_count": winner["selected_trade_count"],
         "stressed_net_pnl": winner["stressed_net_pnl"],
         "stressed_expectancy": winner["stressed_expectancy"],
         "stressed_profit_factor": winner["stressed_profit_factor"],
+        "delta_stressed_net_pnl": winner["delta_stressed_net_pnl"],
+        "delta_stressed_expectancy": winner["delta_stressed_expectancy"],
+        "baseline": baseline_public,
         "candidates": candidates,
     }
-
 
 @contextmanager
 def _native_qlib_predictor_context() -> Iterator[tuple[Predictor, dict[str, Any]]]:
