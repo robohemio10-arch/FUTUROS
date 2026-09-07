@@ -1,8 +1,9 @@
-"""Idempotent Phase14-to-autolearning lineage reconciliation.
+"""Idempotent closed-trade lineage reconciliation for Paper AutoLearning.
 
-The reconciliation is preview-only by default. It enriches existing outcome rows
-by canonical ``order_id`` without changing event identity, economic outcomes,
-row count, runtime state, models, risk, orders, or Trader Master.
+The reconciliation enriches canonical outcome rows from the authoritative
+Freqtrade Paper closed-trade source while preserving event identity, row count,
+and realized economic values.  It is preview-only unless explicitly persisted
+under ``data/feedback``.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from .outcome_schema import (
     DEFAULT_OUTCOME_EVENTS,
 )
 
-SCHEMA_VERSION = "phase14_feedback_lineage_reconciliation_v1"
+SCHEMA_VERSION = "paper_autolearning_lineage_reconciliation_v2"
 EXIT_CLASSIFICATION_FIELDS = ("roi_hit", "stoploss_hit", "forced_exit", "liquidation_flag")
 
 SAFETY_FLAGS: dict[str, bool] = {
@@ -50,6 +51,32 @@ SAFETY_FLAGS: dict[str, bool] = {
     "model_promotion_performed": False,
     "active_model_changed": False,
 }
+
+ENRICHABLE_FIELDS: tuple[str, ...] = (
+    "trade_id",
+    "entry_price",
+    "exit_price",
+    "quantity",
+    "notional",
+    "gross_pnl",
+    "trading_fee",
+    "funding_fee",
+    "leverage",
+    "margin_mode",
+    "liquidation_price",
+    "distance_to_liquidation_pct",
+    "pnl_on_margin_pct",
+    "pnl_on_notional_pct",
+    "strategy_id",
+    "exit_reason",
+)
+
+NUMERIC_CONFLICT_FIELDS: tuple[str, ...] = (
+    "net_pnl",
+    "profit_ratio",
+    "entry_price",
+    "exit_price",
+)
 
 
 @dataclass(frozen=True)
@@ -72,12 +99,12 @@ def build_lineage_reconciliation(
     existing_events: Sequence[Mapping[str, Any]],
     source_rows: Sequence[Mapping[str, Any]],
 ) -> ReconciliationResult:
-    """Build an idempotent reconciliation plan without writing files."""
+    """Build a deterministic reconciliation plan without writing files."""
 
     source_events = [
         normalize_closed_trade_row(
             row,
-            source_file="<phase14_lineage_reconciliation>",
+            source_file="<paper_autolearning_lineage_reconciliation>",
             source_sha256=None,
             ingestion_run_id="lineage_reconciliation_preview",
             source_row_index=index,
@@ -96,13 +123,8 @@ def build_lineage_reconciliation(
         )
     for order_id in sorted(existing_duplicates):
         conflicts.append(
-            {
-                "order_id": order_id,
-                "field": "order_id",
-                "reason": "duplicate_existing_order_id",
-            }
+            {"order_id": order_id, "field": "order_id", "reason": "duplicate_existing_order_id"}
         )
-
     if conflicts:
         return _blocked_result(
             reason="duplicate_order_identity_detected",
@@ -239,7 +261,7 @@ def reconcile_feedback_lineage_files(
         write_performed = True
 
     row_count_invariant = not blockers and len(result.reconciled_events) == len(existing_events)
-    report = {
+    return {
         "schema_version": SCHEMA_VERSION,
         "status": status,
         "reason": reason,
@@ -267,7 +289,6 @@ def reconcile_feedback_lineage_files(
         **SAFETY_FLAGS,
         "safety_flags": {**SAFETY_FLAGS, "writes_parquet": write_performed},
     }
-    return report
 
 
 def _blocked_result(
@@ -308,7 +329,10 @@ def _index_by_order_id(
     return index, duplicates
 
 
-def _find_conflicts(existing: Mapping[str, Any], source: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _find_conflicts(
+    existing: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> list[dict[str, Any]]:
     conflicts: list[dict[str, Any]] = []
 
     existing_trade_id = normalize_identity(existing.get("trade_id"))
@@ -364,7 +388,7 @@ def _find_conflicts(existing: Mapping[str, Any], source: Mapping[str, Any]) -> l
                 }
             )
 
-    for field in ("net_pnl", "profit_ratio"):
+    for field in NUMERIC_CONFLICT_FIELDS:
         numeric_left = safe_float(existing.get(field))
         numeric_right = safe_float(source.get(field))
         if (
@@ -380,24 +404,29 @@ def _find_conflicts(existing: Mapping[str, Any], source: Mapping[str, Any]) -> l
                     "reason": "economic_value_mismatch",
                 }
             )
-
     return conflicts
 
 
-def _enrich_event(existing: Mapping[str, Any], source: Mapping[str, Any]) -> tuple[dict[str, Any], bool]:
+def _enrich_event(
+    existing: Mapping[str, Any],
+    source: Mapping[str, Any],
+) -> tuple[dict[str, Any], bool]:
     enriched = dict(existing)
     changed = False
 
-    source_trade_id = normalize_identity(source.get("trade_id"))
-    if source_trade_id and not normalize_identity(enriched.get("trade_id")):
-        enriched["trade_id"] = source_trade_id
-        changed = True
+    for field in ENRICHABLE_FIELDS:
+        if _missing(enriched.get(field)) and not _missing(source.get(field)):
+            enriched[field] = source.get(field)
+            changed = True
+
+    # net_pnl/profit_ratio are economic truth fields. They are only filled when
+    # absent; conflicts with populated values are rejected above.
+    for field in ("net_pnl", "profit_ratio"):
+        if _missing(enriched.get(field)) and not _missing(source.get(field)):
+            enriched[field] = source.get(field)
+            changed = True
 
     source_reason = clean_text(source.get("exit_reason"))
-    if source_reason and not clean_text(enriched.get("exit_reason")):
-        enriched["exit_reason"] = source_reason
-        changed = True
-
     if source_reason:
         for field in EXIT_CLASSIFICATION_FIELDS:
             expected = bool(source.get(field) is True)
@@ -406,6 +435,10 @@ def _enrich_event(existing: Mapping[str, Any], source: Mapping[str, Any]) -> tup
                 changed = True
 
     return enriched, changed
+
+
+def _missing(value: object) -> bool:
+    return clean_text(value) is None
 
 
 def _as_bool(value: object) -> bool:
@@ -418,11 +451,15 @@ def _as_bool(value: object) -> bool:
 
 
 def _numbers_close(left: float, right: float) -> bool:
-    tolerance = max(1e-10, 1e-8 * max(abs(left), abs(right), 1.0))
+    tolerance = max(1e-8, 1e-7 * max(abs(left), abs(right), 1.0))
     return abs(left - right) <= tolerance
 
 
-def _validate_feedback_write_paths(root: Path, outcome_path: Path, feedback_path: Path) -> list[str]:
+def _validate_feedback_write_paths(
+    root: Path,
+    outcome_path: Path,
+    feedback_path: Path,
+) -> list[str]:
     allowed_root = (root / "data" / "feedback").resolve()
     blockers: list[str] = []
     for path in (outcome_path, feedback_path):
