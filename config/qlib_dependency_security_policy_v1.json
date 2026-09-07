@@ -32,7 +32,7 @@
       "workflow_run_id": 33916166319
     }
   },
-  "decision": "P08_ALLOWED_RESEARCH_ONLY",
+  "decision": "MANTER_EM_RESEARCH",
   "expected_direct_requirements": [
     "pyqlib==0.9.7"
   ],
