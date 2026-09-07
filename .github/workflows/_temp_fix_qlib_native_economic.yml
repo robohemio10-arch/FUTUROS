@@ -1,0 +1,156 @@
+name: TEMP Fix Qlib Native Economic Calibration
+
+on:
+  push:
+    branches:
+      - automation/diagnose-qlib-native-economic-v1
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/qlib-native-economic-challenger-v1
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Refactor complete calibration function
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("smartcrypto/learning/paper_autolearning/qlib_native_economic_challenger.py")
+          text = path.read_text(encoding="utf-8")
+          start_marker = "def _select_calibration_threshold("
+          end_marker = "\n\n@contextmanager\ndef _native_qlib_predictor_context"
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+
+          replacement = '''def _select_calibration_threshold(
+              *,
+              rows: Sequence[Mapping[str, Any]],
+              scores: np.ndarray,
+              stress_bps: float,
+          ) -> dict[str, Any]:
+              """Select a past-only threshold that improves economic outcome.
+
+              Calibration is deliberately aligned with the canonical treatment semantics:
+              blocked trades contribute zero PnL and zero capital. A candidate threshold
+              therefore must improve total stressed Net PnL and expectancy versus executing
+              every calibration trade, not merely produce a profitable selected subset.
+
+              The unrounded threshold is retained for membership decisions. Rounding a
+              quantile boundary before application can change membership when scores are
+              discrete or tied, which would violate calibration/test parity.
+              """
+
+              baseline = _economic_metrics(rows, stress_bps)
+              candidates: list[dict[str, Any]] = []
+              for quantile in SCORE_QUANTILES:
+                  threshold = float(np.quantile(scores, quantile))
+                  selected = [
+                      row
+                      for row, score in zip(rows, scores, strict=True)
+                      if score >= threshold
+                  ]
+                  metrics = _economic_metrics(selected, stress_bps)
+                  delta_net_pnl = metrics["net_pnl"] - baseline["net_pnl"]
+                  expectancy_uplift = metrics["expectancy"] - baseline["expectancy"]
+                  passes = (
+                      metrics["trade_count"] >= MIN_CALIBRATION_SELECTED_TRADES
+                      and metrics["net_pnl"] > 0
+                      and metrics["expectancy"] > 0
+                      and metrics["profit_factor"] is not None
+                      and metrics["profit_factor"] >= MIN_TREATMENT_PROFIT_FACTOR
+                      and delta_net_pnl > 0
+                      and expectancy_uplift > 0
+                  )
+                  candidates.append(
+                      {
+                          "quantile": quantile,
+                          "threshold": threshold,
+                          "selected_trade_count": metrics["trade_count"],
+                          "stressed_net_pnl": metrics["net_pnl"],
+                          "stressed_expectancy": metrics["expectancy"],
+                          "stressed_profit_factor": metrics["profit_factor"],
+                          "delta_stressed_net_pnl": round(delta_net_pnl, 10),
+                          "delta_stressed_expectancy": round(expectancy_uplift, 10),
+                          "passes": passes,
+                      }
+                  )
+
+              passing = [candidate for candidate in candidates if candidate["passes"]]
+              baseline_public = {
+                  "trade_count": baseline["trade_count"],
+                  "stressed_net_pnl": baseline["net_pnl"],
+                  "stressed_expectancy": baseline["expectancy"],
+                  "stressed_profit_factor": baseline["profit_factor"],
+              }
+              if not passing:
+                  return {
+                      "status": "blocked",
+                      "reason": "no_economic_uplift_calibration_threshold",
+                      "threshold": None,
+                      "selected_quantile": None,
+                      "baseline": baseline_public,
+                      "candidates": candidates,
+                  }
+
+              winner = max(
+                  passing,
+                  key=lambda item: (
+                      float(item["delta_stressed_net_pnl"]),
+                      float(item["delta_stressed_expectancy"]),
+                      int(item["selected_trade_count"]),
+                      -float(item["quantile"]),
+                  ),
+              )
+              return {
+                  "status": "ok",
+                  "reason": "economic_uplift_threshold_selected_on_past_calibration_only",
+                  "threshold": winner["threshold"],
+                  "selected_quantile": winner["quantile"],
+                  "selected_trade_count": winner["selected_trade_count"],
+                  "stressed_net_pnl": winner["stressed_net_pnl"],
+                  "stressed_expectancy": winner["stressed_expectancy"],
+                  "stressed_profit_factor": winner["stressed_profit_factor"],
+                  "delta_stressed_net_pnl": winner["delta_stressed_net_pnl"],
+                  "delta_stressed_expectancy": winner["delta_stressed_expectancy"],
+                  "baseline": baseline_public,
+                  "candidates": candidates,
+              }
+          '''
+          replacement = "\n".join(line[10:] if line.startswith("          ") else line for line in replacement.splitlines())
+          path.write_text(text[:start] + replacement + text[end:], encoding="utf-8", newline="\n")
+          PY
+
+      - name: Install deterministic dev environment
+        run: |
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --require-hashes --no-deps -r requirements-build.lock
+          python -m pip install --no-build-isolation --no-deps -e .
+
+      - name: Run focused challenger tests
+        run: python -m pytest -q tests/test_qlib_native_economic_challenger_v1.py
+
+      - name: Regenerate deterministic manifest
+        run: python scripts/generate_project_manifest.py
+
+      - name: Validate diff and commit target branch
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add smartcrypto/learning/paper_autolearning/qlib_native_economic_challenger.py PROJECT_MANIFEST_CLEAN.json
+          git diff --cached --check
+          git commit -m "Alinha calibração Qlib ao uplift econômico causal"
+          git push origin HEAD:codex/qlib-native-economic-challenger-v1
