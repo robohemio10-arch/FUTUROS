@@ -1,0 +1,79 @@
+name: TEMP Diagnose Qlib Native Economic Challenger
+
+on:
+  push:
+    branches:
+      - automation/diagnose-qlib-native-economic-v1
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: automation/diagnose-qlib-native-economic-v1
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install deterministic dev environment
+        run: |
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --require-hashes --no-deps -r requirements-build.lock
+          python -m pip install --no-build-isolation --no-deps -e .
+
+      - name: Print economic challenger diagnostics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from tests.test_qlib_native_economic_challenger_v1 import (
+              _losing_predictor,
+              _profitable_predictor,
+              _rows,
+          )
+          from smartcrypto.learning.paper_autolearning.qlib_native_economic_challenger import (
+              build_qlib_native_economic_challenger_v1,
+          )
+
+          def compact(report):
+              economic = report.get("economic_evaluation") or {}
+              return {
+                  "status": report.get("status"),
+                  "reason": report.get("reason"),
+                  "decision": report.get("decision"),
+                  "blockers": report.get("blockers"),
+                  "folds": report.get("folds"),
+                  "oos_selected_trade_count": report.get("oos_selected_trade_count"),
+                  "economic_status": economic.get("status"),
+                  "economic_reason": economic.get("reason"),
+                  "economic_blockers": economic.get("blockers"),
+                  "selector_coverage": economic.get("selector_coverage"),
+                  "aggregate_delta_stressed_net_pnl": economic.get("aggregate_delta_stressed_net_pnl"),
+                  "aggregate_baseline_metrics": economic.get("aggregate_baseline_metrics"),
+                  "aggregate_treatment_metrics": economic.get("aggregate_treatment_metrics"),
+                  "positive_delta_net_pnl_fold_count": economic.get("positive_delta_net_pnl_fold_count"),
+                  "positive_treatment_net_pnl_fold_count": economic.get("positive_treatment_net_pnl_fold_count"),
+                  "economic_folds": economic.get("folds"),
+              }
+
+          for name, predictor in (
+              ("PROFITABLE", _profitable_predictor),
+              ("LOSING", _losing_predictor),
+          ):
+              report = build_qlib_native_economic_challenger_v1(
+                  project_root=Path("."),
+                  rows=_rows(),
+                  additional_execution_stress_bps=0.0,
+                  predictor=predictor,
+              )
+              print(name)
+              print(json.dumps(compact(report), indent=2, sort_keys=True, default=str))
+          PY
