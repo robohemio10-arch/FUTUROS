@@ -49,43 +49,27 @@ def main() -> None:
     )
     base_text = _replace_once(
         base_text,
-        dedent(
-            """\
-                target = np.asarray(
-                    [_stressed_return_bps(row, stress_bps) for row in fit_rows],
-                    dtype=float,
-                )
-            """
-        ),
-        dedent(
-            """\
-                build_target = target_builder or _stressed_return_bps
-                target = np.asarray(
-                    [build_target(row, stress_bps) for row in fit_rows],
-                    dtype=float,
-                )
-            """
-        ),
+        "    target = np.asarray(\n"
+        "        [_stressed_return_bps(row, stress_bps) for row in fit_rows],\n"
+        "        dtype=float,\n"
+        "    )",
+        "    build_target = target_builder or _stressed_return_bps\n"
+        "    target = np.asarray(\n"
+        "        [build_target(row, stress_bps) for row in fit_rows],\n"
+        "        dtype=float,\n"
+        "    )",
         "unexpected_target_builder_block",
     )
     base_text = _replace_once(
         base_text,
-        dedent(
-            """\
-                if not np.isfinite(train_x.to_numpy()).all() or not np.isfinite(target).all():
-                    return None, ["non_finite_training_matrix"]
-                if not np.isfinite(calibration_x.to_numpy()).all():
-            """
-        ),
-        dedent(
-            """\
-                if not np.isfinite(train_x.to_numpy()).all():
-                    return None, ["non_finite_training_matrix"]
-                if not np.isfinite(target).all():
-                    return None, [target_error_reason]
-                if not np.isfinite(calibration_x.to_numpy()).all():
-            """
-        ),
+        "    if not np.isfinite(train_x.to_numpy()).all() or not np.isfinite(target).all():\n"
+        "        return None, [\"non_finite_training_matrix\"]\n"
+        "    if not np.isfinite(calibration_x.to_numpy()).all():",
+        "    if not np.isfinite(train_x.to_numpy()).all():\n"
+        "        return None, [\"non_finite_training_matrix\"]\n"
+        "    if not np.isfinite(target).all():\n"
+        "        return None, [target_error_reason]\n"
+        "    if not np.isfinite(calibration_x.to_numpy()).all():",
         "unexpected_non_finite_guard_block",
     )
     base_path.write_text(base_text, encoding="utf-8")
