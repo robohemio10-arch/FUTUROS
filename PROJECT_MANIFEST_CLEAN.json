@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "cf0cb06fcc5b5009e061626a6f6262d37f0f705bcb37d5fa2e4fb3b69e74f9bd",
+  "aggregate_sha256": "02105f8875577a8e79beb9169daf09b77dfffccd2a235a192cf20b03957bda4e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 308,
-    "manifested_files_total": 2010,
-    "python_files": 1563,
+    "docs_files": 309,
+    "manifested_files_total": 2014,
+    "python_files": 1566,
     "runtime_excluded_files_total": 0,
-    "test_files": 421,
-    "tracked_files_total": 2011,
+    "test_files": 422,
+    "tracked_files_total": 2015,
     "workflows": 2
   },
   "deterministic": true,
@@ -2144,6 +2144,12 @@
       "sha256": "76123e726551e857bfbf409d71465216260606982bf6d7206e6ec2abc29a44f9"
     },
     {
+      "bytes": 1952,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_LONG_ECONOMIC_POLICY_CHALLENGER_V2.md",
+      "sha256": "184b0eb0964f0fe4345bb9fb6e81204aedf8ef03dbf45cdd276c29429b615b0d"
+    },
+    {
       "bytes": 3092,
       "hash_mode": "text_lf",
       "path": "docs/QLIB_MARKET_FEATURES_ATOMIC_TEMPFILE_HARDENING_V1.md",
@@ -3708,6 +3714,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_dataset.py",
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
+    },
+    {
+      "bytes": 2197,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_long_economic_policy_challenger_v2.py",
+      "sha256": "0d72f9a6c3679d2cad8293c2986e98b37eef8f13f562de14b747a5616a17b84f"
     },
     {
       "bytes": 2203,
@@ -6576,6 +6588,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/outcome_schema.py",
       "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
+    },
+    {
+      "bytes": 24889,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_long_economic_policy_challenger_v2.py",
+      "sha256": "37211ed79f26fe9af92749cd6dc818610f02336288b0f4116d1d42c09bf41b40"
     },
     {
       "bytes": 53638,
@@ -11586,6 +11604,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_institutional_ranking_trainer_v1.py",
       "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
+    },
+    {
+      "bytes": 7602,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_long_economic_policy_challenger_v2.py",
+      "sha256": "1ae7a68b8ca781a5fa0981da21b849a3ff0533514bb79906333b3ec3dfd1b0c2"
     },
     {
       "bytes": 9038,
