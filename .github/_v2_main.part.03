@@ -1,0 +1,130 @@
+    }
+
+
+def _prepare_fold(
+    *,
+    prior_rows: Sequence[Mapping[str, Any]],
+    test_rows: Sequence[Mapping[str, Any]],
+    stress_bps: float,
+) -> tuple[base.PreparedFold | None, list[str]]:
+    prepared, blockers = base._prepare_fold(
+        prior_rows=prior_rows,
+        test_rows=test_rows,
+        stress_bps=stress_bps,
+    )
+    if prepared is None:
+        return None, blockers
+
+    target = np.asarray(
+        [base._stressed_pnl(row, stress_bps) for row in prepared.fit_rows],
+        dtype=float,
+    )
+    if len(target) >= 20:
+        lower = float(np.quantile(target, base.TARGET_CLIP_LOWER_QUANTILE))
+        upper = float(np.quantile(target, base.TARGET_CLIP_UPPER_QUANTILE))
+        target = np.clip(target, lower, upper)
+    if not np.isfinite(target).all():
+        return None, ["non_finite_absolute_stressed_pnl_target"]
+
+    return (
+        base.PreparedFold(
+            feature_columns=prepared.feature_columns,
+            train_x=prepared.train_x,
+            train_y=pd.Series(target, name="label", dtype=float),
+            calibration_x=prepared.calibration_x,
+            test_x=prepared.test_x,
+            fit_rows=prepared.fit_rows,
+            calibration_rows=prepared.calibration_rows,
+            test_rows=prepared.test_rows,
+            test_information_cutoff_utc=prepared.test_information_cutoff_utc,
+            calibration_information_cutoff_utc=(
+                prepared.calibration_information_cutoff_utc
+            ),
+        ),
+        [],
+    )
+
+
+def _select_calibration_threshold(
+    *,
+    rows: Sequence[Mapping[str, Any]],
+    scores: np.ndarray,
+    stress_bps: float,
+) -> dict[str, Any]:
+    baseline = base._economic_metrics(rows, stress_bps)
+    eligibility = np.asarray([_eligible(row) for row in rows], dtype=bool)
+    eligible_scores = scores[eligibility]
+    candidates: list[dict[str, Any]] = []
+
+    if len(eligible_scores) < base.MIN_CALIBRATION_SELECTED_TRADES:
+        return {
+            "status": "blocked",
+            "reason": "eligible_calibration_trade_count_not_met",
+            "threshold": None,
+            "selected_quantile": None,
+            "eligible_trade_count": int(len(eligible_scores)),
+            "baseline": _public_economic_metrics(baseline),
+            "candidates": [],
+        }
+
+    for quantile in SCORE_QUANTILES:
+        threshold = float(np.quantile(eligible_scores, quantile))
+        selected = [
+            row
+            for row, score, eligible in zip(rows, scores, eligibility, strict=True)
+            if eligible and score >= threshold
+        ]
+        metrics = base._economic_metrics(selected, stress_bps)
+        delta_net_pnl = metrics["net_pnl"] - baseline["net_pnl"]
+        expectancy_uplift = metrics["expectancy"] - baseline["expectancy"]
+        passes = (
+            metrics["trade_count"] >= base.MIN_CALIBRATION_SELECTED_TRADES
+            and metrics["net_pnl"] > 0
+            and metrics["expectancy"] > 0
+            and metrics["profit_factor"] is not None
+            and metrics["profit_factor"] >= base.MIN_TREATMENT_PROFIT_FACTOR
+            and delta_net_pnl > 0
+            and expectancy_uplift > 0
+        )
+        candidates.append(
+            {
+                "quantile": quantile,
+                "threshold": threshold,
+                "selected_trade_count": metrics["trade_count"],
+                "stressed_net_pnl": metrics["net_pnl"],
+                "stressed_expectancy": metrics["expectancy"],
+                "stressed_profit_factor": metrics["profit_factor"],
+                "delta_stressed_net_pnl": round(delta_net_pnl, 10),
+                "delta_stressed_expectancy": round(expectancy_uplift, 10),
+                "passes": passes,
+            }
+        )
+
+    passing = [candidate for candidate in candidates if candidate["passes"]]
+    if not passing:
+        return {
+            "status": "blocked",
+            "reason": "no_economic_uplift_calibration_threshold",
+            "threshold": None,
+            "selected_quantile": None,
+            "eligible_trade_count": int(len(eligible_scores)),
+            "baseline": _public_economic_metrics(baseline),
+            "candidates": candidates,
+        }
+
+    winner = max(
+        passing,
+        key=lambda item: (
+            float(item["delta_stressed_net_pnl"]),
+            float(item["delta_stressed_expectancy"]),
+            int(item["selected_trade_count"]),
+            -float(item["quantile"]),
+        ),
+    )
+    return {
+        "status": "ok",
+        "reason": "long_eligible_economic_uplift_threshold_selected_past_only",
+        "threshold": winner["threshold"],
+        "selected_quantile": winner["quantile"],
+        "eligible_trade_count": int(len(eligible_scores)),
+        "selected_trade_count": winner["selected_trade_count"],
