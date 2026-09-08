@@ -226,3 +226,44 @@ def test_v2_safety_contract_is_research_only() -> None:
     assert report["writes_runtime"] is False
     assert report["write_performed"] is False
     assert report["prospective_confirmation_required"] is True
+
+
+def test_v2_missing_notional_within_allowed_coverage_uses_absolute_target_without_crash() -> None:
+    market, rows = _market_and_rows()
+    for row in rows[::30]:
+        row.pop("notional", None)
+        row.pop("quantity", None)
+
+    observed_targets: list[np.ndarray] = []
+
+    def predictor(
+        train_x: pd.DataFrame,
+        train_y: pd.Series,
+        calibration_x: pd.DataFrame,
+        test_x: pd.DataFrame,
+        *,
+        fold_id: str,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        del train_x, fold_id
+        observed_targets.append(train_y.to_numpy(dtype=float).copy())
+        return _long_signal_with_short_boost(
+            pd.DataFrame(),
+            pd.Series(dtype=float),
+            calibration_x,
+            test_x,
+            fold_id="ignored",
+        )
+
+    report = build_qlib_long_economic_policy_challenger_v2(
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        additional_execution_stress_bps=0.0,
+        predictor=predictor,
+    )
+
+    assert report["target"] == TARGET_NAME
+    assert report["predictor_mode"] == "injected_test_double"
+    assert observed_targets
+    assert all(np.isfinite(target).all() for target in observed_targets)
+    assert report["reason"] != "native_qlib_lgb_unavailable_or_failed"
