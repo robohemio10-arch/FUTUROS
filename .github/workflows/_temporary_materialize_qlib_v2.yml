@@ -5,7 +5,8 @@ on:
     branches:
       - codex/qlib-long-economic-policy-challenger-v2
     paths:
-      - .github/_v2_code_payload.b64
+      - .github/_v2_main.part.*
+      - .github/_v2_test.part.*
       - .github/workflows/_temporary_materialize_qlib_v2.yml
 
 permissions:
@@ -29,19 +30,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .github/_v2_code_payload.b64 | tar -xz
-          sha256sum \
-            docs/QLIB_LONG_ECONOMIC_POLICY_CHALLENGER_V2.md \
-            scripts/build_qlib_long_economic_policy_challenger_v2.py \
-            smartcrypto/learning/paper_autolearning/qlib_long_economic_policy_challenger_v2.py \
-            tests/test_qlib_long_economic_policy_challenger_v2.py
+          mkdir -p smartcrypto/learning/paper_autolearning tests
+          cat .github/_v2_main.part.* > smartcrypto/learning/paper_autolearning/qlib_long_economic_policy_challenger_v2.py
+          cat .github/_v2_test.part.* > tests/test_qlib_long_economic_policy_challenger_v2.py
+          test "$(sha256sum smartcrypto/learning/paper_autolearning/qlib_long_economic_policy_challenger_v2.py | cut -d' ' -f1)" = "37211ed79f26fe9af92749cd6dc818610f02336288b0f4116d1d42c09bf41b40"
+          test "$(sha256sum tests/test_qlib_long_economic_policy_challenger_v2.py | cut -d' ' -f1)" = "1ae7a68b8ca781a5fa0981da21b849a3ff0533514bb79906333b3ec3dfd1b0c2"
 
       - name: Remove temporary transport and stage canonical files
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/_v2_code_payload.b64
-          git rm .github/workflows/_temporary_materialize_qlib_v2.yml
+          git rm -f .github/_v2_code_payload.b64
+          git rm -f .github/_v2_main.part.* .github/_v2_test.part.*
+          git rm -f .github/workflows/_temporary_materialize_qlib_v2.yml
           git add \
             docs/QLIB_LONG_ECONOMIC_POLICY_CHALLENGER_V2.md \
             scripts/build_qlib_long_economic_policy_challenger_v2.py \
