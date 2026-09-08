@@ -1,0 +1,120 @@
+from __future__ import annotations
+
+import math
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from smartcrypto.learning.paper_autolearning.qlib_long_economic_policy_challenger_v2 import (
+    ELIGIBILITY_POLICY,
+    OOS_FIELD,
+    SELECTOR_FIELD,
+    TARGET_NAME,
+    build_qlib_long_economic_policy_challenger_v2,
+)
+
+
+def _market_and_rows(count: int = 450) -> tuple[pd.DataFrame, list[dict[str, object]]]:
+    base = datetime(2026, 1, 1, tzinfo=UTC)
+    candle_count = 500 + count * 10 + 30
+    candles: list[dict[str, object]] = []
+    price = 50000.0
+    closes: list[float] = []
+    for index in range(candle_count):
+        timestamp = base + timedelta(minutes=5 * index)
+        wave = 20.0 * math.sin(index / 13.0) + 8.0 * math.sin(index / 5.0)
+        close = max(100.0, price + wave)
+        candles.append(
+            {
+                "symbol": "BTCUSDT",
+                "pair": "BTC/USDT:USDT",
+                "tf": "5m",
+                "ts": timestamp,
+                "open": price,
+                "high": max(price, close) + 10.0,
+                "low": min(price, close) - 10.0,
+                "close": close,
+                "volume": 1000.0 + 100.0 * math.sin(index / 7.0) + 10.0 * (index % 9),
+            }
+        )
+        closes.append(close)
+        price = close
+
+    rows: list[dict[str, object]] = []
+    for index in range(count):
+        candle_index = 500 + index * 10
+        open_time = base + timedelta(minutes=5 * (candle_index + 1))
+        close_time = open_time + timedelta(minutes=20)
+        side = "long" if index % 2 == 0 else "short"
+        ret_5 = closes[candle_index] / closes[candle_index - 5] - 1.0
+        long_profitable = ret_5 > 0
+        if side == "long":
+            net_pnl = 3.0 if long_profitable else -1.0
+        else:
+            # Shorts receive artificially huge model scores in the predictor below,
+            # but remain economically losing. This isolates structural eligibility
+            # from score ranking.
+            net_pnl = -2.0
+        rows.append(
+            {
+                "event_id": f"event-{index:04d}",
+                "trade_id": f"trade-{index:04d}",
+                "order_id": f"order-{index:04d}",
+                "is_closed": True,
+                "validation_status": "ok",
+                "symbol_norm": "BTCUSDT",
+                "side": side,
+                "open_time_utc": open_time.isoformat(),
+                "close_time_utc": close_time.isoformat(),
+                "entry_price": 50000.0,
+                "quantity": 0.002,
+                "notional": 100.0,
+                "leverage": 2.0,
+                "net_pnl": net_pnl,
+                "trading_fee": 0.0,
+                "funding_fee": 0.0,
+            }
+        )
+    return pd.DataFrame(candles), rows
+
+
+def _long_signal_with_short_boost(
+    train_x: pd.DataFrame,
+    train_y: pd.Series,
+    calibration_x: pd.DataFrame,
+    test_x: pd.DataFrame,
+    *,
+    fold_id: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    del train_x, train_y, fold_id
+
+    def score(frame: pd.DataFrame) -> np.ndarray:
+        long_signal = frame["feature_ret_5_side"].to_numpy(dtype=float)
+        is_long = frame["feature_side_long"].to_numpy(dtype=float) >= 0.5
+        return np.where(is_long, long_signal, 1_000_000.0)
+
+    return score(calibration_x), score(test_x)
+
+
+def _reverse_long_signal(
+    train_x: pd.DataFrame,
+    train_y: pd.Series,
+    calibration_x: pd.DataFrame,
+    test_x: pd.DataFrame,
+    *,
+    fold_id: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    del train_x, train_y, fold_id
+    return (
+        -calibration_x["feature_ret_5_side"].to_numpy(dtype=float),
+        -test_x["feature_ret_5_side"].to_numpy(dtype=float),
+    )
+
+
+def test_v2_uses_absolute_stressed_pnl_target() -> None:
+    market, rows = _market_and_rows()
+    observed_targets: list[np.ndarray] = []
+
+    def predictor(
