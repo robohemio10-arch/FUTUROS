@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "02105f8875577a8e79beb9169daf09b77dfffccd2a235a192cf20b03957bda4e",
+  "aggregate_sha256": "980df7f9a2641c3067fe360e082e23838892772afbf49a85e0cb0e1458bc0006",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -6590,16 +6590,16 @@
       "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
     },
     {
-      "bytes": 24889,
+      "bytes": 23998,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_long_economic_policy_challenger_v2.py",
-      "sha256": "37211ed79f26fe9af92749cd6dc818610f02336288b0f4116d1d42c09bf41b40"
+      "sha256": "8c1c1154072ac42eabee0fd2920c4477f26808cec84e000670ff9131dfb0c210"
     },
     {
-      "bytes": 53638,
+      "bytes": 53886,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_market_context_economic_challenger.py",
-      "sha256": "e6dfeb0e4eec4501f71e054438e0f2e1048c1610ee1220a2cb71e7403ef8079b"
+      "sha256": "76b5e5c1274244e69bbaf6fc0374d2ce892a29b4de037afd75a18fb4202a64eb"
     },
     {
       "bytes": 33772,
@@ -11606,10 +11606,10 @@
       "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
     },
     {
-      "bytes": 7602,
+      "bytes": 8895,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_long_economic_policy_challenger_v2.py",
-      "sha256": "1ae7a68b8ca781a5fa0981da21b849a3ff0533514bb79906333b3ec3dfd1b0c2"
+      "sha256": "80ba386c8b8c8c8465146dcc210efab63fccbc98be97fa5440201928c0a76ce3"
     },
     {
       "bytes": 9038,
