@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ad790b69f4de212df2555488945dbd932ef092be637edc08a6ae8dc4402e3685",
+  "aggregate_sha256": "cf0cb06fcc5b5009e061626a6f6262d37f0f705bcb37d5fa2e4fb3b69e74f9bd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 307,
-    "manifested_files_total": 2005,
-    "python_files": 1559,
+    "docs_files": 308,
+    "manifested_files_total": 2010,
+    "python_files": 1563,
     "runtime_excluded_files_total": 0,
-    "test_files": 419,
-    "tracked_files_total": 2006,
+    "test_files": 421,
+    "tracked_files_total": 2011,
     "workflows": 2
   },
   "deterministic": true,
@@ -1482,6 +1482,12 @@
       "hash_mode": "text_lf",
       "path": "docs/MARKET_DATA_HEALTH_SPREAD_LIQUIDITY_LATENCY_GUARDS.md",
       "sha256": "b7dae1d39e21be3b56b23a6ddd2e707e6f624de681f81a98ddf5330ee8dcfde0"
+    },
+    {
+      "bytes": 5434,
+      "hash_mode": "text_lf",
+      "path": "docs/MARKET_FEATURES_CONTINUITY_ECONOMIC_CHALLENGER_V1.md",
+      "sha256": "fb30314efa7d9c708331730a5843a59f3a3c0fab0d984e60131447b75ab90d25"
     },
     {
       "bytes": 2651,
@@ -3704,6 +3710,12 @@
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
     },
     {
+      "bytes": 2203,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_market_context_economic_challenger_v1.py",
+      "sha256": "001e5f382488048144717a7fc9c6ae43301c2d55d603f9bed2a67d8eb5705b38"
+    },
+    {
       "bytes": 1878,
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_native_economic_challenger_v1.py",
@@ -5696,10 +5708,10 @@
       "sha256": "900879264bc8dd054a28c0d1a39860b7b80b097cb4b45919ab5944261e42a554"
     },
     {
-      "bytes": 5192,
+      "bytes": 8342,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/feature_builder.py",
-      "sha256": "b230f98e0eb90360e725b47d393cdc345bec6916754abcac10c57570f13c3131"
+      "sha256": "1525419df1db4db3b2754b4d7596a16231e29e6730d973db0e828572046c79cf"
     },
     {
       "bytes": 2558,
@@ -6564,6 +6576,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/outcome_schema.py",
       "sha256": "13e0debe6b1041fff26c830d0376c9c16028b89f55dc3cdd74d75ceb70ecd819"
+    },
+    {
+      "bytes": 53638,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_market_context_economic_challenger.py",
+      "sha256": "e6dfeb0e4eec4501f71e054438e0f2e1048c1610ee1220a2cb71e7403ef8079b"
     },
     {
       "bytes": 33772,
@@ -7802,10 +7820,10 @@
       "sha256": "926c5cb53f15fd4656d5a375b156ad39b7977248d7cbe35793bb918a93cf1ed4"
     },
     {
-      "bytes": 17396,
+      "bytes": 39147,
       "hash_mode": "text_lf",
       "path": "smartcrypto/qlib_engine/market_features_refresh.py",
-      "sha256": "4924ac8f162bedc8a1cd9e8fa2094c24e0f65e2e4eed2c2fe1e2fdf74566a9cc"
+      "sha256": "bbe7c63fb3f80a310eef5ee43a52c7ab44efa956912a72405891f8abb1c3ba08"
     },
     {
       "bytes": 12512,
@@ -10730,6 +10748,12 @@
       "sha256": "719de299af2775a1b566699cf1d396dee818d9b4aa49b38829801a2860495ea5"
     },
     {
+      "bytes": 8829,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_features_refresh_continuity_v1.py",
+      "sha256": "cf4e1a08ce11984b6cc602659f0ac60d28813456dc7dadb4a53bcfb325a50609"
+    },
+    {
       "bytes": 7696,
       "hash_mode": "text_lf",
       "path": "tests/test_market_features_rematerialization_research_v2.py",
@@ -11562,6 +11586,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_institutional_ranking_trainer_v1.py",
       "sha256": "e20908b8eb6409b3c99b4bbcbb144adb57184c780caf67d4c91c00fbd0f22225"
+    },
+    {
+      "bytes": 9038,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_market_context_economic_challenger_v1.py",
+      "sha256": "76aed2ed8b46e894b2aa66ad7e7bbc9ae195d01fc511b8161694fd485b689580"
     },
     {
       "bytes": 17269,
