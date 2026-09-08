@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "02105f8875577a8e79beb9169daf09b77dfffccd2a235a192cf20b03957bda4e",
+  "aggregate_sha256": "8ededab623d224c8dc549fbc5c7da2f1fbe4f4026749698cebcf2d7d5daf3ac1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 309,
-    "manifested_files_total": 2014,
-    "python_files": 1566,
+    "docs_files": 310,
+    "manifested_files_total": 2018,
+    "python_files": 1569,
     "runtime_excluded_files_total": 0,
-    "test_files": 422,
-    "tracked_files_total": 2015,
+    "test_files": 423,
+    "tracked_files_total": 2019,
     "workflows": 2
   },
   "deterministic": true,
@@ -2216,6 +2216,12 @@
       "sha256": "2429420cc798327fd8b506f7b8145396c0d619e6e40cc9d25534d8ee18eb8a94"
     },
     {
+      "bytes": 3487,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_V2_PROSPECTIVE_PAPER_CONFIRMATION_V1.md",
+      "sha256": "86ccaaf248e1b39cdf7a7d8c0b5db5416a33e65068741c6d3806dc9f07864ef3"
+    },
+    {
       "bytes": 9451,
       "hash_mode": "text_lf",
       "path": "docs/QUALITY_GATED_V5_PROVENANCE_FRESHNESS_AND_NONREGRESSION_CONTRACT_V1.md",
@@ -3738,6 +3744,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_shadow_ensemble_threshold_calibration_v1.py",
       "sha256": "8ba0eb2b6345815a9cec7848b3f1bad251cd8782c220f6f4ae9f13ccd65e7884"
+    },
+    {
+      "bytes": 5552,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_v2_prospective_paper_confirmation_v1.py",
+      "sha256": "21bd6c528d40e35bb00788ea37a389d91b2e410743851ad3951c3843e54aa84a"
     },
     {
       "bytes": 2949,
@@ -6606,6 +6618,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_native_economic_challenger.py",
       "sha256": "1ddadb11c7602356b5ecb71a17b50e36f669bba5affecc5be726dd233704ebe3"
+    },
+    {
+      "bytes": 23847,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_paper_confirmation.py",
+      "sha256": "c0871acff02974c8fa333f32eadc2878d4cb233838033e06d7a7b0342827abb6"
     },
     {
       "bytes": 12369,
@@ -11700,6 +11718,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_shadow_ensemble_threshold_calibration_v1.py",
       "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
+    },
+    {
+      "bytes": 7727,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_paper_confirmation_v1.py",
+      "sha256": "29dbf442555cf5ab8d0f99811def6ebea9e119372d49b8f68d1a26885ac2ce22"
     },
     {
       "bytes": 8175,
