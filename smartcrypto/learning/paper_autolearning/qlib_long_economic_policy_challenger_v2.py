@@ -397,43 +397,18 @@ def _prepare_fold(
     test_rows: Sequence[Mapping[str, Any]],
     stress_bps: float,
 ) -> tuple[base.PreparedFold | None, list[str]]:
+    """Prepare V2 folds without constructing the obsolete per-notional target."""
+
     prepared, blockers = base._prepare_fold(
         prior_rows=prior_rows,
         test_rows=test_rows,
         stress_bps=stress_bps,
+        target_builder=base._stressed_pnl,
+        target_error_reason="non_finite_absolute_stressed_pnl_target",
     )
     if prepared is None:
         return None, blockers
-
-    target = np.asarray(
-        [base._stressed_pnl(row, stress_bps) for row in prepared.fit_rows],
-        dtype=float,
-    )
-    if len(target) >= 20:
-        lower = float(np.quantile(target, base.TARGET_CLIP_LOWER_QUANTILE))
-        upper = float(np.quantile(target, base.TARGET_CLIP_UPPER_QUANTILE))
-        target = np.clip(target, lower, upper)
-    if not np.isfinite(target).all():
-        return None, ["non_finite_absolute_stressed_pnl_target"]
-
-    return (
-        base.PreparedFold(
-            feature_columns=prepared.feature_columns,
-            train_x=prepared.train_x,
-            train_y=pd.Series(target, name="label", dtype=float),
-            calibration_x=prepared.calibration_x,
-            test_x=prepared.test_x,
-            fit_rows=prepared.fit_rows,
-            calibration_rows=prepared.calibration_rows,
-            test_rows=prepared.test_rows,
-            test_information_cutoff_utc=prepared.test_information_cutoff_utc,
-            calibration_information_cutoff_utc=(
-                prepared.calibration_information_cutoff_utc
-            ),
-        ),
-        [],
-    )
-
+    return prepared, []
 
 def _select_calibration_threshold(
     *,

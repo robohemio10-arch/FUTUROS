@@ -23,7 +23,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterator, Protocol
+from typing import Any, Callable, Iterator, Protocol
 
 import numpy as np
 import pandas as pd
@@ -514,6 +514,8 @@ def _prepare_fold(
     prior_rows: Sequence[Mapping[str, Any]],
     test_rows: Sequence[Mapping[str, Any]],
     stress_bps: float,
+    target_builder: Callable[[Mapping[str, Any], float], float] | None = None,
+    target_error_reason: str = "non_finite_training_matrix",
 ) -> tuple[PreparedFold | None, list[str]]:
     blockers: list[str] = []
     if not test_rows:
@@ -602,8 +604,9 @@ def _prepare_fold(
     train_x = matrix(fit_features)
     calibration_x = matrix(calibration_features)
     test_x = matrix(heldout_features)
+    build_target = target_builder or _stressed_return_bps
     target = np.asarray(
-        [_stressed_return_bps(row, stress_bps) for row in fit_rows],
+        [build_target(row, stress_bps) for row in fit_rows],
         dtype=float,
     )
     if len(target) >= 20:
@@ -612,8 +615,10 @@ def _prepare_fold(
         target = np.clip(target, lower, upper)
     train_y = pd.Series(target, name="label", dtype=float)
 
-    if not np.isfinite(train_x.to_numpy()).all() or not np.isfinite(target).all():
+    if not np.isfinite(train_x.to_numpy()).all():
         return None, ["non_finite_training_matrix"]
+    if not np.isfinite(target).all():
+        return None, [target_error_reason]
     if not np.isfinite(calibration_x.to_numpy()).all():
         return None, ["non_finite_calibration_matrix"]
     if not np.isfinite(test_x.to_numpy()).all():
