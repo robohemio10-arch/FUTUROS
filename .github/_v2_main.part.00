@@ -1,0 +1,130 @@
+"""Research-only Qlib long-eligible economic challenger V2.
+
+This candidate preserves the market-context feature rematerialization and causal
+walk-forward machinery from V1, but changes the economic learning objective to
+absolute stressed Net PnL and makes long eligibility an explicit structural
+selection policy. Shorts remain available to model training as negative/positive
+examples, but are never eligible for treatment selection in this V2 candidate.
+
+The module is intentionally fail-closed and has no operational authority.
+"""
+
+from __future__ import annotations
+
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Iterator, Mapping, Sequence
+
+import numpy as np
+import pandas as pd
+
+from smartcrypto.learning.paper_autolearning.economic_walkforward_cost_robustness import (
+    build_paper_autolearning_economic_walkforward_cost_robustness_v1,
+)
+from smartcrypto.learning.paper_autolearning import (
+    qlib_market_context_economic_challenger as base,
+)
+
+SCHEMA_VERSION = "paper_autolearning_qlib_long_economic_policy_challenger_v2"
+TARGET_NAME = "absolute_stressed_net_pnl"
+ELIGIBILITY_POLICY = "long_only_research_candidate"
+SCORE_QUANTILES = (0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.85)
+SELECTOR_FIELD = "paper_candidate_filter_decision"
+SCORE_FIELD = "qlib_long_economic_score"
+THRESHOLD_FIELD = "qlib_long_economic_threshold"
+FOLD_FIELD = "qlib_long_economic_fold"
+OOS_FIELD = "qlib_long_economic_oos"
+
+
+def build_qlib_long_economic_policy_challenger_v2(
+    *,
+    project_root: str | Path,
+    rows: Sequence[Mapping[str, Any]] | None = None,
+    market_rows: Sequence[Mapping[str, Any]] | pd.DataFrame | None = None,
+    outcome_path: str | Path | None = None,
+    market_features_path: str | Path | None = None,
+    additional_execution_stress_bps: float = base.DEFAULT_ADDITIONAL_EXECUTION_STRESS_BPS,
+    predictor: base.Predictor | None = None,
+) -> dict[str, Any]:
+    """Build the fixed V2 long-eligible, absolute-PnL Qlib challenger."""
+
+    root = Path(project_root).resolve()
+    outcome_source = base._resolve(root, outcome_path or base.DEFAULT_OUTCOME_PATH)
+    market_source = base._resolve(
+        root,
+        market_features_path or base.DEFAULT_MARKET_FEATURES_PATH,
+    )
+    input_rows = [dict(row) for row in rows] if rows is not None else base._read_rows(outcome_source)
+    raw_market = base._market_frame(market_rows, market_source)
+    stress_bps = base._validate_stress_bps(additional_execution_stress_bps)
+
+    normalized, invalid_time_count = base._normalize_outcomes(input_rows)
+    try:
+        rematerialized = base._rematerialize_market_features(raw_market)
+        aligned, alignment_report = base._align_point_in_time_market_features(
+            normalized,
+            rematerialized,
+        )
+    except Exception as exc:
+        return _blocked_preflight_report(
+            outcome_source=outcome_source,
+            market_source=market_source,
+            input_row_count=len(input_rows),
+            valid_closed_outcome_count=len(normalized),
+            invalid_time_count=invalid_time_count,
+            stress_bps=stress_bps,
+            reason="market_feature_rematerialization_or_alignment_failed",
+            blockers=["market_feature_rematerialization_or_alignment_failed"],
+            alignment_report={
+                "status": "blocked",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            },
+        )
+
+    common = _common_report_fields(
+        outcome_source=outcome_source,
+        market_source=market_source,
+        input_row_count=len(input_rows),
+        valid_closed_outcome_count=len(normalized),
+        invalid_time_count=invalid_time_count,
+        stress_bps=stress_bps,
+        alignment_report=alignment_report,
+    )
+
+    preflight_blockers: list[str] = []
+    if invalid_time_count:
+        preflight_blockers.append("invalid_trade_time_detected")
+    if alignment_report["coverage"] < base.MIN_PIT_ALIGNMENT_COVERAGE:
+        preflight_blockers.append("point_in_time_market_feature_coverage_not_met")
+    if alignment_report["target_notional_coverage"] < base.MIN_TARGET_NOTIONAL_COVERAGE:
+        preflight_blockers.append("target_notional_coverage_not_met")
+    if len(aligned) < base.MIN_TOTAL_TRADES:
+        preflight_blockers.append("min_total_trades_not_met")
+    fold_specs = base._build_fold_specs(len(aligned))
+    if len(fold_specs) != base.FOLD_COUNT:
+        preflight_blockers.append("walkforward_fold_count_not_met")
+
+    if preflight_blockers:
+        unique_preflight = list(dict.fromkeys(preflight_blockers))
+        return {
+            **common,
+            "status": "blocked",
+            "reason": unique_preflight[0],
+            "decision": "MANTER_EM_RESEARCH",
+            "predictor_mode": "not_started",
+            "native_qlib_used": False,
+            "model": {},
+            "folds": [],
+            "economic_evaluation": None,
+            "blockers": unique_preflight,
+        }
+
+    if predictor is not None:
+        return _run_with_predictor(
+            common=common,
+            normalized=aligned,
+            fold_specs=fold_specs,
+            stress_bps=stress_bps,
+            predictor=predictor,
+            predictor_mode="injected_test_double",
