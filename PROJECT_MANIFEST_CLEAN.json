@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0eb0ae0ab361f04a1b3767b26f98d9dd28bb63c66455829355e70b0d4bfd877a",
+  "aggregate_sha256": "aaaaab17617b0b2176005286fe2b4fb657d998a43ed29efebe74b1289ac57052",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 310,
-    "manifested_files_total": 2018,
-    "python_files": 1569,
+    "manifested_files_total": 2024,
+    "python_files": 1575,
     "runtime_excluded_files_total": 0,
-    "test_files": 423,
-    "tracked_files_total": 2019,
+    "test_files": 425,
+    "tracked_files_total": 2025,
     "workflows": 2
   },
   "deterministic": true,
@@ -4316,6 +4316,12 @@
       "sha256": "028e98deba5bab5730ec07b10419fa68900f5e81423dd166fec0330fb27a71a7"
     },
     {
+      "bytes": 10575,
+      "hash_mode": "text_lf",
+      "path": "scripts/observe_qlib_v2_prospective_signals_v1.py",
+      "sha256": "e285eb5f06d3290951fe7447e484c5b22d043c5639e9cb9ad5a4ece310163d98"
+    },
+    {
       "bytes": 17289,
       "hash_mode": "text_lf",
       "path": "scripts/ocr_bitradex_images_to_review.py",
@@ -4548,6 +4554,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/resolve_final_financial_quality_blocks.py",
       "sha256": "11cf60c52cfb077d3d855c3d2bea24bc750a4dd184f928e0378246afe368183a"
+    },
+    {
+      "bytes": 5161,
+      "hash_mode": "text_lf",
+      "path": "scripts/resolve_qlib_v2_prospective_outcomes_v1.py",
+      "sha256": "a609098f975b593a18e26e9b20a0d1879a38ca5ac21efe06de58721fdadd864a"
     },
     {
       "bytes": 2140,
@@ -6620,10 +6632,22 @@
       "sha256": "1ddadb11c7602356b5ecb71a17b50e36f669bba5affecc5be726dd233704ebe3"
     },
     {
+      "bytes": 37336,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_outcome_resolver.py",
+      "sha256": "13ed59fc70824dd950eda2b3709b80c689c832e0699b01a6bf6ff6eeda422499"
+    },
+    {
       "bytes": 36247,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_paper_confirmation.py",
       "sha256": "9a6445bb89689d7cf5916daed24a067fb5041d9fbd788416435a16f02c737f2f"
+    },
+    {
+      "bytes": 35915,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_signal_observer.py",
+      "sha256": "dadcc64b1551b267c90441991c37f35cfe566de18a12de984d1bc3239c161d0f"
     },
     {
       "bytes": 12369,
@@ -11720,10 +11744,22 @@
       "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
     },
     {
+      "bytes": 17070,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_outcome_resolver_v1.py",
+      "sha256": "273bdf408faee230acc25a4848a1594e3eb0540fd0dd9df945a077ddfd99dab7"
+    },
+    {
       "bytes": 10371,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v2_prospective_paper_confirmation_v1.py",
       "sha256": "60782410427c104130053eae880fe036ed73c14a6cdaba98d9708cd07f6a14f7"
+    },
+    {
+      "bytes": 15988,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_signal_observer_v1.py",
+      "sha256": "3cf8e16d789aa2ec31057ed442140cfaf4041283188c7ba44382edb029f4b6c9"
     },
     {
       "bytes": 8175,
