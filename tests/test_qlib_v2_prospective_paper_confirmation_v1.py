@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from smartcrypto.learning.paper_autolearning.qlib_v2_prospective_paper_confirmation import (
+    CERTIFIED_DEV_COMMIT,
     build_qlib_v2_prospective_paper_confirmation_v1,
 )
 
@@ -90,6 +91,15 @@ def _boundary(rows: list[dict[str, object]], index: int = 330) -> datetime:
     return datetime.fromisoformat(str(rows[index]["open_time_utc"]))
 
 
+def _certified_provenance(boundary: datetime) -> dict[str, object]:
+    return {
+        "certified_implementation_commit": "a" * 40,
+        "certified_ci_run_id": 123456789,
+        "certified_ci_completed_at_utc": boundary - timedelta(seconds=1),
+        "freeze_materialized_at_utc": boundary,
+    }
+
+
 def test_freeze_uses_only_pre_boundary_and_scores_future_closed_trades() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
@@ -114,29 +124,41 @@ def test_freeze_uses_only_pre_boundary_and_scores_future_closed_trades() -> None
     assert all(item["side"] == "long" for item in selected)
     assert report["prospective_labels_used_for_training"] is False
     assert report["prospective_labels_used_for_calibration"] is False
+    assert report["freeze_provenance_complete"] is False
 
 
 def test_future_outcome_mutation_does_not_change_frozen_policy_or_selection() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     first = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=rows, market_rows=market,
-        prospective_start_utc=boundary, additional_execution_stress_bps=0.0,
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        additional_execution_stress_bps=0.0,
         predictor=_predictor,
     )
     mutated = [dict(row) for row in rows]
     for row in mutated[331:]:
         row["net_pnl"] = float(row["net_pnl"]) * -100.0
     second = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=mutated, market_rows=market,
-        prospective_start_utc=boundary, additional_execution_stress_bps=0.0,
-        expected_freeze_spec=first["freeze_spec"], predictor=_predictor,
+        project_root=Path("."),
+        rows=mutated,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        additional_execution_stress_bps=0.0,
+        expected_freeze_spec=first["freeze_spec"],
+        predictor=_predictor,
     )
     assert second["status"] == "observing"
     assert second["freeze_spec_verified"] is True
     assert first["freeze_spec"]["policy_sha256"] == second["freeze_spec"]["policy_sha256"]
-    first_selected = [x["trade_id"] for x in first["prospective_observations"] if x["selected"]]
-    second_selected = [x["trade_id"] for x in second["prospective_observations"] if x["selected"]]
+    first_selected = [
+        item["trade_id"] for item in first["prospective_observations"] if item["selected"]
+    ]
+    second_selected = [
+        item["trade_id"] for item in second["prospective_observations"] if item["selected"]
+    ]
     assert first_selected == second_selected
     assert first["economic_evidence"] != second["economic_evidence"]
 
@@ -145,16 +167,23 @@ def test_pre_boundary_mutation_is_blocked_by_freeze_fingerprint() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     first = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=rows, market_rows=market,
-        prospective_start_utc=boundary, additional_execution_stress_bps=0.0,
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        additional_execution_stress_bps=0.0,
         predictor=_predictor,
     )
     mutated = [dict(row) for row in rows]
     mutated[100]["net_pnl"] = float(mutated[100]["net_pnl"]) + 0.25
     second = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=mutated, market_rows=market,
-        prospective_start_utc=boundary, additional_execution_stress_bps=0.0,
-        expected_freeze_spec=first["freeze_spec"], predictor=_predictor,
+        project_root=Path("."),
+        rows=mutated,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        additional_execution_stress_bps=0.0,
+        expected_freeze_spec=first["freeze_spec"],
+        predictor=_predictor,
     )
     assert second["status"] == "blocked"
     assert second["reason"] == "frozen_policy_fingerprint_mismatch"
@@ -165,8 +194,11 @@ def test_duplicate_trade_id_fails_closed() -> None:
     market, rows = _market_and_rows()
     rows[200]["trade_id"] = rows[199]["trade_id"]
     report = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=rows, market_rows=market,
-        prospective_start_utc=_boundary(rows), additional_execution_stress_bps=0.0,
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=_boundary(rows),
+        additional_execution_stress_bps=0.0,
         predictor=_predictor,
     )
     assert report["status"] == "blocked"
@@ -176,8 +208,11 @@ def test_duplicate_trade_id_fails_closed() -> None:
 def test_safety_contract_never_promotes_or_changes_runtime() -> None:
     market, rows = _market_and_rows()
     report = build_qlib_v2_prospective_paper_confirmation_v1(
-        project_root=Path("."), rows=rows, market_rows=market,
-        prospective_start_utc=_boundary(rows), additional_execution_stress_bps=0.0,
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=_boundary(rows),
+        additional_execution_stress_bps=0.0,
         predictor=_predictor,
     )
     assert report["paper_only"] is True
@@ -190,3 +225,47 @@ def test_safety_contract_never_promotes_or_changes_runtime() -> None:
     assert report["sends_orders"] is False
     assert report["exchange_private_access"] is False
     assert report["writes_runtime"] is False
+
+
+def test_certified_freeze_provenance_binds_dev_commit_ci_and_boundary() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    provenance = _certified_provenance(boundary)
+    report = build_qlib_v2_prospective_paper_confirmation_v1(
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        additional_execution_stress_bps=0.0,
+        predictor=_predictor,
+        **provenance,
+    )
+    freeze = report["freeze_spec"]
+    assert report["status"] == "observing"
+    assert report["freeze_provenance_complete"] is True
+    assert freeze["freeze_provenance_complete"] is True
+    assert freeze["certified_dev_commit"] == CERTIFIED_DEV_COMMIT
+    assert freeze["certified_implementation_commit"] == "a" * 40
+    assert freeze["certified_ci_run_id"] == 123456789
+    assert freeze["prospective_start_utc"] == boundary.isoformat()
+    assert freeze["freeze_materialized_at_utc"] == boundary.isoformat()
+
+
+def test_freeze_provenance_rejects_boundary_before_ci_completion() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    report = build_qlib_v2_prospective_paper_confirmation_v1(
+        project_root=Path("."),
+        rows=rows,
+        market_rows=market,
+        prospective_start_utc=boundary,
+        certified_implementation_commit="b" * 40,
+        certified_ci_run_id=987654321,
+        certified_ci_completed_at_utc=boundary + timedelta(seconds=1),
+        freeze_materialized_at_utc=boundary,
+        additional_execution_stress_bps=0.0,
+        predictor=_predictor,
+    )
+    assert report["status"] == "observing"
+    assert report["freeze_provenance_complete"] is False
+    assert report["freeze_spec"]["freeze_provenance_complete"] is False

@@ -1,10 +1,13 @@
 """Prospective Paper confirmation for the frozen Qlib economic policy V2.
 
-This module evaluates only trades opened strictly after the certified V2 boundary.
-The model is reconstructed deterministically from pre-boundary outcomes and point-in-
-time market features. Prospective outcomes never enter fit, calibration, threshold
-selection, early stopping, or feature imputation. The component is research-only and
-has no operational authority.
+The policy is reconstructed only from pre-boundary Paper outcomes and point-in-time
+market features. A production-grade prospective freeze is a two-phase operation:
+code is first certified by CI, then an immutable freeze is materialized with the
+exact certified implementation commit, CI run and CI completion timestamp. The
+prospective boundary starts at freeze materialization, never at an earlier historical
+constant. Prospective outcomes never enter fit, calibration, threshold selection,
+early stopping or feature imputation. This component is research-only and has no
+operational authority.
 """
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -27,9 +31,8 @@ from smartcrypto.learning.paper_autolearning import (
 )
 
 SCHEMA_VERSION = "paper_autolearning_qlib_v2_prospective_paper_confirmation_v1"
-PROSPECTIVE_START_UTC = datetime(2026, 9, 8, 19, 38, 11, tzinfo=UTC)
-CERTIFIED_DEV_COMMIT = "e2b7d8255b8efa503b547a0885d8422f73e26a52"
-CERTIFIED_POST_MERGE_CI_RUN_ID = 34267098057
+PROVENANCE_SCHEMA_VERSION = "qlib_v2_certified_freeze_provenance_v1"
+CERTIFIED_DEV_COMMIT = "9639e7f49cd5155eed2766df506d380acf91f8df"
 POLICY_VERSION = v2.SCHEMA_VERSION
 SELECTOR_FIELD = "qlib_v2_prospective_selected"
 SCORE_FIELD = "qlib_v2_prospective_score"
@@ -40,6 +43,8 @@ DEFAULT_FREEZE_SPEC_PATH = Path(
 DEFAULT_REPORT_PATH = Path(
     "data/reports/qlib_v2/qlib_v2_prospective_paper_confirmation_v1.json"
 )
+
+_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 
 SAFETY_FLAGS: dict[str, bool] = {
     "paper_only": True,
@@ -63,31 +68,62 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
     market_rows: Sequence[Mapping[str, Any]] | pd.DataFrame | None = None,
     outcome_path: str | Path | None = None,
     market_features_path: str | Path | None = None,
-    prospective_start_utc: str | datetime = PROSPECTIVE_START_UTC,
+    prospective_start_utc: str | datetime | None = None,
+    certified_implementation_commit: str | None = None,
+    certified_ci_run_id: int | None = None,
+    certified_ci_completed_at_utc: str | datetime | None = None,
+    freeze_materialized_at_utc: str | datetime | None = None,
     additional_execution_stress_bps: float = base.DEFAULT_ADDITIONAL_EXECUTION_STRESS_BPS,
     expected_freeze_spec: Mapping[str, Any] | None = None,
     predictor: base.Predictor | None = None,
 ) -> dict[str, Any]:
-    """Freeze the V2 policy on pre-boundary data and score later closed Paper trades."""
+    """Freeze V2 on pre-boundary data and score later closed Paper trades.
+
+    When an immutable freeze already exists, its provenance is authoritative. For a
+    new native-Qlib freeze, complete certified provenance is mandatory. Injected test
+    doubles may omit provenance so unit tests can exercise economic invariants without
+    pretending to be a production certification.
+    """
 
     root = Path(project_root).resolve()
-    boundary = _parse_boundary(prospective_start_utc)
     stress_bps = base._validate_stress_bps(additional_execution_stress_bps)
     outcome_source = base._resolve(root, outcome_path or base.DEFAULT_OUTCOME_PATH)
     market_source = base._resolve(root, market_features_path or base.DEFAULT_MARKET_FEATURES_PATH)
+
+    provenance, provenance_blockers = _resolve_provenance(
+        prospective_start_utc=prospective_start_utc,
+        certified_implementation_commit=certified_implementation_commit,
+        certified_ci_run_id=certified_ci_run_id,
+        certified_ci_completed_at_utc=certified_ci_completed_at_utc,
+        freeze_materialized_at_utc=freeze_materialized_at_utc,
+        expected_freeze_spec=expected_freeze_spec,
+    )
+    if provenance is None:
+        return _blocked_without_boundary_report(
+            stress_bps=stress_bps,
+            outcome_source=outcome_source,
+            market_source=market_source,
+            reason=provenance_blockers[0],
+            blockers=provenance_blockers,
+        )
+
+    boundary = provenance["prospective_start_utc"]
+    assert isinstance(boundary, datetime)
+
     input_rows = [dict(row) for row in rows] if rows is not None else base._read_rows(outcome_source)
     raw_market = base._market_frame(market_rows, market_source)
 
     normalized, invalid_time_count = base._normalize_outcomes(input_rows)
     duplicates = _duplicate_trade_ids(normalized)
     if invalid_time_count or duplicates:
-        blockers = []
+        blockers: list[str] = []
         if invalid_time_count:
             blockers.append("invalid_trade_time_detected")
         if duplicates:
             blockers.append("duplicate_trade_id_detected")
         return _blocked_report(
             boundary=boundary,
+            provenance=provenance,
             stress_bps=stress_bps,
             outcome_source=outcome_source,
             market_source=market_source,
@@ -107,6 +143,7 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
     except Exception as exc:
         return _blocked_report(
             boundary=boundary,
+            provenance=provenance,
             stress_bps=stress_bps,
             outcome_source=outcome_source,
             market_source=market_source,
@@ -126,6 +163,7 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
 
     common = _common_report(
         boundary=boundary,
+        provenance=provenance,
         stress_bps=stress_bps,
         outcome_source=outcome_source,
         market_source=market_source,
@@ -137,23 +175,36 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
         unavailable_pre_boundary_count=len(unavailable_pre_boundary),
     )
 
-    preflight: list[str] = []
+    preflight: list[str] = list(provenance_blockers)
     if alignment_report["coverage"] < base.MIN_PIT_ALIGNMENT_COVERAGE:
         preflight.append("point_in_time_market_feature_coverage_not_met")
     if len(pre_boundary) < base.MIN_INITIAL_CONTEXT_TRADES:
         preflight.append("min_pre_boundary_context_not_met")
     if not pre_boundary:
         preflight.append("pre_boundary_rows_missing")
-    if preflight:
+    if preflight and predictor is None:
+        unique = list(dict.fromkeys(preflight))
         return {
             **common,
             "status": "blocked",
-            "reason": preflight[0],
+            "reason": unique[0],
             "decision": "MANTER_EM_RESEARCH",
             "freeze_spec": None,
             "prospective_observations": [],
             "economic_evidence": None,
-            "blockers": sorted(set(preflight)),
+            "blockers": unique,
+        }
+    if any(item not in provenance_blockers for item in preflight):
+        unique = list(dict.fromkeys(preflight))
+        return {
+            **common,
+            "status": "blocked",
+            "reason": unique[0],
+            "decision": "MANTER_EM_RESEARCH",
+            "freeze_spec": None,
+            "prospective_observations": [],
+            "economic_evidence": None,
+            "blockers": unique,
         }
 
     sentinel = dict(pre_boundary[-1])
@@ -182,7 +233,7 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
 
     try:
         if predictor is not None:
-            report = _run_predictor(
+            return _run_predictor(
                 predictor=predictor,
                 predictor_mode="injected_test_double",
                 native_qlib_used=False,
@@ -193,25 +244,29 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
                 score_x=score_x,
                 stress_bps=stress_bps,
                 boundary=boundary,
+                provenance=provenance,
+                provenance_blockers=provenance_blockers,
                 common=common,
                 expected_freeze_spec=expected_freeze_spec,
             )
-        else:
-            with v2._native_qlib_lgb_predictor_context() as (native_predictor, metadata):
-                report = _run_predictor(
-                    predictor=native_predictor,
-                    predictor_mode="native_qlib_contrib_lgb_frozen_prospective_v1",
-                    native_qlib_used=True,
-                    model_metadata=metadata,
-                    prepared=prepared,
-                    prospective=prospective,
-                    prospective_x=prospective_x,
-                    score_x=score_x,
-                    stress_bps=stress_bps,
-                    boundary=boundary,
-                    common=common,
-                    expected_freeze_spec=expected_freeze_spec,
-                )
+
+        with v2._native_qlib_lgb_predictor_context() as (native_predictor, metadata):
+            return _run_predictor(
+                predictor=native_predictor,
+                predictor_mode="native_qlib_contrib_lgb_frozen_prospective_v1",
+                native_qlib_used=True,
+                model_metadata=metadata,
+                prepared=prepared,
+                prospective=prospective,
+                prospective_x=prospective_x,
+                score_x=score_x,
+                stress_bps=stress_bps,
+                boundary=boundary,
+                provenance=provenance,
+                provenance_blockers=provenance_blockers,
+                common=common,
+                expected_freeze_spec=expected_freeze_spec,
+            )
     except Exception as exc:
         return {
             **common,
@@ -226,7 +281,6 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
             "economic_evidence": None,
             "blockers": ["frozen_policy_model_fit_or_score_failed"],
         }
-    return report
 
 
 def _run_predictor(
@@ -241,6 +295,8 @@ def _run_predictor(
     score_x: pd.DataFrame,
     stress_bps: float,
     boundary: datetime,
+    provenance: Mapping[str, Any],
+    provenance_blockers: Sequence[str],
     common: Mapping[str, Any],
     expected_freeze_spec: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
@@ -256,7 +312,9 @@ def _run_predictor(
         expected=len(prepared.calibration_rows),
     )
     test_scores = base._finite_scores(test_scores, expected=len(score_x))
-    prospective_scores = test_scores[: len(prospective)] if prospective else np.asarray([], dtype=float)
+    prospective_scores = (
+        test_scores[: len(prospective)] if prospective else np.asarray([], dtype=float)
+    )
 
     calibration = v2._select_calibration_threshold(
         rows=prepared.calibration_rows,
@@ -281,27 +339,18 @@ def _run_predictor(
 
     threshold = float(calibration["threshold"])
     dataset_sha = _dataset_fingerprint(prepared)
-    contract = {
-        "schema_version": SCHEMA_VERSION,
-        "source_policy_schema": POLICY_VERSION,
-        "prospective_start_utc": boundary.isoformat(),
-        "certified_dev_commit": CERTIFIED_DEV_COMMIT,
-        "certified_post_merge_ci_run_id": CERTIFIED_POST_MERGE_CI_RUN_ID,
-        "additional_execution_stress_bps": stress_bps,
-        "target": v2.TARGET_NAME,
-        "eligibility_policy": v2.ELIGIBILITY_POLICY,
-        "score_quantiles": list(v2.SCORE_QUANTILES),
-        "feature_columns": list(prepared.feature_columns),
-        "outcome_availability_embargo_seconds": base.OUTCOME_AVAILABILITY_EMBARGO_SECONDS,
-        "fit_trade_count": len(prepared.fit_rows),
-        "calibration_trade_count": len(prepared.calibration_rows),
-        "pre_boundary_dataset_sha256": dataset_sha,
-        "threshold": threshold,
-        "selected_quantile": calibration["selected_quantile"],
-        "model": dict(model_metadata),
-    }
+    contract = _freeze_contract(
+        boundary=boundary,
+        provenance=provenance,
+        stress_bps=stress_bps,
+        prepared=prepared,
+        calibration=calibration,
+        model_metadata=model_metadata,
+        dataset_sha=dataset_sha,
+    )
     policy_sha = _sha256_json(contract)
     freeze_spec = {**contract, "policy_sha256": policy_sha}
+
     mismatch = _freeze_mismatch(expected_freeze_spec, freeze_spec)
     if mismatch:
         return {
@@ -318,6 +367,24 @@ def _run_predictor(
             "prospective_observations": [],
             "economic_evidence": None,
             "blockers": ["frozen_policy_fingerprint_mismatch"],
+        }
+
+    if provenance_blockers and native_qlib_used:
+        unique = list(dict.fromkeys(provenance_blockers))
+        return {
+            **dict(common),
+            "status": "blocked",
+            "reason": unique[0],
+            "decision": "MANTER_EM_RESEARCH",
+            "predictor_mode": predictor_mode,
+            "native_qlib_used": native_qlib_used,
+            "model": dict(model_metadata),
+            "calibration": calibration,
+            "freeze_spec": freeze_spec,
+            "freeze_spec_verified": False,
+            "prospective_observations": [],
+            "economic_evidence": None,
+            "blockers": unique,
         }
 
     observations: list[dict[str, Any]] = []
@@ -384,6 +451,132 @@ def _run_predictor(
     }
 
 
+def _freeze_contract(
+    *,
+    boundary: datetime,
+    provenance: Mapping[str, Any],
+    stress_bps: float,
+    prepared: base.PreparedFold,
+    calibration: Mapping[str, Any],
+    model_metadata: Mapping[str, Any],
+    dataset_sha: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "provenance_schema_version": PROVENANCE_SCHEMA_VERSION,
+        "source_policy_schema": POLICY_VERSION,
+        "prospective_start_utc": boundary.isoformat(),
+        "freeze_materialized_at_utc": _time_iso(provenance["freeze_materialized_at_utc"]),
+        "certified_dev_commit": CERTIFIED_DEV_COMMIT,
+        "certified_implementation_commit": provenance["certified_implementation_commit"],
+        "certified_ci_run_id": provenance["certified_ci_run_id"],
+        "certified_ci_completed_at_utc": _time_iso(
+            provenance["certified_ci_completed_at_utc"]
+        ),
+        "freeze_provenance_complete": bool(provenance["freeze_provenance_complete"]),
+        "additional_execution_stress_bps": stress_bps,
+        "target": v2.TARGET_NAME,
+        "eligibility_policy": v2.ELIGIBILITY_POLICY,
+        "score_quantiles": list(v2.SCORE_QUANTILES),
+        "feature_columns": list(prepared.feature_columns),
+        "outcome_availability_embargo_seconds": base.OUTCOME_AVAILABILITY_EMBARGO_SECONDS,
+        "fit_trade_count": len(prepared.fit_rows),
+        "calibration_trade_count": len(prepared.calibration_rows),
+        "pre_boundary_dataset_sha256": dataset_sha,
+        "threshold": float(calibration["threshold"]),
+        "selected_quantile": calibration["selected_quantile"],
+        "model": dict(model_metadata),
+    }
+
+
+def _resolve_provenance(
+    *,
+    prospective_start_utc: str | datetime | None,
+    certified_implementation_commit: str | None,
+    certified_ci_run_id: int | None,
+    certified_ci_completed_at_utc: str | datetime | None,
+    freeze_materialized_at_utc: str | datetime | None,
+    expected_freeze_spec: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    if expected_freeze_spec is not None:
+        boundary_value = expected_freeze_spec.get("prospective_start_utc")
+        if boundary_value is None:
+            return None, ["existing_freeze_missing_prospective_start_utc"]
+        boundary = _parse_boundary(boundary_value)
+        materialized = _parse_optional_time(
+            expected_freeze_spec.get("freeze_materialized_at_utc")
+        )
+        ci_completed = _parse_optional_time(
+            expected_freeze_spec.get("certified_ci_completed_at_utc")
+        )
+        provenance = {
+            "prospective_start_utc": boundary,
+            "freeze_materialized_at_utc": materialized,
+            "certified_implementation_commit": expected_freeze_spec.get(
+                "certified_implementation_commit"
+            ),
+            "certified_ci_run_id": expected_freeze_spec.get("certified_ci_run_id"),
+            "certified_ci_completed_at_utc": ci_completed,
+            "freeze_provenance_complete": bool(
+                expected_freeze_spec.get("freeze_provenance_complete")
+            ),
+        }
+        blockers = _provenance_blockers(provenance)
+        if expected_freeze_spec.get("certified_dev_commit") != CERTIFIED_DEV_COMMIT:
+            blockers.append("existing_freeze_certified_dev_commit_mismatch")
+        return provenance, list(dict.fromkeys(blockers))
+
+    if prospective_start_utc is None:
+        return None, ["prospective_start_utc_required_without_existing_freeze"]
+
+    boundary = _parse_boundary(prospective_start_utc)
+    materialized = _parse_optional_time(freeze_materialized_at_utc)
+    ci_completed = _parse_optional_time(certified_ci_completed_at_utc)
+    provenance = {
+        "prospective_start_utc": boundary,
+        "freeze_materialized_at_utc": materialized,
+        "certified_implementation_commit": (
+            None
+            if certified_implementation_commit is None
+            else str(certified_implementation_commit).strip().lower()
+        ),
+        "certified_ci_run_id": certified_ci_run_id,
+        "certified_ci_completed_at_utc": ci_completed,
+        "freeze_provenance_complete": False,
+    }
+    blockers = _provenance_blockers(provenance)
+    provenance["freeze_provenance_complete"] = not blockers
+    return provenance, blockers
+
+
+def _provenance_blockers(provenance: Mapping[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    commit = provenance.get("certified_implementation_commit")
+    ci_run = provenance.get("certified_ci_run_id")
+    ci_completed = provenance.get("certified_ci_completed_at_utc")
+    materialized = provenance.get("freeze_materialized_at_utc")
+    boundary = provenance.get("prospective_start_utc")
+
+    if not isinstance(commit, str) or _SHA1_RE.fullmatch(commit) is None:
+        blockers.append("certified_implementation_commit_required")
+    if not isinstance(ci_run, int) or isinstance(ci_run, bool) or ci_run <= 0:
+        blockers.append("certified_ci_run_id_required")
+    if not isinstance(ci_completed, datetime):
+        blockers.append("certified_ci_completed_at_utc_required")
+    if not isinstance(materialized, datetime):
+        blockers.append("freeze_materialized_at_utc_required")
+    if not isinstance(boundary, datetime):
+        blockers.append("prospective_start_utc_required")
+
+    if isinstance(ci_completed, datetime) and isinstance(materialized, datetime):
+        if materialized < ci_completed:
+            blockers.append("freeze_materialized_before_certified_ci_completed")
+    if isinstance(materialized, datetime) and isinstance(boundary, datetime):
+        if boundary != materialized:
+            blockers.append("prospective_start_must_equal_freeze_materialization_time")
+    return blockers
+
+
 def _matrix_from_frozen_fit(
     prepared: base.PreparedFold,
     rows: Sequence[Mapping[str, Any]],
@@ -398,6 +591,7 @@ def _matrix_from_frozen_fit(
         if not finite:
             raise ValueError(f"frozen_feature_median_missing:{column}")
         medians[column] = float(np.median(np.asarray(finite, dtype=float)))
+
     data: dict[str, list[float]] = {column: [] for column in feature_columns}
     for row in row_features:
         for column in feature_columns:
@@ -477,10 +671,15 @@ def _freeze_mismatch(
         return []
     keys = (
         "schema_version",
+        "provenance_schema_version",
         "source_policy_schema",
         "prospective_start_utc",
+        "freeze_materialized_at_utc",
         "certified_dev_commit",
-        "certified_post_merge_ci_run_id",
+        "certified_implementation_commit",
+        "certified_ci_run_id",
+        "certified_ci_completed_at_utc",
+        "freeze_provenance_complete",
         "additional_execution_stress_bps",
         "target",
         "eligibility_policy",
@@ -500,6 +699,7 @@ def _freeze_mismatch(
 def _common_report(
     *,
     boundary: datetime,
+    provenance: Mapping[str, Any],
     stress_bps: float,
     outcome_source: Path,
     market_source: Path,
@@ -512,10 +712,17 @@ def _common_report(
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
+        "provenance_schema_version": PROVENANCE_SCHEMA_VERSION,
         "source_policy_schema": POLICY_VERSION,
         "prospective_start_utc": boundary.isoformat(),
+        "freeze_materialized_at_utc": _time_iso(provenance["freeze_materialized_at_utc"]),
         "certified_dev_commit": CERTIFIED_DEV_COMMIT,
-        "certified_post_merge_ci_run_id": CERTIFIED_POST_MERGE_CI_RUN_ID,
+        "certified_implementation_commit": provenance["certified_implementation_commit"],
+        "certified_ci_run_id": provenance["certified_ci_run_id"],
+        "certified_ci_completed_at_utc": _time_iso(
+            provenance["certified_ci_completed_at_utc"]
+        ),
+        "freeze_provenance_complete": bool(provenance["freeze_provenance_complete"]),
         "additional_execution_stress_bps": stress_bps,
         "outcome_source_path": str(outcome_source),
         "market_features_source_path": str(market_source),
@@ -538,6 +745,7 @@ def _common_report(
 def _blocked_report(
     *,
     boundary: datetime,
+    provenance: Mapping[str, Any],
     stress_bps: float,
     outcome_source: Path,
     market_source: Path,
@@ -549,10 +757,17 @@ def _blocked_report(
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
+        "provenance_schema_version": PROVENANCE_SCHEMA_VERSION,
         "source_policy_schema": POLICY_VERSION,
         "prospective_start_utc": boundary.isoformat(),
+        "freeze_materialized_at_utc": _time_iso(provenance["freeze_materialized_at_utc"]),
         "certified_dev_commit": CERTIFIED_DEV_COMMIT,
-        "certified_post_merge_ci_run_id": CERTIFIED_POST_MERGE_CI_RUN_ID,
+        "certified_implementation_commit": provenance["certified_implementation_commit"],
+        "certified_ci_run_id": provenance["certified_ci_run_id"],
+        "certified_ci_completed_at_utc": _time_iso(
+            provenance["certified_ci_completed_at_utc"]
+        ),
+        "freeze_provenance_complete": bool(provenance["freeze_provenance_complete"]),
         "additional_execution_stress_bps": stress_bps,
         "outcome_source_path": str(outcome_source),
         "market_features_source_path": str(market_source),
@@ -565,6 +780,41 @@ def _blocked_report(
         "prospective_observations": [],
         "economic_evidence": None,
         "diagnostics": dict(diagnostics),
+        "prospective_profit_certified": False,
+        **SAFETY_FLAGS,
+        "write_performed": False,
+        "blockers": blockers,
+    }
+
+
+def _blocked_without_boundary_report(
+    *,
+    stress_bps: float,
+    outcome_source: Path,
+    market_source: Path,
+    reason: str,
+    blockers: list[str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "provenance_schema_version": PROVENANCE_SCHEMA_VERSION,
+        "source_policy_schema": POLICY_VERSION,
+        "prospective_start_utc": None,
+        "freeze_materialized_at_utc": None,
+        "certified_dev_commit": CERTIFIED_DEV_COMMIT,
+        "certified_implementation_commit": None,
+        "certified_ci_run_id": None,
+        "certified_ci_completed_at_utc": None,
+        "freeze_provenance_complete": False,
+        "additional_execution_stress_bps": stress_bps,
+        "outcome_source_path": str(outcome_source),
+        "market_features_source_path": str(market_source),
+        "status": "blocked",
+        "reason": reason,
+        "decision": "MANTER_EM_RESEARCH",
+        "freeze_spec": None,
+        "prospective_observations": [],
+        "economic_evidence": None,
         "prospective_profit_certified": False,
         **SAFETY_FLAGS,
         "write_performed": False,
@@ -598,6 +848,21 @@ def _parse_boundary(value: str | datetime) -> datetime:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         raise ValueError("prospective_start_utc_must_be_timezone_aware")
+    return parsed.astimezone(UTC)
+
+
+def _parse_optional_time(value: Any) -> datetime | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        return None
     return parsed.astimezone(UTC)
 
 

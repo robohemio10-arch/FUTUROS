@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "327d4c1db6e8e22e8790021183b9584a694fb26beb030f7ff6286af1dd6c38b3",
+  "aggregate_sha256": "a15c604db8e2a509c85bcfa1f81c28152e24fae73ff71f030e06562c84e5c0ee",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3746,10 +3746,10 @@
       "sha256": "8ba0eb2b6345815a9cec7848b3f1bad251cd8782c220f6f4ae9f13ccd65e7884"
     },
     {
-      "bytes": 5552,
+      "bytes": 10949,
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_v2_prospective_paper_confirmation_v1.py",
-      "sha256": "21bd6c528d40e35bb00788ea37a389d91b2e410743851ad3951c3843e54aa84a"
+      "sha256": "77bfeaf5b8f00e2373ceaa36c0d980f6f18628fd7fbd5fa356e2e1cda32ed87b"
     },
     {
       "bytes": 2949,
@@ -6620,10 +6620,10 @@
       "sha256": "1ddadb11c7602356b5ecb71a17b50e36f669bba5affecc5be726dd233704ebe3"
     },
     {
-      "bytes": 23847,
+      "bytes": 34599,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_paper_confirmation.py",
-      "sha256": "c0871acff02974c8fa333f32eadc2878d4cb233838033e06d7a7b0342827abb6"
+      "sha256": "c276eac218dbbb99fd5f476bb4a27f4fa0ac1b72f11b79f2e56e779de7b4ca89"
     },
     {
       "bytes": 12369,
@@ -11720,10 +11720,10 @@
       "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
     },
     {
-      "bytes": 7727,
+      "bytes": 10107,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v2_prospective_paper_confirmation_v1.py",
-      "sha256": "29dbf442555cf5ab8d0f99811def6ebea9e119372d49b8f68d1a26885ac2ce22"
+      "sha256": "530f9671fa29e3410ddd75fff085ebb5808a2703f71ea67d64d77c622ab5faff"
     },
     {
       "bytes": 8175,
