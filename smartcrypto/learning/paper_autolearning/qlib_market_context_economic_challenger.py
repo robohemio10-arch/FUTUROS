@@ -14,6 +14,7 @@ changed.
 
 from __future__ import annotations
 
+import gc
 import importlib
 import math
 import os
@@ -726,128 +727,197 @@ def _select_calibration_threshold(
 
 @contextmanager
 def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, Any]]]:
+    """Provide a native Qlib/LightGBM predictor on isolated ephemeral storage.
+
+    MLflow 3.x no longer accepts the legacy filesystem tracking backend by default.
+    This research-only context therefore provisions a temporary SQLite tracking
+    backend and a temporary local artifact store. Windows may keep transient SQLite
+    handles alive after Qlib/MLflow finishes; temporary-directory cleanup errors are
+    explicitly non-fatal, while every model, scoring, calibration, and setup error
+    still propagates to the caller and remains fail-closed.
+    """
+
     qlib = importlib.import_module("qlib")
     gbdt_module = importlib.import_module("qlib.contrib.model.gbdt")
     workflow_module = importlib.import_module("qlib.workflow")
+    mlflow_tracking_module = importlib.import_module("mlflow.tracking")
+
     lgb_model_class = getattr(gbdt_module, "LGBModel", None)
     recorder = getattr(workflow_module, "R", None)
+    mlflow_client_class = getattr(mlflow_tracking_module, "MlflowClient", None)
+
     if lgb_model_class is None:
         raise RuntimeError("qlib_contrib_lgbmodel_missing")
     if recorder is None:
         raise RuntimeError("qlib_workflow_recorder_missing")
+    if mlflow_client_class is None:
+        raise RuntimeError("mlflow_client_missing")
     if not str(getattr(lgb_model_class, "__module__", "")).startswith("qlib.contrib."):
         raise RuntimeError("model_not_from_qlib_contrib")
 
     lightgbm = importlib.import_module("lightgbm")
+
     previous_pickle = os.environ.get("MLFLOW_ALLOW_PICKLE_DESERIALIZATION")
     previous_tracking = os.environ.get("MLFLOW_TRACKING_URI")
+    previous_file_store = os.environ.get("MLFLOW_ALLOW_FILE_STORE")
+
     os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = "false"
+    os.environ.pop("MLFLOW_ALLOW_FILE_STORE", None)
 
-    with tempfile.TemporaryDirectory(prefix="futuros-qlib-market-context-") as temp_dir:
-        temp_root = Path(temp_dir)
-        provider_dir = temp_root / "provider"
-        provider_dir.mkdir(parents=True, exist_ok=True)
-        mlflow_dir = temp_root / "mlruns"
-        mlflow_dir.mkdir(parents=True, exist_ok=True)
-        mlflow_uri = mlflow_dir.as_uri()
-        os.environ["MLFLOW_TRACKING_URI"] = mlflow_uri
-        qlib.init(provider_uri=str(provider_dir), region="us", clear_mem_cache=True)
+    experiment_name = "futuros_market_context_economic_research"
 
-        def predict(
-            train_x: pd.DataFrame,
-            train_y: pd.Series,
-            calibration_x: pd.DataFrame,
-            test_x: pd.DataFrame,
-            *,
-            fold_id: str,
-        ) -> tuple[np.ndarray, np.ndarray]:
-            validation_count = max(
-                MIN_MODEL_VALIDATION_TRADES,
-                math.floor(len(train_x) * MODEL_VALIDATION_FRACTION),
-            )
-            model_train_count = len(train_x) - validation_count
-            if model_train_count < MIN_MODEL_TRAIN_TRADES:
-                raise RuntimeError(
-                    "native_lgb_internal_train_partition_not_met:"
-                    f"{model_train_count}:{validation_count}"
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="futuros-qlib-market-context-",
+            ignore_cleanup_errors=True,
+        ) as temp_dir:
+            temp_root = Path(temp_dir).resolve()
+            provider_dir = temp_root / "provider"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+
+            artifact_dir = temp_root / "artifacts"
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+
+            tracking_db = temp_root / "mlflow.db"
+            tracking_uri = f"sqlite:///{tracking_db.as_posix()}"
+            artifact_uri = artifact_dir.as_uri()
+            os.environ["MLFLOW_TRACKING_URI"] = tracking_uri
+
+            client = mlflow_client_class(tracking_uri=tracking_uri)
+            experiment = client.get_experiment_by_name(experiment_name)
+            if experiment is None:
+                client.create_experiment(
+                    experiment_name,
+                    artifact_location=artifact_uri,
                 )
 
-            dataset = _InMemoryQlibDataset(
-                train_x=train_x.iloc[:model_train_count].reset_index(drop=True),
-                train_y=train_y.iloc[:model_train_count].reset_index(drop=True),
-                model_valid_x=train_x.iloc[model_train_count:].reset_index(drop=True),
-                model_valid_y=train_y.iloc[model_train_count:].reset_index(drop=True),
-                calibration_x=calibration_x,
-                test_x=test_x,
-                fold_id=fold_id,
-            )
-            model = lgb_model_class(
-                loss="mse",
-                early_stopping_rounds=20,
-                num_boost_round=160,
-                learning_rate=0.03,
-                max_depth=3,
-                num_leaves=15,
-                min_data_in_leaf=25,
-                feature_fraction=0.80,
-                bagging_fraction=0.85,
-                bagging_freq=1,
-                lambda_l1=0.10,
-                lambda_l2=0.50,
-                seed=RANDOM_SEED,
-                bagging_seed=RANDOM_SEED,
-                feature_fraction_seed=RANDOM_SEED,
-                data_random_seed=RANDOM_SEED,
-                deterministic=True,
-                force_col_wise=True,
-                num_threads=1,
-            )
-            with recorder.start(
-                experiment_name="futuros_market_context_economic_research",
-                recorder_name=f"{fold_id}_lgb",
-                uri=mlflow_uri,
-            ):
-                model.fit(dataset, verbose_eval=0)
-            calibration_prediction = model.predict(dataset, segment="calibration")
-            test_prediction = model.predict(dataset, segment="test")
-            return (
-                np.asarray(calibration_prediction.to_numpy(), dtype=float).reshape(-1),
-                np.asarray(test_prediction.to_numpy(), dtype=float).reshape(-1),
+            qlib.init(
+                provider_uri=str(provider_dir),
+                region="us",
+                clear_mem_cache=True,
             )
 
-        metadata = {
-            "framework": "Microsoft Qlib",
-            "qlib_version": str(getattr(qlib, "__version__", "unknown")),
-            "lightgbm_version": str(getattr(lightgbm, "__version__", "unknown")),
-            "module": str(getattr(lgb_model_class, "__module__", "")),
-            "class": str(getattr(lgb_model_class, "__name__", "")),
-            "loss": "mse",
-            "target": "stressed_net_pnl_per_notional_bps",
-            "num_boost_round": 160,
-            "max_depth": 3,
-            "num_leaves": 15,
-            "min_data_in_leaf": 25,
-            "model_validation_fraction": MODEL_VALIDATION_FRACTION,
-            "min_model_validation_trades": MIN_MODEL_VALIDATION_TRADES,
-            "min_model_train_trades": MIN_MODEL_TRAIN_TRADES,
-            "calibration_labels_used_for_model_fit_or_early_stopping": False,
-            "fallback_used": False,
-            "provider_mode": "local_temporary_offline",
-            "network_required": False,
-            "mlflow_mode": "temporary_local_research_only",
-            "mlflow_pickle_deserialization": False,
-        }
-        try:
+            def predict(
+                train_x: pd.DataFrame,
+                train_y: pd.Series,
+                calibration_x: pd.DataFrame,
+                test_x: pd.DataFrame,
+                *,
+                fold_id: str,
+            ) -> tuple[np.ndarray, np.ndarray]:
+                validation_count = max(
+                    MIN_MODEL_VALIDATION_TRADES,
+                    math.floor(len(train_x) * MODEL_VALIDATION_FRACTION),
+                )
+                model_train_count = len(train_x) - validation_count
+                if model_train_count < MIN_MODEL_TRAIN_TRADES:
+                    raise RuntimeError(
+                        "native_lgb_internal_train_partition_not_met:"
+                        f"{model_train_count}:{validation_count}"
+                    )
+
+                dataset = _InMemoryQlibDataset(
+                    train_x=train_x.iloc[:model_train_count].reset_index(drop=True),
+                    train_y=train_y.iloc[:model_train_count].reset_index(drop=True),
+                    model_valid_x=train_x.iloc[model_train_count:].reset_index(drop=True),
+                    model_valid_y=train_y.iloc[model_train_count:].reset_index(drop=True),
+                    calibration_x=calibration_x,
+                    test_x=test_x,
+                    fold_id=fold_id,
+                )
+
+                model = lgb_model_class(
+                    loss="mse",
+                    early_stopping_rounds=20,
+                    num_boost_round=160,
+                    learning_rate=0.03,
+                    max_depth=3,
+                    num_leaves=15,
+                    min_data_in_leaf=25,
+                    feature_fraction=0.80,
+                    bagging_fraction=0.85,
+                    bagging_freq=1,
+                    lambda_l1=0.10,
+                    lambda_l2=0.50,
+                    seed=RANDOM_SEED,
+                    bagging_seed=RANDOM_SEED,
+                    feature_fraction_seed=RANDOM_SEED,
+                    data_random_seed=RANDOM_SEED,
+                    deterministic=True,
+                    force_col_wise=True,
+                    num_threads=1,
+                )
+
+                with recorder.start(
+                    experiment_name=experiment_name,
+                    recorder_name=f"{fold_id}_lgb",
+                    uri=tracking_uri,
+                ):
+                    model.fit(dataset, verbose_eval=0)
+
+                calibration_prediction = model.predict(dataset, segment="calibration")
+                test_prediction = model.predict(dataset, segment="test")
+                return (
+                    np.asarray(calibration_prediction.to_numpy(), dtype=float).reshape(-1),
+                    np.asarray(test_prediction.to_numpy(), dtype=float).reshape(-1),
+                )
+
+            metadata = {
+                "framework": "Microsoft Qlib",
+                "qlib_version": str(getattr(qlib, "__version__", "unknown")),
+                "lightgbm_version": str(getattr(lightgbm, "__version__", "unknown")),
+                "module": str(getattr(lgb_model_class, "__module__", "")),
+                "class": str(getattr(lgb_model_class, "__name__", "")),
+                "loss": "mse",
+                "target": "stressed_net_pnl_per_notional_bps",
+                "num_boost_round": 160,
+                "max_depth": 3,
+                "num_leaves": 15,
+                "min_data_in_leaf": 25,
+                "model_validation_fraction": MODEL_VALIDATION_FRACTION,
+                "min_model_validation_trades": MIN_MODEL_VALIDATION_TRADES,
+                "min_model_train_trades": MIN_MODEL_TRAIN_TRADES,
+                "calibration_labels_used_for_model_fit_or_early_stopping": False,
+                "fallback_used": False,
+                "provider_mode": "local_temporary_offline",
+                "network_required": False,
+                "mlflow_mode": "temporary_sqlite_research_only",
+                "mlflow_tracking_backend": "sqlite",
+                "mlflow_artifact_store": "temporary_local_file",
+                "mlflow_file_store_bypass": False,
+                "mlflow_pickle_deserialization": False,
+                "mlflow_sqlite_cleanup_mode": (
+                    "temporary_directory_ignore_cleanup_errors_windows_safe"
+                ),
+                "temporary_cleanup_errors_are_non_fatal": True,
+            }
+
             yield predict, metadata
-        finally:
-            if previous_pickle is None:
-                os.environ.pop("MLFLOW_ALLOW_PICKLE_DESERIALIZATION", None)
-            else:
-                os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = previous_pickle
-            if previous_tracking is None:
-                os.environ.pop("MLFLOW_TRACKING_URI", None)
-            else:
-                os.environ["MLFLOW_TRACKING_URI"] = previous_tracking
+
+            # Drop the local client/experiment references before leaving the temporary
+            # directory and trigger deterministic garbage collection. Qlib/MLflow may
+            # still retain process-global handles; TemporaryDirectory is therefore
+            # configured to tolerate only filesystem cleanup errors on Windows.
+            del experiment
+            del client
+            gc.collect()
+    finally:
+        # Environment restoration is unconditional even when setup, training,
+        # prediction, calibration, or the caller body raises.
+        if previous_pickle is None:
+            os.environ.pop("MLFLOW_ALLOW_PICKLE_DESERIALIZATION", None)
+        else:
+            os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = previous_pickle
+
+        if previous_tracking is None:
+            os.environ.pop("MLFLOW_TRACKING_URI", None)
+        else:
+            os.environ["MLFLOW_TRACKING_URI"] = previous_tracking
+
+        if previous_file_store is None:
+            os.environ.pop("MLFLOW_ALLOW_FILE_STORE", None)
+        else:
+            os.environ["MLFLOW_ALLOW_FILE_STORE"] = previous_file_store
 
 
 class _InMemoryQlibDataset:

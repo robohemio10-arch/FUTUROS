@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "980df7f9a2641c3067fe360e082e23838892772afbf49a85e0cb0e1458bc0006",
+  "aggregate_sha256": "50a301fed52343be11c194d55e71d9605f01a03cce05f7a88e73d1cfedee30e3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 309,
-    "manifested_files_total": 2014,
-    "python_files": 1566,
+    "docs_files": 310,
+    "manifested_files_total": 2024,
+    "python_files": 1575,
     "runtime_excluded_files_total": 0,
-    "test_files": 422,
-    "tracked_files_total": 2015,
+    "test_files": 425,
+    "tracked_files_total": 2025,
     "workflows": 2
   },
   "deterministic": true,
@@ -2216,6 +2216,12 @@
       "sha256": "2429420cc798327fd8b506f7b8145396c0d619e6e40cc9d25534d8ee18eb8a94"
     },
     {
+      "bytes": 6522,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_V2_PROSPECTIVE_PAPER_CONFIRMATION_V1.md",
+      "sha256": "6642b418ba2f747ff3b2ecf79dea71032310c78db1387d828661970a7e023146"
+    },
+    {
       "bytes": 9451,
       "hash_mode": "text_lf",
       "path": "docs/QUALITY_GATED_V5_PROVENANCE_FRESHNESS_AND_NONREGRESSION_CONTRACT_V1.md",
@@ -3740,6 +3746,12 @@
       "sha256": "8ba0eb2b6345815a9cec7848b3f1bad251cd8782c220f6f4ae9f13ccd65e7884"
     },
     {
+      "bytes": 10949,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_v2_prospective_paper_confirmation_v1.py",
+      "sha256": "77bfeaf5b8f00e2373ceaa36c0d980f6f18628fd7fbd5fa356e2e1cda32ed87b"
+    },
+    {
       "bytes": 2949,
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_shadow_compatible_dataset_v1.py",
@@ -4304,6 +4316,12 @@
       "sha256": "028e98deba5bab5730ec07b10419fa68900f5e81423dd166fec0330fb27a71a7"
     },
     {
+      "bytes": 13015,
+      "hash_mode": "text_lf",
+      "path": "scripts/observe_qlib_v2_prospective_signals_v1.py",
+      "sha256": "9e353de5b5fb41ce2b141b97f6c602c2966ebeb6cdeafca37dfc319a16df1a21"
+    },
+    {
       "bytes": 17289,
       "hash_mode": "text_lf",
       "path": "scripts/ocr_bitradex_images_to_review.py",
@@ -4536,6 +4554,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/resolve_final_financial_quality_blocks.py",
       "sha256": "11cf60c52cfb077d3d855c3d2bea24bc750a4dd184f928e0378246afe368183a"
+    },
+    {
+      "bytes": 5161,
+      "hash_mode": "text_lf",
+      "path": "scripts/resolve_qlib_v2_prospective_outcomes_v1.py",
+      "sha256": "a609098f975b593a18e26e9b20a0d1879a38ca5ac21efe06de58721fdadd864a"
     },
     {
       "bytes": 2140,
@@ -6596,16 +6620,34 @@
       "sha256": "8c1c1154072ac42eabee0fd2920c4477f26808cec84e000670ff9131dfb0c210"
     },
     {
-      "bytes": 53886,
+      "bytes": 56904,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_market_context_economic_challenger.py",
-      "sha256": "76b5e5c1274244e69bbaf6fc0374d2ce892a29b4de037afd75a18fb4202a64eb"
+      "sha256": "2bc7d79bcc9babfc779b8c5f9f2f6a321f74add59fb62bd593df6e31500b78e1"
     },
     {
       "bytes": 33772,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_native_economic_challenger.py",
       "sha256": "1ddadb11c7602356b5ecb71a17b50e36f669bba5affecc5be726dd233704ebe3"
+    },
+    {
+      "bytes": 42020,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_outcome_resolver.py",
+      "sha256": "cf96a8dd52cc19c92c50da4ba0fb0a0a59c77eb3662f5c5a4ed8e4641a3dcdfa"
+    },
+    {
+      "bytes": 36247,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_paper_confirmation.py",
+      "sha256": "9a6445bb89689d7cf5916daed24a067fb5041d9fbd788416435a16f02c737f2f"
+    },
+    {
+      "bytes": 49447,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_signal_observer.py",
+      "sha256": "b0888b48a62e4c1b356316362ad6408af51646f5caef1586124934aef7550924"
     },
     {
       "bytes": 12369,
@@ -11700,6 +11742,24 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_shadow_ensemble_threshold_calibration_v1.py",
       "sha256": "1e3c32b8d98c868ecf6b45931ba6d952ff4675f46cf3944faabe30babd1f1818"
+    },
+    {
+      "bytes": 20484,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_outcome_resolver_v1.py",
+      "sha256": "0c10f85c823c2ac00a7bf5eb005feb8ef90c8ab42942ab1a59954e6e6d6831b5"
+    },
+    {
+      "bytes": 10371,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_paper_confirmation_v1.py",
+      "sha256": "60782410427c104130053eae880fe036ed73c14a6cdaba98d9708cd07f6a14f7"
+    },
+    {
+      "bytes": 26421,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v2_prospective_signal_observer_v1.py",
+      "sha256": "7407635f0efb78aa6e329b1e1298bf6c59d763125dc0b1bec159b91f389238ee"
     },
     {
       "bytes": 8175,
