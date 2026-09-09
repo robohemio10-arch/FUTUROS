@@ -12,9 +12,8 @@ import pytest
 
 from scripts.observe_qlib_v2_prospective_signals_v1 import _merge_ledger
 from scripts.resolve_qlib_v2_prospective_outcomes_v1 import _validate_report_path
+from smartcrypto.execution.decision_ledger_v4_2 import seal_decision_record
 from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1.publication import (
-    ATTESTATION_KEY,
-    ATTESTATION_SCHEMA,
     DECISION_LEDGER_KEY,
 )
 from smartcrypto.learning.paper_autolearning.qlib_v2_prospective_outcome_resolver import (
@@ -137,13 +136,57 @@ def _freeze(
     return freeze
 
 
-def _authoritative_signal(boundary: datetime) -> tuple[dict[str, Any], datetime]:
+def _authoritative_signal(
+    boundary: datetime,
+) -> tuple[dict[str, Any], dict[str, Any], datetime]:
     decision_time = boundary + timedelta(minutes=10)
     observed_at = decision_time + timedelta(seconds=1)
-    candidate_id = "candidate-resolver-1"
+    generated_at = decision_time - timedelta(seconds=2)
+    candidate_id = "candidate:phase13-signal-producer:resolver001"
     signal_id = "signal:phase13-signal-producer:resolver001"
     correlation_id = "correlation:resolver001"
     decision_event_id = "decision-event:resolver001"
+    score = 0.42
+
+    record = seal_decision_record(
+        {
+            "event_id": decision_event_id,
+            "signal_id": signal_id,
+            "candidate_id": candidate_id,
+            "correlation_id": correlation_id,
+            "idempotency_key": "idempotency:resolver001",
+            "runtime_mode": "paper",
+            "pair": "BTC/USDT:USDT",
+            "symbol": "BTCUSDT",
+            "side": "long",
+            "feature_timestamp": generated_at,
+            "decision_timestamp": decision_time,
+            "feature_contract_version": "paper-signal-observation-lineage-v1",
+            "feature_hash": "1" * 64,
+            "model_id": "qlib_lgbm_v1",
+            "model_version": "qlib_lgbm_v1",
+            "model_hash": "2" * 64,
+            "qlib_score": score,
+            "calibrated_probability": 0.71,
+            "expected_net_pnl": None,
+            "fast_stop_probability": None,
+            "regime": "unknown",
+            "alignment": "unknown",
+            "ai_shadow_decision": "NOT_EVALUATED",
+            "ai_shadow_reasons": (),
+            "risk_decision": "APPROVED",
+            "risk_reasons": (),
+            "approved_stake_usdt": 50.0,
+            "approved_leverage": 2.0,
+            "final_decision": "ALLOW",
+            "final_reasons": ("risk_manager_approved",),
+            "operational_authority": False,
+            "runtime_integration": False,
+            "sends_orders": False,
+            "exchange_private_access": False,
+        }
+    ).model_dump(mode="json")
+
     signal = {
         "candidate_id": candidate_id,
         "signal_id": signal_id,
@@ -151,42 +194,22 @@ def _authoritative_signal(boundary: datetime) -> tuple[dict[str, Any], datetime]
         "pair": "BTC/USDT:USDT",
         "symbol": "BTCUSDT",
         "side": "long",
+        "score": score,
+        "model_version": "qlib_lgbm_v1",
         "risk_approved": True,
-        "generated_at": (decision_time - timedelta(seconds=2)).isoformat(),
+        "generated_at": generated_at.isoformat(),
         "valid_until": (decision_time + timedelta(minutes=30)).isoformat(),
-        ATTESTATION_KEY: {
-            "schema_version": ATTESTATION_SCHEMA,
-            "materialization_sha256": "1" * 64,
-            "source_signal_sha256": "2" * 64,
-            "research_candidate_sha256": "3" * 64,
-            "registry_candidate_sha256": "4" * 64,
-            "candidate_id": candidate_id,
-            "signal_id": signal_id,
-            "correlation_id": correlation_id,
-            "research_signal_candidate_id": "signal_candidate_resolver001",
-            "signal_instance_id": "signal-instance:resolver001",
-            "producer_id": "phase13-signal-producer",
-            "prospective_only": True,
-            "authoritative_identity": True,
-            "synthetic_identity": False,
-            "trade_id_used_as_candidate_id": False,
-        },
         DECISION_LEDGER_KEY: {
-            "schema_version": "paper_candidate_trade_lineage_strict_decision_in_memory_v1",
+            "schema_version": "decision_ledger_active_signal_envelope_v1",
             "decision_event_id": decision_event_id,
-            "decision_payload_sha256": "5" * 64,
+            "decision_payload_sha256": record["payload_sha256"],
             "candidate_id": candidate_id,
             "signal_id": signal_id,
             "correlation_id": correlation_id,
             "decision_timestamp": decision_time.isoformat(),
-            "projection_type": "strict_in_memory",
-            "writer_invoked": False,
-            "writes_runtime": False,
-            "operational_authority": False,
         },
     }
-    return signal, observed_at
-
+    return signal, record, observed_at
 
 def _ledger_fixture() -> tuple[
     dict[str, Any],
@@ -197,19 +220,25 @@ def _ledger_fixture() -> tuple[
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary)
     observer_report = build_qlib_v2_prospective_signal_observer_v1(
         project_root=Path("."),
         freeze_spec=freeze,
         signal_payload={"signals": [signal]},
+        decision_ledger_records=[decision_record],
         rows=rows,
         market_rows=market,
         predictor=_predictor,
         observed_at_utc=observed_at,
+        score_completed_at_utc=observed_at + timedelta(milliseconds=100),
     )
     assert observer_report["status"] == "observing"
-    ledger = _merge_ledger(existing=None, report=observer_report)
-    return freeze, ledger, observer_report["observations"][0], boundary
+    ledger = _merge_ledger(
+        existing=None,
+        report=observer_report,
+        recorded_at_utc=observed_at + timedelta(milliseconds=200),
+    )
+    return freeze, ledger, ledger["observations"][0], boundary
 
 
 def _trade_and_outcome(
@@ -218,8 +247,8 @@ def _trade_and_outcome(
     trade_id: int = 123,
     net_pnl: float = 2.0,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    observed_at = datetime.fromisoformat(observation["observed_at_utc"])
-    open_time = observed_at + timedelta(seconds=1)
+    recorded_at = datetime.fromisoformat(observation["ledger_recorded_at_utc"])
+    open_time = recorded_at + timedelta(seconds=1)
     close_time = open_time + timedelta(minutes=20)
     trade = {
         "id": trade_id,
@@ -276,6 +305,8 @@ def test_exact_identity_chain_resolves_one_paper_outcome() -> None:
     assert resolved["decision_event_id"] == observation["decision_event_id"]
     assert resolved["paper_trade_id"] == 123
     assert resolved["observation_precedes_trade_open"] is True
+    assert resolved["score_completion_precedes_trade_open"] is True
+    assert resolved["ledger_recording_precedes_trade_open"] is True
     assert report["promotion_allowed"] is False
     assert report["prospective_profit_certified"] is False
     assert report["writes_runtime"] is False
@@ -379,6 +410,62 @@ def test_observation_after_trade_open_is_excluded_from_prospective_evidence() ->
     assert report["resolved_decision_count"] == 0
     assert report["late_observation_count"] == 1
     assert report["unresolved_observations"][0]["reason"] == "observation_after_trade_open"
+
+
+def test_score_completion_after_trade_open_is_excluded_from_prospective_evidence() -> None:
+    freeze, ledger, observation, _ = _ledger_fixture()
+    trade, outcome = _trade_and_outcome(observation)
+    observed_at = datetime.fromisoformat(observation["observed_at_utc"])
+    trade_open = observed_at + timedelta(milliseconds=50)
+    trade_close = trade_open + timedelta(minutes=20)
+    trade["open_date"] = trade_open.isoformat()
+    trade["close_date"] = trade_close.isoformat()
+    outcome["open_time_utc"] = trade_open.isoformat()
+    outcome["close_time_utc"] = trade_close.isoformat()
+
+    report = build_qlib_v2_prospective_outcome_resolution_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        observer_ledger=ledger,
+        paper_trade_rows=[trade],
+        outcome_rows=[outcome],
+    )
+
+    assert report["status"] == "collecting"
+    assert report["resolved_decision_count"] == 0
+    assert report["late_score_completion_count"] == 1
+    assert report["late_ledger_recording_count"] == 0
+    assert report["unresolved_observations"][0]["reason"] == (
+        "score_completed_after_trade_open"
+    )
+
+
+def test_ledger_recording_after_trade_open_is_excluded_from_prospective_evidence() -> None:
+    freeze, ledger, observation, _ = _ledger_fixture()
+    trade, outcome = _trade_and_outcome(observation)
+    score_completed = datetime.fromisoformat(observation["score_completed_at_utc"])
+    trade_open = score_completed + timedelta(milliseconds=50)
+    trade_close = trade_open + timedelta(minutes=20)
+    trade["open_date"] = trade_open.isoformat()
+    trade["close_date"] = trade_close.isoformat()
+    outcome["open_time_utc"] = trade_open.isoformat()
+    outcome["close_time_utc"] = trade_close.isoformat()
+
+    report = build_qlib_v2_prospective_outcome_resolution_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        observer_ledger=ledger,
+        paper_trade_rows=[trade],
+        outcome_rows=[outcome],
+    )
+
+    assert report["status"] == "collecting"
+    assert report["resolved_decision_count"] == 0
+    assert report["late_score_completion_count"] == 0
+    assert report["late_ledger_recording_count"] == 1
+    assert report["unresolved_observations"][0]["reason"] == (
+        "ledger_recorded_after_trade_open"
+    )
 
 
 def test_observer_ledger_hash_mutation_blocks_resolution() -> None:

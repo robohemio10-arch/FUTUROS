@@ -44,15 +44,15 @@ from smartcrypto.learning.paper_autolearning import (
     qlib_v2_prospective_signal_observer as observer,
 )
 
-SCHEMA_VERSION = "paper_autolearning_qlib_v2_prospective_outcome_resolver_v1"
-DEFAULT_FREEZE_SPEC_PATH = prospective.DEFAULT_FREEZE_SPEC_PATH
+SCHEMA_VERSION = "paper_autolearning_qlib_v2_prospective_outcome_resolver_v2"
+DEFAULT_FREEZE_SPEC_PATH = observer.DEFAULT_FREEZE_SPEC_PATH
 DEFAULT_OBSERVER_LEDGER_PATH = observer.DEFAULT_LEDGER_PATH
 DEFAULT_PAPER_SNAPSHOT_DB_PATH = Path(
     "data/snapshots/freqtrade-paper/tradesv3.paper.snapshot.sqlite"
 )
 DEFAULT_OUTCOME_PATH = base.DEFAULT_OUTCOME_PATH
 DEFAULT_REPORT_PATH = Path(
-    "data/research/qlib_v2/qlib_v2_prospective_outcome_resolution_v1.json"
+    "data/research/qlib_v2/qlib_v2_prospective_outcome_resolution_v2.json"
 )
 
 MIN_RESOLVED_DECISIONS = 200
@@ -247,6 +247,8 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
     integrity_blockers: list[str] = []
     linked_trade_count = 0
     late_observation_count = 0
+    late_score_completion_count = 0
+    late_ledger_recording_count = 0
 
     for item in observations:
         decision_event_id = str(item["decision_event_id"])
@@ -262,6 +264,14 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
             continue
 
         observed_at = _parse_utc(item["observed_at_utc"], "observed_at_utc")
+        score_completed_at = _parse_utc(
+            item["score_completed_at_utc"],
+            "score_completed_at_utc",
+        )
+        ledger_recorded_at = _parse_utc(
+            item["ledger_recorded_at_utc"],
+            "ledger_recorded_at_utc",
+        )
         trade_open = trade["open_date"]
         trade_close = trade["close_date"]
         assert isinstance(trade_open, datetime)
@@ -274,6 +284,18 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
         if observed_at > trade_open:
             late_observation_count += 1
             unresolved.append(_unresolved(item, "observation_after_trade_open", trade=trade))
+            continue
+        if score_completed_at > trade_open:
+            late_score_completion_count += 1
+            unresolved.append(
+                _unresolved(item, "score_completed_after_trade_open", trade=trade)
+            )
+            continue
+        if ledger_recorded_at > trade_open:
+            late_ledger_recording_count += 1
+            unresolved.append(
+                _unresolved(item, "ledger_recorded_after_trade_open", trade=trade)
+            )
             continue
 
         paper_trade_id = int(trade["id"])
@@ -320,6 +342,8 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
                 "side": trade["side"],
                 "decision_timestamp_utc": item["decision_timestamp_utc"],
                 "observed_at_utc": item["observed_at_utc"],
+                "score_completed_at_utc": item["score_completed_at_utc"],
+                "ledger_recorded_at_utc": item["ledger_recorded_at_utc"],
                 "trade_open_time_utc": _time_iso(trade_open),
                 "trade_close_time_utc": _time_iso(trade_close),
                 "selected": selected,
@@ -329,6 +353,8 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
                 "stressed_net_pnl": round(float(stressed_pnl), 10),
                 "notional": round(float(notional), 10),
                 "observation_precedes_trade_open": True,
+                "score_completion_precedes_trade_open": True,
+                "ledger_recording_precedes_trade_open": True,
                 "identity_resolution": (
                     "signal_id->decision_event_id->enter_tag->paper_trade_id->outcome_trade_id"
                 ),
@@ -361,13 +387,16 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
         seed=BOOTSTRAP_SEED,
     )
 
-    latest_observed_at = max(
-        (_parse_utc(item["observed_at_utc"], "observed_at_utc") for item in observations),
+    latest_recorded_at = max(
+        (
+            _parse_utc(item["ledger_recorded_at_utc"], "ledger_recorded_at_utc")
+            for item in observations
+        ),
         default=boundary,
     )
     observation_days = max(
         0.0,
-        (latest_observed_at - boundary).total_seconds() / 86400.0,
+        (latest_recorded_at - boundary).total_seconds() / 86400.0,
     )
     scorer_coverage = (
         len(resolved) / linked_trade_count if linked_trade_count else 0.0
@@ -414,6 +443,8 @@ def build_qlib_v2_prospective_outcome_resolution_v1(
         "resolved_decision_count": len(resolved),
         "selected_resolved_trade_count": len(selected_outcome_rows),
         "late_observation_count": late_observation_count,
+        "late_score_completion_count": late_score_completion_count,
+        "late_ledger_recording_count": late_ledger_recording_count,
         "unresolved_observation_count": len(unresolved),
         "observation_days": round(observation_days, 10),
         "execution_link_rate": round(execution_link_rate, 10),
@@ -448,6 +479,8 @@ def _validate_observer_ledger(
         blockers.append("prospective_signal_ledger_schema_mismatch")
     if ledger.get("policy_sha256") != policy_sha:
         blockers.append("prospective_signal_ledger_policy_mismatch")
+    if ledger.get("identity_authority") != "sealed_decision_ledger_v4_2":
+        blockers.append("prospective_signal_ledger_identity_authority_mismatch")
     if ledger.get("prospective_start_utc") != freeze.get("prospective_start_utc"):
         blockers.append("prospective_signal_ledger_boundary_mismatch")
 
@@ -459,6 +492,7 @@ def _validate_observer_ledger(
         "schema_version": observer.LEDGER_SCHEMA_VERSION,
         "policy_sha256": policy_sha,
         "prospective_start_utc": ledger.get("prospective_start_utc"),
+        "identity_authority": "sealed_decision_ledger_v4_2",
         "observations": raw_observations,
     }
     expected_ledger_sha = prospective._sha256_json(hash_payload)
@@ -480,10 +514,21 @@ def _validate_observer_ledger(
             "signal_id",
             "correlation_id",
             "decision_event_id",
+            "decision_payload_sha256",
+            "decision_ledger_schema_version",
+            "decision_ledger_record_type",
+            "decision_ledger_runtime_mode",
+            "decision_feature_timestamp_utc",
+            "decision_feature_hash",
+            "decision_model_id",
+            "decision_model_version",
+            "decision_model_hash",
             "policy_sha256",
             "pre_boundary_dataset_sha256",
             "decision_timestamp_utc",
             "observed_at_utc",
+            "score_completed_at_utc",
+            "ledger_recorded_at_utc",
             "signal_valid_until_utc",
             "signal_snapshot_sha256",
             "feature_vector_sha256",
@@ -492,6 +537,26 @@ def _validate_observer_ledger(
         if missing:
             blockers.append(
                 f"prospective_observation_required_field_missing:{index}:{missing[0]}"
+            )
+            continue
+        if item.get("decision_ledger_identity_verified") is not True:
+            blockers.append(
+                f"prospective_observation_decision_ledger_unverified:{index}"
+            )
+            continue
+        if item.get("decision_ledger_schema_version") != "decision_ledger_payload_v4_2":
+            blockers.append(
+                f"prospective_observation_decision_ledger_schema_mismatch:{index}"
+            )
+            continue
+        if item.get("decision_ledger_record_type") != "decision":
+            blockers.append(
+                f"prospective_observation_decision_record_type_invalid:{index}"
+            )
+            continue
+        if item.get("decision_ledger_runtime_mode") != "paper":
+            blockers.append(
+                f"prospective_observation_decision_runtime_mode_invalid:{index}"
             )
             continue
         if item["policy_sha256"] != policy_sha:
@@ -517,9 +582,23 @@ def _validate_observer_ledger(
         seen_decision.add(decision_id)
 
         try:
-            decision_time = _parse_utc(item["decision_timestamp_utc"], "decision_timestamp_utc")
+            decision_time = _parse_utc(
+                item["decision_timestamp_utc"],
+                "decision_timestamp_utc",
+            )
             observed_time = _parse_utc(item["observed_at_utc"], "observed_at_utc")
-            valid_until = _parse_utc(item["signal_valid_until_utc"], "signal_valid_until_utc")
+            score_completed_time = _parse_utc(
+                item["score_completed_at_utc"],
+                "score_completed_at_utc",
+            )
+            ledger_recorded_time = _parse_utc(
+                item["ledger_recorded_at_utc"],
+                "ledger_recorded_at_utc",
+            )
+            valid_until = _parse_utc(
+                item["signal_valid_until_utc"],
+                "signal_valid_until_utc",
+            )
         except ValueError as exc:
             blockers.append(f"prospective_observation_timestamp_invalid:{index}:{exc}")
             continue
@@ -527,11 +606,22 @@ def _validate_observer_ledger(
             blockers.append(f"prospective_observation_not_post_freeze:{index}")
         if observed_time < decision_time:
             blockers.append(f"prospective_observation_before_decision:{index}")
+        if score_completed_time < observed_time:
+            blockers.append(f"prospective_score_completed_before_observation:{index}")
+        if ledger_recorded_time < score_completed_time:
+            blockers.append(f"prospective_ledger_recorded_before_score_completion:{index}")
         if observed_time > valid_until:
             blockers.append(f"prospective_observation_after_signal_expiry:{index}")
+        if score_completed_time > valid_until:
+            blockers.append(f"prospective_score_completed_after_signal_expiry:{index}")
+        if ledger_recorded_time > valid_until:
+            blockers.append(f"prospective_ledger_recorded_after_signal_expiry:{index}")
 
         for hash_field in (
             "observation_sha256",
+            "decision_payload_sha256",
+            "decision_feature_hash",
+            "decision_model_hash",
             "signal_snapshot_sha256",
             "feature_vector_sha256",
         ):
@@ -723,8 +813,20 @@ def _validate_trade_outcome_consistency(
         blockers.append(f"outcome_close_time_mismatch:{trade_id}")
 
     observed_at = _parse_utc(observation.get("observed_at_utc"), "observed_at_utc")
+    score_completed_at = _parse_utc(
+        observation.get("score_completed_at_utc"),
+        "score_completed_at_utc",
+    )
+    ledger_recorded_at = _parse_utc(
+        observation.get("ledger_recorded_at_utc"),
+        "ledger_recorded_at_utc",
+    )
     if observed_at > outcome_close:
         blockers.append(f"observation_after_outcome_close:{trade_id}")
+    if score_completed_at > outcome_close:
+        blockers.append(f"score_completed_after_outcome_close:{trade_id}")
+    if ledger_recorded_at > outcome_close:
+        blockers.append(f"ledger_recorded_after_outcome_close:{trade_id}")
     return blockers
 
 
@@ -836,11 +938,16 @@ def _unresolved(
     *,
     trade: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
+    trade_open = None if trade is None else trade.get("open_date")
     return {
         "observation_id": observation.get("observation_id"),
         "signal_id": observation.get("signal_id"),
         "decision_event_id": observation.get("decision_event_id"),
         "paper_trade_id": None if trade is None else trade.get("id"),
+        "observed_at_utc": observation.get("observed_at_utc"),
+        "score_completed_at_utc": observation.get("score_completed_at_utc"),
+        "ledger_recorded_at_utc": observation.get("ledger_recorded_at_utc"),
+        "paper_trade_open_time_utc": _time_iso(trade_open),
         "reason": reason,
     }
 

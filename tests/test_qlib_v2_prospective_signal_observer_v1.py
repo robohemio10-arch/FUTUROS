@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import json
 import math
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
@@ -15,6 +16,7 @@ from scripts.observe_qlib_v2_prospective_signals_v1 import (
     _merge_ledger,
     _validate_ledger_path,
 )
+from smartcrypto.execution.decision_ledger_v4_2 import seal_decision_record
 from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1.publication import (
     ATTESTATION_KEY,
     ATTESTATION_SCHEMA,
@@ -141,58 +143,95 @@ def _authoritative_signal(
     signal_id: str = "signal:phase13-signal-producer:observer001",
     decision_event_id: str = "decision-event:observer001",
     side: str = "long",
-) -> tuple[dict[str, Any], datetime]:
+    include_attestation: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], datetime]:
     decision_time = boundary + timedelta(minutes=10)
     generated_at = decision_time - timedelta(seconds=2)
     valid_until = decision_time + timedelta(minutes=30)
-    candidate_id = "candidate-observer-1"
+    candidate_id = "candidate:phase13-signal-producer:observer001"
     correlation_id = "correlation:observer001"
-    signal_candidate_id = "signal_candidate_observer001"
-    signal_instance_id = "signal-instance:observer001"
+    score = 0.42
 
-    signal = {
+    record = seal_decision_record(
+        {
+            "event_id": decision_event_id,
+            "signal_id": signal_id,
+            "candidate_id": candidate_id,
+            "correlation_id": correlation_id,
+            "idempotency_key": "idempotency:observer001",
+            "runtime_mode": "paper",
+            "pair": "BTC/USDT:USDT",
+            "symbol": "BTCUSDT",
+            "side": side,
+            "feature_timestamp": generated_at,
+            "decision_timestamp": decision_time,
+            "feature_contract_version": "paper-signal-observation-lineage-v1",
+            "feature_hash": "1" * 64,
+            "model_id": "qlib_lgbm_v1",
+            "model_version": "qlib_lgbm_v1",
+            "model_hash": "2" * 64,
+            "qlib_score": score,
+            "calibrated_probability": 0.71,
+            "expected_net_pnl": None,
+            "fast_stop_probability": None,
+            "regime": "unknown",
+            "alignment": "unknown",
+            "ai_shadow_decision": "NOT_EVALUATED",
+            "ai_shadow_reasons": (),
+            "risk_decision": "APPROVED",
+            "risk_reasons": (),
+            "approved_stake_usdt": 50.0,
+            "approved_leverage": 2.0,
+            "final_decision": "ALLOW",
+            "final_reasons": ("risk_manager_approved",),
+            "operational_authority": False,
+            "runtime_integration": False,
+            "sends_orders": False,
+            "exchange_private_access": False,
+        }
+    ).model_dump(mode="json")
+
+    signal: dict[str, Any] = {
         "candidate_id": candidate_id,
         "signal_id": signal_id,
         "correlation_id": correlation_id,
         "pair": "BTC/USDT:USDT",
         "symbol": "BTCUSDT",
         "side": side,
+        "score": score,
+        "model_version": "qlib_lgbm_v1",
         "risk_approved": True,
         "generated_at": generated_at.isoformat(),
         "valid_until": valid_until.isoformat(),
-        ATTESTATION_KEY: {
-            "schema_version": ATTESTATION_SCHEMA,
-            "materialization_sha256": "1" * 64,
-            "source_signal_sha256": "2" * 64,
-            "research_candidate_sha256": "3" * 64,
-            "registry_candidate_sha256": "4" * 64,
+        DECISION_LEDGER_KEY: {
+            "schema_version": "decision_ledger_active_signal_envelope_v1",
+            "decision_event_id": decision_event_id,
+            "decision_payload_sha256": record["payload_sha256"],
             "candidate_id": candidate_id,
             "signal_id": signal_id,
             "correlation_id": correlation_id,
-            "research_signal_candidate_id": signal_candidate_id,
-            "signal_instance_id": signal_instance_id,
+            "decision_timestamp": decision_time.isoformat(),
+        },
+    }
+    if include_attestation:
+        signal[ATTESTATION_KEY] = {
+            "schema_version": ATTESTATION_SCHEMA,
+            "materialization_sha256": "3" * 64,
+            "source_signal_sha256": "4" * 64,
+            "research_candidate_sha256": "5" * 64,
+            "registry_candidate_sha256": "6" * 64,
+            "candidate_id": candidate_id,
+            "signal_id": signal_id,
+            "correlation_id": correlation_id,
+            "research_signal_candidate_id": "signal_candidate_observer001",
+            "signal_instance_id": "signal-instance:observer001",
             "producer_id": "phase13-signal-producer",
             "prospective_only": True,
             "authoritative_identity": True,
             "synthetic_identity": False,
             "trade_id_used_as_candidate_id": False,
-        },
-        DECISION_LEDGER_KEY: {
-            "schema_version": "paper_candidate_trade_lineage_strict_decision_in_memory_v1",
-            "decision_event_id": decision_event_id,
-            "decision_payload_sha256": "5" * 64,
-            "candidate_id": candidate_id,
-            "signal_id": signal_id,
-            "correlation_id": correlation_id,
-            "decision_timestamp": decision_time.isoformat(),
-            "projection_type": "strict_in_memory",
-            "writer_invoked": False,
-            "writes_runtime": False,
-            "operational_authority": False,
-        },
-    }
-    return signal, decision_time + timedelta(seconds=1)
-
+        }
+    return signal, record, decision_time + timedelta(seconds=1)
 
 def _observe(
     *,
@@ -200,30 +239,33 @@ def _observe(
     rows: list[dict[str, object]],
     freeze: dict[str, Any],
     signal: dict[str, Any],
+    decision_records: list[dict[str, Any]],
     observed_at: datetime,
 ) -> dict[str, Any]:
     return build_qlib_v2_prospective_signal_observer_v1(
         project_root=Path("."),
         freeze_spec=freeze,
         signal_payload={"signals": [signal]},
+        decision_ledger_records=decision_records,
         rows=rows,
         market_rows=market,
         predictor=_predictor,
         observed_at_utc=observed_at,
+        score_completed_at_utc=observed_at + timedelta(milliseconds=100),
     )
-
 
 def test_observer_scores_authoritative_signal_with_ex_ante_identity() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
 
     report = _observe(
         market=market,
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -235,8 +277,16 @@ def test_observer_scores_authoritative_signal_with_ex_ante_identity() -> None:
     assert observation["schema_version"] == SCHEMA_VERSION
     assert observation["signal_id"] == signal["signal_id"]
     assert observation["decision_event_id"] == signal[DECISION_LEDGER_KEY]["decision_event_id"]
+    assert observation["decision_payload_sha256"] == decision_record["payload_sha256"]
+    assert observation["decision_ledger_identity_verified"] is True
+    assert observation["lineage_attestation_present"] is False
     assert observation["observed_at_utc"] == observed_at.isoformat()
+    assert observation["score_completed_at_utc"] == (
+        observed_at + timedelta(milliseconds=100)
+    ).isoformat()
+    assert observation["scoring_latency_seconds"] == 0.1
     assert observation["signal_active_at_observation"] is True
+    assert observation["signal_active_at_score_completion"] is True
     assert observation["post_outcome_fields_present"] is False
     assert len(observation["signal_snapshot_sha256"]) == 64
     assert len(observation["feature_vector_sha256"]) == 64
@@ -252,13 +302,14 @@ def test_post_boundary_outcome_mutation_cannot_change_signal_observation() -> No
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
 
     first = _observe(
         market=market,
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -271,6 +322,7 @@ def test_post_boundary_outcome_mutation_cannot_change_signal_observation() -> No
         rows=mutated,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -285,7 +337,7 @@ def test_pre_boundary_outcome_mutation_blocks_frozen_reconstruction() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
     mutated = [dict(row) for row in rows]
     mutated[100]["net_pnl"] = float(mutated[100]["net_pnl"]) + 0.5
 
@@ -294,6 +346,7 @@ def test_pre_boundary_outcome_mutation_blocks_frozen_reconstruction() -> None:
         rows=mutated,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -305,28 +358,164 @@ def test_identity_mismatch_blocks_entire_evidence_batch() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
-    signal[ATTESTATION_KEY] = dict(signal[ATTESTATION_KEY])
-    signal[ATTESTATION_KEY]["signal_id"] = "signal:other"
+    signal, _, observed_at = _authoritative_signal(boundary=boundary)
+    _, mismatched_record, _ = _authoritative_signal(
+        boundary=boundary,
+        signal_id="signal:phase13-signal-producer:other",
+    )
 
     report = _observe(
         market=market,
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[mismatched_record],
         observed_at=observed_at,
     )
 
     assert report["status"] == "blocked"
-    assert "lineage_attestation_identity_mismatch:signal_id" in report["reason"]
+    assert "sealed_decision_identity_mismatch:signal_id" in report["reason"]
     assert report["observation_count"] == 0
+
+
+def test_optional_valid_lineage_attestation_is_preserved_but_not_required() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(
+        boundary=boundary,
+        include_attestation=True,
+    )
+
+    report = _observe(
+        market=market,
+        rows=rows,
+        freeze=freeze,
+        signal=signal,
+        decision_records=[decision_record],
+        observed_at=observed_at,
+    )
+
+    assert report["status"] == "observing"
+    observation = report["observations"][0]
+    assert observation["lineage_attestation_present"] is True
+    assert len(observation["lineage_attestation_sha256"]) == 64
+
+
+def test_missing_sealed_decision_record_blocks_post_boundary_signal() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, _, observed_at = _authoritative_signal(boundary=boundary)
+
+    report = _observe(
+        market=market,
+        rows=rows,
+        freeze=freeze,
+        signal=signal,
+        decision_records=[],
+        observed_at=observed_at,
+    )
+
+    assert report["status"] == "blocked"
+    assert "decision_ledger_record_missing" in report["reason"]
+
+
+def test_tampered_sealed_decision_payload_hash_blocks() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
+    tampered = dict(decision_record)
+    tampered["payload_sha256"] = "f" * 64
+
+    report = _observe(
+        market=market,
+        rows=rows,
+        freeze=freeze,
+        signal=signal,
+        decision_records=[tampered],
+        observed_at=observed_at,
+    )
+
+    assert report["status"] == "blocked"
+    assert "decision_ledger_record_invalid" in report["reason"]
+
+
+def test_pre_boundary_signal_is_ignored_without_decision_record_lookup() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, _, _ = _authoritative_signal(boundary=boundary - timedelta(minutes=20))
+    observed_at = boundary + timedelta(seconds=1)
+
+    report = _observe(
+        market=market,
+        rows=rows,
+        freeze=freeze,
+        signal=signal,
+        decision_records=[],
+        observed_at=observed_at,
+    )
+
+    assert report["status"] == "waiting_for_signals"
+    assert report["reason"] == "no_authoritative_post_freeze_active_signals"
+    assert report["blockers"] == []
+
+
+def test_observer_reads_sealed_decision_jsonl_readonly(tmp_path: Path) -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
+    ledger_path = tmp_path / "decision_ledger_v4_2.jsonl"
+    ledger_path.write_text(json.dumps(decision_record) + "\n", encoding="utf-8")
+
+    report = build_qlib_v2_prospective_signal_observer_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        signal_payload={"signals": [signal]},
+        decision_ledger_path=ledger_path,
+        rows=rows,
+        market_rows=market,
+        predictor=_predictor,
+        observed_at_utc=observed_at,
+    )
+
+    assert report["status"] == "observing"
+    assert report["decision_ledger_identity_verified"] is True
+    assert report["decision_ledger_source_path"] == str(ledger_path.resolve())
+
+
+def test_malformed_decision_ledger_jsonl_blocks(tmp_path: Path) -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, _, observed_at = _authoritative_signal(boundary=boundary)
+    ledger_path = tmp_path / "decision_ledger_v4_2.jsonl"
+    ledger_path.write_text("{not-json\n", encoding="utf-8")
+
+    report = build_qlib_v2_prospective_signal_observer_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        signal_payload={"signals": [signal]},
+        decision_ledger_path=ledger_path,
+        rows=rows,
+        market_rows=market,
+        predictor=_predictor,
+        observed_at_utc=observed_at,
+    )
+
+    assert report["status"] == "blocked"
+    assert "decision_ledger_json_invalid:1" in report["reason"]
+    assert report["freeze_spec_verified"] is True
 
 
 def test_post_outcome_field_in_active_signal_is_rejected() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
     signal["trade_id"] = 123
 
     report = _observe(
@@ -334,6 +523,7 @@ def test_post_outcome_field_in_active_signal_is_rejected() -> None:
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -345,7 +535,7 @@ def test_observer_cannot_backdate_before_decision() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, _ = _authoritative_signal(boundary=boundary)
+    signal, decision_record, _ = _authoritative_signal(boundary=boundary)
     decision_time = datetime.fromisoformat(signal[DECISION_LEDGER_KEY]["decision_timestamp"])
 
     report = _observe(
@@ -353,6 +543,7 @@ def test_observer_cannot_backdate_before_decision() -> None:
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=decision_time - timedelta(milliseconds=1),
     )
 
@@ -364,7 +555,7 @@ def test_expired_signal_is_not_accepted_as_ex_ante_observation() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, _ = _authoritative_signal(boundary=boundary)
+    signal, decision_record, _ = _authoritative_signal(boundary=boundary)
     valid_until = datetime.fromisoformat(signal["valid_until"])
 
     report = _observe(
@@ -372,6 +563,7 @@ def test_expired_signal_is_not_accepted_as_ex_ante_observation() -> None:
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=valid_until + timedelta(microseconds=1),
     )
 
@@ -383,7 +575,7 @@ def test_non_utc_authoritative_timestamp_is_rejected() -> None:
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
     decision_time = datetime.fromisoformat(signal[DECISION_LEDGER_KEY]["decision_timestamp"])
     local_time = decision_time.astimezone(timezone(timedelta(hours=-3)))
     signal[DECISION_LEDGER_KEY] = dict(signal[DECISION_LEDGER_KEY])
@@ -394,6 +586,7 @@ def test_non_utc_authoritative_timestamp_is_rejected() -> None:
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
@@ -405,18 +598,29 @@ def test_ledger_merge_is_idempotent_and_identity_mutation_fails_closed() -> None
     market, rows = _market_and_rows()
     boundary = _boundary(rows)
     freeze = _freeze(market, rows, boundary)
-    signal, observed_at = _authoritative_signal(boundary=boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
     report = _observe(
         market=market,
         rows=rows,
         freeze=freeze,
         signal=signal,
+        decision_records=[decision_record],
         observed_at=observed_at,
     )
 
-    first = _merge_ledger(existing=None, report=report)
-    second = _merge_ledger(existing=first, report=report)
+    recorded_at = observed_at + timedelta(milliseconds=200)
+    first = _merge_ledger(
+        existing=None,
+        report=report,
+        recorded_at_utc=recorded_at,
+    )
+    second = _merge_ledger(
+        existing=first,
+        report=report,
+        recorded_at_utc=recorded_at + timedelta(milliseconds=50),
+    )
     assert first["observation_count"] == 1
+    assert first["observations"][0]["ledger_recorded_at_utc"] == recorded_at.isoformat()
     assert second["observation_count"] == 1
     assert second["new_observation_count"] == 0
     assert second["idempotent_observation_count"] == 1
@@ -427,6 +631,90 @@ def test_ledger_merge_is_idempotent_and_identity_mutation_fails_closed() -> None
     mutated_report["observations"] = [changed]
     with pytest.raises(RuntimeError, match="observer_signal_identity_mutation"):
         _merge_ledger(existing=first, report=mutated_report)
+
+
+def test_score_completion_before_observer_start_is_rejected() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
+
+    report = build_qlib_v2_prospective_signal_observer_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        signal_payload={"signals": [signal]},
+        decision_ledger_records=[decision_record],
+        rows=rows,
+        market_rows=market,
+        predictor=_predictor,
+        observed_at_utc=observed_at,
+        score_completed_at_utc=observed_at - timedelta(microseconds=1),
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "score_completed_before_observer_started"
+
+
+def test_score_completion_after_signal_expiry_is_rejected() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
+    valid_until = datetime.fromisoformat(str(signal["valid_until"]))
+
+    report = build_qlib_v2_prospective_signal_observer_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        signal_payload={"signals": [signal]},
+        decision_ledger_records=[decision_record],
+        rows=rows,
+        market_rows=market,
+        predictor=_predictor,
+        observed_at_utc=observed_at,
+        score_completed_at_utc=valid_until + timedelta(microseconds=1),
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"].startswith("signal_expired_before_score_completion:")
+
+
+def test_ledger_recording_timestamp_must_follow_score_and_precede_expiry() -> None:
+    market, rows = _market_and_rows()
+    boundary = _boundary(rows)
+    freeze = _freeze(market, rows, boundary)
+    signal, decision_record, observed_at = _authoritative_signal(boundary=boundary)
+    report = _observe(
+        market=market,
+        rows=rows,
+        freeze=freeze,
+        signal=signal,
+        decision_records=[decision_record],
+        observed_at=observed_at,
+    )
+    score_completed = datetime.fromisoformat(
+        report["observations"][0]["score_completed_at_utc"]
+    )
+    valid_until = datetime.fromisoformat(str(signal["valid_until"]))
+
+    with pytest.raises(
+        RuntimeError,
+        match="observer_ledger_recorded_before_score_completion",
+    ):
+        _merge_ledger(
+            existing=None,
+            report=report,
+            recorded_at_utc=score_completed - timedelta(microseconds=1),
+        )
+
+    with pytest.raises(
+        RuntimeError,
+        match="observer_ledger_recorded_after_signal_expiry",
+    ):
+        _merge_ledger(
+            existing=None,
+            report=report,
+            recorded_at_utc=valid_until + timedelta(microseconds=1),
+        )
 
 
 def test_ledger_write_path_is_confined_to_research_namespace(tmp_path: Path) -> None:
@@ -455,6 +743,7 @@ def test_observer_module_has_no_execution_writer_or_private_exchange_imports() -
         "smartcrypto.execution.order_manager",
         "smartcrypto.risk.risk_manager",
         "smartcrypto.execution.decision_ledger_paper_runtime_writer_v1",
+        "smartcrypto.execution.decision_ledger_v4_2.writer",
     )
     assert not any(
         any(name.startswith(prefix) for prefix in forbidden_prefixes)

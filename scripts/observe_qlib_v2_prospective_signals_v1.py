@@ -13,6 +13,7 @@ from typing import Any, Mapping
 
 from smartcrypto.learning.paper_autolearning.qlib_v2_prospective_signal_observer import (
     DEFAULT_ACTIVE_SIGNALS_PATH,
+    DEFAULT_DECISION_LEDGER_PATH,
     DEFAULT_FREEZE_SPEC_PATH,
     DEFAULT_LEDGER_PATH,
     LEDGER_SCHEMA_VERSION,
@@ -34,6 +35,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-root", default=".")
     parser.add_argument("--freeze-spec", default=str(DEFAULT_FREEZE_SPEC_PATH))
     parser.add_argument("--active-signals", default=str(DEFAULT_ACTIVE_SIGNALS_PATH))
+    parser.add_argument(
+        "--decision-ledger",
+        default=str(DEFAULT_DECISION_LEDGER_PATH),
+        help=(
+            "Read-only Decision Ledger V4.2 JSONL used as the authoritative identity "
+            "source for candidate/signal/decision correlation."
+        ),
+    )
     parser.add_argument("--outcome-path", default="data/feedback/outcome_events.parquet")
     parser.add_argument(
         "--market-features-path",
@@ -78,10 +87,15 @@ def _merge_ledger(
     *,
     existing: Mapping[str, Any] | None,
     report: Mapping[str, Any],
+    recorded_at_utc: datetime | None = None,
 ) -> dict[str, Any]:
     policy_sha = str(report.get("policy_sha256") or "").strip()
     if not policy_sha:
         raise RuntimeError("observer_policy_sha256_missing")
+    recorded_at = _require_utc_datetime(
+        recorded_at_utc if recorded_at_utc is not None else datetime.now(UTC),
+        "ledger_recorded_at_utc",
+    )
 
     current: list[dict[str, Any]] = []
     if existing is not None:
@@ -104,6 +118,10 @@ def _merge_ledger(
         observation_sha = str(item.get("observation_sha256") or "").strip()
         if not signal_id or not decision_event_id or not observation_sha:
             raise RuntimeError("existing_observer_ledger_identity_incomplete")
+        _require_utc_datetime(
+            item.get("ledger_recorded_at_utc"),
+            "existing_ledger_recorded_at_utc",
+        )
         if signal_id in by_signal:
             raise RuntimeError(f"existing_observer_ledger_duplicate_signal_id:{signal_id}")
         if decision_event_id in by_decision:
@@ -128,6 +146,8 @@ def _merge_ledger(
         observation_sha = str(item.get("observation_sha256") or "").strip()
         if not signal_id or not decision_event_id or not observation_sha:
             raise RuntimeError("observer_report_observation_identity_incomplete")
+        if item.get("ledger_recorded_at_utc") is not None:
+            raise RuntimeError("observer_report_must_not_prepopulate_ledger_recorded_at")
 
         existing_signal = by_signal.get(signal_id)
         if existing_signal is not None:
@@ -142,6 +162,24 @@ def _merge_ledger(
                 "observer_decision_event_identity_collision:"
                 f"{decision_event_id}:{prior_signal}:{signal_id}"
             )
+
+        score_completed = _require_utc_datetime(
+            item.get("score_completed_at_utc"),
+            "score_completed_at_utc",
+        )
+        valid_until = _require_utc_datetime(
+            item.get("signal_valid_until_utc"),
+            "signal_valid_until_utc",
+        )
+        if recorded_at < score_completed:
+            raise RuntimeError(
+                f"observer_ledger_recorded_before_score_completion:{signal_id}"
+            )
+        if recorded_at > valid_until:
+            raise RuntimeError(
+                f"observer_ledger_recorded_after_signal_expiry:{signal_id}"
+            )
+        item["ledger_recorded_at_utc"] = recorded_at.isoformat()
         by_signal[signal_id] = item
         by_decision[decision_event_id] = signal_id
         new_count += 1
@@ -157,6 +195,7 @@ def _merge_ledger(
         "schema_version": LEDGER_SCHEMA_VERSION,
         "policy_sha256": policy_sha,
         "prospective_start_utc": report.get("prospective_start_utc"),
+        "identity_authority": "sealed_decision_ledger_v4_2",
         "observations": observations,
     }
     ledger_sha = _sha256_json(ledger_hash_payload)
@@ -170,7 +209,7 @@ def _merge_ledger(
         "new_observation_count": new_count,
         "idempotent_observation_count": idempotent_count,
         "ledger_sha256": ledger_sha,
-        "updated_at_utc": datetime.now(UTC).isoformat(),
+        "updated_at_utc": recorded_at.isoformat(),
         "paper_only": True,
         "shadow_only": True,
         "research_only": True,
@@ -181,6 +220,24 @@ def _merge_ledger(
         "sends_orders": False,
         "exchange_private_access": False,
     }
+
+
+def _require_utc_datetime(value: Any, field: str) -> datetime:
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        text = str(value or "").strip()
+        if not text:
+            raise RuntimeError(f"{field}_missing")
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise RuntimeError(f"{field}_invalid") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise RuntimeError(f"{field}_must_be_timezone_aware")
+    if parsed.utcoffset().total_seconds() != 0:
+        raise RuntimeError(f"{field}_must_use_utc_offset_zero")
+    return parsed.astimezone(UTC)
 
 
 def _validate_ledger_path(root: Path, path: Path) -> None:
@@ -203,6 +260,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         project_root=root,
         freeze_spec_path=args.freeze_spec,
         active_signals_path=args.active_signals,
+        decision_ledger_path=args.decision_ledger,
         outcome_path=args.outcome_path,
         market_features_path=args.market_features_path,
     )
@@ -214,6 +272,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             raise RuntimeError(
                 f"observer_write_blocked:{report.get('reason', 'unknown_reason')}"
             )
+        if int(report.get("observation_count") or 0) <= 0:
+            raise RuntimeError("observer_write_blocked:no_new_prospective_observations")
         existing = _read_json_object(ledger_path)
         ledger_payload = _merge_ledger(existing=existing, report=report)
         _write_json_atomic(ledger_path, ledger_payload)
