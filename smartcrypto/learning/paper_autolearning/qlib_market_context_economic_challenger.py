@@ -14,6 +14,7 @@ changed.
 
 from __future__ import annotations
 
+import gc
 import importlib
 import math
 import os
@@ -726,32 +727,72 @@ def _select_calibration_threshold(
 
 @contextmanager
 def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, Any]]]:
+    """Provide a native Qlib/LightGBM predictor on an isolated MLflow SQLite backend.
+
+    MLflow 3.x no longer accepts the legacy filesystem tracking backend by default.
+    The research challenger therefore provisions a temporary SQLite tracking store
+    plus a temporary local artifact store for the lifetime of this context only.
+    No repository, runtime, registry, active-model, or operational state is written.
+    """
+
     qlib = importlib.import_module("qlib")
     gbdt_module = importlib.import_module("qlib.contrib.model.gbdt")
     workflow_module = importlib.import_module("qlib.workflow")
+    mlflow_tracking_module = importlib.import_module("mlflow.tracking")
+
     lgb_model_class = getattr(gbdt_module, "LGBModel", None)
     recorder = getattr(workflow_module, "R", None)
+    mlflow_client_class = getattr(mlflow_tracking_module, "MlflowClient", None)
+
     if lgb_model_class is None:
         raise RuntimeError("qlib_contrib_lgbmodel_missing")
     if recorder is None:
         raise RuntimeError("qlib_workflow_recorder_missing")
+    if mlflow_client_class is None:
+        raise RuntimeError("mlflow_client_missing")
     if not str(getattr(lgb_model_class, "__module__", "")).startswith("qlib.contrib."):
         raise RuntimeError("model_not_from_qlib_contrib")
 
     lightgbm = importlib.import_module("lightgbm")
+
     previous_pickle = os.environ.get("MLFLOW_ALLOW_PICKLE_DESERIALIZATION")
     previous_tracking = os.environ.get("MLFLOW_TRACKING_URI")
-    os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = "false"
+    previous_file_store = os.environ.get("MLFLOW_ALLOW_FILE_STORE")
 
-    with tempfile.TemporaryDirectory(prefix="futuros-qlib-market-context-") as temp_dir:
-        temp_root = Path(temp_dir)
+    os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = "false"
+    os.environ.pop("MLFLOW_ALLOW_FILE_STORE", None)
+
+    experiment_name = "futuros_market_context_economic_research"
+
+    with tempfile.TemporaryDirectory(
+        prefix="futuros-qlib-market-context-",
+        ignore_cleanup_errors=True,
+    ) as temp_dir:
+        temp_root = Path(temp_dir).resolve()
         provider_dir = temp_root / "provider"
         provider_dir.mkdir(parents=True, exist_ok=True)
-        mlflow_dir = temp_root / "mlruns"
-        mlflow_dir.mkdir(parents=True, exist_ok=True)
-        mlflow_uri = mlflow_dir.as_uri()
-        os.environ["MLFLOW_TRACKING_URI"] = mlflow_uri
-        qlib.init(provider_uri=str(provider_dir), region="us", clear_mem_cache=True)
+
+        artifact_dir = temp_root / "artifacts"
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+
+        tracking_db = temp_root / "mlflow.db"
+        tracking_uri = f"sqlite:///{tracking_db.as_posix()}"
+        artifact_uri = artifact_dir.as_uri()
+        os.environ["MLFLOW_TRACKING_URI"] = tracking_uri
+
+        client = mlflow_client_class(tracking_uri=tracking_uri)
+        experiment = client.get_experiment_by_name(experiment_name)
+        if experiment is None:
+            client.create_experiment(
+                experiment_name,
+                artifact_location=artifact_uri,
+            )
+
+        qlib.init(
+            provider_uri=str(provider_dir),
+            region="us",
+            clear_mem_cache=True,
+        )
 
         def predict(
             train_x: pd.DataFrame,
@@ -781,6 +822,7 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                 test_x=test_x,
                 fold_id=fold_id,
             )
+
             model = lgb_model_class(
                 loss="mse",
                 early_stopping_rounds=20,
@@ -802,12 +844,14 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                 force_col_wise=True,
                 num_threads=1,
             )
+
             with recorder.start(
-                experiment_name="futuros_market_context_economic_research",
+                experiment_name=experiment_name,
                 recorder_name=f"{fold_id}_lgb",
-                uri=mlflow_uri,
+                uri=tracking_uri,
             ):
                 model.fit(dataset, verbose_eval=0)
+
             calibration_prediction = model.predict(dataset, segment="calibration")
             test_prediction = model.predict(dataset, segment="test")
             return (
@@ -834,20 +878,50 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
             "fallback_used": False,
             "provider_mode": "local_temporary_offline",
             "network_required": False,
-            "mlflow_mode": "temporary_local_research_only",
+            "mlflow_mode": "temporary_sqlite_research_only",
+            "mlflow_tracking_backend": "sqlite",
+            "mlflow_artifact_store": "temporary_local_file",
+            "mlflow_file_store_bypass": False,
             "mlflow_pickle_deserialization": False,
+            "mlflow_sqlite_engine_disposal": "best_effort_before_temp_cleanup",
+            "temporary_cleanup_errors_are_non_fatal": True,
         }
+
         try:
             yield predict, metadata
         finally:
+            # MLflow/SQLAlchemy can keep a SQLite handle alive briefly on Windows
+            # even after the recorder context has closed. Dispose the client store
+            # engine when available and force collection before the temporary tree
+            # is removed. Cleanup failure must never invalidate an already completed
+            # research fit/score result; TemporaryDirectory therefore ignores only
+            # cleanup errors, while model/training errors remain fail-closed.
+            try:
+                tracking_client = getattr(client, "_tracking_client", None)
+                tracking_store = getattr(tracking_client, "store", None)
+                tracking_engine = getattr(tracking_store, "engine", None)
+                if tracking_engine is not None:
+                    tracking_engine.dispose()
+            except Exception:
+                # Best-effort resource cleanup only. Economic/model exceptions are
+                # raised before this point and remain blocking.
+                pass
+            finally:
+                gc.collect()
             if previous_pickle is None:
                 os.environ.pop("MLFLOW_ALLOW_PICKLE_DESERIALIZATION", None)
             else:
                 os.environ["MLFLOW_ALLOW_PICKLE_DESERIALIZATION"] = previous_pickle
+
             if previous_tracking is None:
                 os.environ.pop("MLFLOW_TRACKING_URI", None)
             else:
                 os.environ["MLFLOW_TRACKING_URI"] = previous_tracking
+
+            if previous_file_store is None:
+                os.environ.pop("MLFLOW_ALLOW_FILE_STORE", None)
+            else:
+                os.environ["MLFLOW_ALLOW_FILE_STORE"] = previous_file_store
 
 
 class _InMemoryQlibDataset:
