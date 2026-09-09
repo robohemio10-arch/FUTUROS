@@ -110,7 +110,11 @@ def build_qlib_v2_prospective_paper_confirmation_v1(
     boundary = provenance["prospective_start_utc"]
     assert isinstance(boundary, datetime)
 
-    input_rows = [dict(row) for row in rows] if rows is not None else base._read_rows(outcome_source)
+    input_rows = (
+        [dict(row) for row in rows]
+        if rows is not None
+        else base._read_rows(outcome_source)
+    )
     raw_market = base._market_frame(market_rows, market_source)
 
     normalized, invalid_time_count = base._normalize_outcomes(input_rows)
@@ -339,6 +343,8 @@ def _run_predictor(
 
     threshold = float(calibration["threshold"])
     dataset_sha = _dataset_fingerprint(prepared)
+    feature_medians = _feature_medians(prepared)
+    calibration_score_fingerprint_sha256 = _score_fingerprint(calibration_scores)
     contract = _freeze_contract(
         boundary=boundary,
         provenance=provenance,
@@ -347,6 +353,8 @@ def _run_predictor(
         calibration=calibration,
         model_metadata=model_metadata,
         dataset_sha=dataset_sha,
+        feature_medians=feature_medians,
+        calibration_score_fingerprint_sha256=calibration_score_fingerprint_sha256,
     )
     policy_sha = _sha256_json(contract)
     freeze_spec = {**contract, "policy_sha256": policy_sha}
@@ -460,6 +468,8 @@ def _freeze_contract(
     calibration: Mapping[str, Any],
     model_metadata: Mapping[str, Any],
     dataset_sha: str,
+    feature_medians: Mapping[str, float],
+    calibration_score_fingerprint_sha256: str,
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -483,6 +493,12 @@ def _freeze_contract(
         "fit_trade_count": len(prepared.fit_rows),
         "calibration_trade_count": len(prepared.calibration_rows),
         "pre_boundary_dataset_sha256": dataset_sha,
+        "feature_medians": {
+            column: round(float(feature_medians[column]), 12)
+            for column in prepared.feature_columns
+        },
+        "calibration_score_count": len(prepared.calibration_rows),
+        "calibration_score_fingerprint_sha256": calibration_score_fingerprint_sha256,
         "threshold": float(calibration["threshold"]),
         "selected_quantile": calibration["selected_quantile"],
         "model": dict(model_metadata),
@@ -607,6 +623,28 @@ def _matrix_from_frozen_fit(
     return frame
 
 
+
+def _feature_medians(prepared: base.PreparedFold) -> dict[str, float]:
+    fit_feature_rows = [base._model_feature_row(row) for row in prepared.fit_rows]
+    medians: dict[str, float] = {}
+    for column in prepared.feature_columns:
+        values = [base._numeric(row.get(column)) for row in fit_feature_rows]
+        finite = [
+            float(value)
+            for value in values
+            if value is not None and math.isfinite(value)
+        ]
+        if not finite:
+            raise ValueError(f"frozen_feature_median_missing:{column}")
+        medians[column] = float(np.median(np.asarray(finite, dtype=float)))
+    return medians
+
+
+def _score_fingerprint(scores: np.ndarray) -> str:
+    values = base._finite_scores(scores, expected=len(scores))
+    payload = [round(float(value), 10) for value in values]
+    return _sha256_json(payload)
+
 def _dataset_fingerprint(prepared: base.PreparedFold) -> str:
     payload: list[dict[str, Any]] = []
     for partition, rows in (
@@ -689,6 +727,9 @@ def _freeze_mismatch(
         "fit_trade_count",
         "calibration_trade_count",
         "pre_boundary_dataset_sha256",
+        "feature_medians",
+        "calibration_score_count",
+        "calibration_score_fingerprint_sha256",
         "threshold",
         "selected_quantile",
         "policy_sha256",

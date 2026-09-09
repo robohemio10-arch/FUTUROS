@@ -249,6 +249,10 @@ def test_certified_freeze_provenance_binds_dev_commit_ci_and_boundary() -> None:
     assert freeze["certified_ci_run_id"] == 123456789
     assert freeze["prospective_start_utc"] == boundary.isoformat()
     assert freeze["freeze_materialized_at_utc"] == boundary.isoformat()
+    assert freeze["feature_medians"]
+    assert set(freeze["feature_medians"]) == set(freeze["feature_columns"])
+    assert freeze["calibration_score_count"] == freeze["calibration_trade_count"]
+    assert len(freeze["calibration_score_fingerprint_sha256"]) == 64
 
 
 def test_freeze_provenance_rejects_boundary_before_ci_completion() -> None:
