@@ -9,29 +9,56 @@ from typing import Any
 import yaml
 
 from smartcrypto.learning.paper_autolearning.scheduler_deployment import (
+    BOOTSTRAP_PERMISSION_PATHS,
+    BOOTSTRAP_SERVICE_COMMAND_PREFIX,
+    EXPECTED_FREQTRADE_DEPENDENCY,
+    EXPECTED_PAPER_DB_VOLUME,
+    EXPECTED_RESTART_POLICY,
     EXPECTED_SERVICE_COMMAND,
+    SELECTED_MECHANISM,
     SERVICE_NAME,
     build_paper_autolearning_scheduler_deployment_report,
 )
 
 
-def write_compose(root: Path, *, command: list[str] | None = None) -> Path:
+def _bootstrap_command(service_command: list[str] | None = None) -> list[str]:
+    command = list(BOOTSTRAP_SERVICE_COMMAND_PREFIX)
+    for path in sorted(BOOTSTRAP_PERMISSION_PATHS):
+        command.extend(["--path", path])
+    command.extend(["--", *(service_command or EXPECTED_SERVICE_COMMAND)])
+    return command
+
+
+def write_compose(
+    root: Path,
+    *,
+    command: list[str] | None = None,
+    restart: str = EXPECTED_RESTART_POLICY,
+    paper_db_readonly: bool = True,
+    depends_on: dict[str, Any] | None = None,
+) -> Path:
+    volumes = ["./data:/app/data"]
+    if paper_db_readonly:
+        volumes.append(EXPECTED_PAPER_DB_VOLUME)
     compose = {
         "services": {
             SERVICE_NAME: {
                 "build": {"context": ".", "dockerfile": "docker/smartcrypto/Dockerfile"},
-                "restart": "no",
+                "restart": restart,
                 "profiles": ["autolearning"],
+                "depends_on": depends_on or EXPECTED_FREQTRADE_DEPENDENCY,
                 "environment": {
                     "SMARTCRYPTO_RUNTIME_MODE": "paper",
                     "LIVE_ENABLED": "false",
                     "ORDER_SUBMISSION_ENABLED": "false",
                     "REAL_ORDER_SUBMISSION_ENABLED": "false",
                     "SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS": "false",
+                    "SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS": "300",
                     "PYTHONPATH": "/app",
                 },
                 "working_dir": "/app",
-                "command": command or EXPECTED_SERVICE_COMMAND,
+                "volumes": volumes,
+                "command": command or _bootstrap_command(),
             }
         }
     }
@@ -70,12 +97,13 @@ def ready_report(tmp_path: Path) -> dict[str, Any]:
     )
 
 
-def test_deployment_default_is_dry_run(tmp_path: Path) -> None:
+def test_deployment_default_is_unattended_ready(tmp_path: Path) -> None:
     report = ready_report(tmp_path)
 
     assert report["status"] == "ok"
     assert report["deployment_status"] == "deployment_ready"
     assert report["deployment_performed"] is False
+    assert report["unattended_service_enabled"] is True
     assert report["creates_service"] is False
 
 
@@ -94,27 +122,63 @@ def test_deployment_requires_kill_switch_contract(tmp_path: Path) -> None:
     assert report["kill_switch_contract_present"] is False
 
 
-def test_deployment_validates_foundation_runner_command(tmp_path: Path) -> None:
+def test_deployment_validates_unattended_orchestrator_command(tmp_path: Path) -> None:
     report = ready_report(tmp_path)
 
     assert report["command_validated"] is True
     assert report["foundation_runner_command_validated"] is True
+    assert report["unattended_command_validated"] is True
     assert report["would_run_command"] == EXPECTED_SERVICE_COMMAND
+    assert "--daemon" in report["would_run_command"]
+    assert "--write-quarantine-artifacts" in report["would_run_command"]
 
 
-def test_deployment_does_not_create_cron_unless_selected(tmp_path: Path) -> None:
+def test_deployment_requires_restartable_container(tmp_path: Path) -> None:
+    compose = write_compose(tmp_path, restart="no")
+    report = build_paper_autolearning_scheduler_deployment_report(
+        project_root=tmp_path,
+        compose_path=compose,
+        kill_switch_contract_path=write_kill_switch_contract(tmp_path),
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "scheduler_restart_policy_invalid"
+    assert report["restart_policy_validated"] is False
+
+
+def test_deployment_requires_read_only_paper_db_mount(tmp_path: Path) -> None:
+    compose = write_compose(tmp_path, paper_db_readonly=False)
+    report = build_paper_autolearning_scheduler_deployment_report(
+        project_root=tmp_path,
+        compose_path=compose,
+        kill_switch_contract_path=write_kill_switch_contract(tmp_path),
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "paper_db_readonly_mount_missing"
+    assert report["paper_db_readonly_mounted"] is False
+
+
+def test_deployment_requires_healthy_freqtrade_dependency(tmp_path: Path) -> None:
+    compose = write_compose(tmp_path, depends_on={"freqtrade-paper": {"condition": "service_started"}})
+    report = build_paper_autolearning_scheduler_deployment_report(
+        project_root=tmp_path,
+        compose_path=compose,
+        kill_switch_contract_path=write_kill_switch_contract(tmp_path),
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "freqtrade_health_dependency_missing"
+    assert report["freqtrade_health_dependency_validated"] is False
+
+
+def test_deployment_does_not_create_external_scheduler(tmp_path: Path) -> None:
     report = ready_report(tmp_path)
 
-    assert report["selected_mechanism"] == "docker_compose_paper"
+    assert report["selected_mechanism"] == SELECTED_MECHANISM
     assert report["creates_cron"] is False
     assert report["creates_systemd_timer"] is False
-
-
-def test_deployment_does_not_create_windows_task(tmp_path: Path) -> None:
-    report = ready_report(tmp_path)
-
     assert report["creates_windows_task"] is False
-    assert report["windows_task_defined"] is False
 
 
 def test_deployment_does_not_start_service(tmp_path: Path) -> None:
@@ -175,8 +239,12 @@ def test_cli_audit_json_executes() -> None:
     assert payload["status"] == "ok"
     assert payload["deployment_status"] == "deployment_ready"
     assert payload["daily_autolearning_enabled"] is True
+    assert payload["unattended_service_enabled"] is True
     assert payload["docker_service_defined"] is True
     assert payload["kill_switch_contract_present"] is True
-    assert payload["foundation_runner_command_validated"] is True
+    assert payload["unattended_command_validated"] is True
+    assert payload["restart_policy_validated"] is True
+    assert payload["paper_db_readonly_mounted"] is True
+    assert payload["freqtrade_health_dependency_validated"] is True
     assert payload["deployment_performed"] is False
     assert payload["sends_orders"] is False

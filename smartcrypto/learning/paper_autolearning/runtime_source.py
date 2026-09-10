@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
 
 PAPER_DB_CANDIDATES: tuple[Path, ...] = (
     Path("freqtrade/user_data/tradesv3.paper.sqlite"),
@@ -48,13 +48,33 @@ def load_authoritative_closed_paper_trades(
     project_root: str | Path,
     explicit_path: str | Path | None = None,
 ) -> PaperSourceSelection:
-    """Select the freshest valid Paper DB and return closed trades read-only."""
+    """Select the authoritative Paper DB and return closed trades read-only.
+
+    A caller-supplied source is an authority declaration, not a freshness hint.
+    When that source is valid and contains closed trades, snapshots cannot
+    supersede it based on timestamps or filesystem metadata.
+    """
 
     root = Path(project_root).resolve()
+    explicit = _resolve_explicit_path(root, explicit_path)
     candidate_paths = _candidate_paths(root, explicit_path)
     inspected = tuple(_inspect_candidate(path) for path in candidate_paths)
-    valid = [item for item in inspected if item.status == "ok" and item.closed_trade_count > 0]
-    if not valid:
+
+    if explicit is not None:
+        explicit_candidate = next(item for item in inspected if item.path == explicit)
+        if _is_valid_candidate(explicit_candidate):
+            return _load_selected_candidate(
+                explicit_candidate,
+                candidates=inspected,
+                reason="explicit_closed_trade_source_selected_read_only",
+            )
+
+    fallback_candidates = [
+        item
+        for item in inspected
+        if item.path != explicit and _is_valid_candidate(item)
+    ]
+    if not fallback_candidates:
         return PaperSourceSelection(
             status="blocked",
             reason="no_valid_closed_paper_trade_source",
@@ -63,23 +83,56 @@ def load_authoritative_closed_paper_trades(
             candidates=inspected,
         )
 
-    selected = max(valid, key=_freshness_key)
-    rows = tuple(_read_closed_trades(selected.path))
+    selected = max(fallback_candidates, key=_freshness_key)
+    return _load_selected_candidate(
+        selected,
+        candidates=inspected,
+        reason="freshest_fallback_closed_trade_source_selected_read_only",
+    )
+
+
+def _load_selected_candidate(
+    selected: PaperSourceCandidate,
+    *,
+    candidates: tuple[PaperSourceCandidate, ...],
+    reason: str,
+) -> PaperSourceSelection:
+    try:
+        rows = tuple(_read_closed_trades(selected.path))
+    except (OSError, sqlite3.Error, ValueError):
+        return PaperSourceSelection(
+            status="blocked",
+            reason="selected_closed_trade_source_became_unreadable",
+            selected_path=selected.path,
+            rows=(),
+            candidates=candidates,
+        )
     if not rows:
         return PaperSourceSelection(
             status="blocked",
             reason="selected_source_returned_no_closed_trades",
             selected_path=selected.path,
             rows=(),
-            candidates=inspected,
+            candidates=candidates,
         )
     return PaperSourceSelection(
         status="ok",
-        reason="freshest_closed_trade_source_selected_read_only",
+        reason=reason,
         selected_path=selected.path,
         rows=rows,
-        candidates=inspected,
+        candidates=candidates,
     )
+
+
+def _resolve_explicit_path(root: Path, explicit_path: str | Path | None) -> Path | None:
+    if explicit_path is None:
+        return None
+    explicit = Path(explicit_path)
+    return (explicit if explicit.is_absolute() else root / explicit).resolve()
+
+
+def _is_valid_candidate(candidate: PaperSourceCandidate) -> bool:
+    return candidate.status == "ok" and candidate.closed_trade_count > 0
 
 
 def _candidate_paths(root: Path, explicit_path: str | Path | None) -> tuple[Path, ...]:
@@ -171,7 +224,10 @@ def _freqtrade_row_to_feedback(row: Mapping[str, Any]) -> dict[str, Any]:
         if open_trade_value is not None:
             notional = abs(open_trade_value)
     if notional is None and stake_amount is not None:
-        notional = abs(stake_amount * leverage) if leverage not in (None, 0.0) else abs(stake_amount)
+        if leverage is not None and leverage != 0.0:
+            notional = abs(stake_amount * leverage)
+        else:
+            notional = abs(stake_amount)
 
     gross_pnl = _gross_pnl(
         amount=amount,
@@ -307,7 +363,7 @@ def _finite_float(value: object) -> float | None:
     if value is None:
         return None
     try:
-        number = float(value)
+        number = float(cast(Any, value))
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None

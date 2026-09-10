@@ -9,7 +9,9 @@ The loop never writes SQLite, submits orders, changes risk, or promotes models.
 from __future__ import annotations
 
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
+from statistics import median
 from typing import Any, Mapping, Sequence
 
 from .feedback_store import (
@@ -122,6 +124,7 @@ def run_paper_autolearning_live_feedback_loop_v1(
         reason = "no_new_closed_paper_trades"
 
     coverage = _coverage_payload(projected_events)
+    latency = _new_outcome_latency_payload(feedback.new_events)
     return {
         "schema_version": SCHEMA_VERSION,
         "status": "ok",
@@ -142,7 +145,8 @@ def run_paper_autolearning_live_feedback_loop_v1(
         "lineage_unmatched_source_count": reconciliation.unmatched_source_count,
         "lineage_conflict_count": reconciliation.conflict_count,
         "new_outcome_event_count": len(feedback.new_events),
-        "duplicate_outcome_event_count": len(feedback.duplicate_events),
+        **_feedback_dedupe_payload(feedback),
+        **latency,
         "projected_outcome_event_count": len(projected_events),
         "projected_duplicate_order_id_count": _duplicate_identity_count(
             projected_events,
@@ -197,6 +201,10 @@ def _blocked_report(
         "lineage_conflict_count": 0,
         "new_outcome_event_count": 0,
         "duplicate_outcome_event_count": 0,
+        "already_known_outcome_event_count": 0,
+        "intra_source_duplicate_outcome_event_count": 0,
+        "duplicate_or_reprocessed_row_count": 0,
+        **_empty_new_outcome_latency_payload(),
         "projected_outcome_event_count": 0,
         "projected_duplicate_order_id_count": 0,
         "projected_duplicate_trade_id_count": 0,
@@ -274,7 +282,7 @@ def _blocked_identity_report(
         "lineage_unmatched_source_count": reconciliation.unmatched_source_count,
         "lineage_conflict_count": reconciliation.conflict_count,
         "new_outcome_event_count": len(feedback.new_events),
-        "duplicate_outcome_event_count": len(feedback.duplicate_events),
+        **_feedback_dedupe_payload(feedback),
         "projected_outcome_event_count": len(projected_events),
         "projected_duplicate_order_id_count": _duplicate_identity_count(
             projected_events,
@@ -288,6 +296,78 @@ def _blocked_identity_report(
         "blockers": blockers,
     }
 
+
+def _feedback_dedupe_payload(feedback: Any) -> dict[str, int]:
+    """Separate known history from duplicate input observed in this cycle."""
+
+    intra_source_count = feedback.duplicate_or_reprocessed_row_count
+    return {
+        "duplicate_outcome_event_count": len(feedback.duplicate_events),
+        "already_known_outcome_event_count": len(feedback.already_known_events),
+        "intra_source_duplicate_outcome_event_count": intra_source_count,
+        "duplicate_or_reprocessed_row_count": intra_source_count,
+    }
+
+
+def _new_outcome_latency_payload(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    if not events:
+        return _empty_new_outcome_latency_payload()
+
+    latencies: list[float] = []
+    close_times: list[datetime] = []
+    created_times: list[datetime] = []
+    for event in events:
+        close_time = _parse_utc_datetime(event.get("close_time_utc"))
+        created_at = _parse_utc_datetime(event.get("created_at_utc"))
+        if close_time is None or created_at is None:
+            continue
+        close_times.append(close_time)
+        created_times.append(created_at)
+        latencies.append((created_at - close_time).total_seconds())
+
+    if not latencies:
+        return _empty_new_outcome_latency_payload()
+
+    latest_close = max(close_times)
+    latest_latency_candidates = [
+        (created - close).total_seconds()
+        for close, created in zip(close_times, created_times, strict=True)
+        if close == latest_close
+    ]
+    return {
+        "new_outcome_latest_close_time_utc": latest_close.isoformat(),
+        "feedback_created_at_utc": max(created_times).isoformat(),
+        "close_to_feedback_latency_seconds_latest": round(min(latest_latency_candidates), 6),
+        "close_to_feedback_latency_seconds_p50": round(float(median(latencies)), 6),
+        "close_to_feedback_latency_seconds_max": round(max(latencies), 6),
+    }
+
+
+def _empty_new_outcome_latency_payload() -> dict[str, Any]:
+    return {
+        "new_outcome_latest_close_time_utc": None,
+        "feedback_created_at_utc": None,
+        "close_to_feedback_latency_seconds_latest": None,
+        "close_to_feedback_latency_seconds_p50": None,
+        "close_to_feedback_latency_seconds_max": None,
+    }
+
+
+def _parse_utc_datetime(value: object) -> datetime | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 def _coverage_payload(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     return {

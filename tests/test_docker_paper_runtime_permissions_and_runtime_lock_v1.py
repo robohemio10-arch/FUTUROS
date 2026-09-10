@@ -65,20 +65,35 @@ def test_phase14_uses_ephemeral_root_bootstrap_with_exact_paths() -> None:
 def test_autolearning_uses_ephemeral_root_bootstrap_with_exact_paths() -> None:
     assert_bootstrap_contract(
         bootstrap.AUTOLEARNING_SERVICE,
-        {"/app/data/reports", "/app/data/feedback"},
+        {
+            "/app/data/reports",
+            "/app/data/feedback",
+            "/app/data/research",
+            "/app/data/models",
+            "/app/data/registries",
+        },
     )
-    argv = command(services()[bootstrap.AUTOLEARNING_SERVICE])
+    service = services()[bootstrap.AUTOLEARNING_SERVICE]
+    argv = command(service)
     separator = argv.index("--")
     assert argv[separator + 1 :] == [
         "python",
-        "scripts/run_paper_autolearning_scheduler_v1.py",
+        "scripts/run_paper_autolearning_continuous_orchestrator_v1.py",
         "--project-root",
         "/app",
-        "--once",
+        "--paper-db",
+        "/paper-db/tradesv3.paper.sqlite",
+        "--daemon",
+        "--interval-seconds",
+        "${SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS:-300}",
         "--write-feedback",
-        "--train-smoke",
+        "--train-challenger",
+        "--write-quarantine-artifacts",
+        "--write-reports",
         "--json",
     ]
+    assert service["restart"] == "unless-stopped"
+    assert service["depends_on"] == {"freqtrade-paper": {"condition": "service_healthy"}}
 
 
 def test_notifications_keep_existing_limited_bootstrap_without_execution() -> None:
@@ -103,7 +118,11 @@ def test_notifications_keep_existing_limited_bootstrap_without_execution() -> No
 
 def test_operational_paper_db_and_dashboard_data_are_read_only() -> None:
     payload = services()
-    for service_name in (bootstrap.PHASE14_SERVICE, bootstrap.NOTIFICATION_SERVICE):
+    for service_name in (
+        bootstrap.PHASE14_SERVICE,
+        bootstrap.AUTOLEARNING_SERVICE,
+        bootstrap.NOTIFICATION_SERVICE,
+    ):
         assert "freqtrade_paper_db:/paper-db:ro" in payload[service_name]["volumes"]
     assert "./data:/app/data:ro" in payload["smartcrypto-dashboard-paper"]["volumes"]
 
@@ -153,6 +172,9 @@ def test_no_world_writable_mode_or_generic_data_authority() -> None:
         "/app/data/runtime",
         "/app/data/trades",
         "/app/data/feedback",
+        "/app/data/research",
+        "/app/data/models",
+        "/app/data/registries",
         "/app/data/features",
         "/app/data/predictions",
         "/app/data/snapshots/freqtrade-paper",
