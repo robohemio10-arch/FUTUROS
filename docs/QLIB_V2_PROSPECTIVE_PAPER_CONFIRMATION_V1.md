@@ -151,6 +151,30 @@ operational_authority = false
 
 A decisão permanece research-only e exige revisão manual posterior.
 
+## Boundary temporal do snapshot Freqtrade
+
+O snapshot SQLite Paper observado persiste `trades.open_date` e
+`trades.close_date` como texto UTC sem offset. O resolver interpreta essa
+representação timezone-naive como UTC somente no adapter da fonte Freqtrade,
+antes de aplicar os contratos prospectivos estritos.
+
+O normalizador dedicado aceita timestamps naive do snapshot, `Z` e `+00:00`.
+Offsets explícitos diferentes de UTC, valores vazios e strings inválidas são
+bloqueados. A transformação não consulta timezone local, locale ou relógio do
+host. Rows injetadas em testes representam semanticamente o mesmo datasource
+Freqtrade e atravessam o mesmo boundary.
+
+Todos os demais timestamps continuam UTC-aware obrigatórios, incluindo freeze,
+observer, Decision Ledger, sinais, `score_completed_at_utc`,
+`ledger_recorded_at_utc` e outcomes. A correção não adiciona matching fuzzy,
+nearest timestamp, inferência por símbolo/lado ou backfill.
+
+Esta adaptação ocorre depois do treatment assignment. Ela não altera modelo,
+features, target, threshold, policy SHA, `prospective_start_utc`, identidade do
+Decision Ledger ou observações registradas. Assim, a freeze V2 e o ledger V2
+permanecem válidos; nenhuma Freeze V3 é necessária e promoção continua
+proibida.
+
 ## Invariantes de segurança
 
 ```text
