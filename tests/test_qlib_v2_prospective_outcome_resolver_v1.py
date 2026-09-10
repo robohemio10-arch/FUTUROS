@@ -19,7 +19,10 @@ from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1.publicat
 from smartcrypto.learning.paper_autolearning.qlib_v2_prospective_outcome_resolver import (
     BOOTSTRAP_SAMPLES,
     SCHEMA_VERSION,
+    _index_paper_trades,
     _paired_bootstrap_delta,
+    _parse_freqtrade_snapshot_utc,
+    _parse_utc,
     _promotion_gate,
     build_qlib_v2_prospective_outcome_resolution_v1,
 )
@@ -282,6 +285,107 @@ def _trade_and_outcome(
     return trade, outcome
 
 
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2026-09-09 23:12:06.123456",
+        "2026-09-09T23:12:06.123456",
+        "2026-09-09T23:12:06.123456Z",
+        "2026-09-09T23:12:06.123456+00:00",
+    ],
+)
+def test_freqtrade_snapshot_timestamp_normalizes_supported_utc_forms(
+    value: str,
+) -> None:
+    parsed = _parse_freqtrade_snapshot_utc(value, "paper_trade_open_date")
+
+    assert parsed == datetime(2026, 9, 9, 23, 12, 6, 123456, tzinfo=UTC)
+    assert parsed.tzinfo is UTC
+
+
+def test_freqtrade_snapshot_timestamp_interprets_naive_datetime_as_utc() -> None:
+    value = datetime(2026, 9, 9, 23, 12, 6, 123456)
+
+    parsed = _parse_freqtrade_snapshot_utc(value, "paper_trade_open_date")
+
+    assert parsed == value.replace(tzinfo=UTC)
+
+
+def test_freqtrade_snapshot_timestamp_rejects_explicit_non_utc_offset() -> None:
+    with pytest.raises(ValueError, match="timestamp_not_utc:paper_trade_open_date"):
+        _parse_freqtrade_snapshot_utc(
+            "2026-09-09T20:12:06.123456-03:00",
+            "paper_trade_open_date",
+        )
+
+
+@pytest.mark.parametrize("value", [None, "", "not-a-timestamp"])
+def test_freqtrade_snapshot_timestamp_rejects_missing_or_invalid_values(
+    value: object,
+) -> None:
+    with pytest.raises(ValueError, match="^timestamp_(missing|invalid):"):
+        _parse_freqtrade_snapshot_utc(value, "paper_trade_open_date")
+
+
+def test_generic_utc_parser_remains_strict_for_naive_timestamp() -> None:
+    with pytest.raises(
+        ValueError,
+        match="timestamp_not_timezone_aware:prospective_timestamp",
+    ):
+        _parse_utc("2026-09-09T23:12:06.123456", "prospective_timestamp")
+
+
+def test_freqtrade_naive_trade_rows_are_indexed_without_timezone_blocker() -> None:
+    freeze, ledger, observation, _ = _ledger_fixture()
+    trade, _ = _trade_and_outcome(observation)
+    trade["open_date"] = "2026-09-09 23:12:06.123456"
+    trade["close_date"] = "2026-09-09 23:32:06.123456"
+
+    report = build_qlib_v2_prospective_outcome_resolution_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        observer_ledger=ledger,
+        paper_trade_rows=[trade],
+        outcome_rows=[],
+        paper_trade_source_sha256="d" * 64,
+    )
+
+    assert report["status"] == "collecting"
+    assert report["linked_paper_trade_count"] == 1
+    assert report["resolved_decision_count"] == 0
+    assert report["unresolved_observations"][0]["reason"] == (
+        "outcome_event_not_yet_available"
+    )
+    assert not any(
+        "timestamp_not_timezone_aware:paper_trade" in blocker
+        for blocker in report["blockers"]
+    )
+
+
+def test_freqtrade_snapshot_close_before_open_remains_blocked() -> None:
+    _, _, observation, _ = _ledger_fixture()
+    trade, _ = _trade_and_outcome(observation)
+    trade["open_date"] = "2026-09-09 23:32:06.123456"
+    trade["close_date"] = "2026-09-09 23:12:06.123456"
+
+    _, blockers = _index_paper_trades([trade])
+
+    assert blockers == ["paper_trade_invalid:0:paper_trade_close_before_open"]
+
+
+def test_duplicate_paper_trade_id_remains_blocked() -> None:
+    _, _, observation, _ = _ledger_fixture()
+    trade, _ = _trade_and_outcome(observation)
+    second = dict(trade)
+    second["enter_tag"] = (
+        "smartcrypto_long|decision_event_id=decision-event:resolver002"
+    )
+
+    _, blockers = _index_paper_trades([trade, second])
+
+    assert blockers == ["duplicate_paper_trade_id:123"]
+
+
 def test_exact_identity_chain_resolves_one_paper_outcome() -> None:
     freeze, ledger, observation, _ = _ledger_fixture()
     trade, outcome = _trade_and_outcome(observation)
@@ -384,6 +488,23 @@ def test_outcome_semantic_mismatch_blocks_after_exact_identity_resolution() -> N
 
     assert report["status"] == "blocked"
     assert report["reason"] == "outcome_symbol_mismatch:123"
+
+
+def test_outcome_side_mismatch_still_blocks_after_exact_identity_resolution() -> None:
+    freeze, ledger, observation, _ = _ledger_fixture()
+    trade, outcome = _trade_and_outcome(observation)
+    outcome["side"] = "short"
+
+    report = build_qlib_v2_prospective_outcome_resolution_v1(
+        project_root=Path("."),
+        freeze_spec=freeze,
+        observer_ledger=ledger,
+        paper_trade_rows=[trade],
+        outcome_rows=[outcome],
+    )
+
+    assert report["status"] == "blocked"
+    assert report["reason"] == "outcome_side_mismatch:123"
 
 
 def test_observation_after_trade_open_is_excluded_from_prospective_evidence() -> None:

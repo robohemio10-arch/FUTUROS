@@ -687,8 +687,14 @@ def _index_paper_trades(
                 raise ValueError("paper_trade_symbol_invalid")
             is_short = _strict_bool(row.get("is_short"), "paper_trade_is_short")
             side = "short" if is_short else "long"
-            open_date = _parse_utc(row.get("open_date"), "paper_trade_open_date")
-            close_date = _parse_utc(row.get("close_date"), "paper_trade_close_date")
+            open_date = _parse_freqtrade_snapshot_utc(
+                row.get("open_date"),
+                "paper_trade_open_date",
+            )
+            close_date = _parse_freqtrade_snapshot_utc(
+                row.get("close_date"),
+                "paper_trade_close_date",
+            )
             if close_date < open_date:
                 raise ValueError("paper_trade_close_before_open")
         except CandidateLineageError as exc:
@@ -1008,6 +1014,30 @@ def _nonempty_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text if text else None
+
+
+def _parse_freqtrade_snapshot_utc(value: Any, field: str) -> datetime:
+    """Parse timestamps at the Freqtrade SQLite snapshot boundary.
+
+    Freqtrade persists UTC trade timestamps as timezone-naive values in the
+    certified Paper snapshot. Only this source adapter may attach UTC to a
+    naive representation. Explicit non-UTC offsets remain invalid.
+    """
+
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        text = str(value or "").strip()
+        if not text:
+            raise ValueError(f"timestamp_missing:{field}")
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"timestamp_invalid:{field}") from exc
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return _parse_utc(parsed, field)
 
 
 def _parse_utc(value: Any, field: str) -> datetime:
