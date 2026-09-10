@@ -9,8 +9,15 @@ processing.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
+import os
+import tempfile
+import time
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Protocol
 
 import pandas as pd
 
@@ -30,6 +37,14 @@ LiveFeedbackRunner = Callable[..., dict[str, Any]]
 QuarantineRunner = Callable[..., dict[str, Any]]
 CandidateEvaluator = Callable[..., dict[str, Any]]
 MicrobatchLoader = Callable[[Path], pd.DataFrame]
+CycleRunner = Callable[..., dict[str, Any]]
+SleepFn = Callable[[float], Any]
+StopRequested = Callable[[], bool]
+CycleObserver = Callable[[dict[str, Any]], None]
+
+UNATTENDED_SCHEMA_VERSION = "paper_autolearning_unattended_service_v2"
+DEFAULT_UNATTENDED_INTERVAL_SECONDS = 300.0
+_LOGGER = logging.getLogger(__name__)
 
 UNSAFE_TRUE_FIELDS: tuple[str, ...] = (
     "live_release_allowed",
@@ -78,6 +93,7 @@ def run_paper_autolearning_continuous_orchestrator_v1(
         explicit_paper_db_path=explicit_paper_db_path,
         write=write_feedback,
     )
+    feedback_completed_monotonic = time.perf_counter()
     unsafe = _unsafe_findings(feedback, stage="live_feedback")
     if unsafe:
         return _report(
@@ -199,6 +215,7 @@ def run_paper_autolearning_continuous_orchestrator_v1(
         fail_on_operational_write=True,
         microbatch_frame=quarantine_microbatch,
     )
+    quarantine_completed_monotonic = time.perf_counter()
     quarantine = {
         **quarantine,
         "bridge_status": "ok",
@@ -252,6 +269,11 @@ def run_paper_autolearning_continuous_orchestrator_v1(
     status = "ok" if quarantine.get("status") in {"ok", "warning"} else "blocked"
     reason = _final_reason(quarantine, evaluation, should_evaluate)
     blockers = list(quarantine.get("blockers") or []) if status == "blocked" else []
+    feedback_to_challenger_latency_seconds = (
+        round(max(0.0, quarantine_completed_monotonic - feedback_completed_monotonic), 6)
+        if _training_performed(quarantine)
+        else None
+    )
     return _report(
         status=status,
         reason=reason,
@@ -263,6 +285,7 @@ def run_paper_autolearning_continuous_orchestrator_v1(
         train_challenger=train_challenger,
         write_quarantine_artifacts=write_quarantine_artifacts,
         write_reports=write_reports,
+        feedback_to_challenger_latency_seconds=feedback_to_challenger_latency_seconds,
     )
 
 
@@ -342,6 +365,7 @@ def _report(
     train_challenger: bool,
     write_quarantine_artifacts: bool,
     write_reports: bool,
+    feedback_to_challenger_latency_seconds: float | None = None,
 ) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -370,12 +394,345 @@ def _report(
         "write_quarantine_artifacts_requested": bool(write_quarantine_artifacts),
         "write_reports_requested": bool(write_reports),
         "new_outcome_event_count": int(feedback.get("new_outcome_event_count") or 0),
+        "new_outcomes": int(feedback.get("new_outcome_event_count") or 0),
         "microbatch_rows": int(feedback.get("microbatch_rows") or 0),
+        "duplicate_or_reprocessed_row_count": int(
+            feedback.get("duplicate_or_reprocessed_row_count") or 0
+        ),
+        "close_to_feedback_latency_seconds_latest": feedback.get("close_to_feedback_latency_seconds_latest"),
+        "close_to_feedback_latency_seconds_p50": feedback.get("close_to_feedback_latency_seconds_p50"),
+        "close_to_feedback_latency_seconds_max": feedback.get("close_to_feedback_latency_seconds_max"),
+        "feedback_to_challenger_latency_seconds": feedback_to_challenger_latency_seconds,
         "quarantine_candidate_count": int(quarantine.get("quarantine_candidate_count") or 0),
+        "candidate_count": int(quarantine.get("quarantine_candidate_count") or 0),
+        "training_performed": _training_performed(quarantine),
         "candidate_evaluation_status": evaluation.get("status"),
         "candidate_evaluation_decision": evaluation.get("decision"),
         "blockers": sorted(set(blockers)),
         "feedback_stage": dict(feedback),
         "quarantine_stage": dict(quarantine),
         "candidate_evaluation_stage": dict(evaluation),
+    }
+
+
+class ExclusiveProcessLock(Protocol):
+    """Minimal process-shared lock contract for the unattended service."""
+
+    path: Path
+
+    def acquire(self) -> None:
+        """Acquire the lock without waiting indefinitely."""
+
+    def release(self) -> None:
+        """Release the lock."""
+
+
+class AdvisoryFileLock:
+    """Cross-platform advisory lock released automatically on process exit."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._handle: Any = None
+        self._backend: str | None = None
+
+    def acquire(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        handle = self.path.open("a+b")
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                handle.seek(0, os.SEEK_END)
+                if handle.tell() == 0:
+                    handle.write(b"0")
+                    handle.flush()
+                handle.seek(0)
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                except OSError as exc:
+                    raise RuntimeError("paper_autolearning_unattended_lock_busy") from exc
+                self._backend = "msvcrt"
+            else:
+                import fcntl
+
+                try:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError as exc:
+                    raise RuntimeError("paper_autolearning_unattended_lock_busy") from exc
+                self._backend = "fcntl"
+
+            handle.seek(0)
+            handle.truncate()
+            metadata = {
+                "pid": os.getpid(),
+                "acquired_at_utc": datetime.now(UTC).isoformat(),
+                "schema_version": UNATTENDED_SCHEMA_VERSION,
+            }
+            handle.write(json.dumps(metadata, sort_keys=True).encode("utf-8"))
+            handle.flush()
+            self._handle = handle
+        except Exception:
+            handle.close()
+            raise
+
+    def release(self) -> None:
+        handle = self._handle
+        backend = self._backend
+        if handle is None or backend is None:
+            return
+        self._handle = None
+        self._backend = None
+        try:
+            if backend == "msvcrt":
+                import msvcrt
+
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            handle.close()
+
+
+def default_unattended_lock_path(project_root: str | Path) -> Path:
+    """Return an ephemeral lock path outside project data/runtime trees."""
+
+    root = Path(project_root).resolve()
+    digest = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:16]
+    return Path(tempfile.gettempdir()) / f"smart_futuros_paper_autolearning_{digest}.lock"
+
+
+def run_paper_autolearning_unattended_service_v2(
+    *,
+    project_root: str | Path,
+    explicit_paper_db_path: str | Path | None = None,
+    interval_seconds: float = DEFAULT_UNATTENDED_INTERVAL_SECONDS,
+    write_feedback: bool = False,
+    train_challenger: bool = False,
+    write_quarantine_artifacts: bool = False,
+    write_reports: bool = False,
+    evaluate_candidates: bool = True,
+    max_cycles: int | None = None,
+    stop_requested: StopRequested | None = None,
+    cycle_observer: CycleObserver | None = None,
+    sleep_fn: SleepFn = time.sleep,
+    cycle_runner: CycleRunner = run_paper_autolearning_continuous_orchestrator_v1,
+    lock: ExclusiveProcessLock | None = None,
+) -> dict[str, Any]:
+    """Run the canonical Paper auto-learning cycle unattended.
+
+    Transient blocked cycles and ordinary exceptions are isolated to the current
+    iteration. The service keeps its single process-shared lock until shutdown,
+    so duplicate daemon instances cannot race feedback/watermark writes.
+    """
+
+    if interval_seconds <= 0:
+        raise ValueError("interval_seconds_must_be_positive")
+    if max_cycles is not None and max_cycles <= 0:
+        raise ValueError("max_cycles_must_be_positive")
+
+    root = Path(project_root).resolve()
+    stop = stop_requested or (lambda: False)
+    service_lock = lock or AdvisoryFileLock(default_unattended_lock_path(root))
+    started_at = datetime.now(UTC)
+    cycles_executed = 0
+    cycles_with_new_outcomes = 0
+    training_cycle_count = 0
+    blocked_cycle_count = 0
+    exception_cycle_count = 0
+    total_new_outcomes = 0
+    total_microbatch_rows = 0
+    total_candidates = 0
+    total_duplicate_or_reprocessed_rows = 0
+    last_cycle: dict[str, Any] = {}
+
+    try:
+        service_lock.acquire()
+    except RuntimeError as exc:
+        return _unattended_service_report(
+            status="blocked",
+            reason=str(exc),
+            started_at=started_at,
+            cycles_executed=0,
+            cycles_with_new_outcomes=0,
+            training_cycle_count=0,
+            blocked_cycle_count=0,
+            exception_cycle_count=0,
+            total_new_outcomes=0,
+            total_microbatch_rows=0,
+            total_candidates=0,
+            total_duplicate_or_reprocessed_rows=0,
+            interval_seconds=interval_seconds,
+            lock_path=service_lock.path,
+            last_cycle={},
+        )
+
+    try:
+        while not stop():
+            cycle_started = time.perf_counter()
+            cycle_index = cycles_executed + 1
+            try:
+                raw_cycle = cycle_runner(
+                    project_root=root,
+                    explicit_paper_db_path=explicit_paper_db_path,
+                    write_feedback=write_feedback,
+                    train_challenger=train_challenger,
+                    write_quarantine_artifacts=write_quarantine_artifacts,
+                    write_reports=write_reports,
+                    evaluate_candidates=evaluate_candidates,
+                )
+                cycle = dict(raw_cycle)
+            except Exception as exc:  # noqa: BLE001 - isolated, surfaced in structured result
+                _LOGGER.exception(
+                    "paper_autolearning_unattended_cycle_failed cycle_index=%s",
+                    cycle_index,
+                )
+                exception_cycle_count += 1
+                cycle = _exception_cycle_report(exc)
+
+            cycle_duration = max(0.0, time.perf_counter() - cycle_started)
+            cycle["cycle_index"] = cycle_index
+            cycle["cycle_duration_seconds"] = round(cycle_duration, 6)
+            cycle["service_schema_version"] = UNATTENDED_SCHEMA_VERSION
+            cycle["service_lock_path"] = str(service_lock.path)
+            last_cycle = cycle
+            cycles_executed += 1
+
+            new_outcomes = int(cycle.get("new_outcome_event_count") or 0)
+            microbatch_rows = int(cycle.get("microbatch_rows") or 0)
+            candidate_count = int(cycle.get("quarantine_candidate_count") or 0)
+            duplicate_rows = int(cycle.get("duplicate_or_reprocessed_row_count") or 0)
+            if new_outcomes > 0:
+                cycles_with_new_outcomes += 1
+            if cycle.get("training_performed") is True:
+                training_cycle_count += 1
+            if cycle.get("status") == "blocked":
+                blocked_cycle_count += 1
+            total_new_outcomes += new_outcomes
+            total_microbatch_rows += microbatch_rows
+            total_candidates += candidate_count
+            total_duplicate_or_reprocessed_rows += duplicate_rows
+
+            if cycle_observer is not None:
+                cycle_observer(dict(cycle))
+
+            if max_cycles is not None and cycles_executed >= max_cycles:
+                break
+            if stop():
+                break
+            sleep_fn(interval_seconds)
+    finally:
+        service_lock.release()
+
+    reason = "stop_requested" if stop() else "max_cycles_reached" if max_cycles is not None else "service_stopped"
+    status = "warning" if blocked_cycle_count or exception_cycle_count else "ok"
+    return _unattended_service_report(
+        status=status,
+        reason=reason,
+        started_at=started_at,
+        cycles_executed=cycles_executed,
+        cycles_with_new_outcomes=cycles_with_new_outcomes,
+        training_cycle_count=training_cycle_count,
+        blocked_cycle_count=blocked_cycle_count,
+        exception_cycle_count=exception_cycle_count,
+        total_new_outcomes=total_new_outcomes,
+        total_microbatch_rows=total_microbatch_rows,
+        total_candidates=total_candidates,
+        total_duplicate_or_reprocessed_rows=total_duplicate_or_reprocessed_rows,
+        interval_seconds=interval_seconds,
+        lock_path=service_lock.path,
+        last_cycle=last_cycle,
+    )
+
+
+def _training_performed(quarantine: Mapping[str, Any]) -> bool:
+    trained_statuses = {"trained_quarantine_only", "trained_research_only"}
+    return any(
+        quarantine.get(field) in trained_statuses
+        for field in ("qlib_challenger_train_status", "ai_shadow_challenger_train_status")
+    )
+
+
+def _exception_cycle_report(exc: Exception) -> dict[str, Any]:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "status": "blocked",
+        "reason": "unattended_cycle_exception",
+        "exception_type": type(exc).__name__,
+        "decision": DECISION_RESEARCH_ONLY,
+        "paper_only": True,
+        "shadow_only": True,
+        "operational_authority": False,
+        "live_release_allowed": False,
+        "canary_release_allowed": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
+        "sends_orders": False,
+        "exchange_private_access": False,
+        "changes_risk": False,
+        "writes_runtime": False,
+        "writes_sqlite": False,
+        "model_promotion_performed": False,
+        "active_model_changed": False,
+        "new_outcome_event_count": 0,
+        "microbatch_rows": 0,
+        "duplicate_or_reprocessed_row_count": 0,
+        "quarantine_candidate_count": 0,
+        "training_performed": False,
+        "blockers": [f"cycle_exception:{type(exc).__name__}"],
+    }
+
+
+def _unattended_service_report(
+    *,
+    status: str,
+    reason: str,
+    started_at: datetime,
+    cycles_executed: int,
+    cycles_with_new_outcomes: int,
+    training_cycle_count: int,
+    blocked_cycle_count: int,
+    exception_cycle_count: int,
+    total_new_outcomes: int,
+    total_microbatch_rows: int,
+    total_candidates: int,
+    total_duplicate_or_reprocessed_rows: int,
+    interval_seconds: float,
+    lock_path: Path,
+    last_cycle: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "schema_version": UNATTENDED_SCHEMA_VERSION,
+        "status": status,
+        "reason": reason,
+        "started_at_utc": started_at.isoformat(),
+        "completed_at_utc": datetime.now(UTC).isoformat(),
+        "interval_seconds": float(interval_seconds),
+        "lock_path": str(lock_path),
+        "cycles_executed": int(cycles_executed),
+        "cycles_with_new_outcomes": int(cycles_with_new_outcomes),
+        "training_cycle_count": int(training_cycle_count),
+        "blocked_cycle_count": int(blocked_cycle_count),
+        "exception_cycle_count": int(exception_cycle_count),
+        "new_outcome_event_count": int(total_new_outcomes),
+        "microbatch_rows": int(total_microbatch_rows),
+        "candidate_count": int(total_candidates),
+        "duplicate_or_reprocessed_row_count": int(total_duplicate_or_reprocessed_rows),
+        "last_cycle": dict(last_cycle),
+        "paper_only": True,
+        "shadow_only": True,
+        "operational_authority": False,
+        "live_release_allowed": False,
+        "canary_release_allowed": False,
+        "order_submission_enabled": False,
+        "real_order_submission_enabled": False,
+        "sends_orders": False,
+        "exchange_private_access": False,
+        "changes_risk": False,
+        "writes_runtime": False,
+        "writes_sqlite": False,
+        "model_promotion_performed": False,
+        "active_model_changed": False,
     }

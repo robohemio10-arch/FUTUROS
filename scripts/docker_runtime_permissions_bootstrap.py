@@ -72,6 +72,9 @@ ALLOWED_RUNTIME_PATHS = frozenset(
         "/app/data/runtime",
         "/app/data/trades",
         "/app/data/feedback",
+        "/app/data/research",
+        "/app/data/models",
+        "/app/data/registries",
         "/app/data/features",
         "/app/data/predictions",
         "/app/data/snapshots/freqtrade-paper",
@@ -112,6 +115,9 @@ SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
         directories=(
             "/app/data/reports",
             "/app/data/feedback",
+            "/app/data/research",
+            "/app/data/models",
+            "/app/data/registries",
         ),
     ),
     NOTIFICATION_SERVICE: RuntimePermissionProfile(

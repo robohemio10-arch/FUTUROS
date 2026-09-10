@@ -65,11 +65,19 @@ class FeedbackBuildResult:
     rejected_rows: list[dict[str, Any]]
     new_events: list[dict[str, Any]]
     duplicate_events: list[dict[str, Any]]
+    already_known_events: list[dict[str, Any]]
+    intra_source_duplicate_events: list[dict[str, Any]]
     source_path: Path | None
     source_sha256: str | None
     input_mode: str
     source_reason: str
     futures_fields_coverage: dict[str, float]
+
+    @property
+    def duplicate_or_reprocessed_row_count(self) -> int:
+        """Count only repeated identities observed within the current source."""
+
+        return len(self.intra_source_duplicate_events)
 
 
 def build_feedback_events(
@@ -111,13 +119,19 @@ def build_feedback_events(
             )
     existing_path = _resolve(root, existing_outcome_path, DEFAULT_OUTCOME_EVENTS)
     existing_events = read_existing_outcome_events(existing_path)
-    new_events, duplicate_events = split_new_and_duplicate_events(valid_events, existing_events)
+    new_events, already_known_events, intra_source_duplicate_events = _partition_feedback_events(
+        valid_events,
+        existing_events,
+    )
+    duplicate_events = [*already_known_events, *intra_source_duplicate_events]
     return FeedbackBuildResult(
         closed_rows=[dict(row) for row in rows],
         valid_events=valid_events,
         rejected_rows=rejected_rows,
         new_events=new_events,
         duplicate_events=duplicate_events,
+        already_known_events=already_known_events,
+        intra_source_duplicate_events=intra_source_duplicate_events,
         source_path=source,
         source_sha256=source_sha,
         input_mode=input_mode,
@@ -296,20 +310,39 @@ def split_new_and_duplicate_events(
     events: Sequence[Mapping[str, Any]],
     existing_events: Sequence[Mapping[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Preserve the legacy combined duplicate partition for existing callers."""
+
+    new_events, already_known_events, intra_source_duplicate_events = _partition_feedback_events(
+        events,
+        existing_events,
+    )
+    return new_events, [*already_known_events, *intra_source_duplicate_events]
+
+
+def _partition_feedback_events(
+    events: Sequence[Mapping[str, Any]],
+    existing_events: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Separate historical matches from actual same-cycle duplicate input."""
+
     existing_keys = {event_dedup_key(event) for event in existing_events}
     seen: set[str] = set()
     new_events: list[dict[str, Any]] = []
-    duplicate_events: list[dict[str, Any]] = []
+    already_known_events: list[dict[str, Any]] = []
+    intra_source_duplicate_events: list[dict[str, Any]] = []
     for raw in events:
         event = dict(raw)
         key = event_dedup_key(event)
         event["_dedup_key"] = key
-        if key in existing_keys or key in seen:
-            duplicate_events.append(event)
+        if key in seen:
+            intra_source_duplicate_events.append(event)
             continue
         seen.add(key)
-        new_events.append(event)
-    return new_events, duplicate_events
+        if key in existing_keys:
+            already_known_events.append(event)
+        else:
+            new_events.append(event)
+    return new_events, already_known_events, intra_source_duplicate_events
 
 
 def read_existing_outcome_events(path: Path) -> list[dict[str, Any]]:

@@ -306,10 +306,13 @@ services:
     build:
       context: .
       dockerfile: docker/smartcrypto/Dockerfile
-    restart: "no"
+    restart: unless-stopped
     profiles:
       - autolearning
     user: "0:0"
+    depends_on:
+      freqtrade-paper:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -319,6 +322,7 @@ services:
       REAL_ORDER_SUBMISSION_ENABLED: "false"
       SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
       SMARTCRYPTO_AUTOLEARNING_KILL_SWITCH_CONTRACT: /app/docker/paper-autolearning-scheduler/autolearning_scheduler_kill_switch.template.json
+      SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS: ${SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS:-300}
       PYTHONPATH: /app
     working_dir: /app
     volumes:
@@ -327,6 +331,7 @@ services:
       - ./docker/paper-autolearning-scheduler:/app/docker/paper-autolearning-scheduler:ro
       - ./scripts:/app/scripts:ro
       - ./smartcrypto:/app/smartcrypto:ro
+      - freqtrade_paper_db:/paper-db:ro
     command:
       - python
       - scripts/docker_runtime_permissions_bootstrap.py
@@ -336,14 +341,26 @@ services:
       - /app/data/reports
       - --path
       - /app/data/feedback
+      - --path
+      - /app/data/research
+      - --path
+      - /app/data/models
+      - --path
+      - /app/data/registries
       - --
       - python
-      - scripts/run_paper_autolearning_scheduler_v1.py
+      - scripts/run_paper_autolearning_continuous_orchestrator_v1.py
       - --project-root
       - /app
-      - --once
+      - --paper-db
+      - /paper-db/tradesv3.paper.sqlite
+      - --daemon
+      - --interval-seconds
+      - ${SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS:-300}
       - --write-feedback
-      - --train-smoke
+      - --train-challenger
+      - --write-quarantine-artifacts
+      - --write-reports
       - --json
 
   redis:

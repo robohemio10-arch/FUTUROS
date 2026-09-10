@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "62962555ee2290e2ff05b7b5c40e4fc99ccb9d7c5ed69f9a78c0a390346f10f0",
+  "aggregate_sha256": "27c820b7fdd64e1171772fab67739562ba929dd6c78b38b89be7fe22f5e410b0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -686,10 +686,10 @@
       "sha256": "ecea4bb38a7854b9655f2614b4b587e3ced1ea49337b2dd73e03918671809ba7"
     },
     {
-      "bytes": 10930,
+      "bytes": 11505,
       "hash_mode": "text_lf",
       "path": "docker-compose.paper.yml",
-      "sha256": "9349b7a2780406ea67d78f44acf317cda91fe14406ddde898c2e881f9477881d"
+      "sha256": "5b4f62c9f0bee1a68cfc9ff434420015d227e7f99442b8d1784ed834a3d85c4d"
     },
     {
       "bytes": 1204,
@@ -4028,10 +4028,10 @@
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
     },
     {
-      "bytes": 26497,
+      "bytes": 26689,
       "hash_mode": "text_lf",
       "path": "scripts/docker_runtime_permissions_bootstrap.py",
-      "sha256": "008e0ca8dad45940ded1c044cc290d9b1a1f42c4d6fc3f6646245fed5cfedcb1"
+      "sha256": "eaee15560234bcd14d7ec2b30af8c4ed2493651de1ee2da3a68803b4aaab0846"
     },
     {
       "bytes": 580,
@@ -4730,10 +4730,10 @@
       "sha256": "d65c8478cd3122f39edcb0dcc118c4a78e40fd26af927d9c6e82de9bfa1ffe4a"
     },
     {
-      "bytes": 1927,
+      "bytes": 5408,
       "hash_mode": "text_lf",
       "path": "scripts/run_paper_autolearning_continuous_orchestrator_v1.py",
-      "sha256": "8e7ccaca55f9d15a95b3db272228c5c7507f626dc08bd655db8d6a0ac1b87f78"
+      "sha256": "291fa5b4d7da1ee89f22a721bd25db808a858bd2dc16e7757f4dc41b1a181b4d"
     },
     {
       "bytes": 2468,
@@ -6548,10 +6548,10 @@
       "sha256": "c4aac3cd42918fcc7b5551d2ff8285cca63cf7f083ff0147a74a3a060fc7b9a7"
     },
     {
-      "bytes": 14518,
+      "bytes": 28180,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/continuous_orchestrator.py",
-      "sha256": "9e30e4d15b01d63fa5164c2bc306ae6718ac168222e15595fa0cb9179622b8f0"
+      "sha256": "15c88d536ee37c6ae226b816b8c6963fad625bb8026457726b8a2537b12f7cf0"
     },
     {
       "bytes": 10425,
@@ -6578,10 +6578,10 @@
       "sha256": "124887b32468a39ade8445580afa08b827663fdd9fe7578af4331eb6a7a66976"
     },
     {
-      "bytes": 20687,
+      "bytes": 22027,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/feedback_store.py",
-      "sha256": "8e0d83243427c752a486138c63f4f86341f58a48daf384274b2d08153a9a5301"
+      "sha256": "9d20c34fc02018948ae8549da2aff6418e27578bf87a9fbff06d549758cba41d"
     },
     {
       "bytes": 15996,
@@ -6590,10 +6590,10 @@
       "sha256": "ede93469f0c512f5a123935d80c300a71a73d23d99a9bd450aa17d522a5a4286"
     },
     {
-      "bytes": 13268,
+      "bytes": 16246,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/live_feedback_loop.py",
-      "sha256": "c6bf65629c8b8a34ede89f57017b8bdeba8216eee8fe0dc5b4396149174d952a"
+      "sha256": "d0a2e9e239a8e00eac29c9461cc28ed739d63179620e690acab0ed9be7d04c21"
     },
     {
       "bytes": 2501,
@@ -6650,10 +6650,10 @@
       "sha256": "b0888b48a62e4c1b356316362ad6408af51646f5caef1586124934aef7550924"
     },
     {
-      "bytes": 12369,
+      "bytes": 14168,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/runtime_source.py",
-      "sha256": "b51bf28edd812c4967040098bdef5d52a0bb1ef81f062f2ea8459616ddc1d95d"
+      "sha256": "849fe878545f7c620a88034603b3d587f26d7728c9fbf387fa18c2abed01acb4"
     },
     {
       "bytes": 6596,
@@ -6662,10 +6662,10 @@
       "sha256": "3f34965c2fb02081482d448ea06859793e111bf44af81e27a8c293ff4aece0de"
     },
     {
-      "bytes": 9658,
+      "bytes": 11950,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/scheduler_deployment.py",
-      "sha256": "aa0c8bb69d44fc55ca85dd5b8c6efc6fded87da48984e22f787588c110f93c74"
+      "sha256": "a1828edb8641b10882c24eb031d76bfa2aa86e010aaae9ebe5b89675a14d4560"
     },
     {
       "bytes": 206,
@@ -10514,16 +10514,16 @@
       "sha256": "be6e9bdd951d6bf508306229dc2c1897e4b5aee9766f30b4823df26cda5ca2cf"
     },
     {
-      "bytes": 5550,
+      "bytes": 6246,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_paper_runtime_permissions_and_runtime_lock_v1.py",
-      "sha256": "5f2f3a9d79fe75b630e709b151e6d8c7cc9262a620f676849c2b9b4e5335ab92"
+      "sha256": "6d1b5a7f586a329a4bb4762908d59a5768b75e7b6f61adb992c5c73cf5ad33ca"
     },
     {
-      "bytes": 9072,
+      "bytes": 9162,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_runtime_permissions_bootstrap.py",
-      "sha256": "50d6fa37634819e73e0aced1c379026f0c2145a206ca69306465fddbe9c3d5fe"
+      "sha256": "3474dbd6a9c837c03b1561e382e277072c9dd38cd8534207965abc876971139e"
     },
     {
       "bytes": 1777,
@@ -11060,10 +11060,10 @@
       "sha256": "84fbc6775306ab5747685d01aa1a6560c479bafa71b692839e945a02ec386458"
     },
     {
-      "bytes": 6325,
+      "bytes": 12798,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_continuous_orchestrator_v1.py",
-      "sha256": "8118991a3d68dbbd038eda16efbf0b2f642e023c5fb537e9c64d9f10b915450c"
+      "sha256": "4549225f25f2d3416f64d2e351d9e1e731ff967b6c3cc5588c9ece00f1b0fa93"
     },
     {
       "bytes": 9816,
@@ -11096,16 +11096,16 @@
       "sha256": "dd232faf1b45426c5dcbcc11ef0d0f2ea4150858759ef5277884d87462185b5a"
     },
     {
-      "bytes": 10968,
+      "bytes": 16703,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_live_feedback_loop_v1.py",
-      "sha256": "aa89a011f2e8c3c037ae0d44784f030d840263f6b147072f3892b403c49b029b"
+      "sha256": "f38e8a0f89fab1c45ecac6a5a3d01525cc9e295b907dce0f7e6c3dfdfd88a50d"
     },
     {
-      "bytes": 6367,
+      "bytes": 9209,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autolearning_scheduler_deployment_v1.py",
-      "sha256": "d6f3f729b827852597cb183c0e00590ff6d29912de72ebbcb18f2286ab0bf5ad"
+      "sha256": "ca02cfdc31c6dd1166ff61df21b30108eeb962f792d4e3899454ebd6643ca491"
     },
     {
       "bytes": 16419,
@@ -11708,10 +11708,10 @@
       "sha256": "0b136663b08f673f29f084ebcec1cb9e8e1a746b16b2a8f6aacb5d6ed389b6f5"
     },
     {
-      "bytes": 18241,
+      "bytes": 18331,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_refresh_supervisor_runtime_permissions_v1.py",
-      "sha256": "ca6236ce58ecedf430e470815d49be9842b7273ce07a6abe58306eea575fa02e"
+      "sha256": "beae4e9955eec99c55feae92e3f431a6ec7a504b0c92025da9d12b6a6b29f388"
     },
     {
       "bytes": 8242,

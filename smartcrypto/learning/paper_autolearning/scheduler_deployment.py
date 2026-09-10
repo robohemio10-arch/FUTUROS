@@ -1,4 +1,4 @@
-"""Deployment readiness contract for the paper auto-learning scheduler."""
+"""Deployment readiness contract for the unattended Paper auto-learning service."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import yaml
 from .outcome_schema import SAFETY_FLAGS, utc_now_iso
 
 SCHEMA_VERSION = "paper_autolearning_scheduler_deployment_v1"
-SELECTED_MECHANISM = "docker_compose_paper"
+SELECTED_MECHANISM = "docker_compose_paper_unattended"
 SERVICE_NAME = "paper-autolearning-scheduler"
 DEFAULT_COMPOSE_PATH = Path("docker-compose.paper.yml")
 DEFAULT_KILL_SWITCH_CONTRACT_PATH = Path(
@@ -22,12 +22,18 @@ DEFAULT_AUDIT_REPORT_PATH = Path("data/reports/paper_autolearning_scheduler_depl
 
 EXPECTED_SERVICE_COMMAND = [
     "python",
-    "scripts/run_paper_autolearning_scheduler_v1.py",
+    "scripts/run_paper_autolearning_continuous_orchestrator_v1.py",
     "--project-root",
     "/app",
-    "--once",
+    "--paper-db",
+    "/paper-db/tradesv3.paper.sqlite",
+    "--daemon",
+    "--interval-seconds",
+    "${SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS:-300}",
     "--write-feedback",
-    "--train-smoke",
+    "--train-challenger",
+    "--write-quarantine-artifacts",
+    "--write-reports",
     "--json",
 ]
 BOOTSTRAP_SERVICE_COMMAND_PREFIX = [
@@ -39,7 +45,13 @@ BOOTSTRAP_SERVICE_COMMAND_PREFIX = [
 BOOTSTRAP_PERMISSION_PATHS = {
     "/app/data/reports",
     "/app/data/feedback",
+    "/app/data/research",
+    "/app/data/models",
+    "/app/data/registries",
 }
+EXPECTED_RESTART_POLICY = "unless-stopped"
+EXPECTED_PAPER_DB_VOLUME = "freqtrade_paper_db:/paper-db:ro"
+EXPECTED_FREQTRADE_DEPENDENCY = {"freqtrade-paper": {"condition": "service_healthy"}}
 
 DEPLOYMENT_SAFETY_FLAGS: dict[str, bool] = {
     **SAFETY_FLAGS,
@@ -92,20 +104,24 @@ def build_paper_autolearning_scheduler_deployment_report(
     docker_service_defined = bool(service)
     command_validated = validate_service_command(service)
     env_validated = validate_service_environment(service)
-    foundation_runner_command_validated = command_validated
+    restart_policy_validated = validate_restart_policy(service)
+    paper_db_readonly_mounted = validate_paper_db_volume(service)
+    freqtrade_health_dependency_validated = validate_freqtrade_dependency(service)
     kill_switch_contract_present = inputs.kill_switch_contract_path.exists()
-    kill_switch_checked = True
 
     validation_errors = validate_deployment_components(
         docker_service_defined=docker_service_defined,
         command_validated=command_validated,
         env_validated=env_validated,
+        restart_policy_validated=restart_policy_validated,
+        paper_db_readonly_mounted=paper_db_readonly_mounted,
+        freqtrade_health_dependency_validated=freqtrade_health_dependency_validated,
         kill_switch_contract_present=kill_switch_contract_present,
     )
     status = "blocked" if validation_errors else "ok"
     deployment_status = "blocked" if validation_errors else "deployment_ready"
     reason = reason_from_errors(validation_errors)
-    daily_autolearning_enabled = not validation_errors
+    unattended_ready = not validation_errors
 
     report: dict[str, Any] = {
         "status": status,
@@ -115,15 +131,21 @@ def build_paper_autolearning_scheduler_deployment_report(
         "deployment_status": deployment_status,
         "deployment_mode": SELECTED_MECHANISM,
         "deployment_performed": False,
-        "scheduler_enabled": daily_autolearning_enabled,
-        "daily_autolearning_enabled": daily_autolearning_enabled,
+        "scheduler_enabled": unattended_ready,
+        "daily_autolearning_enabled": unattended_ready,
+        "unattended_service_enabled": unattended_ready,
         "selected_mechanism": SELECTED_MECHANISM,
         "would_run_command": list(EXPECTED_SERVICE_COMMAND),
         "command_validated": command_validated,
-        "foundation_runner_command_validated": foundation_runner_command_validated,
+        "foundation_runner_command_validated": command_validated,
+        "unattended_command_validated": command_validated,
+        "restart_policy_validated": restart_policy_validated,
+        "restart_policy": service.get("restart") if service else None,
+        "paper_db_readonly_mounted": paper_db_readonly_mounted,
+        "freqtrade_health_dependency_validated": freqtrade_health_dependency_validated,
         "kill_switch_required": True,
         "kill_switch_contract_present": kill_switch_contract_present,
-        "kill_switch_checked": kill_switch_checked,
+        "kill_switch_checked": True,
         "kill_switch_contract_path": str(inputs.kill_switch_contract_path),
         "log_path_planned": str((inputs.project_root / DEFAULT_LOG_PATH).resolve()),
         "audit_report_path_planned": str((inputs.project_root / DEFAULT_AUDIT_REPORT_PATH).resolve()),
@@ -208,8 +230,6 @@ def normalize_command(command: Any) -> list[str]:
 
 def validate_service_command(service: Mapping[str, Any]) -> bool:
     command = normalize_command(service.get("command"))
-    if command == EXPECTED_SERVICE_COMMAND:
-        return True
     if command[: len(BOOTSTRAP_SERVICE_COMMAND_PREFIX)] != BOOTSTRAP_SERVICE_COMMAND_PREFIX:
         return False
     if "--" not in command:
@@ -239,7 +259,26 @@ def validate_service_environment(service: Mapping[str, Any]) -> bool:
     for key, expected in REQUIRED_FALSE_SERVICE_ENV.items():
         if str(environment.get(key, "")).lower() != expected:
             return False
-    return str(environment.get("SMARTCRYPTO_RUNTIME_MODE", "")).lower() == "paper"
+    if str(environment.get("SMARTCRYPTO_RUNTIME_MODE", "")).lower() != "paper":
+        return False
+    interval = str(environment.get("SMARTCRYPTO_AUTOLEARNING_INTERVAL_SECONDS", "")).strip()
+    return bool(interval)
+
+
+def validate_restart_policy(service: Mapping[str, Any]) -> bool:
+    return str(service.get("restart", "")) == EXPECTED_RESTART_POLICY
+
+
+def validate_paper_db_volume(service: Mapping[str, Any]) -> bool:
+    volumes = service.get("volumes")
+    if not isinstance(volumes, list):
+        return False
+    return EXPECTED_PAPER_DB_VOLUME in {str(item) for item in volumes}
+
+
+def validate_freqtrade_dependency(service: Mapping[str, Any]) -> bool:
+    depends_on = service.get("depends_on")
+    return depends_on == EXPECTED_FREQTRADE_DEPENDENCY
 
 
 def validate_deployment_components(
@@ -247,6 +286,9 @@ def validate_deployment_components(
     docker_service_defined: bool,
     command_validated: bool,
     env_validated: bool,
+    restart_policy_validated: bool,
+    paper_db_readonly_mounted: bool,
+    freqtrade_health_dependency_validated: bool,
     kill_switch_contract_present: bool,
 ) -> list[str]:
     errors: list[str] = []
@@ -258,6 +300,12 @@ def validate_deployment_components(
         errors.append("scheduler_command_invalid")
     if docker_service_defined and not env_validated:
         errors.append("scheduler_environment_unsafe")
+    if docker_service_defined and not restart_policy_validated:
+        errors.append("scheduler_restart_policy_invalid")
+    if docker_service_defined and not paper_db_readonly_mounted:
+        errors.append("paper_db_readonly_mount_missing")
+    if docker_service_defined and not freqtrade_health_dependency_validated:
+        errors.append("freqtrade_health_dependency_missing")
     return errors
 
 

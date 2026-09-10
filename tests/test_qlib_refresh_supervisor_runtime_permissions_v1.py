@@ -259,6 +259,9 @@ def test_existing_service_profiles_remain_nominal_and_restricted() -> None:
     ].directories == (
         "/app/data/reports",
         "/app/data/feedback",
+        "/app/data/research",
+        "/app/data/models",
+        "/app/data/registries",
     )
     assert bootstrap.SERVICE_PROFILES[
         bootstrap.NOTIFICATION_SERVICE
