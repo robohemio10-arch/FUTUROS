@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "27c820b7fdd64e1171772fab67739562ba929dd6c78b38b89be7fe22f5e410b0",
+  "aggregate_sha256": "7bed0746996e86d4c2311e566f6bcd070b4b599dd68d7bc2727ac46f534113fb",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 310,
-    "manifested_files_total": 2024,
-    "python_files": 1575,
+    "docs_files": 311,
+    "manifested_files_total": 2030,
+    "python_files": 1580,
     "runtime_excluded_files_total": 0,
-    "test_files": 425,
-    "tracked_files_total": 2025,
+    "test_files": 426,
+    "tracked_files_total": 2031,
     "workflows": 2
   },
   "deterministic": true,
@@ -2222,6 +2222,12 @@
       "sha256": "ab56b5c2b370cf13d94b3c5f0b61e72d64f75daff07136abc184a21e8fb79a97"
     },
     {
+      "bytes": 5684,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_V3_REPRODUCIBLE_FREEZE_EPOCH_V1.md",
+      "sha256": "c840e5fbf0ccd30100e0594b18136444866a03cf89adeb833cc2d736bb2af089"
+    },
+    {
       "bytes": 9451,
       "hash_mode": "text_lf",
       "path": "docs/QUALITY_GATED_V5_PROVENANCE_FRESHNESS_AND_NONREGRESSION_CONTRACT_V1.md",
@@ -3752,6 +3758,12 @@
       "sha256": "77bfeaf5b8f00e2373ceaa36c0d980f6f18628fd7fbd5fa356e2e1cda32ed87b"
     },
     {
+      "bytes": 5124,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_v3_reproducible_freeze_epoch_v1.py",
+      "sha256": "f335c8041cc75ecf17289ca1af1878c81988500ea7afc75926b93333a72ad39d"
+    },
+    {
       "bytes": 2949,
       "hash_mode": "text_lf",
       "path": "scripts/build_quality_gated_shadow_compatible_dataset_v1.py",
@@ -4484,6 +4496,12 @@
       "sha256": "2300537f5cdaa5722f70b4e99d4caf701c9bfc029e2197556e4bdd6b4c1ad60e"
     },
     {
+      "bytes": 1741,
+      "hash_mode": "text_lf",
+      "path": "scripts/rebuild_qlib_v3_frozen_epoch_once_v1.py",
+      "sha256": "4aba7f98a082f5507643be41675ae5988d7f98eef73b9a994e393973e8d8b1e5"
+    },
+    {
       "bytes": 1906,
       "hash_mode": "text_lf",
       "path": "scripts/reconcile_aibot_account_performance_v1.py",
@@ -5094,6 +5112,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/validate_phase11_signal_execution.py",
       "sha256": "766da38a079535c7ace2271234d59398ec9988ec9de9beecb09a1b1dbce62bad"
+    },
+    {
+      "bytes": 5054,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_qlib_v3_offline_candidate_v1.py",
+      "sha256": "4e77ddba9e64d42839b4a411a4d4ac562b493ee1c431e6b0f097536f4e8c7418"
     },
     {
       "bytes": 1510,
@@ -6620,10 +6644,10 @@
       "sha256": "8c1c1154072ac42eabee0fd2920c4477f26808cec84e000670ff9131dfb0c210"
     },
     {
-      "bytes": 56904,
+      "bytes": 59986,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_market_context_economic_challenger.py",
-      "sha256": "2bc7d79bcc9babfc779b8c5f9f2f6a321f74add59fb62bd593df6e31500b78e1"
+      "sha256": "987d2e263eb8a246a0cf49d47cc291ce4b009ec578a6656ef0fc23a12422393c"
     },
     {
       "bytes": 33772,
@@ -6648,6 +6672,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/qlib_v2_prospective_signal_observer.py",
       "sha256": "b0888b48a62e4c1b356316362ad6408af51646f5caef1586124934aef7550924"
+    },
+    {
+      "bytes": 96330,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/paper_autolearning/qlib_v3_reproducible_freeze_epoch.py",
+      "sha256": "b77bb7b5038de5980869a2414f7c6b7822ffa701d7294c48331f4fd3f200135d"
     },
     {
       "bytes": 14168,
@@ -11760,6 +11790,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v2_prospective_signal_observer_v1.py",
       "sha256": "7407635f0efb78aa6e329b1e1298bf6c59d763125dc0b1bec159b91f389238ee"
+    },
+    {
+      "bytes": 23158,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_reproducible_freeze_epoch_v1.py",
+      "sha256": "0a4c2e3b1ce368f1359e00fab97dab3c2e024a4a11a89dcec6edfb7633dfc511"
     },
     {
       "bytes": 8175,
