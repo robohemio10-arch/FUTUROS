@@ -1107,7 +1107,15 @@ def _align_point_in_time_market_features(
     outcomes: Sequence[Mapping[str, Any]],
     market: pd.DataFrame,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Vectorized point-in-time join from closed 5m candles to trade entries."""
+    """Vectorized point-in-time join from closed 5m candles to trade entries.
+
+    Pandas 3 preserves microsecond resolution for Python ``datetime`` inputs while
+    Parquet-backed market timestamps are commonly nanosecond-resolution. ``merge_asof``
+    requires the two join keys to have exactly the same dtype. Normalize both sides to
+    ``datetime64[ns, UTC]`` before sorting and joining so the PIT contract is independent
+    of the source timestamp resolution without changing timestamp values or lookahead
+    semantics.
+    """
 
     aligned = [dict(row) for row in outcomes]
     if not aligned:
@@ -1127,6 +1135,12 @@ def _align_point_in_time_market_features(
             "open_time_utc": [row["__open_time"] for row in aligned],
         }
     )
+    left["open_time_utc"] = pd.to_datetime(
+        left["open_time_utc"],
+        utc=True,
+        errors="raise",
+    ).astype("datetime64[ns, UTC]")
+
     joined_parts: list[pd.DataFrame] = []
     right_columns = [
         "symbol",
@@ -1144,6 +1158,18 @@ def _align_point_in_time_market_features(
                 missing[column] = np.nan
             joined_parts.append(missing)
             continue
+
+        right["ts"] = pd.to_datetime(
+            right["ts"],
+            utc=True,
+            errors="raise",
+        ).astype("datetime64[ns, UTC]")
+        right["available_at_utc"] = pd.to_datetime(
+            right["available_at_utc"],
+            utc=True,
+            errors="raise",
+        ).astype("datetime64[ns, UTC]")
+
         merged = pd.merge_asof(
             left_group.sort_values("open_time_utc", kind="mergesort"),
             right.drop(columns=["symbol"]).sort_values(

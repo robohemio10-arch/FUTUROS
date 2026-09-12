@@ -174,6 +174,48 @@ def test_training_contract_remains_exactly_v2_compatible() -> None:
     }
 
 
+def test_pit_alignment_normalizes_mixed_datetime_resolution_for_pandas3() -> None:
+    open_time = pd.Timestamp("2026-06-01T00:10:00.123456Z").to_pydatetime()
+    outcomes = [
+        {
+            "__symbol": "ETHUSDT",
+            "__open_time": open_time,
+            "notional": 100.0,
+        }
+    ]
+
+    market_row: dict[str, object] = {
+        "symbol": "ETHUSDT",
+        "ts": pd.Timestamp("2026-06-01T00:05:00Z"),
+        "available_at_utc": pd.Timestamp("2026-06-01T00:10:00Z"),
+    }
+    market_row.update({column: 1.0 for column in base.MARKET_SOURCE_COLUMNS})
+    market = pd.DataFrame([market_row])
+    market["ts"] = pd.to_datetime(
+        market["ts"],
+        utc=True,
+        errors="raise",
+    ).astype("datetime64[ns, UTC]")
+    market["available_at_utc"] = pd.to_datetime(
+        market["available_at_utc"],
+        utc=True,
+        errors="raise",
+    ).astype("datetime64[ns, UTC]")
+
+    ready, report = base._align_point_in_time_market_features(outcomes, market)
+
+    assert report["status"] == "ok"
+    assert report["input_trade_count"] == 1
+    assert report["ready_trade_count"] == 1
+    assert report["coverage"] == 1.0
+    assert len(ready) == 1
+    assert ready[0]["__market_ready"] is True
+    assert ready[0]["__market_feature_available_at"] == pd.Timestamp(
+        "2026-06-01T00:10:00Z"
+    ).to_pydatetime()
+    assert ready[0]["__market_feature_age_seconds"] == pytest.approx(0.123456)
+
+
 def test_v2_predictor_wrapper_is_semantically_transparent(monkeypatch: pytest.MonkeyPatch) -> None:
     train_x = pd.DataFrame({"x": [1.0, 2.0, 3.0]})
     train_y = pd.Series([1.0, 2.0, 3.0], dtype=float)
