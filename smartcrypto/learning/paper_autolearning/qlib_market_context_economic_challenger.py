@@ -161,6 +161,28 @@ class Predictor(Protocol):
 
 
 @dataclass(frozen=True)
+class NativeQlibLgbFitResult:
+    """Serializable outputs from the repository's canonical Qlib LGB trainer."""
+
+    calibration_scores: np.ndarray
+    test_scores: np.ndarray
+    model_text: str
+    best_iteration: int
+
+
+class NativeQlibLgbTrainer(Protocol):
+    def __call__(
+        self,
+        train_x: pd.DataFrame,
+        train_y: pd.Series,
+        calibration_x: pd.DataFrame,
+        test_x: pd.DataFrame,
+        *,
+        fold_id: str,
+    ) -> NativeQlibLgbFitResult: ...
+
+
+@dataclass(frozen=True)
 class FoldSpec:
     fold_id: str
     test_start: int
@@ -725,9 +747,39 @@ def _select_calibration_threshold(
     }
 
 
+def native_qlib_lgb_training_contract() -> dict[str, Any]:
+    """Return the exact, predeclared training contract shared by V2 and V3."""
+
+    return {
+        "loss": "mse",
+        "early_stopping_rounds": 20,
+        "num_boost_round": 160,
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "num_leaves": 15,
+        "min_data_in_leaf": 25,
+        "feature_fraction": 0.80,
+        "bagging_fraction": 0.85,
+        "bagging_freq": 1,
+        "lambda_l1": 0.10,
+        "lambda_l2": 0.50,
+        "seed": RANDOM_SEED,
+        "bagging_seed": RANDOM_SEED,
+        "feature_fraction_seed": RANDOM_SEED,
+        "data_random_seed": RANDOM_SEED,
+        "deterministic": True,
+        "force_col_wise": True,
+        "num_threads": 1,
+        "model_validation_fraction": MODEL_VALIDATION_FRACTION,
+        "min_model_validation_trades": MIN_MODEL_VALIDATION_TRADES,
+        "min_model_train_trades": MIN_MODEL_TRAIN_TRADES,
+    }
+
+
 @contextmanager
-def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, Any]]]:
-    """Provide a native Qlib/LightGBM predictor on isolated ephemeral storage.
+def _native_qlib_lgb_trainer_context(
+) -> Iterator[tuple[NativeQlibLgbTrainer, dict[str, Any]]]:
+    """Provide the canonical native trainer and its deterministic model bytes.
 
     MLflow 3.x no longer accepts the legacy filesystem tracking backend by default.
     This research-only context therefore provisions a temporary SQLite tracking
@@ -797,14 +849,14 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                 clear_mem_cache=True,
             )
 
-            def predict(
+            def train(
                 train_x: pd.DataFrame,
                 train_y: pd.Series,
                 calibration_x: pd.DataFrame,
                 test_x: pd.DataFrame,
                 *,
                 fold_id: str,
-            ) -> tuple[np.ndarray, np.ndarray]:
+            ) -> NativeQlibLgbFitResult:
                 validation_count = max(
                     MIN_MODEL_VALIDATION_TRADES,
                     math.floor(len(train_x) * MODEL_VALIDATION_FRACTION),
@@ -826,27 +878,18 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                     fold_id=fold_id,
                 )
 
-                model = lgb_model_class(
-                    loss="mse",
-                    early_stopping_rounds=20,
-                    num_boost_round=160,
-                    learning_rate=0.03,
-                    max_depth=3,
-                    num_leaves=15,
-                    min_data_in_leaf=25,
-                    feature_fraction=0.80,
-                    bagging_fraction=0.85,
-                    bagging_freq=1,
-                    lambda_l1=0.10,
-                    lambda_l2=0.50,
-                    seed=RANDOM_SEED,
-                    bagging_seed=RANDOM_SEED,
-                    feature_fraction_seed=RANDOM_SEED,
-                    data_random_seed=RANDOM_SEED,
-                    deterministic=True,
-                    force_col_wise=True,
-                    num_threads=1,
-                )
+                training_contract = native_qlib_lgb_training_contract()
+                model_kwargs = {
+                    key: value
+                    for key, value in training_contract.items()
+                    if key
+                    not in {
+                        "model_validation_fraction",
+                        "min_model_validation_trades",
+                        "min_model_train_trades",
+                    }
+                }
+                model = lgb_model_class(**model_kwargs)
 
                 with recorder.start(
                     experiment_name=experiment_name,
@@ -857,11 +900,24 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
 
                 calibration_prediction = model.predict(dataset, segment="calibration")
                 test_prediction = model.predict(dataset, segment="test")
-                return (
-                    np.asarray(calibration_prediction.to_numpy(), dtype=float).reshape(-1),
-                    np.asarray(test_prediction.to_numpy(), dtype=float).reshape(-1),
+                booster = getattr(model, "model", None)
+                if booster is None or not hasattr(booster, "model_to_string"):
+                    raise RuntimeError("native_lgb_serializable_booster_missing")
+                model_text = str(booster.model_to_string())
+                if not model_text.strip():
+                    raise RuntimeError("native_lgb_serialized_model_empty")
+                return NativeQlibLgbFitResult(
+                    calibration_scores=np.asarray(
+                        calibration_prediction.to_numpy(), dtype=float
+                    ).reshape(-1),
+                    test_scores=np.asarray(
+                        test_prediction.to_numpy(), dtype=float
+                    ).reshape(-1),
+                    model_text=model_text.rstrip("\n") + "\n",
+                    best_iteration=int(getattr(booster, "best_iteration", 0) or 0),
                 )
 
+            training_contract = native_qlib_lgb_training_contract()
             metadata = {
                 "framework": "Microsoft Qlib",
                 "qlib_version": str(getattr(qlib, "__version__", "unknown")),
@@ -870,10 +926,10 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                 "class": str(getattr(lgb_model_class, "__name__", "")),
                 "loss": "mse",
                 "target": "stressed_net_pnl_per_notional_bps",
-                "num_boost_round": 160,
-                "max_depth": 3,
-                "num_leaves": 15,
-                "min_data_in_leaf": 25,
+                "num_boost_round": training_contract["num_boost_round"],
+                "max_depth": training_contract["max_depth"],
+                "num_leaves": training_contract["num_leaves"],
+                "min_data_in_leaf": training_contract["min_data_in_leaf"],
                 "model_validation_fraction": MODEL_VALIDATION_FRACTION,
                 "min_model_validation_trades": MIN_MODEL_VALIDATION_TRADES,
                 "min_model_train_trades": MIN_MODEL_TRAIN_TRADES,
@@ -890,9 +946,11 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
                     "temporary_directory_ignore_cleanup_errors_windows_safe"
                 ),
                 "temporary_cleanup_errors_are_non_fatal": True,
+                "training_contract": training_contract,
+                "serialized_model_format": "lightgbm_booster_text",
             }
 
-            yield predict, metadata
+            yield train, metadata
 
             # Drop the local client/experiment references before leaving the temporary
             # directory and trigger deterministic garbage collection. Qlib/MLflow may
@@ -918,6 +976,32 @@ def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, 
             os.environ.pop("MLFLOW_ALLOW_FILE_STORE", None)
         else:
             os.environ["MLFLOW_ALLOW_FILE_STORE"] = previous_file_store
+
+
+@contextmanager
+def _native_qlib_lgb_predictor_context() -> Iterator[tuple[Predictor, dict[str, Any]]]:
+    """Preserve the established V2 predictor API over the shared trainer."""
+
+    with _native_qlib_lgb_trainer_context() as (trainer, metadata):
+
+        def predict(
+            train_x: pd.DataFrame,
+            train_y: pd.Series,
+            calibration_x: pd.DataFrame,
+            test_x: pd.DataFrame,
+            *,
+            fold_id: str,
+        ) -> tuple[np.ndarray, np.ndarray]:
+            result = trainer(
+                train_x,
+                train_y,
+                calibration_x,
+                test_x,
+                fold_id=fold_id,
+            )
+            return result.calibration_scores, result.test_scores
+
+        yield predict, metadata
 
 
 class _InMemoryQlibDataset:
@@ -1023,7 +1107,15 @@ def _align_point_in_time_market_features(
     outcomes: Sequence[Mapping[str, Any]],
     market: pd.DataFrame,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Vectorized point-in-time join from closed 5m candles to trade entries."""
+    """Vectorized point-in-time join from closed 5m candles to trade entries.
+
+    Pandas 3 preserves microsecond resolution for Python ``datetime`` inputs while
+    Parquet-backed market timestamps are commonly nanosecond-resolution. ``merge_asof``
+    requires the two join keys to have exactly the same dtype. Normalize both sides to
+    ``datetime64[ns, UTC]`` before sorting and joining so the PIT contract is independent
+    of the source timestamp resolution without changing timestamp values or lookahead
+    semantics.
+    """
 
     aligned = [dict(row) for row in outcomes]
     if not aligned:
@@ -1043,6 +1135,12 @@ def _align_point_in_time_market_features(
             "open_time_utc": [row["__open_time"] for row in aligned],
         }
     )
+    left["open_time_utc"] = pd.to_datetime(
+        left["open_time_utc"],
+        utc=True,
+        errors="raise",
+    ).astype("datetime64[ns, UTC]")
+
     joined_parts: list[pd.DataFrame] = []
     right_columns = [
         "symbol",
@@ -1060,6 +1158,18 @@ def _align_point_in_time_market_features(
                 missing[column] = np.nan
             joined_parts.append(missing)
             continue
+
+        right["ts"] = pd.to_datetime(
+            right["ts"],
+            utc=True,
+            errors="raise",
+        ).astype("datetime64[ns, UTC]")
+        right["available_at_utc"] = pd.to_datetime(
+            right["available_at_utc"],
+            utc=True,
+            errors="raise",
+        ).astype("datetime64[ns, UTC]")
+
         merged = pd.merge_asof(
             left_group.sort_values("open_time_utc", kind="mergesort"),
             right.drop(columns=["symbol"]).sort_values(
@@ -1156,6 +1266,10 @@ def _model_feature_row(row: Mapping[str, Any]) -> dict[str, float | None]:
     dist_ema20 = _numeric(market.get("dist_ema20"))
 
     open_time = row.get("__open_time")
+    hour_sin: float | None
+    hour_cos: float | None
+    weekday_sin: float | None
+    weekday_cos: float | None
     if isinstance(open_time, datetime):
         seconds_of_day = open_time.hour * 3600 + open_time.minute * 60 + open_time.second
         day_angle = 2.0 * math.pi * seconds_of_day / 86400.0
@@ -1165,7 +1279,10 @@ def _model_feature_row(row: Mapping[str, Any]) -> dict[str, float | None]:
         weekday_sin = math.sin(weekday_angle)
         weekday_cos = math.cos(weekday_angle)
     else:
-        hour_sin = hour_cos = weekday_sin = weekday_cos = None
+        hour_sin = None
+        hour_cos = None
+        weekday_sin = None
+        weekday_cos = None
 
     return {
         "feature_side_long": side_long,
