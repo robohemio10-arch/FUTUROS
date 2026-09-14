@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "2ef9bf0d84f96b7f2c4f332160a1ef82b12cf663b7709557958d4c8c2eb246e6",
+  "aggregate_sha256": "f1b8e4c3301d6cf424e5a887d390ac1f7d454216986243bd85b27efe9251f488",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 311,
-    "manifested_files_total": 2030,
-    "python_files": 1580,
+    "docs_files": 312,
+    "manifested_files_total": 2039,
+    "python_files": 1588,
     "runtime_excluded_files_total": 0,
-    "test_files": 426,
-    "tracked_files_total": 2031,
+    "test_files": 427,
+    "tracked_files_total": 2040,
     "workflows": 2
   },
   "deterministic": true,
@@ -2220,6 +2220,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_V2_PROSPECTIVE_PAPER_CONFIRMATION_V1.md",
       "sha256": "ab56b5c2b370cf13d94b3c5f0b61e72d64f75daff07136abc184a21e8fb79a97"
+    },
+    {
+      "bytes": 5679,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_V3_PROSPECTIVE_EVIDENCE_ORCHESTRATOR_V1.md",
+      "sha256": "09871e2cf34b628417e0f39dc5495e50c8f1e640544aba8e51dd2cc4cace7960"
     },
     {
       "bytes": 5684,
@@ -4868,6 +4874,12 @@
       "sha256": "e95a6b3a3caf52961f72139c53d0d89a77cd012220ff6c77b3f18e65e397de37"
     },
     {
+      "bytes": 1659,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_qlib_v3_prospective_evidence_orchestrator_v1.py",
+      "sha256": "9ae58ae1df340d1935af952982fa7278e73f1f5107f117021dcdcaad67b2b7f8"
+    },
+    {
       "bytes": 3389,
       "hash_mode": "text_lf",
       "path": "scripts/run_readiness_gate_audit.py",
@@ -7014,6 +7026,42 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/walkforward_evaluator.py",
       "sha256": "3cf79fb60895daf71d9c52728ce2f8f77f3a09e10547a5bc54cbf7de8092fe99"
+    },
+    {
+      "bytes": 144,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/__init__.py",
+      "sha256": "6759d709207f1a2b6654db8f7ed1d1adeebec79d0b9718dcd3adb5edd8caf8c6"
+    },
+    {
+      "bytes": 5429,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/activation.py",
+      "sha256": "394c10ea580eb123dfe05c20836602bd1d4bec9c1e9773105462db9b4ac69ebc"
+    },
+    {
+      "bytes": 4254,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/admission.py",
+      "sha256": "d0c70b312c910f3e85d3b7d3ed1af83b2963daad0e0e3993417536588de382b8"
+    },
+    {
+      "bytes": 3314,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/contracts.py",
+      "sha256": "423da12a7166850b3350febdde82f264346d915332ad04f842f5dfaa319b2d1e"
+    },
+    {
+      "bytes": 7891,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/orchestrator.py",
+      "sha256": "afec096b2799347ec3ea62a7d84e7716cc1058652b2464f6b25a8cc0e5e02a9f"
+    },
+    {
+      "bytes": 2604,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/store.py",
+      "sha256": "f89b1821a35d49026176b9c35e8616135c93e8927718277e693a938d58089419"
     },
     {
       "bytes": 281,
@@ -11790,6 +11838,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v2_prospective_signal_observer_v1.py",
       "sha256": "7407635f0efb78aa6e329b1e1298bf6c59d763125dc0b1bec159b91f389238ee"
+    },
+    {
+      "bytes": 13677,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_prospective_evidence_orchestrator_v1.py",
+      "sha256": "185d33682f8875f2f515dca1b9723b9175a4d84469dc2fe8a01274a82a44c841"
     },
     {
       "bytes": 24592,
