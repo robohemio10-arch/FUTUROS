@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f1b8e4c3301d6cf424e5a887d390ac1f7d454216986243bd85b27efe9251f488",
+  "aggregate_sha256": "12559a23c12a82645ff2b80136c1f5fe61f88a80af2362f36e99035d6bdddbbb",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 312,
-    "manifested_files_total": 2039,
+    "docs_files": 313,
+    "manifested_files_total": 2040,
     "python_files": 1588,
     "runtime_excluded_files_total": 0,
     "test_files": 427,
-    "tracked_files_total": 2040,
+    "tracked_files_total": 2041,
     "workflows": 2
   },
   "deterministic": true,
@@ -48,6 +48,12 @@
       "hash_mode": "text_lf",
       "path": ".gitignore",
       "sha256": "72adc44bae638b5e47aefe9236f979927da6d17066a45857553740bb938f1545"
+    },
+    {
+      "bytes": 4056,
+      "hash_mode": "text_lf",
+      "path": "AGENTS.md",
+      "sha256": "7f22a43872379fc06011991a636302061885da04ad07506cbd0da0a4297615d6"
     },
     {
       "bytes": 1230,
