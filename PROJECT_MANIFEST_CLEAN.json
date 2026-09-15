@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "12559a23c12a82645ff2b80136c1f5fe61f88a80af2362f36e99035d6bdddbbb",
+  "aggregate_sha256": "af3f4b060c881777c24efc311606c5d25012192c912085dc43570953f2fbb4c0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 313,
-    "manifested_files_total": 2040,
-    "python_files": 1588,
+    "manifested_files_total": 2043,
+    "python_files": 1591,
     "runtime_excluded_files_total": 0,
-    "test_files": 427,
-    "tracked_files_total": 2041,
+    "test_files": 429,
+    "tracked_files_total": 2044,
     "workflows": 2
   },
   "deterministic": true,
@@ -5978,10 +5978,10 @@
       "sha256": "cab07e5d71ede8a18bd00bef3dd227e80c56ffe6353b7a52274b2ac925dcf837"
     },
     {
-      "bytes": 11174,
+      "bytes": 11408,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/decision_ledger_paper_observability_wiring_v1/coordinator.py",
-      "sha256": "0c7e43172eb25c8119358c6b2772fce3c106fe240d441b30396f2bd1c80e9e5b"
+      "sha256": "fc0af65059c7e165ef8f774d65dcea739fb015dfcd1bc1a1167f0de22c96d989"
     },
     {
       "bytes": 5650,
@@ -6236,10 +6236,10 @@
       "sha256": "b50d83ab424b4984f94e04ab41ed4a78d0e8bcd0f3d3daa2bb6c49e9b78918ce"
     },
     {
-      "bytes": 20828,
+      "bytes": 21147,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/decision_projection.py",
-      "sha256": "d7386fe3db849610cfe7ff6f3eacec151af3a2f7280f4dc3abf60d7f5e3dd8c2"
+      "sha256": "ec3a8968ae4a7f2d20f0f4d76ec0ade0ee78a92df1799dbe02e24a17095370f9"
     },
     {
       "bytes": 7303,
@@ -6302,10 +6302,10 @@
       "sha256": "fdcea391507a68fd813dc5a040f28f513d19c75573eafd674f64f1fdad54ae8d"
     },
     {
-      "bytes": 31636,
+      "bytes": 32387,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/signal_producer.py",
-      "sha256": "fedeeceb61d698567565c66c97038bf20327b5004f3a0ce62fa3aa2ce7fc7f8b"
+      "sha256": "3e81c7360b6c209aa189b24a1a52828167ad78fcb7ca70d2291992657a45f12f"
     },
     {
       "bytes": 10881,
@@ -6632,10 +6632,10 @@
       "sha256": "ede93469f0c512f5a123935d80c300a71a73d23d99a9bd450aa17d522a5a4286"
     },
     {
-      "bytes": 16246,
+      "bytes": 16684,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/paper_autolearning/live_feedback_loop.py",
-      "sha256": "d0a2e9e239a8e00eac29c9461cc28ed739d63179620e690acab0ed9be7d04c21"
+      "sha256": "d4f43985ac2a4680d6f24c2e47fd697362dfbcae0a87b640085b81d7de7eb26a"
     },
     {
       "bytes": 2501,
@@ -7056,6 +7056,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/contracts.py",
       "sha256": "423da12a7166850b3350febdde82f264346d915332ad04f842f5dfaa319b2d1e"
+    },
+    {
+      "bytes": 15743,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
+      "sha256": "619f81db163c9260597cf94ad4b45166540a61752430c5c5ec0c5f36bd71b136"
     },
     {
       "bytes": 7891,
@@ -11844,6 +11850,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v2_prospective_signal_observer_v1.py",
       "sha256": "7407635f0efb78aa6e329b1e1298bf6c59d763125dc0b1bec159b91f389238ee"
+    },
+    {
+      "bytes": 14781,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_natural_evidence_producer_wiring_v1.py",
+      "sha256": "903c36b132b957dd91fd062b5543131bd6a9e46296138100789de77ba06cbebf"
+    },
+    {
+      "bytes": 11118,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_natural_evidence_runtime_parity_v1.py",
+      "sha256": "735292e1f324f1ec6e34c465aa837e4fd8f3ef4b9b23b0727366faf5b2d5df74"
     },
     {
       "bytes": 13677,
