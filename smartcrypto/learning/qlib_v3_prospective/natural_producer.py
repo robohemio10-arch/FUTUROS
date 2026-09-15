@@ -100,7 +100,7 @@ def _persist(path: Path, activation: Activation, signals: list[Envelope], outcom
                          "signals": signals, "outcomes": outcomes})
 
 
-def _failure(exc: Exception, *, write: bool) -> ProducerReport:
+def _blocked_report(exc: Exception, *, write: bool) -> ProducerReport:
     if isinstance(exc, EvidenceError):
         reason = str(exc)
     elif isinstance(exc, AtomicWriteError):
@@ -173,7 +173,7 @@ must match the certified activation; assigning V3 identity never repairs lineage
                               write_requested=True, write_performed=bool(count))
     except Exception as exc:
         # Evidence fails closed; the existing financial publisher must still run.
-        return _failure(exc, write=True)
+        return _blocked_report(exc, write=True)
 
 
 def _decision_tag(value: object) -> str | None:
@@ -315,4 +315,4 @@ outcomes cannot acquire a parent here. Re-observation checks content conflicts.
                               skipped_without_parent=len(by_trade) - len(observed),
                               write_requested=write, write_performed=bool(write and count))
     except Exception as exc:
-        return _failure(exc, write=write)
+        return _blocked_report(exc, write=write)
