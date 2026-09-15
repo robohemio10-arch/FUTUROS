@@ -35,6 +35,7 @@ from smartcrypto.execution.decision_ledger_paper_observability_wiring_v1 import 
     prepare_before_risk_manager,
 )
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
+from smartcrypto.learning.qlib_v3_prospective.natural_producer import observe_signal_batch
 from smartcrypto.runtime.integrity_traceability_v2 import (
     atomic_write_json as institutional_atomic_write_json,
 )
@@ -693,6 +694,19 @@ def build_active_signals(
         if observability_preparation.enabled
         else publication.active_signals
     )
+    # Observe the sealed decision in this invocation, before either active file is published.
+    # The research result never changes the approved signals or financial publication gate.
+    v3_evidence = observe_signal_batch(
+        project_root=Path.cwd(),
+        signals=signals,
+        decisions=getattr(
+            observability if observability_preparation.enabled else strict_decision_projection,
+            "decision_records", (),
+        ),
+        invocation_started_at=generated_at,
+        runtime_mode=runtime_mode,
+        config_source=config.get("qlib_v3_natural_evidence"),
+    )
     for signal in signals:
         signal["decision_ledger_context"] = build_minimum_decision_ledger_context(
             signal,
@@ -734,6 +748,7 @@ def build_active_signals(
         "written_pinned": written_pinned,
         "prediction_rows": int(len(frame)),
         "prediction_freshness": freshness,
+        "qlib_v3_natural_evidence": v3_evidence.to_dict(),
         "pairs": [item.get("pair") for item in signals],
         "sides": [item.get("side") for item in signals],
         "generated_at": generated_at.isoformat(),
