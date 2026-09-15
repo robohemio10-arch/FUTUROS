@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
+from smartcrypto.execution.decision_ledger_v4_2.contracts import DecisionRecordV42
+
 from .mapper import (
     CandidateLineageError,
     build_authoritative_signal_identity,
@@ -80,6 +82,7 @@ class StrictDecisionInMemoryReportV1:
 class StrictDecisionInMemoryOutcomeV1:
     active_signals: tuple[dict[str, Any], ...]
     report: StrictDecisionInMemoryReportV1
+    decision_records: tuple[DecisionRecordV42, ...] = ()
 
 
 def project_strict_decision_envelopes_in_memory(
@@ -120,18 +123,19 @@ def project_strict_decision_envelopes_in_memory(
         return _blocked_batch(baseline, context_error)
 
     projected: list[dict[str, Any]] = []
+    decision_records: list[DecisionRecordV42] = []
     failures: list[dict[str, Any]] = []
 
     for index, approved in enumerate(baseline):
         try:
-            projected.append(
-                _project_one(
-                    approved=approved,
-                    contexts=contexts,
-                    decision_timestamp=decision_timestamp,
-                    producer_id=producer_id,
-                )
+            signal, decision = _project_one(
+                approved=approved,
+                contexts=contexts,
+                decision_timestamp=decision_timestamp,
+                producer_id=producer_id,
             )
+            projected.append(signal)
+            decision_records.append(decision)
         except CandidateLineageError as exc:
             failures.append(
                 {
@@ -170,6 +174,7 @@ def project_strict_decision_envelopes_in_memory(
 
     return StrictDecisionInMemoryOutcomeV1(
         active_signals=tuple(projected),
+        decision_records=tuple(decision_records),
         report=StrictDecisionInMemoryReportV1(
             status="ok",
             reason="strict_decision_envelopes_projected_in_memory",
@@ -188,7 +193,7 @@ def _project_one(
     contexts: Mapping[tuple[str, str, str], Mapping[str, Any]],
     decision_timestamp: datetime,
     producer_id: str,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], DecisionRecordV42]:
     if approved.get("risk_approved") is not True:
         raise CandidateLineageError("approved_signal_missing_risk_approval")
 
@@ -366,7 +371,7 @@ def _project_one(
             "strict_decision_existing_envelope_override_forbidden"
         )
     output[DECISION_LEDGER_KEY] = envelope
-    return output
+    return output, target
 
 
 def _index_source_contexts(
@@ -506,11 +511,12 @@ def _coerce_utc_datetime(value: Any, field: str) -> datetime:
 
 
 def _require_utc_datetime(value: datetime, field: str) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
+    offset = value.utcoffset()
+    if value.tzinfo is None or offset is None:
         raise CandidateLineageError(
             f"strict_decision_timestamp_not_timezone_aware:{field}"
         )
-    if value.utcoffset().total_seconds() != 0:
+    if offset.total_seconds() != 0:
         raise CandidateLineageError(
             f"strict_decision_timestamp_not_utc:{field}"
         )

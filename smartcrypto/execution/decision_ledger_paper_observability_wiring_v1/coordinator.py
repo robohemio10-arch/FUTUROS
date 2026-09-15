@@ -18,6 +18,7 @@ from smartcrypto.execution.decision_ledger_runtime_integration_v1 import (
     preview_after_risk_manager,
 )
 from smartcrypto.execution.signal_risk_gate import RiskGateResult
+from smartcrypto.execution.decision_ledger_v4_2.contracts import DecisionRecordV42
 
 from .config import load_observability_config
 from .contracts import (
@@ -33,6 +34,7 @@ from .sink import IdempotentDecisionLedgerRuntimeSink
 class PaperObservabilityOutcomeV1:
     active_signals: list[dict[str, Any]]
     report: WiringReportV1
+    decision_records: tuple[DecisionRecordV42, ...] = ()
 
 
 def prepare_before_risk_manager(
@@ -189,6 +191,7 @@ def finalize_after_risk_manager(
 
     return PaperObservabilityOutcomeV1(
         active_signals=[dict(item) for item in preview.active_signals],
+        decision_records=tuple(item.target_payload for item in preview.decision_projections),
         report=WiringReportV1(
             status="ok",
             reason=None,

@@ -14,6 +14,10 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Mapping, Sequence
 
+from smartcrypto.learning.qlib_v3_prospective.natural_producer import (
+    ConfigSource, observe_feedback_close,
+)
+
 from .feedback_store import (
     build_feedback_events,
     clean_text,
@@ -39,6 +43,7 @@ def run_paper_autolearning_live_feedback_loop_v1(
     project_root: str | Path,
     explicit_paper_db_path: str | Path | None = None,
     write: bool = False,
+    qlib_v3_natural_evidence: ConfigSource = None,
 ) -> dict[str, Any]:
     """Run one idempotent, economically reconciled Paper feedback iteration."""
 
@@ -123,6 +128,11 @@ def run_paper_autolearning_live_feedback_loop_v1(
     else:
         reason = "no_new_closed_paper_trades"
 
+    v3_evidence = observe_feedback_close(
+        project_root=root, snapshot_db=selection.selected_path,
+        events=feedback.valid_events, write=write,
+        config_source=qlib_v3_natural_evidence,
+    )
     coverage = _coverage_payload(projected_events)
     latency = _new_outcome_latency_payload(feedback.new_events)
     return {
@@ -168,6 +178,7 @@ def run_paper_autolearning_live_feedback_loop_v1(
         "write_requested": bool(write),
         "write_performed": should_write_feedback,
         "write_result": write_result,
+        "qlib_v3_natural_evidence": v3_evidence.to_dict(),
         "source_candidates": [_candidate_to_dict(item) for item in selection.candidates],
         **SAFETY_FLAGS,
     }
