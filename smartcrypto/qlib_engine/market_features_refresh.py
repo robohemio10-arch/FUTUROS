@@ -4,6 +4,7 @@ import json
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from threading import RLock
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -13,7 +14,6 @@ import pandas as pd
 from smartcrypto.data.feature_builder import build_market_feature_frame
 from smartcrypto.execution.freqtrade_contract import freqtrade_pair, internal_symbol
 from smartcrypto.market.market_feature_schema import (
-    lookahead_columns,
     sanitize_operational_market_features,
     write_operational_market_features,
 )
@@ -60,6 +60,84 @@ CONTINUITY_GUARD_FEATURE_COLUMNS = (
 # bounded 60-day history is small enough that correctness is preferable to a tail
 # approximation.
 AFFECTED_GROUP_REBUILD_POLICY = "full_history"
+
+# Process-local handoff of the exact full-history feature rebuild that was already
+# computed by refresh_qlib_market_features(). The operational artifact may preserve
+# older non-null values by design; this snapshot intentionally keeps the canonical
+# rebuilt surface before that merge so research/shadow consumers do not have to
+# rematerialize the same history on the signal-publication path.
+_CANONICAL_REBUILT_SNAPSHOT_LOCK = RLock()
+_CANONICAL_REBUILT_SNAPSHOT: tuple[str, int, int, int, pd.DataFrame] | None = None
+
+
+def get_canonical_rebuilt_feature_snapshot(
+    output_path: str | Path,
+) -> pd.DataFrame | None:
+    """Return the exact in-process rebuild only while it matches the output file.
+
+    The cache is performance-only and never authoritative by itself. A process
+    restart, path mismatch, or any subsequent output-file mutation invalidates it.
+    The caller receives a shallow DataFrame copy and must treat it as read-only.
+    """
+
+    target = Path(output_path).resolve()
+    try:
+        stat = target.stat()
+    except OSError:
+        return None
+
+    with _CANONICAL_REBUILT_SNAPSHOT_LOCK:
+        snapshot = _CANONICAL_REBUILT_SNAPSHOT
+        if snapshot is None:
+            return None
+        path_text, mtime_ns, ctime_ns, size, frame = snapshot
+        if (
+            path_text != str(target)
+            or mtime_ns != stat.st_mtime_ns
+            or ctime_ns != stat.st_ctime_ns
+            or size != stat.st_size
+        ):
+            return None
+        return frame.copy(deep=False)
+
+
+def clear_canonical_rebuilt_feature_snapshot() -> None:
+    """Clear only the process-local canonical rebuild cache."""
+
+    global _CANONICAL_REBUILT_SNAPSHOT
+    with _CANONICAL_REBUILT_SNAPSHOT_LOCK:
+        _CANONICAL_REBUILT_SNAPSHOT = None
+
+
+def _publish_canonical_rebuilt_feature_snapshot(
+    *,
+    output_path: str | Path,
+    rebuilt_features: pd.DataFrame,
+) -> bool:
+    """Publish a non-authoritative in-memory snapshot after a successful write."""
+
+    if not isinstance(rebuilt_features, pd.DataFrame) or rebuilt_features.empty:
+        clear_canonical_rebuilt_feature_snapshot()
+        return False
+
+    target = Path(output_path).resolve()
+    try:
+        stat = target.stat()
+    except OSError:
+        clear_canonical_rebuilt_feature_snapshot()
+        return False
+
+    snapshot = rebuilt_features.copy(deep=False)
+    global _CANONICAL_REBUILT_SNAPSHOT
+    with _CANONICAL_REBUILT_SNAPSHOT_LOCK:
+        _CANONICAL_REBUILT_SNAPSHOT = (
+            str(target),
+            stat.st_mtime_ns,
+            stat.st_ctime_ns,
+            stat.st_size,
+            snapshot,
+        )
+    return True
 
 
 def refresh_qlib_market_features(
@@ -332,6 +410,10 @@ def refresh_qlib_market_features(
         operational_candidate,
         output,
     )
+    canonical_rebuilt_snapshot_cached = _publish_canonical_rebuilt_feature_snapshot(
+        output_path=output,
+        rebuilt_features=rebuilt_features,
+    )
     final_continuity = inspect_feature_continuity(final_features)
     report = _status_report(
         status="ok",
@@ -356,6 +438,7 @@ def refresh_qlib_market_features(
         group_freshness=group_freshness,
         current=current,
     )
+    report["canonical_rebuilt_snapshot_cached"] = canonical_rebuilt_snapshot_cached
     write_json(report_file, report)
     return report
 

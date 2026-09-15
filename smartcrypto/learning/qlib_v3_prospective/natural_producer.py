@@ -46,21 +46,34 @@ class ProducerReport:
     skipped_without_parent: int = 0
     write_requested: bool = False
     write_performed: bool = False
+    shadow_decision_source: str | None = None
+    shadow_scored_count: int = 0
+    shadow_selected_count: int = 0
+    shadow_control_count: int = 0
+    shadow_market_source: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
             "schema_version": "qlib_v3_natural_evidence_producer_wiring_v1",
-            "status": self.status, "reason": self.reason,
+            "status": self.status,
+            "reason": self.reason,
             "new_signal_count": self.new_signal_count,
             "new_outcome_count": self.new_outcome_count,
             "skipped_without_parent": self.skipped_without_parent,
             "write_requested": self.write_requested,
             "write_performed": self.write_performed,
-            "research_only": True, "operational_authority": False,
-            "paper_behavior_changed": False, "sends_orders": False,
-            "v2_evidence_imported": False, "historical_backfill_allowed": False,
+            "shadow_decision_source": self.shadow_decision_source,
+            "shadow_scored_count": self.shadow_scored_count,
+            "shadow_selected_count": self.shadow_selected_count,
+            "shadow_control_count": self.shadow_control_count,
+            "shadow_market_source": self.shadow_market_source,
+            "research_only": True,
+            "operational_authority": False,
+            "paper_behavior_changed": False,
+            "sends_orders": False,
+            "v2_evidence_imported": False,
+            "historical_backfill_allowed": False,
         }
-
 
 def _activation(root: Path, source: ConfigSource) -> Activation | None:
     if source is None:
@@ -113,69 +126,505 @@ def _blocked_report(exc: Exception, *, write: bool) -> ProducerReport:
                           write_performed=isinstance(exc, AtomicWriteError) and exc.promoted)
 
 
-def observe_signal_batch(
-    *, project_root: Path, signals: Sequence[Mapping[str, Any]],
-    decisions: Sequence[DecisionRecordV42], invocation_started_at: datetime,
-    runtime_mode: str, config_source: ConfigSource = None,
-) -> ProducerReport:
-    """Capture only records produced in this invocation, before active publication.
+def _validated_input_decision(
+    signal: Mapping[str, Any],
+    records: Mapping[str, DecisionRecordV42],
+) -> DecisionRecordV42:
+    """Validate the current sealed operational decision without changing it."""
 
-No source file is searched to recover a vanished signal. The actual model hash
-must match the certified activation; assigning V3 identity never repairs lineage.
-"""
+    envelope = signal.get("decision_ledger")
+    if not isinstance(envelope, Mapping):
+        raise EvidenceError("ex_ante_sealed_decision_missing")
+
+    record = records.get(
+        str(envelope.get("decision_event_id", ""))
+    )
+    if (
+        record is None
+        or record.final_decision != FinalDecision.ALLOW
+    ):
+        raise EvidenceError("ex_ante_sealed_allow_required")
+
+    if (
+        envelope.get("decision_payload_sha256")
+        != record.payload_sha256
+    ):
+        raise EvidenceError("published_decision_hash_mismatch")
+
+    for key in (
+        "signal_id",
+        "candidate_id",
+        "correlation_id",
+        "pair",
+        "symbol",
+    ):
+        if signal.get(key) != getattr(record, key):
+            raise EvidenceError(
+                "published_signal_identity_mismatch"
+            )
+
+    if (
+        signal.get("side") != record.side.value
+        or signal.get("risk_approved") is not True
+    ):
+        raise EvidenceError(
+            "published_signal_risk_or_side_mismatch"
+        )
+
+    return record
+
+
+def _validated_persisted_signal(
+    signal: Mapping[str, Any],
+    persisted_row: Mapping[str, Any],
+) -> DecisionRecordV42:
+    """Validate stable occurrence identity against an admitted V3 parent."""
+
+    persisted = DecisionRecordV42.model_validate(
+        persisted_row.get("decision")
+    )
+
+    exact = (
+        signal.get("signal_id") == persisted.signal_id
+        and signal.get("candidate_id") == persisted.candidate_id
+        and signal.get("correlation_id") == persisted.correlation_id
+        and signal.get("pair") == persisted.pair
+        and signal.get("symbol") == persisted.symbol
+        and str(signal.get("side") or "").lower()
+        == persisted.side.value
+        and signal.get("risk_approved") is True
+    )
+    if not exact:
+        raise EvidenceError(
+            "persisted_signal_identity_conflict"
+        )
+    return persisted
+
+
+def _existing_signal_is_noop(
+    *,
+    signal: Mapping[str, Any],
+    current_record: DecisionRecordV42,
+    persisted_row: Mapping[str, Any],
+    activation: Activation,
+) -> bool:
+    """Classify a repeated occurrence without creating a second V3 decision.
+
+    A repeated certified V3 decision must be byte/content identical. A legacy
+    operational decision is allowed to differ from the persisted V3 shadow
+    payload because it is a separate model lineage; stable signal occurrence
+    identity still has to match exactly.
+    """
+
+    persisted = _validated_persisted_signal(
+        signal,
+        persisted_row,
+    )
+
+    if (
+        current_record.model_hash
+        == activation.identity.model_artifact_sha256
+        and current_record.payload_sha256
+        != persisted.payload_sha256
+    ):
+        raise EvidenceError(
+            "causal_identity_content_conflict"
+        )
+
+    return True
+
+def observe_signal_batch(
+    *,
+    project_root: Path,
+    signals: Sequence[Mapping[str, Any]],
+    decisions: Sequence[DecisionRecordV42],
+    invocation_started_at: datetime,
+    runtime_mode: str,
+    config_source: ConfigSource = None,
+) -> ProducerReport:
+    """Capture only new ex-ante V3 signal occurrences before Paper publication.
+
+    Store-first idempotency prevents a repeated operational ``signal_id`` from
+    being rescored. A second locked recheck closes the race between scoring and
+    persistence. Legacy Paper decisions remain a separate lineage: once the
+    corresponding V3 shadow parent exists, re-observation is a no-op rather than
+    a new V3 decision. Certified V3 payload drift still blocks as a content
+    conflict.
+    """
+
     try:
-        activation = _activation(project_root, config_source)
+        activation = _activation(
+            project_root,
+            config_source,
+        )
         if activation is None:
-            return ProducerReport("disabled", "producer_not_enabled")
+            return ProducerReport(
+                "disabled",
+                "producer_not_enabled",
+            )
         if runtime_mode != "paper":
-            raise EvidenceError("natural_paper_runtime_required")
+            raise EvidenceError(
+                "natural_paper_runtime_required"
+            )
+
         clock = datetime.now(UTC)
-        started = utc(invocation_started_at.isoformat())
-        if not activation.boundary <= started <= clock:
-            raise EvidenceError("producer_invocation_outside_prospective_window")
-        records = {r.event_id: r for r in decisions}
+        started = utc(
+            invocation_started_at.isoformat()
+        )
+        if not (
+            activation.boundary
+            <= started
+            <= clock
+        ):
+            raise EvidenceError(
+                "producer_invocation_outside_prospective_window"
+            )
+
+        records = {
+            record.event_id: record
+            for record in decisions
+        }
         if len(records) != len(decisions):
-            raise EvidenceError("duplicate_decision_event_id")
+            raise EvidenceError(
+                "duplicate_decision_event_id"
+            )
+
+        validated: list[
+            tuple[Mapping[str, Any], DecisionRecordV42]
+        ] = [
+            (
+                signal,
+                _validated_input_decision(
+                    signal,
+                    records,
+                ),
+            )
+            for signal in signals
+        ]
+
+        signal_ids = [
+            record.signal_id
+            for _, record in validated
+        ]
+        if len(set(signal_ids)) != len(signal_ids):
+            raise EvidenceError(
+                "duplicate_signal_id"
+            )
+
+        path = store.location(
+            project_root,
+            activation.identity,
+        )
+        prior_by_signal: dict[str, Envelope] = {}
+
+        if path.exists():
+            with store.exclusive(path):
+                prior_signals, _ = _state(
+                    path,
+                    activation,
+                    clock,
+                )
+            prior_by_signal = {
+                str(row["signal_id"]): row
+                for row in prior_signals
+            }
+
+        pending: list[
+            tuple[Mapping[str, Any], DecisionRecordV42]
+        ] = []
+        for signal, record in validated:
+            persisted = prior_by_signal.get(
+                record.signal_id
+            )
+            if persisted is None:
+                pending.append(
+                    (signal, record)
+                )
+                continue
+
+            _existing_signal_is_noop(
+                signal=signal,
+                current_record=record,
+                persisted_row=persisted,
+                activation=activation,
+            )
+
+        if not pending:
+            return ProducerReport(
+                "ok",
+                "no_new_natural_signals",
+                write_requested=True,
+                write_performed=False,
+                shadow_decision_source=(
+                    "persisted_v3_signal"
+                ),
+                shadow_market_source=(
+                    "persisted_v3_signal"
+                ),
+            )
+
+        pending_signals = tuple(
+            signal
+            for signal, _ in pending
+        )
+        pending_decisions = tuple(
+            record
+            for _, record in pending
+        )
+
+        original_model_mismatch = any(
+            record.model_hash
+            != activation.identity.model_artifact_sha256
+            for record in pending_decisions
+        )
+
+        from .economic_shadow_decision_producer import (
+            resolve_shadow_decision_batch,
+        )
+
+        shadow = resolve_shadow_decision_batch(
+            project_root=project_root,
+            signals=pending_signals,
+            existing_decisions=pending_decisions,
+            decision_timestamp_utc=clock,
+            activation=activation,
+            config_source=config_source,
+        )
+
+        if shadow.report.status != "ok":
+            reason = (
+                "decision_model_mismatch"
+                if original_model_mismatch
+                else (
+                    "shadow_decision_source_blocked:"
+                    f"{shadow.report.reason}"
+                )
+            )
+            return ProducerReport(
+                "blocked",
+                reason,
+                write_requested=True,
+                shadow_decision_source=(
+                    shadow.report.decision_source
+                ),
+                shadow_scored_count=(
+                    shadow.report.scored_count
+                ),
+                shadow_selected_count=(
+                    shadow.report.selected_count
+                ),
+                shadow_control_count=(
+                    shadow.report.control_count
+                ),
+                shadow_market_source=(
+                    shadow.report.market_source
+                ),
+            )
+
+        resolved_signals = shadow.signals
+        resolved_decisions = shadow.decisions
+        resolved_records = {
+            record.event_id: record
+            for record in resolved_decisions
+        }
+        if len(resolved_records) != len(
+            resolved_decisions
+        ):
+            raise EvidenceError(
+                "duplicate_decision_event_id"
+            )
+
         incoming: list[Envelope] = []
-        for signal in signals:
-            envelope = signal.get("decision_ledger")
-            if not isinstance(envelope, Mapping):
-                raise EvidenceError("ex_ante_sealed_decision_missing")
-            record = records.get(str(envelope.get("decision_event_id", "")))
-            if record is None or record.final_decision != FinalDecision.ALLOW:
-                raise EvidenceError("ex_ante_sealed_allow_required")
-            if not started <= record.decision_timestamp <= clock:
-                raise EvidenceError("retrospective_signal_capture_forbidden")
-            if envelope.get("decision_payload_sha256") != record.payload_sha256:
-                raise EvidenceError("published_decision_hash_mismatch")
-            for key in ("signal_id", "candidate_id", "correlation_id", "pair", "symbol"):
-                if signal.get(key) != getattr(record, key):
-                    raise EvidenceError("published_signal_identity_mismatch")
-            if signal.get("side") != record.side.value or signal.get("risk_approved") is not True:
-                raise EvidenceError("published_signal_risk_or_side_mismatch")
-            row = {"epoch_version": "v3", "origin": "natural_paper_runtime",
-                   "identity": activation.identity.mapping(), "synthetic": False,
-                   "replayed": False, "backfilled": False, "signal_id": record.signal_id,
-                   "decision_event_id": record.event_id,
-                   "signal_timestamp_utc": record.decision_timestamp.isoformat(),
-                   "decision": record.model_dump(mode="json")}
-            incoming.append(admission.signal(row, activation, clock))
-        if not incoming:
-            return ProducerReport("ok", "no_new_natural_signals")
-        path = store.location(project_root, activation.identity)
+        for signal in resolved_signals:
+            envelope = signal.get(
+                "decision_ledger"
+            )
+            if not isinstance(
+                envelope,
+                Mapping,
+            ):
+                raise EvidenceError(
+                    "ex_ante_sealed_decision_missing"
+                )
+
+            record = resolved_records.get(
+                str(
+                    envelope.get(
+                        "decision_event_id",
+                        "",
+                    )
+                )
+            )
+            if (
+                record is None
+                or record.final_decision
+                != FinalDecision.ALLOW
+            ):
+                raise EvidenceError(
+                    "ex_ante_sealed_allow_required"
+                )
+
+            if not (
+                started
+                <= record.decision_timestamp
+                <= clock
+            ):
+                raise EvidenceError(
+                    "retrospective_signal_capture_forbidden"
+                )
+
+            if (
+                envelope.get(
+                    "decision_payload_sha256"
+                )
+                != record.payload_sha256
+            ):
+                raise EvidenceError(
+                    "published_decision_hash_mismatch"
+                )
+
+            for key in (
+                "signal_id",
+                "candidate_id",
+                "correlation_id",
+                "pair",
+                "symbol",
+            ):
+                if signal.get(key) != getattr(
+                    record,
+                    key,
+                ):
+                    raise EvidenceError(
+                        "published_signal_identity_mismatch"
+                    )
+
+            if (
+                signal.get("side")
+                != record.side.value
+                or signal.get("risk_approved")
+                is not True
+            ):
+                raise EvidenceError(
+                    "published_signal_risk_or_side_mismatch"
+                )
+
+            row = {
+                "epoch_version": "v3",
+                "origin": "natural_paper_runtime",
+                "identity": (
+                    activation.identity.mapping()
+                ),
+                "synthetic": False,
+                "replayed": False,
+                "backfilled": False,
+                "signal_id": record.signal_id,
+                "decision_event_id": record.event_id,
+                "signal_timestamp_utc": (
+                    record.decision_timestamp.isoformat()
+                ),
+                "decision": record.model_dump(
+                    mode="json"
+                ),
+            }
+            incoming.append(
+                admission.signal(
+                    row,
+                    activation,
+                    clock,
+                )
+            )
+
+        pending_by_signal = {
+            record.signal_id: (
+                signal,
+                record,
+            )
+            for signal, record in pending
+        }
+
         with store.exclusive(path):
-            prior, outcomes = _state(path, activation, clock)
-            merged = merge(prior + incoming, "signal_id")
+            prior, outcomes = _state(
+                path,
+                activation,
+                clock,
+            )
+            current_by_signal = {
+                str(row["signal_id"]): row
+                for row in prior
+            }
+
+            truly_new: list[Envelope] = []
+            for row in incoming:
+                signal_id = str(
+                    row["signal_id"]
+                )
+                persisted = current_by_signal.get(
+                    signal_id
+                )
+                if persisted is None:
+                    truly_new.append(row)
+                    continue
+
+                current = pending_by_signal.get(
+                    signal_id
+                )
+                if current is None:
+                    raise EvidenceError(
+                        "pending_signal_identity_missing"
+                    )
+                signal, input_record = current
+                _existing_signal_is_noop(
+                    signal=signal,
+                    current_record=input_record,
+                    persisted_row=persisted,
+                    activation=activation,
+                )
+
+            merged = merge(
+                prior + truly_new,
+                "signal_id",
+            )
             count = len(merged) - len(prior)
             if count:
-                _persist(path, activation, merged, outcomes)
-        return ProducerReport("ok", "natural_signal_observed", new_signal_count=count,
-                              write_requested=True, write_performed=bool(count))
+                _persist(
+                    path,
+                    activation,
+                    merged,
+                    outcomes,
+                )
+
+        return ProducerReport(
+            "ok",
+            (
+                "natural_signal_observed"
+                if count
+                else "no_new_natural_signals"
+            ),
+            new_signal_count=count,
+            write_requested=True,
+            write_performed=bool(count),
+            shadow_decision_source=(
+                shadow.report.decision_source
+            ),
+            shadow_scored_count=(
+                shadow.report.scored_count
+            ),
+            shadow_selected_count=(
+                shadow.report.selected_count
+            ),
+            shadow_control_count=(
+                shadow.report.control_count
+            ),
+            shadow_market_source=(
+                shadow.report.market_source
+            ),
+        )
+
     except Exception as exc:
-        # Evidence fails closed; the existing financial publisher must still run.
-        return _blocked_report(exc, write=True)
-
-
+        return _blocked_report(
+            exc,
+            write=True,
+        )
 def _decision_tag(value: object) -> str | None:
     if not isinstance(value, str):
         return None
