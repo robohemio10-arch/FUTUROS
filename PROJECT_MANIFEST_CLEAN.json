@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b3801fd3bb82652a1381efa470e1f90dfed5297fc29734032eba6af5d347fd04",
+  "aggregate_sha256": "b36463c953d0c7940c7059336eeeae75c8d84f0e5922d8ee11c3417e9f499580",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 313,
-    "manifested_files_total": 2058,
-    "python_files": 1606,
+    "manifested_files_total": 2061,
+    "python_files": 1609,
     "runtime_excluded_files_total": 0,
-    "test_files": 435,
-    "tracked_files_total": 2059,
+    "test_files": 436,
+    "tracked_files_total": 2062,
     "workflows": 2
   },
   "deterministic": true,
@@ -4766,6 +4766,12 @@
       "sha256": "8588bf2a23a6cd0c8b485f6c1090e9e43756d0c34367f51c52fe1f3096841c3f"
     },
     {
+      "bytes": 3831,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_official_trades_master_walkforward_v1.py",
+      "sha256": "3719fda60b824576e5131f6f521acc16c92aa70437557b232025119d354a06be"
+    },
+    {
       "bytes": 20625,
       "hash_mode": "text_lf",
       "path": "scripts/run_order_intent_capital_ledger_audit.py",
@@ -9422,6 +9428,12 @@
       "sha256": "e2e9b48978a3d67b7823c01c12bb923ebd2dd94a999ffbef10d69bc2f5acae95"
     },
     {
+      "bytes": 41379,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/walkforward.py",
+      "sha256": "9faf24e5869e00417772baf2f9bfe04696c720cdb88b0061eebd550aa445287a"
+    },
+    {
       "bytes": 29700,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/training_executive_report_pack.py",
@@ -11148,6 +11160,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_official_trades_master_source_v1.py",
       "sha256": "66a9ab5c999bd4e6932416dd27b729888510ceb6a5e180dfe624584ec5aed2cd"
+    },
+    {
+      "bytes": 9852,
+      "hash_mode": "text_lf",
+      "path": "tests/test_official_trades_master_walkforward_v1.py",
+      "sha256": "0ba956476215868292d35e20c0b26621b2c5a470ee075a7940ae84bd0fe82cbb"
     },
     {
       "bytes": 6121,
