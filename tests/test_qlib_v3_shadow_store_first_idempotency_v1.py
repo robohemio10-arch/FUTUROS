@@ -163,10 +163,25 @@ def test_persisted_v3_shadow_parent_makes_legacy_model_rerun_noop(
     context,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Pre-crosswalk V3 rows preserve the original store-first compatibility."""
+
     kwargs = _inputs(context)
     assert producer.observe_signal_batch(**kwargs).write_performed
 
     path = _evidence_path(context)
+    state = store.load(path, context[0]["expected"])
+    assert len(state["signals"]) == 1
+    state["signals"][0].pop("operational_crosswalk", None)
+    store.persist(
+        path,
+        {
+            "schema_version": store.SCHEMA,
+            "identity": context[0]["expected"].mapping(),
+            "signals": state["signals"],
+            "outcomes": state["outcomes"],
+        },
+    )
+
     before = (
         path.read_bytes(),
         path.stat().st_mtime_ns,
@@ -189,7 +204,7 @@ def test_persisted_v3_shadow_parent_makes_legacy_model_rerun_noop(
         shadow,
         "resolve_shadow_decision_batch",
         lambda **kwargs: pytest.fail(
-            "legacy rerun with persisted V3 parent must not rescore"
+            "pre-crosswalk legacy rerun must not rescore"
         ),
     )
 

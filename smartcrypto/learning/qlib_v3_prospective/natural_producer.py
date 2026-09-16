@@ -28,6 +28,10 @@ from . import admission, store
 from .activation import Activation, load_activation, read_object, safe_path
 from .contracts import CANONICAL, EvidenceError, digest, utc
 from .orchestrator import merge
+from .trade_link_crosswalk import (
+    seal_operational_crosswalk,
+    validate_operational_crosswalk,
+)
 
 LOGGER = logging.getLogger(__name__)
 CONFIG_ENV = "QLIB_V3_NATURAL_EVIDENCE_CONFIG"
@@ -208,12 +212,14 @@ def _existing_signal_is_noop(
     persisted_row: Mapping[str, Any],
     activation: Activation,
 ) -> bool:
-    """Classify a repeated occurrence without creating a second V3 decision.
+    """Validate a repeated occurrence without changing its admitted lineage.
 
-    A repeated certified V3 decision must be byte/content identical. A legacy
-    operational decision is allowed to differ from the persisted V3 shadow
-    payload because it is a separate model lineage; stable signal occurrence
-    identity still has to match exactly.
+    Signals admitted before the operational-crosswalk contract remain valid and
+    preserve the historical store-first behavior. Once a signal contains a
+    sealed operational crosswalk, every re-observation of that same signal
+    occurrence must present the exact same operational decision event and
+    payload hash. This also closes the race where concurrent observers see the
+    same signal_id with divergent operational decisions.
     """
 
     persisted = _validated_persisted_signal(
@@ -231,7 +237,22 @@ def _existing_signal_is_noop(
             "causal_identity_content_conflict"
         )
 
+    crosswalk = validate_operational_crosswalk(
+        persisted_row.get("operational_crosswalk"),
+        v3_decision=persisted,
+    )
+    if crosswalk is not None and (
+        current_record.event_id
+        != crosswalk["operational_decision_event_id"]
+        or current_record.payload_sha256
+        != crosswalk["operational_decision_payload_sha256"]
+    ):
+        raise EvidenceError(
+            "operational_crosswalk_content_conflict"
+        )
+
     return True
+
 
 def observe_signal_batch(
     *,
@@ -246,10 +267,10 @@ def observe_signal_batch(
 
     Store-first idempotency prevents a repeated operational ``signal_id`` from
     being rescored. A second locked recheck closes the race between scoring and
-    persistence. Legacy Paper decisions remain a separate lineage: once the
-    corresponding V3 shadow parent exists, re-observation is a no-op rather than
-    a new V3 decision. Certified V3 payload drift still blocks as a content
-    conflict.
+    persistence. New occurrences persist an immutable exact crosswalk from the
+    validated operational decision to the V3 shadow decision before Paper
+    publication. Legacy Paper decisions remain non-authoritative and the
+    operational signal object is never changed.
     """
 
     try:
@@ -371,6 +392,13 @@ def observe_signal_batch(
             record
             for _, record in pending
         )
+        pending_by_signal = {
+            record.signal_id: (
+                signal,
+                record,
+            )
+            for signal, record in pending
+        }
 
         original_model_mismatch = any(
             record.model_hash
@@ -508,6 +536,20 @@ def observe_signal_batch(
                     "published_signal_risk_or_side_mismatch"
                 )
 
+            original = pending_by_signal.get(
+                record.signal_id
+            )
+            if original is None:
+                raise EvidenceError(
+                    "pending_signal_identity_missing"
+                )
+            _, operational_record = original
+
+            crosswalk = seal_operational_crosswalk(
+                operational_record=operational_record,
+                v3_decision=record,
+            )
+
             row = {
                 "epoch_version": "v3",
                 "origin": "natural_paper_runtime",
@@ -525,6 +567,7 @@ def observe_signal_batch(
                 "decision": record.model_dump(
                     mode="json"
                 ),
+                "operational_crosswalk": crosswalk,
             }
             incoming.append(
                 admission.signal(
@@ -533,14 +576,6 @@ def observe_signal_batch(
                     clock,
                 )
             )
-
-        pending_by_signal = {
-            record.signal_id: (
-                signal,
-                record,
-            )
-            for signal, record in pending
-        }
 
         with store.exclusive(path):
             prior, outcomes = _state(
@@ -625,6 +660,76 @@ def observe_signal_batch(
             exc,
             write=True,
         )
+
+def _operational_parent_index(
+    signals: Sequence[Envelope],
+) -> dict[str, Envelope]:
+    """Index only explicitly sealed operational->V3 crosswalks."""
+
+    index: dict[str, Envelope] = {}
+    for parent in signals:
+        decision = DecisionRecordV42.model_validate(
+            parent["decision"]
+        )
+        crosswalk = validate_operational_crosswalk(
+            parent.get("operational_crosswalk"),
+            v3_decision=decision,
+        )
+        if crosswalk is None:
+            continue
+
+        event_id = crosswalk[
+            "operational_decision_event_id"
+        ]
+        previous = index.get(event_id)
+        if (
+            previous is not None
+            and previous["signal_id"] != parent["signal_id"]
+        ):
+            raise EvidenceError(
+                "operational_crosswalk_identity_collision"
+            )
+        index[event_id] = parent
+    return index
+
+
+def _resolve_trade_parent(
+    decision_event_id: str | None,
+    *,
+    v3_parents: Mapping[str, Envelope],
+    operational_parents: Mapping[str, Envelope],
+) -> tuple[Envelope | None, str | None]:
+    """Resolve a trade parent by exact identifier only."""
+
+    if decision_event_id is None:
+        return None, None
+
+    direct = v3_parents.get(decision_event_id)
+    crossed = operational_parents.get(
+        decision_event_id
+    )
+
+    if (
+        direct is not None
+        and crossed is not None
+        and direct["signal_id"] != crossed["signal_id"]
+    ):
+        raise EvidenceError(
+            "trade_decision_tag_parent_collision"
+        )
+
+    if direct is not None:
+        return (
+            direct,
+            "explicit_decision_event_id_in_enter_tag",
+        )
+    if crossed is not None:
+        return (
+            crossed,
+            "explicit_operational_decision_event_id_crosswalk",
+        )
+    return None, None
+
 def _decision_tag(value: object) -> str | None:
     if not isinstance(value, str):
         return None
@@ -670,98 +775,279 @@ def _trade_rows(path: Path, ids: Sequence[int]) -> list[dict[str, Any]]:
         connection.close()
 
 
-def _closed_envelope(row: Mapping[str, Any], event: Mapping[str, Any], parent: Envelope,
-                     activation: Activation) -> Envelope:
+def _closed_envelope(
+    row: Mapping[str, Any],
+    event: Mapping[str, Any],
+    parent: Envelope,
+    activation: Activation,
+    *,
+    link_reason: str,
+) -> Envelope:
+    if link_reason not in {
+        "explicit_decision_event_id_in_enter_tag",
+        "explicit_operational_decision_event_id_crosswalk",
+    }:
+        raise EvidenceError("trade_link_reason_invalid")
+
     decision = DecisionRecordV42.model_validate(parent["decision"])
-    opened, closed = _database_time(row["open_date"]), _database_time(row["close_date"])
-    if (event.get("symbol_norm") != decision.symbol or event.get("side") != decision.side.value
-            or event.get("is_closed") is not True
-            or utc(event.get("open_time_utc")) != opened
-            or utc(event.get("close_time_utc")) != closed):
+    opened = _database_time(row["open_date"])
+    closed = _database_time(row["close_date"])
+
+    if (
+        event.get("symbol_norm") != decision.symbol
+        or event.get("side") != decision.side.value
+        or event.get("is_closed") is not True
+        or utc(event.get("open_time_utc")) != opened
+        or utc(event.get("close_time_utc")) != closed
+    ):
         raise EvidenceError("canonical_feedback_trade_mismatch")
+
     if row["pair"] != decision.pair or row["is_short"] not in (0, 1):
         raise EvidenceError("closed_trade_pair_or_side_invalid")
+
     side = "short" if row["is_short"] == 1 else "long"
     if side != decision.side.value:
         raise EvidenceError("closed_trade_side_mismatch")
-    token = digest({"decision_event_id": decision.event_id, "trade_id": row["id"]})
-    link = seal_trade_link_record({
-        "event_id": "v3-trade-" + token, "idempotency_key": "v3-trade-" + token,
-        "parent_event_id": decision.event_id, "signal_id": decision.signal_id,
-        "candidate_id": decision.candidate_id, "correlation_id": decision.correlation_id,
-        "trade_id": row["id"], "pair": row["pair"], "symbol": decision.symbol, "side": side,
-        "decision_timestamp": decision.decision_timestamp, "execution_timestamp": opened,
-        "decision_payload_sha256": decision.payload_sha256,
-        "link_reason": "explicit_decision_event_id_in_enter_tag",
-    })
-    return {"epoch_version": "v3", "origin": "natural_paper_runtime",
-            "identity": activation.identity.mapping(), "synthetic": False,
-            "replayed": False, "backfilled": False, "signal_id": decision.signal_id,
-            "decision_event_id": decision.event_id, "trade_id": row["id"],
-            "trade_link": link.model_dump(mode="json"), "open_time_utc": opened.isoformat(),
-            "close_time_utc": closed.isoformat(), "is_closed": True, "net_pnl": event["net_pnl"]}
+
+    token = digest(
+        {
+            "decision_event_id": decision.event_id,
+            "trade_id": row["id"],
+        }
+    )
+    link = seal_trade_link_record(
+        {
+            "event_id": "v3-trade-" + token,
+            "idempotency_key": "v3-trade-" + token,
+            "parent_event_id": decision.event_id,
+            "signal_id": decision.signal_id,
+            "candidate_id": decision.candidate_id,
+            "correlation_id": decision.correlation_id,
+            "trade_id": row["id"],
+            "pair": row["pair"],
+            "symbol": decision.symbol,
+            "side": side,
+            "decision_timestamp": decision.decision_timestamp,
+            "execution_timestamp": opened,
+            "decision_payload_sha256": decision.payload_sha256,
+            "link_reason": link_reason,
+        }
+    )
+    return {
+        "epoch_version": "v3",
+        "origin": "natural_paper_runtime",
+        "identity": activation.identity.mapping(),
+        "synthetic": False,
+        "replayed": False,
+        "backfilled": False,
+        "signal_id": decision.signal_id,
+        "decision_event_id": decision.event_id,
+        "trade_id": row["id"],
+        "trade_link": link.model_dump(mode="json"),
+        "open_time_utc": opened.isoformat(),
+        "close_time_utc": closed.isoformat(),
+        "is_closed": True,
+        "net_pnl": event["net_pnl"],
+    }
+
 
 
 def observe_feedback_close(
-    *, project_root: Path, snapshot_db: Path, events: Sequence[Mapping[str, Any]],
-    write: bool, config_source: ConfigSource = None,
+    *,
+    project_root: Path,
+    snapshot_db: Path,
+    events: Sequence[Mapping[str, Any]],
+    write: bool,
+    config_source: ConfigSource = None,
 ) -> ProducerReport:
-    """Export real closures only when an ex-ante parent already exists in V3.
+    """Export real closures only when an exact ex-ante V3 parent is provable.
 
-The financial values come unchanged from validated AutoLearning events. Old
-outcomes cannot acquire a parent here. Re-observation checks content conflicts.
-"""
+    Direct V3 decision ids remain supported for backward compatibility.
+    Operational decision ids are accepted only when the V3 parent already
+    contains an immutable ex-ante crosswalk. Signals admitted before the
+    crosswalk contract are never retrofitted or matched by time, pair, order,
+    proximity, fuzzy identity, or nearest-neighbour inference.
+    """
+
     try:
-        activation = _activation(project_root, config_source)
+        activation = _activation(
+            project_root,
+            config_source,
+        )
         if activation is None:
-            return ProducerReport("disabled", "producer_not_enabled")
+            return ProducerReport(
+                "disabled",
+                "producer_not_enabled",
+            )
+
         clock = datetime.now(UTC)
-        path = store.location(project_root, activation.identity)
+        path = store.location(
+            project_root,
+            activation.identity,
+        )
         if not path.exists():
-            return ProducerReport("ok", "no_ex_ante_v3_parents", skipped_without_parent=len(events))
-        with store.exclusive(path) if write else nullcontext():
-            signals, prior = _state(path, activation, clock)
-            parents = {r["decision_event_id"]: r for r in signals}
-            by_signal = {r["signal_id"]: r for r in signals}
-            if not parents:
-                return ProducerReport("ok", "no_ex_ante_v3_parents", skipped_without_parent=len(events))
+            return ProducerReport(
+                "ok",
+                "no_ex_ante_v3_parents",
+                skipped_without_parent=len(events),
+            )
+
+        with (
+            store.exclusive(path)
+            if write
+            else nullcontext()
+        ):
+            signals, prior = _state(
+                path,
+                activation,
+                clock,
+            )
+            v3_parents = {
+                row["decision_event_id"]: row
+                for row in signals
+            }
+            operational_parents = (
+                _operational_parent_index(signals)
+            )
+            by_signal = {
+                row["signal_id"]: row
+                for row in signals
+            }
+
+            if not v3_parents:
+                return ProducerReport(
+                    "ok",
+                    "no_ex_ante_v3_parents",
+                    skipped_without_parent=len(events),
+                )
+
             if len(events) > 50000:
                 raise EvidenceError("source_row_limit")
-            by_trade: dict[int, Mapping[str, Any]] = {}
+
+            by_trade: dict[
+                int,
+                Mapping[str, Any],
+            ] = {}
             for event in events:
                 if event.get("validation_status") != "ok":
-                    raise EvidenceError("unvalidated_feedback_event")
+                    raise EvidenceError(
+                        "unvalidated_feedback_event"
+                    )
+
                 key = str(event.get("trade_id", ""))
-                if not re.fullmatch(r"[1-9][0-9]*", key):
-                    raise EvidenceError("exact_integer_trade_id_required")
+                if not re.fullmatch(
+                    r"[1-9][0-9]*",
+                    key,
+                ):
+                    raise EvidenceError(
+                        "exact_integer_trade_id_required"
+                    )
+
                 trade_id = int(key)
-                fields = ("net_pnl", "symbol_norm", "side", "open_time_utc", "close_time_utc", "is_closed")
-                if trade_id in by_trade and any(by_trade[trade_id].get(k) != event.get(k) for k in fields):
-                    raise EvidenceError("feedback_trade_identity_conflict")
+                fields = (
+                    "net_pnl",
+                    "symbol_norm",
+                    "side",
+                    "open_time_utc",
+                    "close_time_utc",
+                    "is_closed",
+                )
+                if (
+                    trade_id in by_trade
+                    and any(
+                        by_trade[trade_id].get(field)
+                        != event.get(field)
+                        for field in fields
+                    )
+                ):
+                    raise EvidenceError(
+                        "feedback_trade_identity_conflict"
+                    )
                 by_trade[trade_id] = event
+
             incoming: list[Envelope] = []
-            known = {r["trade_id"] for r in prior}
+            known = {
+                row["trade_id"]
+                for row in prior
+            }
             observed: set[int] = set()
-            for row in _trade_rows(snapshot_db, sorted(by_trade)):
+
+            for row in _trade_rows(
+                snapshot_db,
+                sorted(by_trade),
+            ):
                 trade_id = row["id"]
-                parent = parents.get(_decision_tag(row["enter_tag"]) or "")
-                if parent is None:
+                decision_event_id = _decision_tag(
+                    row["enter_tag"]
+                )
+                parent, link_reason = (
+                    _resolve_trade_parent(
+                        decision_event_id,
+                        v3_parents=v3_parents,
+                        operational_parents=(
+                            operational_parents
+                        ),
+                    )
+                )
+
+                if parent is None or link_reason is None:
                     if trade_id in known:
-                        raise EvidenceError("persisted_trade_parent_disappeared")
+                        raise EvidenceError(
+                            "persisted_trade_parent_disappeared"
+                        )
                     continue
+
                 observed.add(trade_id)
-                incoming.append(admission.outcome(
-                    _closed_envelope(row, by_trade[trade_id], parent, activation),
-                    by_signal, activation, clock,
-                ))
-            if (known & set(by_trade)) - observed:
-                raise EvidenceError("persisted_closed_trade_disappeared")
-            merged = merge(prior + incoming, "trade_id")
+                incoming.append(
+                    admission.outcome(
+                        _closed_envelope(
+                            row,
+                            by_trade[trade_id],
+                            parent,
+                            activation,
+                            link_reason=link_reason,
+                        ),
+                        by_signal,
+                        activation,
+                        clock,
+                    )
+                )
+
+            if (
+                (known & set(by_trade))
+                - observed
+            ):
+                raise EvidenceError(
+                    "persisted_closed_trade_disappeared"
+                )
+
+            merged = merge(
+                prior + incoming,
+                "trade_id",
+            )
             count = len(merged) - len(prior)
             if write and count:
-                _persist(path, activation, signals, merged)
-        return ProducerReport("ok", "natural_closures_observed", new_outcome_count=count,
-                              skipped_without_parent=len(by_trade) - len(observed),
-                              write_requested=write, write_performed=bool(write and count))
+                _persist(
+                    path,
+                    activation,
+                    signals,
+                    merged,
+                )
+
+        return ProducerReport(
+            "ok",
+            "natural_closures_observed",
+            new_outcome_count=count,
+            skipped_without_parent=(
+                len(by_trade) - len(observed)
+            ),
+            write_requested=write,
+            write_performed=bool(
+                write and count
+            ),
+        )
     except Exception as exc:
-        return _blocked_report(exc, write=write)
+        return _blocked_report(
+            exc,
+            write=write,
+        )
