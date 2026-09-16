@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7ee544b948b4b1355085462d0354a506e019495198e16ebaa7894105ad212b33",
+  "aggregate_sha256": "b3801fd3bb82652a1381efa470e1f90dfed5297fc29734032eba6af5d347fd04",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 313,
-    "manifested_files_total": 2049,
-    "python_files": 1597,
+    "manifested_files_total": 2058,
+    "python_files": 1606,
     "runtime_excluded_files_total": 0,
-    "test_files": 433,
-    "tracked_files_total": 2050,
+    "test_files": 435,
+    "tracked_files_total": 2059,
     "workflows": 2
   },
   "deterministic": true,
@@ -2906,6 +2906,12 @@
       "sha256": "a9f8f735b0928ec916b36a4b4389ca6642a685bff199daa02f1c7ea0a06e58d0"
     },
     {
+      "bytes": 3122,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_official_trades_master_source_v1.py",
+      "sha256": "73b2837c40051e91e5b88aa5368e73ef637e7cec39b02c2978ebcb05184f57a8"
+    },
+    {
       "bytes": 20309,
       "hash_mode": "text_lf",
       "path": "scripts/audit_operational_exception_swallowing.py",
@@ -3468,6 +3474,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ocr_v11_research_dataset.py",
       "sha256": "e1edd28555663d5e2c361aac771b93a308a8b59311eb3aa3b32d7692af57963c"
+    },
+    {
+      "bytes": 4634,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_official_trades_master_baseline_v1.py",
+      "sha256": "ca9418b35e1b94e9394301007738160d211699e5e2f5f2ecd1b566b7088ec326"
     },
     {
       "bytes": 8932,
@@ -9380,6 +9392,36 @@
       "sha256": "e8982f1b37a132558b4714eaf21f7b0662961b2bd29d4be9694b578152e9208c"
     },
     {
+      "bytes": 876,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/__init__.py",
+      "sha256": "3ace5a0c43ae2a3a2f4f522426079755c6d40d3acb5191e3ea51d33de088e8c8"
+    },
+    {
+      "bytes": 24044,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/baseline.py",
+      "sha256": "23330acaffb75161917d54d3b4f607f780241e2a92b614d28ea215e23d328b48"
+    },
+    {
+      "bytes": 5216,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/contracts.py",
+      "sha256": "13f300932a2059bac3d3ae0972b25b4ba35565b1e140a72b9112d53fb51b2412"
+    },
+    {
+      "bytes": 10730,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/loader.py",
+      "sha256": "1299b08f05ff25141f292ac305281363a749839bd5576389e95cc7667bc5604d"
+    },
+    {
+      "bytes": 6026,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/persistence.py",
+      "sha256": "e2e9b48978a3d67b7823c01c12bb923ebd2dd94a999ffbef10d69bc2f5acae95"
+    },
+    {
       "bytes": 29700,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/training_executive_report_pack.py",
@@ -11094,6 +11136,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ocr_v11_walkforward_montecarlo_research.py",
       "sha256": "539d44f61b160af1c8ebfe4d1fc3bcd96eb19633d0f52e3d93bf3aee9c51b316"
+    },
+    {
+      "bytes": 8918,
+      "hash_mode": "text_lf",
+      "path": "tests/test_official_trades_master_baseline_v1.py",
+      "sha256": "d9dcb31e690baf1c378881e4e629d6c1574ec37ada89e56f75f2edc608470d4d"
+    },
+    {
+      "bytes": 7401,
+      "hash_mode": "text_lf",
+      "path": "tests/test_official_trades_master_source_v1.py",
+      "sha256": "66a9ab5c999bd4e6932416dd27b729888510ceb6a5e180dfe624584ec5aed2cd"
     },
     {
       "bytes": 6121,
