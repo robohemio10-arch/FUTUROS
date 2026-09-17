@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "b36463c953d0c7940c7059336eeeae75c8d84f0e5922d8ee11c3417e9f499580",
+  "aggregate_sha256": "c61353c9e398833680a32e716997c1e80c8445aedb58bb1eeae96f5040db0d1c",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 313,
-    "manifested_files_total": 2061,
-    "python_files": 1609,
+    "manifested_files_total": 2064,
+    "python_files": 1612,
     "runtime_excluded_files_total": 0,
-    "test_files": 436,
-    "tracked_files_total": 2062,
+    "test_files": 437,
+    "tracked_files_total": 2065,
     "workflows": 2
   },
   "deterministic": true,
@@ -3480,6 +3480,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_official_trades_master_baseline_v1.py",
       "sha256": "ca9418b35e1b94e9394301007738160d211699e5e2f5f2ecd1b566b7088ec326"
+    },
+    {
+      "bytes": 5029,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_official_trades_master_segment_persistence_v1.py",
+      "sha256": "3aec6379f8fc34f6d5d562315fb5995b7ad69dcda6d660fc803f1338deeadba7"
     },
     {
       "bytes": 8932,
@@ -9428,6 +9434,12 @@
       "sha256": "e2e9b48978a3d67b7823c01c12bb923ebd2dd94a999ffbef10d69bc2f5acae95"
     },
     {
+      "bytes": 54031,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/segment_persistence.py",
+      "sha256": "98f1ccd7fd6c4e447b0d0095d6b478f7a5ef15343e6a15bfe3f3dd901d8cccf1"
+    },
+    {
       "bytes": 41379,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/trades_master_official/walkforward.py",
@@ -11154,6 +11166,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_official_trades_master_baseline_v1.py",
       "sha256": "d9dcb31e690baf1c378881e4e629d6c1574ec37ada89e56f75f2edc608470d4d"
+    },
+    {
+      "bytes": 8705,
+      "hash_mode": "text_lf",
+      "path": "tests/test_official_trades_master_segment_persistence_v1.py",
+      "sha256": "02093182fcf377ab1584d1db6bf671663e4dcd5caa27743f4590d5ee75e8541e"
     },
     {
       "bytes": 7401,
