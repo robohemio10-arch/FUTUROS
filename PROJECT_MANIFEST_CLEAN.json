@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "4b0298f0da581e1e34c704e9418777bcae158ca25b85ed7b8049ba1175440540",
+  "aggregate_sha256": "6e7c8d7adf5a0140237ded44c60930a915598ad008bc698f2ec9be3a5163144e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 313,
-    "manifested_files_total": 2064,
-    "python_files": 1612,
+    "manifested_files_total": 2067,
+    "python_files": 1615,
     "runtime_excluded_files_total": 0,
-    "test_files": 437,
-    "tracked_files_total": 2065,
+    "test_files": 438,
+    "tracked_files_total": 2068,
     "workflows": 2
   },
   "deterministic": true,
@@ -3756,6 +3756,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_qlib_dataset.py",
       "sha256": "427b9bb805f7692dfb024e60f87ae4870af222ded2054a1061033714f9cdafdf"
+    },
+    {
+      "bytes": 3870,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_qlib_dataset_from_official_trades_master_v1.py",
+      "sha256": "2b461e1186a9cbb9eac68337634bf0ddcd7baa0bb2e5525029d79d63c291b4d6"
     },
     {
       "bytes": 2197,
@@ -9434,6 +9440,12 @@
       "sha256": "e2e9b48978a3d67b7823c01c12bb923ebd2dd94a999ffbef10d69bc2f5acae95"
     },
     {
+      "bytes": 42716,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/qlib_dataset.py",
+      "sha256": "37652037b4546bc591c072250c235d93d876089b543e754646b191290820e52b"
+    },
+    {
       "bytes": 54031,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/trades_master_official/segment_persistence.py",
@@ -11166,6 +11178,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_official_trades_master_baseline_v1.py",
       "sha256": "d9dcb31e690baf1c378881e4e629d6c1574ec37ada89e56f75f2edc608470d4d"
+    },
+    {
+      "bytes": 11146,
+      "hash_mode": "text_lf",
+      "path": "tests/test_official_trades_master_qlib_dataset_v1.py",
+      "sha256": "0c2def1c7a49937b9477977441c82ed49a3ae23ac9ac5b23c7b904677835c30f"
     },
     {
       "bytes": 8705,
