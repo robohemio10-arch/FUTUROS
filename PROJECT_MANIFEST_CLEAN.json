@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "89c2e04f551aa1071321085640026ffa81a22064138749e1a5f74070389c7081",
+  "aggregate_sha256": "d21a83f87b925a0072271b93eb39b49b6e9362abf908b40455020b61094e882e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2088,
-    "python_files": 1635,
+    "manifested_files_total": 2091,
+    "python_files": 1638,
     "runtime_excluded_files_total": 0,
-    "test_files": 445,
-    "tracked_files_total": 2089,
+    "test_files": 446,
+    "tracked_files_total": 2092,
     "workflows": 2
   },
   "deterministic": true,
@@ -3348,6 +3348,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_event_driven_backtest_execution_cost_gate_v1.py",
       "sha256": "6dda83ca0210957e4608865f2564bc1c23a0bce11bb067ed9069ce863a6cbb02"
+    },
+    {
+      "bytes": 1448,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_execution_intelligence_net_pnl_attribution_v1.py",
+      "sha256": "b6e4f3b9d0e7ff342f7eb8cb340c32897d0a6f072d24cdcfac663effdb572835"
     },
     {
       "bytes": 1628,
@@ -8144,6 +8150,12 @@
       "sha256": "45a3195030ab064c1b3b215e30d837d40bdacece8a7c736e41d777a12f085ff6"
     },
     {
+      "bytes": 18212,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/execution_intelligence_net_pnl_attribution.py",
+      "sha256": "4def5c94afb69dd1a2b6ffe44d04e0269bacc3d7e999d59ead1ddc14b309b914"
+    },
+    {
       "bytes": 24307,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/market_intelligence_pnl_ablation.py",
@@ -10830,6 +10842,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_evidence_bundle_secret_redaction_gate_v1.py",
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
+    },
+    {
+      "bytes": 3415,
+      "hash_mode": "text_lf",
+      "path": "tests/test_execution_intelligence_net_pnl_attribution_v1.py",
+      "sha256": "f21d3d10d46afca14b25119324213e48796a5b916c9e2c3f8fa54a7c52af62e4"
     },
     {
       "bytes": 9537,
