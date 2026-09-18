@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d21a83f87b925a0072271b93eb39b49b6e9362abf908b40455020b61094e882e",
+  "aggregate_sha256": "9d72e5da6c16b2172b9207152c5206ca8b2f0e338350460e31ed07bb07530902",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2091,
-    "python_files": 1638,
+    "manifested_files_total": 2094,
+    "python_files": 1641,
     "runtime_excluded_files_total": 0,
-    "test_files": 446,
-    "tracked_files_total": 2092,
+    "test_files": 447,
+    "tracked_files_total": 2095,
     "workflows": 2
   },
   "deterministic": true,
@@ -3522,6 +3522,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_open_decision_clean_dataset.py",
       "sha256": "9f87bcb3b3ab0c2484fe00363598e952a7816adfb26e183ea9fc71198a06e34f"
+    },
+    {
+      "bytes": 1264,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_opportunity_allocator_capital_hour_uplift_v1.py",
+      "sha256": "ff6433070ccaa4abc39d5bb23210bd5b85234b24654b61b92ce7506f4bdcbd50"
     },
     {
       "bytes": 4891,
@@ -8162,6 +8168,12 @@
       "sha256": "69986434e786fa1bb5ff17decd284f3a9c154784149c6b9559625a544014e779"
     },
     {
+      "bytes": 19167,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/opportunity_allocator_capital_hour_uplift.py",
+      "sha256": "17b7131200b2fec7bdf90894d1ddbcfc54a39554a1c2e46eb349114ec694e3e3"
+    },
+    {
       "bytes": 2125,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/performance_reconciliation.py",
@@ -11340,6 +11352,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_operational_exception_swallowing_audit_v1.py",
       "sha256": "0228531524f04ac7acc43fad2e6efad3846baa90d6af147bd042631fc54c898d"
+    },
+    {
+      "bytes": 4401,
+      "hash_mode": "text_lf",
+      "path": "tests/test_opportunity_allocator_capital_hour_uplift_v1.py",
+      "sha256": "c446b4552aac70a14d9ba8c98edeedc53693d5edd3c557fae2ab7ddb94f29f9f"
     },
     {
       "bytes": 5386,
