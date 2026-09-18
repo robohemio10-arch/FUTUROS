@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "73a65d143a51fe571787fa60e72147562c2de093417d8aa610742c019fd0e1a0",
+  "aggregate_sha256": "09a2c9da7fc12b8ed3b59f5aff6040c6030cc669a684e236be75b19ccc858ad1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2079,
-    "python_files": 1626,
+    "manifested_files_total": 2082,
+    "python_files": 1629,
     "runtime_excluded_files_total": 0,
-    "test_files": 442,
-    "tracked_files_total": 2080,
+    "test_files": 443,
+    "tracked_files_total": 2083,
     "workflows": 2
   },
   "deterministic": true,
@@ -3870,6 +3870,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_shadow_opportunity_engine_v1.py",
       "sha256": "87462d44950cfbc9a931b157172a7511953de4ad8e68da9eb491f75319be00d4"
+    },
+    {
+      "bytes": 2203,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_smart_aibot_3991_economic_benchmark_v1.py",
+      "sha256": "119714be36dacb63c0ef7f6bff01207f44ca7d6b9a60951ffe9ddaf47b89929d"
     },
     {
       "bytes": 751,
@@ -8114,6 +8120,12 @@
       "sha256": "81cc203b22f741f218573f0cd73e08168357f50b7006f527ceb696a7f7b3c4cf"
     },
     {
+      "bytes": 23791,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/economic_benchmark.py",
+      "sha256": "45a3195030ab064c1b3b215e30d837d40bdacece8a7c736e41d777a12f085ff6"
+    },
+    {
       "bytes": 2125,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/performance_reconciliation.py",
@@ -12336,6 +12348,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_sklearn_model_version_compatibility_guard.py",
       "sha256": "1621826e67eb0506d1a783b0977d61c69d0efff7fac4fea570ae8800663e67ff"
+    },
+    {
+      "bytes": 5903,
+      "hash_mode": "text_lf",
+      "path": "tests/test_smart_aibot_3991_economic_benchmark_v1.py",
+      "sha256": "0775c6b872b4c238ce350d9a8d1a4f5eba2c1d3cc7a7d363037fffc05d6ba01d"
     },
     {
       "bytes": 454,
