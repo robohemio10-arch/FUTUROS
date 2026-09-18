@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "09a2c9da7fc12b8ed3b59f5aff6040c6030cc669a684e236be75b19ccc858ad1",
+  "aggregate_sha256": "767c7714c90c2ae39daa3edd6b3b4335abef226bad65d637503fa18b8df41c4d",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2082,
-    "python_files": 1629,
+    "manifested_files_total": 2085,
+    "python_files": 1632,
     "runtime_excluded_files_total": 0,
-    "test_files": 443,
-    "tracked_files_total": 2083,
+    "test_files": 444,
+    "tracked_files_total": 2086,
     "workflows": 2
   },
   "deterministic": true,
@@ -3138,6 +3138,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_ai_shadow_drift_baseline.py",
       "sha256": "6437b7153d9d25839553dd24e5aa97295398e3e27c9120721489c2341e65b2c1"
+    },
+    {
+      "bytes": 1317,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_ai_shadow_economic_challenger_sync_v1.py",
+      "sha256": "8843d82cc5403aa09d8f90a868fc30d90de3057286ec1d1716ad603766e87559"
     },
     {
       "bytes": 3143,
@@ -8108,6 +8114,12 @@
       "sha256": "d7fb9c975e0c921edaf267b8ae847fd49ba7b3bcb705a4411b19413bfe6f5c76"
     },
     {
+      "bytes": 15606,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/ai_shadow_economic_challenger.py",
+      "sha256": "f29a1d17f2cfc87eec2bd8508aad2b3551bc615fd37e3e322fc627217f9360e2"
+    },
+    {
       "bytes": 6547,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/benchmark_engine.py",
@@ -9912,6 +9924,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_ai_shadow_drift_monitor.py",
       "sha256": "ac523aca7d9749b884392e760039051a6797a69aeedfdc871e961c909f12ee2b"
+    },
+    {
+      "bytes": 6448,
+      "hash_mode": "text_lf",
+      "path": "tests/test_ai_shadow_economic_challenger_sync_v1.py",
+      "sha256": "13df8982ff45853c5baebbccba2b317bac032beaeedc1d3b5a5d32494f045700"
     },
     {
       "bytes": 8310,
