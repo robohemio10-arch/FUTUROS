@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "767c7714c90c2ae39daa3edd6b3b4335abef226bad65d637503fa18b8df41c4d",
+  "aggregate_sha256": "89c2e04f551aa1071321085640026ffa81a22064138749e1a5f74070389c7081",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2085,
-    "python_files": 1632,
+    "manifested_files_total": 2088,
+    "python_files": 1635,
     "runtime_excluded_files_total": 0,
-    "test_files": 444,
-    "tracked_files_total": 2086,
+    "test_files": 445,
+    "tracked_files_total": 2089,
     "workflows": 2
   },
   "deterministic": true,
@@ -3408,6 +3408,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_market_features.py",
       "sha256": "14f6850bd1cc8a5f6a77634c9116fb553f71cb44b8ffabb503887dd44f79cc1f"
+    },
+    {
+      "bytes": 1683,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_market_intelligence_pnl_ablation_v1.py",
+      "sha256": "e84338b8696e625a1eeae5f8a3e12afaa18661ba21ded73aa9f90c564fe5487f"
     },
     {
       "bytes": 3425,
@@ -8138,6 +8144,12 @@
       "sha256": "45a3195030ab064c1b3b215e30d837d40bdacece8a7c736e41d777a12f085ff6"
     },
     {
+      "bytes": 24307,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/market_intelligence_pnl_ablation.py",
+      "sha256": "69986434e786fa1bb5ff17decd284f3a9c154784149c6b9559625a544014e779"
+    },
+    {
       "bytes": 2125,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/performance_reconciliation.py",
@@ -11094,6 +11106,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_market_intelligence_contract_v1.py",
       "sha256": "9348f27c1c466ae8ab3bc2f63fe0a13c93f993d3acb7b3bb0c0318b01a5febb0"
+    },
+    {
+      "bytes": 6252,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_pnl_ablation_v1.py",
+      "sha256": "2243ae5403352f770ec32b54a66f7fc16f1c58e2061cd18e7a450e8a961ce207"
     },
     {
       "bytes": 5476,
