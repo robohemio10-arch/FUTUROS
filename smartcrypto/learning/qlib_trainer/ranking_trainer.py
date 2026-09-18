@@ -1,25 +1,497 @@
-"""Research-only institutional Qlib ranking challenger trainer."""
+"""Research-only institutional Qlib ranking challenger trainer.
+
+The trainer remains backward-compatible with legacy research invocations.
+
+When a WQ7 hypothesis registry and hypothesis ID are explicitly supplied, the
+trainer consumes the immutable post-OCR hypothesis contract and validates the
+actual dataset/split fingerprints before reporting successful consumption.
+
+The current canonical WQ7 Qlib hypothesis is HOLD. Registry-bound dry-run is
+allowed for evidence/lineage consumption, while registry-bound training is
+fail-closed until a separately evidenced state transition authorizes it.
+
+No registry write, model promotion, runtime update, risk mutation, private
+exchange access, order submission, live release, or canary release is enabled.
+"""
 
 from __future__ import annotations
 
 import importlib.util
 import json
+from collections.abc import Mapping
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from smartcrypto.learning.paper_autolearning.outcome_schema import SAFETY_FLAGS, utc_now_iso
-from smartcrypto.learning.qlib_backend_gate import build_qlib_research_backend_gate_report
+from smartcrypto.learning.paper_autolearning.outcome_schema import (
+    SAFETY_FLAGS,
+    utc_now_iso,
+)
+from smartcrypto.learning.qlib_backend_gate import (
+    build_qlib_research_backend_gate_report,
+)
+from smartcrypto.research.trades_master_official.hypothesis_registry import (
+    EXPECTED_QLIB_HYPOTHESIS_ID,
+    EXPECTED_PORTABLE_REGISTRY_HASH,
+    OfficialHypothesisRegistryError,
+    get_registered_hypothesis,
+    load_post_ocr_hypothesis_registry,
+)
 
-from .challenger_artifacts import write_challenger_artifact, write_report_artifacts
-from .dataset_adapter import DEFAULT_WALKFORWARD_BASELINE_JSON, DEFAULT_WALKFORWARD_JSON, load_ranking_dataset_bundle, resolve
-from .walkforward_evaluator import evaluate_walkforward_challenger
+from .challenger_artifacts import (
+    write_challenger_artifact,
+    write_report_artifacts,
+)
+from .dataset_adapter import (
+    load_ranking_dataset_bundle,
+    resolve,
+)
+from .walkforward_evaluator import (
+    evaluate_walkforward_challenger,
+)
+
 
 SCHEMA_VERSION = "qlib_institutional_ranking_trainer_v1"
-DEFAULT_REPORT_JSON = Path("data/reports/qlib_institutional_ranking_trainer_v1.json")
-DEFAULT_REPORT_MD = Path("data/reports/qlib_institutional_ranking_trainer_v1.md")
-DEFAULT_METRICS_JSON = Path("data/reports/qlib_institutional_ranking_metrics_v1.json")
-DEFAULT_METRICS_MD = Path("data/reports/qlib_institutional_ranking_metrics_v1.md")
-DEFAULT_BACKEND_GATE_REPORT = Path("data/reports/qlib_research_backend_gate_v1.json")
+
+DEFAULT_REPORT_JSON = Path(
+    "data/reports/qlib_institutional_ranking_trainer_v1.json"
+)
+DEFAULT_REPORT_MD = Path(
+    "data/reports/qlib_institutional_ranking_trainer_v1.md"
+)
+DEFAULT_METRICS_JSON = Path(
+    "data/reports/qlib_institutional_ranking_metrics_v1.json"
+)
+DEFAULT_METRICS_MD = Path(
+    "data/reports/qlib_institutional_ranking_metrics_v1.md"
+)
+DEFAULT_BACKEND_GATE_REPORT = Path(
+    "data/reports/qlib_research_backend_gate_v1.json"
+)
+
+WQ7_EXPECTED_CANDIDATE_CLASS = "qlib_ranking_challenger"
+WQ7_CURRENT_CANONICAL_STATE = "HOLD"
+
+
+def empty_wq7_hypothesis_binding() -> dict[str, Any]:
+    """Return the non-authoritative default WQ7 binding envelope."""
+
+    return {
+        "binding_requested": False,
+        "consumed_registry": False,
+        "binding_status": "not_requested",
+        "registry_path": None,
+        "registry_hash": None,
+        "hypothesis_id": None,
+        "candidate_class": None,
+        "hypothesis_state": None,
+        "dataset_hash_expected": None,
+        "dataset_hash_actual": None,
+        "dataset_fingerprint_match": False,
+        "split_manifest_hash_expected": None,
+        "split_manifest_hash_actual": None,
+        "split_fingerprint_match": False,
+        "training_authorized": False,
+        "operational_authority": False,
+        "model_promotion_allowed": False,
+        "registry_write_allowed": False,
+        "sends_orders": False,
+        "changes_risk": False,
+        "exchange_private_access": False,
+    }
+
+
+def resolve_wq7_hypothesis_binding(
+    *,
+    hypothesis_registry_path: str | Path | None,
+    hypothesis_id: str | None,
+    bundle: Any,
+    train: bool,
+) -> tuple[dict[str, Any], list[str]]:
+    """Resolve and validate optional WQ7 hypothesis consumption.
+
+    Legacy invocations with neither binding argument remain unchanged.
+
+    An explicit binding is fail-closed:
+    - both registry path and hypothesis ID are mandatory;
+    - the portable registry hash must be canonical;
+    - only canonical H01 is accepted by this Qlib consumer;
+    - candidate class must be ``qlib_ranking_challenger``;
+    - candidate state must remain the currently frozen ``HOLD`` state;
+    - actual trainer dataset and split fingerprints must equal H01;
+    - dry-run consumption is allowed;
+    - training while HOLD is forbidden.
+    """
+
+    binding = empty_wq7_hypothesis_binding()
+    errors: list[str] = []
+
+    path_supplied = (
+        hypothesis_registry_path
+        is not None
+    )
+    id_supplied = (
+        hypothesis_id
+        is not None
+    )
+
+    if not path_supplied and not id_supplied:
+        return binding, errors
+
+    binding[
+        "binding_requested"
+    ] = True
+
+    binding[
+        "registry_path"
+    ] = (
+        None
+        if hypothesis_registry_path
+        is None
+        else str(
+            Path(
+                hypothesis_registry_path
+            )
+        )
+    )
+
+    binding[
+        "hypothesis_id"
+    ] = hypothesis_id
+
+    if path_supplied != id_supplied:
+        binding[
+            "binding_status"
+        ] = "blocked_incomplete_parameters"
+
+        errors.append(
+            "wq7_binding_parameters_incomplete"
+        )
+
+        return binding, errors
+
+    assert (
+        hypothesis_registry_path
+        is not None
+    )
+    assert hypothesis_id is not None
+
+    try:
+        registry = (
+            load_post_ocr_hypothesis_registry(
+                hypothesis_registry_path
+            )
+        )
+
+    except (
+        OfficialHypothesisRegistryError
+    ) as exc:
+        binding[
+            "binding_status"
+        ] = "blocked_invalid_registry"
+
+        errors.append(
+            "wq7_registry_invalid:"
+            + exc.code
+        )
+
+        return binding, errors
+
+    registry_hash = registry.get(
+        "registry_hash"
+    )
+
+    binding[
+        "registry_hash"
+    ] = registry_hash
+
+    if (
+        registry_hash
+        != EXPECTED_PORTABLE_REGISTRY_HASH
+    ):
+        errors.append(
+            "wq7_registry_hash_mismatch"
+        )
+
+    if (
+        hypothesis_id
+        != EXPECTED_QLIB_HYPOTHESIS_ID
+    ):
+        errors.append(
+            "wq7_hypothesis_id_not_canonical_h01"
+        )
+
+    try:
+        hypothesis = (
+            get_registered_hypothesis(
+                registry,
+                hypothesis_id,
+            )
+        )
+
+    except (
+        OfficialHypothesisRegistryError
+    ) as exc:
+        binding[
+            "binding_status"
+        ] = "blocked_hypothesis_lookup"
+
+        errors.append(
+            "wq7_hypothesis_lookup_failed:"
+            + exc.code
+        )
+
+        return binding, sorted(
+            set(
+                errors
+            )
+        )
+
+    candidate_class = hypothesis.get(
+        "candidate_class"
+    )
+
+    hypothesis_state = hypothesis.get(
+        "state"
+    )
+
+    binding[
+        "candidate_class"
+    ] = candidate_class
+
+    binding[
+        "hypothesis_state"
+    ] = hypothesis_state
+
+    if (
+        candidate_class
+        != WQ7_EXPECTED_CANDIDATE_CLASS
+    ):
+        errors.append(
+            "wq7_hypothesis_class_mismatch"
+        )
+
+    if (
+        hypothesis_state
+        != WQ7_CURRENT_CANONICAL_STATE
+    ):
+        errors.append(
+            "wq7_hypothesis_state_drift"
+        )
+
+    dataset_fingerprint = (
+        hypothesis.get(
+            "dataset_fingerprint"
+        )
+    )
+
+    split_fingerprint = (
+        hypothesis.get(
+            "split_fingerprint"
+        )
+    )
+
+    if not isinstance(
+        dataset_fingerprint,
+        Mapping,
+    ):
+        errors.append(
+            "wq7_dataset_fingerprint_invalid"
+        )
+
+        dataset_fingerprint = {}
+
+    if not isinstance(
+        split_fingerprint,
+        Mapping,
+    ):
+        errors.append(
+            "wq7_split_fingerprint_invalid"
+        )
+
+        split_fingerprint = {}
+
+    expected_dataset_hash = (
+        dataset_fingerprint.get(
+            "dataset_hash"
+        )
+    )
+
+    actual_dataset_hash = (
+        bundle.dataset_manifest.get(
+            "dataset_hash"
+        )
+        if isinstance(
+            bundle.dataset_manifest,
+            Mapping,
+        )
+        else None
+    )
+
+    expected_split_hash = (
+        split_fingerprint.get(
+            "split_manifest_hash"
+        )
+    )
+
+    actual_split_hash = (
+        bundle.walkforward.get(
+            "split_manifest_hash"
+        )
+        if isinstance(
+            bundle.walkforward,
+            Mapping,
+        )
+        else None
+    )
+
+    dataset_match = bool(
+        expected_dataset_hash
+        and actual_dataset_hash
+        and (
+            expected_dataset_hash
+            == actual_dataset_hash
+        )
+    )
+
+    split_match = bool(
+        expected_split_hash
+        and actual_split_hash
+        and (
+            expected_split_hash
+            == actual_split_hash
+        )
+    )
+
+    binding[
+        "dataset_hash_expected"
+    ] = expected_dataset_hash
+
+    binding[
+        "dataset_hash_actual"
+    ] = actual_dataset_hash
+
+    binding[
+        "dataset_fingerprint_match"
+    ] = dataset_match
+
+    binding[
+        "split_manifest_hash_expected"
+    ] = expected_split_hash
+
+    binding[
+        "split_manifest_hash_actual"
+    ] = actual_split_hash
+
+    binding[
+        "split_fingerprint_match"
+    ] = split_match
+
+    if not dataset_match:
+        errors.append(
+            "wq7_dataset_fingerprint_mismatch"
+        )
+
+    if not split_match:
+        errors.append(
+            "wq7_split_fingerprint_mismatch"
+        )
+
+    authority = hypothesis.get(
+        "authority"
+    )
+
+    if not isinstance(
+        authority,
+        Mapping,
+    ):
+        errors.append(
+            "wq7_hypothesis_authority_invalid"
+        )
+
+    else:
+        forbidden_true = (
+            "operational_authority",
+            "sends_orders",
+            "changes_risk",
+            "can_apply_to_freqtrade",
+            "can_apply_to_risk_manager",
+            "exchange_private_access",
+        )
+
+        for field in (
+            forbidden_true
+        ):
+            if authority.get(
+                field
+            ) is not False:
+                errors.append(
+                    "wq7_hypothesis_authority_drift:"
+                    + field
+                )
+
+    training_authorized = bool(
+        not errors
+        and (
+            hypothesis_state
+            == "PROVAR"
+        )
+    )
+
+    binding[
+        "training_authorized"
+    ] = training_authorized
+
+    if (
+        train
+        and (
+            hypothesis_state
+            == "HOLD"
+        )
+    ):
+        errors.append(
+            "wq7_hypothesis_state_hold_blocks_training"
+        )
+
+    unique_errors = sorted(
+        set(
+            errors
+        )
+    )
+
+    binding[
+        "consumed_registry"
+    ] = bool(
+        not [
+            error
+            for error in unique_errors
+            if error
+            != "wq7_hypothesis_state_hold_blocks_training"
+        ]
+    )
+
+    if unique_errors:
+        if (
+            unique_errors
+            == [
+                "wq7_hypothesis_state_hold_blocks_training"
+            ]
+        ):
+            binding[
+                "binding_status"
+            ] = "consumed_hold_training_blocked"
+
+        else:
+            binding[
+                "binding_status"
+            ] = "blocked_validation_error"
+
+    else:
+        binding[
+            "binding_status"
+        ] = "consumed_hold_dry_run"
+
+    return binding, unique_errors
 
 
 def build_qlib_institutional_ranking_trainer_report(
@@ -42,201 +514,765 @@ def build_qlib_institutional_ranking_trainer_report(
     backend_gate_report_path: str | Path | None = None,
     registry_write_requested: bool = False,
     model_promotion_requested: bool = False,
+    hypothesis_registry_path: str | Path | None = None,
+    hypothesis_id: str | None = None,
 ) -> dict[str, Any]:
-    root = Path(project_root).resolve()
+    root = Path(
+        project_root
+    ).resolve()
+
     generated_at = utc_now_iso()
+
     bundle = load_ranking_dataset_bundle(
         project_root=root,
-        feature_contract_path=feature_contract_path,
-        dataset_manifest_path=dataset_manifest_path,
-        target_store_path=target_store_path,
-        walkforward_path=walkforward_path,
-        baseline_path=baseline_path,
-        dataset_path=dataset_path,
+        feature_contract_path=(
+            feature_contract_path
+        ),
+        dataset_manifest_path=(
+            dataset_manifest_path
+        ),
+        target_store_path=(
+            target_store_path
+        ),
+        walkforward_path=(
+            walkforward_path
+        ),
+        baseline_path=(
+            baseline_path
+        ),
+        dataset_path=(
+            dataset_path
+        ),
     )
-    backend_gate_report, backend_gate_status = resolve_backend_gate_report(
+
+    (
+        wq7_binding,
+        wq7_binding_errors,
+    ) = resolve_wq7_hypothesis_binding(
+        hypothesis_registry_path=(
+            hypothesis_registry_path
+        ),
+        hypothesis_id=(
+            hypothesis_id
+        ),
+        bundle=bundle,
+        train=train,
+    )
+
+    (
+        backend_gate_report,
+        backend_gate_status,
+    ) = resolve_backend_gate_report(
         root=root,
-        backend_gate_report_path=backend_gate_report_path,
+        backend_gate_report_path=(
+            backend_gate_report_path
+        ),
     )
-    backend_probe = qlib_backend_probe_from_gate(backend_gate_report)
+
+    backend_probe = (
+        qlib_backend_probe_from_gate(
+            backend_gate_report
+        )
+    )
+
     if backend_probe is None:
-        qlib_available = importlib.util.find_spec("qlib") is not None
-        qlib_backend_status = "available" if qlib_available else "unavailable"
-        backend_gate_status = "not_provided"
+        qlib_available = (
+            importlib.util.find_spec(
+                "qlib"
+            )
+            is not None
+        )
+
+        qlib_backend_status = (
+            "available"
+            if qlib_available
+            else "unavailable"
+        )
+
+        backend_gate_status = (
+            "not_provided"
+        )
+
     else:
-        qlib_backend_status = backend_probe["qlib_backend_status"]
-        qlib_available = qlib_backend_status == "available"
-    validation_errors = list(bundle.validation_errors)
+        qlib_backend_status = (
+            backend_probe[
+                "qlib_backend_status"
+            ]
+        )
+
+        qlib_available = (
+            qlib_backend_status
+            == "available"
+        )
+
+    validation_errors = list(
+        bundle.validation_errors
+    )
+
+    validation_errors.extend(
+        wq7_binding_errors
+    )
+
     if registry_write_requested:
-        validation_errors.append("registry_write_forbidden")
+        validation_errors.append(
+            "registry_write_forbidden"
+        )
+
     if model_promotion_requested:
-        validation_errors.append("model_promotion_forbidden")
-    if write_challenger_artifact and not train:
-        validation_errors.append("challenger_artifact_requires_train")
+        validation_errors.append(
+            "model_promotion_forbidden"
+        )
+
+    if (
+        write_challenger_artifact
+        and not train
+    ):
+        validation_errors.append(
+            "challenger_artifact_requires_train"
+        )
+
+    validation_errors = sorted(
+        set(
+            validation_errors
+        )
+    )
 
     trainer_status = "ok"
     reason = "dry_run_validated"
-    backend_name = "qlib_research" if qlib_available else "none"
+
+    backend_name = (
+        "qlib_research"
+        if qlib_available
+        else "none"
+    )
+
     challenger_status = "not_trained"
     training_performed = False
-    metrics_by_split: list[dict[str, Any]] = []
-    aggregate_metrics = empty_aggregate_metrics()
-    baseline_comparison = empty_baseline_comparison(bundle.baseline_summary)
-    model_payload: dict[str, Any] = {}
+
+    metrics_by_split: list[
+        dict[str, Any]
+    ] = []
+
+    aggregate_metrics = (
+        empty_aggregate_metrics()
+    )
+
+    baseline_comparison = (
+        empty_baseline_comparison(
+            bundle.baseline_summary
+        )
+    )
+
+    model_payload: dict[
+        str,
+        Any,
+    ] = {}
+
+    binding_requested = bool(
+        wq7_binding.get(
+            "binding_requested"
+        )
+    )
 
     if train:
-        if qlib_backend_status == "blocked":
+        if (
+            binding_requested
+            and wq7_binding_errors
+        ):
+            trainer_status = "blocked"
+
+            reason = (
+                wq7_binding_errors[
+                    0
+                ]
+            )
+
+        elif (
+            binding_requested
+            and not wq7_binding.get(
+                "training_authorized",
+                False,
+            )
+        ):
+            trainer_status = "blocked"
+
+            reason = (
+                "wq7_hypothesis_not_authorized_for_training"
+            )
+
+            validation_errors.append(
+                reason
+            )
+
+        elif (
+            qlib_backend_status
+            == "blocked"
+        ):
             trainer_status = "blocked"
             reason = "qlib_backend_blocked"
-            validation_errors.append("qlib_backend_blocked")
-        elif qlib_backend_status in {"unavailable", "partial"} and not allow_research_fallback:
+
+            validation_errors.append(
+                "qlib_backend_blocked"
+            )
+
+        elif (
+            qlib_backend_status
+            in {
+                "unavailable",
+                "partial",
+            }
+            and not allow_research_fallback
+        ):
             trainer_status = "blocked"
-            reason = f"qlib_backend_{qlib_backend_status}"
-            validation_errors.append(reason)
+
+            reason = (
+                "qlib_backend_"
+                + qlib_backend_status
+            )
+
+            validation_errors.append(
+                reason
+            )
+
         elif validation_errors:
             trainer_status = "blocked"
-            reason = validation_errors[0]
+
+            reason = (
+                validation_errors[
+                    0
+                ]
+            )
+
         else:
-            evaluation = evaluate_walkforward_challenger(bundle)
-            metrics_by_split = evaluation["metrics_by_split"]
-            aggregate_metrics = evaluation["aggregate_metrics"]
-            baseline_comparison = evaluation["baseline_comparison"]
+            evaluation = (
+                evaluate_walkforward_challenger(
+                    bundle
+                )
+            )
+
+            metrics_by_split = (
+                evaluation[
+                    "metrics_by_split"
+                ]
+            )
+
+            aggregate_metrics = (
+                evaluation[
+                    "aggregate_metrics"
+                ]
+            )
+
+            baseline_comparison = (
+                evaluation[
+                    "baseline_comparison"
+                ]
+            )
+
             model_payload = {
-                "backend_name": evaluation["backend_name"],
-                "models": evaluation["models"],
-                "scaler_fit_row_counts": evaluation["scaler_fit_row_counts"],
+                "backend_name": (
+                    evaluation[
+                        "backend_name"
+                    ]
+                ),
+                "models": (
+                    evaluation[
+                        "models"
+                    ]
+                ),
+                "scaler_fit_row_counts": (
+                    evaluation[
+                        "scaler_fit_row_counts"
+                    ]
+                ),
             }
-            backend_name = "qlib_research" if qlib_available else evaluation["backend_name"]
+
+            backend_name = (
+                "qlib_research"
+                if qlib_available
+                else evaluation[
+                    "backend_name"
+                ]
+            )
+
             if not qlib_available:
-                qlib_backend_status = "research_fallback_allowed"
-            challenger_status = "trained_research_only"
+                qlib_backend_status = (
+                    "research_fallback_allowed"
+                )
+
+            challenger_status = (
+                "trained_research_only"
+            )
+
             trainer_status = "ok"
-            reason = "research_challenger_trained"
+
+            reason = (
+                "research_challenger_trained"
+            )
+
             training_performed = True
+
     elif validation_errors:
         trainer_status = "blocked"
-        reason = validation_errors[0]
 
-    candidate_decision = decide_candidate(
-        train=train,
-        training_performed=training_performed,
-        reason=reason,
-        aggregate_metrics=aggregate_metrics,
-        baseline_comparison=baseline_comparison,
+        reason = (
+            validation_errors[
+                0
+            ]
+        )
+
+    validation_errors = sorted(
+        set(
+            validation_errors
+        )
     )
-    status = "blocked" if trainer_status == "blocked" else "ok"
+
+    candidate_decision = (
+        decide_candidate(
+            train=train,
+            training_performed=(
+                training_performed
+            ),
+            reason=reason,
+            aggregate_metrics=(
+                aggregate_metrics
+            ),
+            baseline_comparison=(
+                baseline_comparison
+            ),
+        )
+    )
+
+    status = (
+        "blocked"
+        if trainer_status
+        == "blocked"
+        else "ok"
+    )
+
     output_paths = {
-        "trainer_report_json": str(resolve(root, report_json_path, DEFAULT_REPORT_JSON)),
-        "trainer_report_markdown": str(resolve(root, report_markdown_path, DEFAULT_REPORT_MD)),
-        "metrics_json": str(resolve(root, metrics_json_path, DEFAULT_METRICS_JSON)),
-        "metrics_markdown": str(resolve(root, metrics_markdown_path, DEFAULT_METRICS_MD)),
+        "trainer_report_json": str(
+            resolve(
+                root,
+                report_json_path,
+                DEFAULT_REPORT_JSON,
+            )
+        ),
+        "trainer_report_markdown": str(
+            resolve(
+                root,
+                report_markdown_path,
+                DEFAULT_REPORT_MD,
+            )
+        ),
+        "metrics_json": str(
+            resolve(
+                root,
+                metrics_json_path,
+                DEFAULT_METRICS_JSON,
+            )
+        ),
+        "metrics_markdown": str(
+            resolve(
+                root,
+                metrics_markdown_path,
+                DEFAULT_METRICS_MD,
+            )
+        ),
     }
-    artifact_paths: dict[str, str] = {}
-    artifact_hashes: dict[str, str] = {}
-    qlib_training_performed_flag = bool(training_performed and qlib_backend_status == "available")
-    report_safety_flags = safety_flags(
-        training_requested=bool(train),
-        qlib_challenger_training_performed=bool(training_performed),
-        qlib_training_performed=qlib_training_performed_flag,
+
+    artifact_paths: dict[
+        str,
+        str,
+    ] = {}
+
+    artifact_hashes: dict[
+        str,
+        str,
+    ] = {}
+
+    qlib_training_performed_flag = bool(
+        training_performed
+        and (
+            qlib_backend_status
+            == "available"
+        )
     )
-    report: dict[str, Any] = {
+
+    report_safety_flags = (
+        safety_flags(
+            training_requested=bool(
+                train
+            ),
+            qlib_challenger_training_performed=bool(
+                training_performed
+            ),
+            qlib_training_performed=(
+                qlib_training_performed_flag
+            ),
+        )
+    )
+
+    report: dict[
+        str,
+        Any,
+    ] = {
         "status": status,
         "reason": reason,
-        "schema_version": SCHEMA_VERSION,
-        "generated_at_utc": generated_at,
-        "input_sources": input_sources(root, bundle),
-        "selected_dataset_path": str(bundle.selected_dataset_path) if bundle.selected_dataset_path is not None else None,
-        "selected_dataset_rows": int(len(bundle.dataset)),
-        "feature_contract_hash": bundle.feature_contract.get("contract_hash"),
-        "dataset_hash": bundle.dataset_manifest.get("dataset_hash"),
-        "target_store_hash": bundle.target_store.get("target_store_hash"),
-        "split_engine_hash": bundle.walkforward.get("split_engine_hash"),
-        "lineage_drift_detected": bundle.lineage_drift_detected,
-        "qlib_backend_status": qlib_backend_status,
-        "qlib_importable": bool(backend_gate_report.get("qlib_importable", qlib_available)) if isinstance(backend_gate_report, dict) else bool(qlib_available),
-        "qlib_version": backend_gate_report.get("qlib_version") if isinstance(backend_gate_report, dict) else None,
-        "environment_lock_status": backend_gate_report.get("environment_lock_status") if isinstance(backend_gate_report, dict) else None,
-        "dependency_contract_hash": backend_gate_report.get("dependency_contract_hash") if isinstance(backend_gate_report, dict) else None,
-        "backend_gate_report_status": backend_gate_status,
-        "backend_gate_report_path": str(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT)),
-        "trainer_status": trainer_status,
-        "challenger_model_status": challenger_status,
-        "backend_name": backend_name,
-        "feature_column_count": len(bundle.feature_columns),
-        "feature_columns": bundle.feature_columns,
-        "primary_target": bundle.primary_target,
-        "auxiliary_targets": bundle.auxiliary_targets,
-        "split_count": int(bundle.walkforward.get("split_count", len(bundle.reconstructed_splits)) or 0),
-        "trained_split_count": len(metrics_by_split),
-        "evaluated_split_count": len(metrics_by_split),
-        "metrics_by_split": metrics_by_split,
-        "aggregate_metrics": aggregate_metrics,
-        "baseline_comparison": baseline_comparison,
-        "candidate_decision": candidate_decision,
+        "schema_version": (
+            SCHEMA_VERSION
+        ),
+        "generated_at_utc": (
+            generated_at
+        ),
+        "input_sources": (
+            input_sources(
+                root,
+                bundle,
+                hypothesis_registry_path=(
+                    hypothesis_registry_path
+                ),
+            )
+        ),
+        "selected_dataset_path": (
+            str(
+                bundle.selected_dataset_path
+            )
+            if bundle.selected_dataset_path
+            is not None
+            else None
+        ),
+        "selected_dataset_rows": int(
+            len(
+                bundle.dataset
+            )
+        ),
+        "feature_contract_hash": (
+            bundle.feature_contract.get(
+                "contract_hash"
+            )
+        ),
+        "dataset_hash": (
+            bundle.dataset_manifest.get(
+                "dataset_hash"
+            )
+        ),
+        "target_store_hash": (
+            bundle.target_store.get(
+                "target_store_hash"
+            )
+        ),
+        "split_engine_hash": (
+            bundle.walkforward.get(
+                "split_engine_hash"
+            )
+        ),
+        "split_manifest_hash": (
+            bundle.walkforward.get(
+                "split_manifest_hash"
+            )
+        ),
+        "lineage_drift_detected": (
+            bundle.lineage_drift_detected
+        ),
+        "qlib_backend_status": (
+            qlib_backend_status
+        ),
+        "qlib_importable": (
+            bool(
+                backend_gate_report.get(
+                    "qlib_importable",
+                    qlib_available,
+                )
+            )
+            if isinstance(
+                backend_gate_report,
+                dict,
+            )
+            else bool(
+                qlib_available
+            )
+        ),
+        "qlib_version": (
+            backend_gate_report.get(
+                "qlib_version"
+            )
+            if isinstance(
+                backend_gate_report,
+                dict,
+            )
+            else None
+        ),
+        "environment_lock_status": (
+            backend_gate_report.get(
+                "environment_lock_status"
+            )
+            if isinstance(
+                backend_gate_report,
+                dict,
+            )
+            else None
+        ),
+        "dependency_contract_hash": (
+            backend_gate_report.get(
+                "dependency_contract_hash"
+            )
+            if isinstance(
+                backend_gate_report,
+                dict,
+            )
+            else None
+        ),
+        "backend_gate_report_status": (
+            backend_gate_status
+        ),
+        "backend_gate_report_path": str(
+            resolve(
+                root,
+                backend_gate_report_path,
+                DEFAULT_BACKEND_GATE_REPORT,
+            )
+        ),
+        "trainer_status": (
+            trainer_status
+        ),
+        "challenger_model_status": (
+            challenger_status
+        ),
+        "backend_name": (
+            backend_name
+        ),
+        "feature_column_count": len(
+            bundle.feature_columns
+        ),
+        "feature_columns": (
+            bundle.feature_columns
+        ),
+        "primary_target": (
+            bundle.primary_target
+        ),
+        "auxiliary_targets": (
+            bundle.auxiliary_targets
+        ),
+        "split_count": int(
+            bundle.walkforward.get(
+                "split_count",
+                len(
+                    bundle.reconstructed_splits
+                ),
+            )
+            or 0
+        ),
+        "trained_split_count": len(
+            metrics_by_split
+        ),
+        "evaluated_split_count": len(
+            metrics_by_split
+        ),
+        "metrics_by_split": (
+            metrics_by_split
+        ),
+        "aggregate_metrics": (
+            aggregate_metrics
+        ),
+        "baseline_comparison": (
+            baseline_comparison
+        ),
+        "candidate_decision": (
+            candidate_decision
+        ),
         "promotion_eligible": False,
-        "registry_write_requested": bool(registry_write_requested),
+        "wq7_hypothesis_binding": (
+            deepcopy(
+                wq7_binding
+            )
+        ),
+        "registry_write_requested": bool(
+            registry_write_requested
+        ),
         "registry_write_performed": False,
-        "model_promotion_requested": bool(model_promotion_requested),
+        "model_promotion_requested": bool(
+            model_promotion_requested
+        ),
         "model_promotion_performed": False,
         "active_model_changed": False,
-        "write_report_requested": bool(write_report),
+        "write_report_requested": bool(
+            write_report
+        ),
         "write_report_performed": False,
-        "write_challenger_artifact_requested": bool(write_challenger_artifact),
+        "write_challenger_artifact_requested": bool(
+            write_challenger_artifact
+        ),
         "write_challenger_artifact_performed": False,
-        "artifact_paths": artifact_paths,
-        "artifact_hashes": artifact_hashes,
+        "artifact_paths": (
+            artifact_paths
+        ),
+        "artifact_hashes": (
+            artifact_hashes
+        ),
         **report_safety_flags,
-        "training_requested": bool(train),
-        "qlib_challenger_training_performed": bool(training_performed),
-        "qlib_training_performed": qlib_training_performed_flag,
+        "training_requested": bool(
+            train
+        ),
+        "qlib_challenger_training_performed": bool(
+            training_performed
+        ),
+        "qlib_training_performed": (
+            qlib_training_performed_flag
+        ),
         "qlib_runtime_updated": False,
         "ai_shadow_training_performed": False,
-        "safety_flags": report_safety_flags,
-        "validation_errors": sorted(set(validation_errors)),
+        "safety_flags": (
+            report_safety_flags
+        ),
+        "validation_errors": (
+            validation_errors
+        ),
     }
+
     metrics_payload = {
-        "schema_version": "qlib_institutional_ranking_metrics_v1",
-        "generated_at_utc": generated_at,
-        "metrics_by_split": metrics_by_split,
-        "aggregate_metrics": aggregate_metrics,
-        "baseline_comparison": baseline_comparison,
-        "evaluated_split_count": len(metrics_by_split),
+        "schema_version": (
+            "qlib_institutional_ranking_metrics_v1"
+        ),
+        "generated_at_utc": (
+            generated_at
+        ),
+        "metrics_by_split": (
+            metrics_by_split
+        ),
+        "aggregate_metrics": (
+            aggregate_metrics
+        ),
+        "baseline_comparison": (
+            baseline_comparison
+        ),
+        "evaluated_split_count": len(
+            metrics_by_split
+        ),
         "promotion_eligible": False,
-        "candidate_decision": candidate_decision,
+        "candidate_decision": (
+            candidate_decision
+        ),
+        "wq7_hypothesis_binding": (
+            deepcopy(
+                wq7_binding
+            )
+        ),
     }
-    if write_challenger_artifact and training_performed:
+
+    if (
+        write_challenger_artifact
+        and training_performed
+    ):
         artifact_metadata = {
-            "schema_version": "qlib_institutional_ranking_challenger_artifact_v1",
-            "generated_at_utc": generated_at,
-            "feature_contract_hash": report["feature_contract_hash"],
-            "dataset_hash": report["dataset_hash"],
-            "target_store_hash": report["target_store_hash"],
-            "split_engine_hash": report["split_engine_hash"],
-            "backend_name": backend_name,
+            "schema_version": (
+                "qlib_institutional_ranking_challenger_artifact_v1"
+            ),
+            "generated_at_utc": (
+                generated_at
+            ),
+            "feature_contract_hash": (
+                report[
+                    "feature_contract_hash"
+                ]
+            ),
+            "dataset_hash": (
+                report[
+                    "dataset_hash"
+                ]
+            ),
+            "target_store_hash": (
+                report[
+                    "target_store_hash"
+                ]
+            ),
+            "split_engine_hash": (
+                report[
+                    "split_engine_hash"
+                ]
+            ),
+            "split_manifest_hash": (
+                report[
+                    "split_manifest_hash"
+                ]
+            ),
+            "backend_name": (
+                backend_name
+            ),
             "promotion_eligible": False,
-            "candidate_decision": candidate_decision,
-            "safety_flags": report_safety_flags,
+            "candidate_decision": (
+                candidate_decision
+            ),
+            "wq7_hypothesis_binding": (
+                deepcopy(
+                    wq7_binding
+                )
+            ),
+            "safety_flags": (
+                report_safety_flags
+            ),
         }
-        artifact_paths, artifact_hashes = write_challenger_artifact_files(
+
+        (
+            artifact_paths,
+            artifact_hashes,
+        ) = write_challenger_artifact_files(
             root=root,
-            generated_at_utc=generated_at,
-            metadata=artifact_metadata,
-            metrics=metrics_payload,
-            model_payload=model_payload,
+            generated_at_utc=(
+                generated_at
+            ),
+            metadata=(
+                artifact_metadata
+            ),
+            metrics=(
+                metrics_payload
+            ),
+            model_payload=(
+                model_payload
+            ),
         )
-        report["artifact_paths"] = artifact_paths
-        report["artifact_hashes"] = artifact_hashes
-        report["write_challenger_artifact_performed"] = True
+
+        report[
+            "artifact_paths"
+        ] = artifact_paths
+
+        report[
+            "artifact_hashes"
+        ] = artifact_hashes
+
+        report[
+            "write_challenger_artifact_performed"
+        ] = True
+
     if write_report:
-        report["write_report_performed"] = True
+        report[
+            "write_report_performed"
+        ] = True
+
         write_report_artifacts(
             report=report,
             metrics=metrics_payload,
-            report_json=Path(output_paths["trainer_report_json"]),
-            report_md=Path(output_paths["trainer_report_markdown"]),
-            metrics_json=Path(output_paths["metrics_json"]),
-            metrics_md=Path(output_paths["metrics_markdown"]),
+            report_json=Path(
+                output_paths[
+                    "trainer_report_json"
+                ]
+            ),
+            report_md=Path(
+                output_paths[
+                    "trainer_report_markdown"
+                ]
+            ),
+            metrics_json=Path(
+                output_paths[
+                    "metrics_json"
+                ]
+            ),
+            metrics_md=Path(
+                output_paths[
+                    "metrics_markdown"
+                ]
+            ),
         )
+
     return report
 
 
@@ -247,13 +1283,20 @@ def write_challenger_artifact_files(
     metadata: dict[str, Any],
     metrics: dict[str, Any],
     model_payload: dict[str, Any],
-) -> tuple[dict[str, str], dict[str, str]]:
+) -> tuple[
+    dict[str, str],
+    dict[str, str],
+]:
     return write_challenger_artifact(
         root=root,
-        generated_at_utc=generated_at_utc,
+        generated_at_utc=(
+            generated_at_utc
+        ),
         metadata=metadata,
         metrics=metrics,
-        model_payload=model_payload,
+        model_payload=(
+            model_payload
+        ),
     )
 
 
@@ -267,19 +1310,65 @@ def decide_candidate(
 ) -> str:
     if not train:
         return "NOT_TRAINED_DRY_RUN"
-    if reason in {"qlib_backend_unavailable", "qlib_backend_partial", "qlib_backend_blocked"}:
-        return "BLOCKED_BACKEND_UNAVAILABLE"
+
+    if reason in {
+        "qlib_backend_unavailable",
+        "qlib_backend_partial",
+        "qlib_backend_blocked",
+    }:
+        return (
+            "BLOCKED_BACKEND_UNAVAILABLE"
+        )
+
     if not training_performed:
         return "MANTER_EM_RESEARCH"
-    beats_no_trade = int(baseline_comparison.get("beats_no_trade_split_count", 0) or 0)
-    beats_random = int(baseline_comparison.get("beats_random_split_count", 0) or 0)
-    split_count = int(aggregate_metrics.get("split_count", 0) or 0)
-    if split_count and beats_no_trade == split_count and beats_random == split_count:
-        return "RESEARCH_CHALLENGER_ONLY"
+
+    beats_no_trade = int(
+        baseline_comparison.get(
+            "beats_no_trade_split_count",
+            0,
+        )
+        or 0
+    )
+
+    beats_random = int(
+        baseline_comparison.get(
+            "beats_random_split_count",
+            0,
+        )
+        or 0
+    )
+
+    split_count = int(
+        aggregate_metrics.get(
+            "split_count",
+            0,
+        )
+        or 0
+    )
+
+    if (
+        split_count
+        and (
+            beats_no_trade
+            == split_count
+        )
+        and (
+            beats_random
+            == split_count
+        )
+    ):
+        return (
+            "RESEARCH_CHALLENGER_ONLY"
+        )
+
     return "MANTER_EM_RESEARCH"
 
 
-def empty_aggregate_metrics() -> dict[str, Any]:
+def empty_aggregate_metrics() -> dict[
+    str,
+    Any,
+]:
     return {
         "split_count": 0,
         "mean_rank_ic": 0.0,
@@ -291,78 +1380,227 @@ def empty_aggregate_metrics() -> dict[str, Any]:
     }
 
 
-def empty_baseline_comparison(baseline: dict[str, Any]) -> dict[str, Any]:
+def empty_baseline_comparison(
+    baseline: dict[str, Any],
+) -> dict[str, Any]:
     return {
-        "baseline_status": baseline.get("baseline_status", "unknown"),
+        "baseline_status": (
+            baseline.get(
+                "baseline_status",
+                "unknown",
+            )
+        ),
         "candidate_selected_top_k_expected_value_total": 0.0,
-        "baseline_no_trade_expected_value": baseline.get("no_trade_expected_value", 0.0),
-        "baseline_always_allow_expected_value": baseline.get("always_allow_expected_value", 0.0),
-        "baseline_random_expected_value": baseline.get("random_deterministic_expected_value", 0.0),
+        "baseline_no_trade_expected_value": (
+            baseline.get(
+                "no_trade_expected_value",
+                0.0,
+            )
+        ),
+        "baseline_always_allow_expected_value": (
+            baseline.get(
+                "always_allow_expected_value",
+                0.0,
+            )
+        ),
+        "baseline_random_expected_value": (
+            baseline.get(
+                "random_deterministic_expected_value",
+                0.0,
+            )
+        ),
         "beats_no_trade_split_count": 0,
         "beats_always_allow_split_count": 0,
         "beats_random_split_count": 0,
     }
 
 
-def input_sources(root: Path, bundle: Any) -> list[dict[str, Any]]:
+def input_sources(
+    root: Path,
+    bundle: Any,
+    *,
+    hypothesis_registry_path: str | Path | None = None,
+) -> list[dict[str, Any]]:
     paths = [
-        root / "data/reports/ai_unified_feature_contract_v1.json",
-        root / "data/reports/ai_unified_dataset_manifest_v1.json",
-        root / "data/reports/financial_label_target_store_v1.json",
-        root / "data/reports/walkforward_anti_leakage_split_engine_v1.json",
-        root / "data/reports/walkforward_baseline_summary_v1.json",
+        root
+        / "data/reports/ai_unified_feature_contract_v1.json",
+        root
+        / "data/reports/ai_unified_dataset_manifest_v1.json",
+        root
+        / "data/reports/financial_label_target_store_v1.json",
+        root
+        / "data/reports/walkforward_anti_leakage_split_engine_v1.json",
+        root
+        / "data/reports/walkforward_baseline_summary_v1.json",
     ]
-    if bundle.selected_dataset_path is not None:
-        paths.append(bundle.selected_dataset_path)
-    return [{"path": str(path.resolve()), "exists": path.exists()} for path in paths]
+
+    if (
+        bundle.selected_dataset_path
+        is not None
+    ):
+        paths.append(
+            bundle.selected_dataset_path
+        )
+
+    if (
+        hypothesis_registry_path
+        is not None
+    ):
+        paths.append(
+            Path(
+                hypothesis_registry_path
+            )
+        )
+
+    return [
+        {
+            "path": str(
+                path.resolve()
+            ),
+            "exists": (
+                path.exists()
+            ),
+        }
+        for path in paths
+    ]
 
 
 def resolve_backend_gate_report(
     *,
     root: Path,
     backend_gate_report_path: str | Path | None,
-) -> tuple[dict[str, Any] | None, str]:
-    """Resolve Qlib backend status without trusting stale default runtime reports.
+) -> tuple[
+    dict[str, Any] | None,
+    str,
+]:
+    """Resolve Qlib backend status without trusting stale default reports."""
 
-    If the caller supplies --backend-gate-report, the trainer treats that file as an
-    explicit immutable evidence input. Otherwise, it performs a live no-write gate
-    probe, because data/reports/qlib_research_backend_gate_v1.json can be stale
-    when the auditor was previously run without --write.
-    """
+    if (
+        backend_gate_report_path
+        is not None
+    ):
+        return (
+            load_backend_gate_report(
+                resolve(
+                    root,
+                    backend_gate_report_path,
+                    DEFAULT_BACKEND_GATE_REPORT,
+                )
+            ),
+            "provided",
+        )
 
-    if backend_gate_report_path is not None:
-        return load_backend_gate_report(resolve(root, backend_gate_report_path, DEFAULT_BACKEND_GATE_REPORT)), "provided"
     try:
-        report = build_qlib_research_backend_gate_report(project_root=root, write=False)
-    except Exception as exc:  # noqa: BLE001 - returned as controlled blocked evidence, not swallowed.
-        return {
-            "qlib_backend_status": "blocked",
-            "validation_errors": [f"backend_gate_live_probe_failed:{type(exc).__name__}"],
-        }, "live_probe_failed"
-    if not isinstance(report, dict):
-        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_live_probe_invalid"]}, "live_probe_failed"
+        report = (
+            build_qlib_research_backend_gate_report(
+                project_root=root,
+                write=False,
+            )
+        )
+
+    except Exception as exc:  # noqa: BLE001
+        return (
+            {
+                "qlib_backend_status": (
+                    "blocked"
+                ),
+                "validation_errors": [
+                    "backend_gate_live_probe_failed:"
+                    + type(
+                        exc
+                    ).__name__
+                ],
+            },
+            "live_probe_failed",
+        )
+
+    if not isinstance(
+        report,
+        dict,
+    ):
+        return (
+            {
+                "qlib_backend_status": (
+                    "blocked"
+                ),
+                "validation_errors": [
+                    "backend_gate_live_probe_invalid"
+                ],
+            },
+            "live_probe_failed",
+        )
+
     return report, "live_probe"
 
 
-def load_backend_gate_report(path: Path) -> dict[str, Any] | None:
+def load_backend_gate_report(
+    path: Path,
+) -> dict[str, Any] | None:
     if not path.exists():
         return None
+
     try:
-        payload = json.loads(path.read_text(encoding="utf-8-sig"))
-    except (OSError, json.JSONDecodeError):
-        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_report_invalid"]}
-    if not isinstance(payload, dict):
-        return {"qlib_backend_status": "blocked", "validation_errors": ["backend_gate_report_invalid"]}
+        payload = json.loads(
+            path.read_text(
+                encoding="utf-8-sig"
+            )
+        )
+
+    except (
+        OSError,
+        json.JSONDecodeError,
+    ):
+        return {
+            "qlib_backend_status": (
+                "blocked"
+            ),
+            "validation_errors": [
+                "backend_gate_report_invalid"
+            ],
+        }
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+        return {
+            "qlib_backend_status": (
+                "blocked"
+            ),
+            "validation_errors": [
+                "backend_gate_report_invalid"
+            ],
+        }
+
     return payload
 
 
-def qlib_backend_probe_from_gate(report: dict[str, Any] | None) -> dict[str, str] | None:
+def qlib_backend_probe_from_gate(
+    report: dict[str, Any] | None,
+) -> dict[str, str] | None:
     if report is None:
         return None
-    status = str(report.get("qlib_backend_status") or "")
-    if status not in {"available", "unavailable", "partial", "blocked"}:
+
+    status = str(
+        report.get(
+            "qlib_backend_status"
+        )
+        or ""
+    )
+
+    if status not in {
+        "available",
+        "unavailable",
+        "partial",
+        "blocked",
+    }:
         status = "blocked"
-    return {"qlib_backend_status": status}
+
+    return {
+        "qlib_backend_status": (
+            status
+        )
+    }
 
 
 def safety_flags(
@@ -373,9 +1611,15 @@ def safety_flags(
 ) -> dict[str, bool]:
     return {
         **SAFETY_FLAGS,
-        "training_requested": bool(training_requested),
-        "qlib_challenger_training_performed": bool(qlib_challenger_training_performed),
-        "qlib_training_performed": bool(qlib_training_performed),
+        "training_requested": bool(
+            training_requested
+        ),
+        "qlib_challenger_training_performed": bool(
+            qlib_challenger_training_performed
+        ),
+        "qlib_training_performed": bool(
+            qlib_training_performed
+        ),
         "qlib_runtime_updated": False,
         "ai_shadow_training_performed": False,
         "registry_write_performed": False,
