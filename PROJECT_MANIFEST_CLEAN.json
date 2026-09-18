@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a79f7e91b11c61c23ccbc82cd266e3f782a2484b41a0eba42bda2dd2cad513ba",
+  "aggregate_sha256": "73a65d143a51fe571787fa60e72147562c2de093417d8aa610742c019fd0e1a0",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 313,
-    "manifested_files_total": 2074,
-    "python_files": 1622,
+    "docs_files": 314,
+    "manifested_files_total": 2079,
+    "python_files": 1626,
     "runtime_excluded_files_total": 0,
-    "test_files": 440,
-    "tracked_files_total": 2075,
+    "test_files": 442,
+    "tracked_files_total": 2080,
     "workflows": 2
   },
   "deterministic": true,
@@ -2084,6 +2084,12 @@
       "sha256": "44e83e741cef88157d06a736656526a6b3abbfa7d7caaea3269a894c3cc8db61"
     },
     {
+      "bytes": 6302,
+      "hash_mode": "text_lf",
+      "path": "docs/POST_OCR_HYPOTHESIS_REGISTRY_V1.md",
+      "sha256": "63609cf35726a40c3e76ca04713e64ef70cfe2914379153c15973d376f24c5ac"
+    },
+    {
       "bytes": 6649,
       "hash_mode": "text_lf",
       "path": "docs/POST_P07_INDEPENDENT_READINESS_GAP_AUDIT_V1.md",
@@ -3746,6 +3752,12 @@
       "sha256": "1b10e6208a542e4d4ec851670f266384d6537eebcdc9de1ffa4066e29f80c6f3"
     },
     {
+      "bytes": 9948,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_post_ocr_hypothesis_registry_v1.py",
+      "sha256": "a131e58da933b93d11bf450490bd2c55edb1d1998ce2b8169de4ef560f2ee265"
+    },
+    {
       "bytes": 1977,
       "hash_mode": "text_lf",
       "path": "scripts/build_profit_research_dataset_snapshot_v1.py",
@@ -5102,10 +5114,10 @@
       "sha256": "1df27886c3e14bfce329c1a37b81384b57340f41ac8a0ae0e168687ea4d8f2b2"
     },
     {
-      "bytes": 3769,
+      "bytes": 6672,
       "hash_mode": "text_lf",
       "path": "scripts/train_qlib_institutional_ranking_challenger_v1.py",
-      "sha256": "8a45f48a0cd771a907ea7352e4ffea9fd7962c913014d4c7c42d7049f8188074"
+      "sha256": "7be3ba8acc74dbfdf5656d401a6b880bbce5dc883cc2bbb84223975df74426a8"
     },
     {
       "bytes": 600,
@@ -7064,10 +7076,10 @@
       "sha256": "9d977d883c327a0595a536f72d40b16d01eb6ec4c415301a1ae110838e6a4ecd"
     },
     {
-      "bytes": 17716,
+      "bytes": 37437,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_trainer/ranking_trainer.py",
-      "sha256": "dc5e4c3d76fa5d458c8253783338093a5a2bc3a8f8df902e88ee616fcffe4871"
+      "sha256": "a31efb0af02273074121cc06c3497b0331daaf7b12e2b1ae45d291f88d67e7f0"
     },
     {
       "bytes": 4405,
@@ -9438,6 +9450,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/trades_master_official/contracts.py",
       "sha256": "13f300932a2059bac3d3ae0972b25b4ba35565b1e140a72b9112d53fb51b2412"
+    },
+    {
+      "bytes": 42417,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/trades_master_official/hypothesis_registry.py",
+      "sha256": "1e7b4431c7385b7ef4ac83d9dc48d06c2094f330b35499e9532c3dcf8b8dffba"
     },
     {
       "bytes": 10730,
@@ -11844,6 +11862,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_portfolio_of_alphas_v1.py",
       "sha256": "a1bcb46485f693045e4dd018b54e7bf062977623cdba1b59edc423f15d2a5906"
+    },
+    {
+      "bytes": 9795,
+      "hash_mode": "text_lf",
+      "path": "tests/test_post_ocr_hypothesis_registry_qlib_binding_v1.py",
+      "sha256": "e1fc552ea104a31bdcd287eaf91ab745dbe9a4af295f0b60bacbeef16c6fbb64"
+    },
+    {
+      "bytes": 7170,
+      "hash_mode": "text_lf",
+      "path": "tests/test_post_ocr_hypothesis_registry_v1.py",
+      "sha256": "2d8d5dda2ad6e20e3c2aa822ef8ecd291c1dcdb9ac4a720e07426183024e6fde"
     },
     {
       "bytes": 4242,
