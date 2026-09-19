@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "fb9981358959e0787b7afa1096319f8a99b36228d5355804ea59a93f67c28c70",
+  "aggregate_sha256": "d818fd4e496882b5b8a5ab77cdad98a7ecd8988bc806a765ca28455c5da5b37a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2100,
-    "python_files": 1647,
+    "manifested_files_total": 2103,
+    "python_files": 1650,
     "runtime_excluded_files_total": 0,
-    "test_files": 449,
-    "tracked_files_total": 2101,
+    "test_files": 450,
+    "tracked_files_total": 2104,
     "workflows": 2
   },
   "deterministic": true,
@@ -3780,6 +3780,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_phase22_market_features.py",
       "sha256": "191403f950facae9969132eb00c1213d45f856195777ad458a18f21088fa2b60"
+    },
+    {
+      "bytes": 2005,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_portfolio_of_alphas_oos_economic_selection_v1.py",
+      "sha256": "ac495ea676db7e44fa50d82639e919c062145bc8d8b91db969855a939a28e453"
     },
     {
       "bytes": 4851,
@@ -9170,6 +9176,12 @@
       "sha256": "58472e51188a11d75d41201c0d9ca2104db6d30fe0815c122a4b35830601d769"
     },
     {
+      "bytes": 28620,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/portfolio_of_alphas/oos_economic_selection.py",
+      "sha256": "05cd67804799d4f988edc722a3472f634685fdbf541f542d9d5164106515e2af"
+    },
+    {
       "bytes": 6779,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/portfolio_of_alphas/portfolio.py",
@@ -11976,6 +11988,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_portfolio_allocator_shadow_v1.py",
       "sha256": "26e9bb0bfc1132ac59827ffa508d28370c83ed5afbcd43478fe80c9a95fab3fe"
+    },
+    {
+      "bytes": 6923,
+      "hash_mode": "text_lf",
+      "path": "tests/test_portfolio_of_alphas_oos_economic_selection_v1.py",
+      "sha256": "549d1755ba2be9efc03fab401f5fd5665009aee72bdff5e425bfe3f132e1f399"
     },
     {
       "bytes": 5101,
