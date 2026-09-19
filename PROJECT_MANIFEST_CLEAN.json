@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9d72e5da6c16b2172b9207152c5206ca8b2f0e338350460e31ed07bb07530902",
+  "aggregate_sha256": "e974d08337946d1cdd911b18792f38b0c03f4502da11e1fb0e2013daf0bf57ff",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2094,
-    "python_files": 1641,
+    "manifested_files_total": 2097,
+    "python_files": 1644,
     "runtime_excluded_files_total": 0,
-    "test_files": 447,
-    "tracked_files_total": 2095,
+    "test_files": 448,
+    "tracked_files_total": 2098,
     "workflows": 2
   },
   "deterministic": true,
@@ -3204,6 +3204,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_canonical_data_foundation_v2.py",
       "sha256": "64d53bebae456b6ce7e40372b57910219e0adbe7f7bada31b6411d4cb3d75e91"
+    },
+    {
+      "bytes": 1761,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_component_economic_attribution_ledger_v1.py",
+      "sha256": "90598f9bc55ffaa9d268536747b2d3526f3a8a4fff2c3d729641e8b07904822d"
     },
     {
       "bytes": 4936,
@@ -8144,6 +8150,12 @@
       "sha256": "dc1dbaefafdfbfe221c232277036eb2dafb74aca455e86c33e991bbce005d560"
     },
     {
+      "bytes": 24519,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/component_economic_attribution_ledger.py",
+      "sha256": "226c484692dc83df7e1e01a56538a9e0f24ce5d578bafbd99677f749e2f229c1"
+    },
+    {
       "bytes": 4819,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/contracts.py",
@@ -10224,6 +10236,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_complete_ci_security_typecheck_runtime_readiness.py",
       "sha256": "a2dc888d5fe40ca6ccf0d8f9d1f2622ea5503684e45c67343e1296ded89f44bc"
+    },
+    {
+      "bytes": 7332,
+      "hash_mode": "text_lf",
+      "path": "tests/test_component_economic_attribution_ledger_v1.py",
+      "sha256": "a9f6e70b769d4e2a98c65fae1a63ba916a02ec85dc382800d1f12270c1415f3f"
     },
     {
       "bytes": 4423,
