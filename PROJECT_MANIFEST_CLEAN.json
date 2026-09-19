@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d818fd4e496882b5b8a5ab77cdad98a7ecd8988bc806a765ca28455c5da5b37a",
+  "aggregate_sha256": "e53c437a0b90b909196a049b46a07ee12813ae612a2ccef5d0b765a868305ad6",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2103,
-    "python_files": 1650,
+    "manifested_files_total": 2106,
+    "python_files": 1653,
     "runtime_excluded_files_total": 0,
-    "test_files": 450,
-    "tracked_files_total": 2104,
+    "test_files": 451,
+    "tracked_files_total": 2107,
     "workflows": 2
   },
   "deterministic": true,
@@ -3876,6 +3876,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_quant_validation_strategy_factory_v2.py",
       "sha256": "f7cb83e39ed98d0e2135f0dc5debfd64be5223a9413c88b1858c62eda86511af"
+    },
+    {
+      "bytes": 2010,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_research_council_alpha_uplift_ab_v1.py",
+      "sha256": "e28fc7cf5da8cb6d3a70a35e64ec81362dfed90a456ee921154393c9613e3fa1"
     },
     {
       "bytes": 5632,
@@ -9386,6 +9392,12 @@
       "sha256": "f19f4561a399b4e33e382edd4631958e95218e1f23467bbff04d0cf2416a0bce"
     },
     {
+      "bytes": 25404,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/research_council/alpha_uplift_ab.py",
+      "sha256": "d4493cf0735a8c9ee2bada9f700abf0ef1eaf109cd39c1001f181d8a98f62c58"
+    },
+    {
       "bytes": 2353,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/research_council/consensus.py",
@@ -12294,6 +12306,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_reproducible_dev_environment_ci_makefile.py",
       "sha256": "0968219424f1eac1693ebdc7464bb7067309dd879ce36639e2968f97369df9b8"
+    },
+    {
+      "bytes": 7805,
+      "hash_mode": "text_lf",
+      "path": "tests/test_research_council_alpha_uplift_ab_v1.py",
+      "sha256": "239b8a4cd1ad74f29f64edbd78806f172d772dd811082a8e8e2617c9a9aaeb55"
     },
     {
       "bytes": 16410,
