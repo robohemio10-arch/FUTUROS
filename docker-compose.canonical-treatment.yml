@@ -1,0 +1,163 @@
+name: futuros-canonical-treatment
+
+services:
+  canonical-treatment-signal-publisher:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: unless-stopped
+    user: "10001:10001"
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ${FUTUROS_RUNTIME_DATA_ROOT}:/app/data
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+    command:
+      - python
+      - scripts/run_canonical_treatment_signal_publisher_v1.py
+      - --control-signals
+      - /app/data/runtime/active_freqtrade_signals.json
+      - --v3-evidence
+      - /app/data/research/qlib_v3/prospective_evidence/qlib-v3-b0b722c25fd961938943af8c/a1756853239b2f52f5604b44ddfb15e6d1355fbfc50533ad046d5f04a5ce9fa9/evidence.json
+      - --output
+      - /app/data/runtime/canonical_treatment/active_freqtrade_signals.json
+      - --report
+      - /app/data/reports/canonical_treatment/signal_publisher_report_v1.json
+      - --ledger
+      - /app/data/research/canonical_treatment/decision_ledger_v1.json
+      - --control-exit-control
+      - /app/data/runtime/paper_exit_control.json
+      - --interval-seconds
+      - "5"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - scripts/canonical_treatment_report_healthcheck_v1.py
+        - --report
+        - /app/data/reports/canonical_treatment/signal_publisher_report_v1.json
+        - --max-age-seconds
+        - "20"
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  freqtrade-canonical-treatment-paper:
+    image: freqtradeorg/freqtrade:stable@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db
+    restart: unless-stopped
+    depends_on:
+      canonical-treatment-signal-publisher:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+    volumes:
+      - ./freqtrade/user_data/config.paper.canonical-treatment.json:/freqtrade/user_data/config.paper.canonical-treatment.json:ro
+      - ./freqtrade/user_data/strategies:/freqtrade/user_data/strategies:ro
+      - ${FUTUROS_TREATMENT_LOG_ROOT}:/freqtrade/user_data/logs
+      - ./scripts/freqtrade_paper_healthcheck.py:/freqtrade/user_data/freqtrade_paper_healthcheck.py:ro
+      - canonical_treatment_paper_data:/freqtrade/user_data/data
+      - ${FUTUROS_TREATMENT_RUNTIME_ROOT}:/freqtrade/user_data/data/runtime
+      - canonical_treatment_paper_db:/freqtrade/user_data/db
+    command: >
+      trade
+      --config /freqtrade/user_data/config.paper.canonical-treatment.json
+      --strategy SmartCryptoSignalStrategy
+      --logfile /freqtrade/user_data/logs/freqtrade-canonical-treatment.log
+      --db-url sqlite:////freqtrade/user_data/db/tradesv3.canonical-treatment.paper.sqlite
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - /freqtrade/user_data/freqtrade_paper_healthcheck.py
+        - --quiet
+        - --config
+        - /freqtrade/user_data/config.paper.canonical-treatment.json
+        - --database
+        - /freqtrade/user_data/db/tradesv3.canonical-treatment.paper.sqlite
+        - --min-uptime-seconds
+        - "45"
+      interval: 15s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+  canonical-treatment-economic-monitor:
+    build:
+      context: .
+      dockerfile: docker/smartcrypto/Dockerfile
+    restart: unless-stopped
+    user: "10001:10001"
+    depends_on:
+      canonical-treatment-signal-publisher:
+        condition: service_healthy
+      freqtrade-canonical-treatment-paper:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SMARTCRYPTO_RUNTIME_MODE: paper
+      LIVE_ENABLED: "false"
+      ORDER_SUBMISSION_ENABLED: "false"
+      REAL_ORDER_SUBMISSION_ENABLED: "false"
+      SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+      PYTHONPATH: /app
+    working_dir: /app
+    volumes:
+      - ${FUTUROS_RUNTIME_DATA_ROOT}:/app/data
+      - ./scripts:/app/scripts:ro
+      - ./smartcrypto:/app/smartcrypto:ro
+      - control_paper_db:/control-db:ro
+      - canonical_treatment_paper_db:/treatment-db:ro
+    command:
+      - python
+      - scripts/run_canonical_treatment_economic_monitor_v1.py
+      - --ledger
+      - /app/data/research/canonical_treatment/decision_ledger_v1.json
+      - --control-db
+      - /control-db/tradesv3.paper.sqlite
+      - --treatment-db
+      - /treatment-db/tradesv3.canonical-treatment.paper.sqlite
+      - --output
+      - /app/data/reports/canonical_treatment/economic_monitor_v1.json
+      - --initial-wallet-usdt
+      - "1000"
+      - --interval-seconds
+      - "30"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - scripts/canonical_treatment_report_healthcheck_v1.py
+        - --report
+        - /app/data/reports/canonical_treatment/economic_monitor_v1.json
+        - --max-age-seconds
+        - "90"
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+
+volumes:
+  control_paper_db:
+    external: true
+    name: futuros_freqtrade_paper_db
+  canonical_treatment_paper_db:
+    name: futuros_canonical_treatment_paper_db
+  canonical_treatment_paper_data:
+    name: futuros_canonical_treatment_paper_data
