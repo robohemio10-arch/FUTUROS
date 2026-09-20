@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "c55002e9ccbfcc7aed9f48b92462ce908dc5b7db26f7048404166ba9af068a17",
+  "aggregate_sha256": "e9d02f9116891bfaa4ef504b62727e6b160d8efe4104bd5b24b41d0f3fe15194",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3980,10 +3980,10 @@
       "sha256": "d4a7763a0870ddb3c84d91002326502a66608b44f080b4f3f13f2fe15fab017c"
     },
     {
-      "bytes": 1063,
+      "bytes": 1463,
       "hash_mode": "text_lf",
       "path": "scripts/canonical_treatment_report_healthcheck_v1.py",
-      "sha256": "266cc640b8551831fa81f10ce0f43d8844dd495015b0c7d9e8a6d8cc7016a557"
+      "sha256": "b3549649ff4187020cfe276e150cc64187b61b911f3145fde7e2411196df2345"
     },
     {
       "bytes": 2008,
