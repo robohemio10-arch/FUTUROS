@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e53c437a0b90b909196a049b46a07ee12813ae612a2ccef5d0b765a868305ad6",
+  "aggregate_sha256": "e9d02f9116891bfaa4ef504b62727e6b160d8efe4104bd5b24b41d0f3fe15194",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2106,
-    "python_files": 1653,
+    "manifested_files_total": 2117,
+    "python_files": 1660,
     "runtime_excluded_files_total": 0,
-    "test_files": 451,
-    "tracked_files_total": 2107,
+    "test_files": 452,
+    "tracked_files_total": 2118,
     "workflows": 2
   },
   "deterministic": true,
@@ -684,6 +684,12 @@
       "hash_mode": "text_lf",
       "path": "constraints.txt",
       "sha256": "51ff46fa2ee652c3a2cb48149d3263a9dbe3aefec4ed00ddbc80c48ee2cb53f6"
+    },
+    {
+      "bytes": 5566,
+      "hash_mode": "text_lf",
+      "path": "docker-compose.canonical-treatment.yml",
+      "sha256": "97805ab99ec21a5cf0dae3a0df70e7fc697e8f315664e9ab8b3451e1175b3ab6"
     },
     {
       "bytes": 1328,
@@ -2552,6 +2558,12 @@
       "sha256": "e5aec428d325726c1ba18c91f34353d0d325ea4098d14de7aa45132e88388d00"
     },
     {
+      "bytes": 2690,
+      "hash_mode": "text_lf",
+      "path": "freqtrade/user_data/config.paper.canonical-treatment.json",
+      "sha256": "dfc704c316a8e80c1056de2f29deb794d40b0839d5f51cd6ba8fff5aa7446be5"
+    },
+    {
       "bytes": 2851,
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/config.paper.json",
@@ -3968,6 +3980,12 @@
       "sha256": "d4a7763a0870ddb3c84d91002326502a66608b44f080b4f3f13f2fe15fab017c"
     },
     {
+      "bytes": 1463,
+      "hash_mode": "text_lf",
+      "path": "scripts/canonical_treatment_report_healthcheck_v1.py",
+      "sha256": "b3549649ff4187020cfe276e150cc64187b61b911f3145fde7e2411196df2345"
+    },
+    {
       "bytes": 2008,
       "hash_mode": "text_lf",
       "path": "scripts/check_aibot_parity_prospective_runtime_health_v1.py",
@@ -4754,6 +4772,18 @@
       "sha256": "1aec7cad27c992f7bd09c7aa94f8fad19bee1bdf935dc5b854d179c45c1f46b9"
     },
     {
+      "bytes": 155,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_canonical_treatment_economic_monitor_v1.py",
+      "sha256": "50d2d01e2e60f6763dff620731930c8b4d8157332dc1c5bfac00a2589c4e7da6"
+    },
+    {
+      "bytes": 148,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_canonical_treatment_signal_publisher_v1.py",
+      "sha256": "38076157e4caa4dc3ed432ba906db6bcce120370fc50a89dcfd3507a7078b68a"
+    },
+    {
       "bytes": 1758,
       "hash_mode": "text_lf",
       "path": "scripts/run_critical_notification_dispatch.py",
@@ -5120,6 +5150,12 @@
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
     },
     {
+      "bytes": 4799,
+      "hash_mode": "text_lf",
+      "path": "scripts/start_canonical_treatment_paper_v1.ps1",
+      "sha256": "55934a15884d6c09e7ac0cd68504a0345ea19d2ba58716ecf38957c25e746f90"
+    },
+    {
       "bytes": 7829,
       "hash_mode": "text_lf",
       "path": "scripts/sync_ocr_master_v11_phase5_sidecars.py",
@@ -5190,6 +5226,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/validate_ai_shadow_inference_input.py",
       "sha256": "48866af9e4ffb591085168e62b81e4c62596ef80c177b53e8824ee314345f2b7"
+    },
+    {
+      "bytes": 4958,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_canonical_treatment_paper_v1.ps1",
+      "sha256": "6dc17de85bac9b7c7b6f0e12b0593d9bfd2db06ad99ca7c2752c6592b4f50c9c"
     },
     {
       "bytes": 1967,
@@ -8318,6 +8360,24 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
+      "bytes": 50,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/__init__.py",
+      "sha256": "9a19868aa4f1bf252967eb1be5c9a86f804802cbca76363cb6432729411b5261"
+    },
+    {
+      "bytes": 16251,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/economic_monitor.py",
+      "sha256": "b27a9522326efb7f2741313f4334cac06eedd3605d975c8c9a90472ddc1904a4"
+    },
+    {
+      "bytes": 19806,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/publisher.py",
+      "sha256": "e046cfa9fd585b588a1ab24e3a861b4b6b38036bdeebe567ed4dd85917fe4aaa"
+    },
+    {
       "bytes": 17591,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_candidate_shadow_rule_registry.py",
@@ -10260,6 +10320,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_data_foundation_v2.py",
       "sha256": "b631c03840552f801d5b32153041cd1b29a11b83afefed52e9a52174e57a7502"
+    },
+    {
+      "bytes": 7177,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_treatment_signal_publisher_v1.py",
+      "sha256": "c14ab1146480f209b515c244169d54b92da0b4236a80134c9eae60c3d02ad380"
     },
     {
       "bytes": 3730,
