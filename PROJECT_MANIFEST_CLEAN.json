@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "e9d02f9116891bfaa4ef504b62727e6b160d8efe4104bd5b24b41d0f3fe15194",
+  "aggregate_sha256": "8c8127385ff3a563c45041edd13b6499729829978199eddc063a6c53c4edad06",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 314,
-    "manifested_files_total": 2117,
-    "python_files": 1660,
+    "manifested_files_total": 2125,
+    "python_files": 1665,
     "runtime_excluded_files_total": 0,
-    "test_files": 452,
-    "tracked_files_total": 2118,
+    "test_files": 453,
+    "tracked_files_total": 2126,
     "workflows": 2
   },
   "deterministic": true,
@@ -684,6 +684,12 @@
       "hash_mode": "text_lf",
       "path": "constraints.txt",
       "sha256": "51ff46fa2ee652c3a2cb48149d3263a9dbe3aefec4ed00ddbc80c48ee2cb53f6"
+    },
+    {
+      "bytes": 1449,
+      "hash_mode": "text_lf",
+      "path": "docker-compose.canonical-economic-plane.yml",
+      "sha256": "00d98b6ef9ed7010f82bcdccbdcdbc3dcbb56261ebd853a107db96534b57dcf2"
     },
     {
       "bytes": 5566,
@@ -3980,6 +3986,12 @@
       "sha256": "d4a7763a0870ddb3c84d91002326502a66608b44f080b4f3f13f2fe15fab017c"
     },
     {
+      "bytes": 1679,
+      "hash_mode": "text_lf",
+      "path": "scripts/canonical_economic_evidence_plane_healthcheck_v1.py",
+      "sha256": "2652decf936b270ff0275690002979a02e368101ca0e49fafed13004bbfa7a85"
+    },
+    {
       "bytes": 1463,
       "hash_mode": "text_lf",
       "path": "scripts/canonical_treatment_report_healthcheck_v1.py",
@@ -4772,6 +4784,12 @@
       "sha256": "1aec7cad27c992f7bd09c7aa94f8fad19bee1bdf935dc5b854d179c45c1f46b9"
     },
     {
+      "bytes": 3465,
+      "hash_mode": "text_lf",
+      "path": "scripts/run_canonical_economic_evidence_plane_v1.py",
+      "sha256": "1bb099d7a00626a2adc6c3e2f8f234e82ca0660d342bb5f723cebcc139bc87da"
+    },
+    {
       "bytes": 155,
       "hash_mode": "text_lf",
       "path": "scripts/run_canonical_treatment_economic_monitor_v1.py",
@@ -5150,6 +5168,12 @@
       "sha256": "39a7c53c96f352c060faba6386efae915f48bbb037a8a502b3731bb35f5d977a"
     },
     {
+      "bytes": 5725,
+      "hash_mode": "text_lf",
+      "path": "scripts/start_canonical_economic_evidence_plane_v1.ps1",
+      "sha256": "dda40a494412e367bb05b66ebc5640914646afadc6379e22987aae23268302fe"
+    },
+    {
       "bytes": 4799,
       "hash_mode": "text_lf",
       "path": "scripts/start_canonical_treatment_paper_v1.ps1",
@@ -5226,6 +5250,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/validate_ai_shadow_inference_input.py",
       "sha256": "48866af9e4ffb591085168e62b81e4c62596ef80c177b53e8824ee314345f2b7"
+    },
+    {
+      "bytes": 3377,
+      "hash_mode": "text_lf",
+      "path": "scripts/validate_canonical_economic_evidence_plane_v1.ps1",
+      "sha256": "4d11465da7039331b767e226a4dced7bc9a60e00c5f5656a5db21d47c7abdf54"
     },
     {
       "bytes": 4958,
@@ -8360,6 +8390,18 @@
       "sha256": "bed3080c0438db1fc5cfc8192724fa3c4609b9f0deaf03c28b9ca0068c14057a"
     },
     {
+      "bytes": 89,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_economic_plane/__init__.py",
+      "sha256": "217f7ebb63893ab794101018dce917059aeecc3feab2f61c5a4bef63156ca6f5"
+    },
+    {
+      "bytes": 21581,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_economic_plane/orchestrator.py",
+      "sha256": "6c64471da31a05302cc6642a3523c88b5c8ee2cf706fa6278d339fec2e6d6d26"
+    },
+    {
       "bytes": 50,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/__init__.py",
@@ -10320,6 +10362,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_data_foundation_v2.py",
       "sha256": "b631c03840552f801d5b32153041cd1b29a11b83afefed52e9a52174e57a7502"
+    },
+    {
+      "bytes": 8613,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_economic_evidence_plane_v1.py",
+      "sha256": "1ac9221a744f1e3cfb3f2105eff23e31428629c7775e57de7539f89bc08c704f"
     },
     {
       "bytes": 7177,
