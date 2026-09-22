@@ -88,7 +88,7 @@ def test_exact_recovered_runtime_source_parity(relative: str, expected: str) -> 
     [
         (
             "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
-            "f0298e510c835f62ddc084e965617cf289b7cf9273bf1d3040cb3aa51276d379",
+            "fdb2a605d2b1c623381fbaf1398e99b9d3f0c1cd10d6aded89da515316925932",
         ),
         (
             "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/"
@@ -106,7 +106,9 @@ def test_recovered_source_integrity_after_deliberate_hardening(
     assert hashlib.sha256(normalized).hexdigest() == expected
 
 
-def test_model_mismatch_is_reported_without_rewriting_hash(context) -> None:
+def test_model_mismatch_preserves_real_shadow_blocker_without_rewriting_hash(
+    context,
+) -> None:
     kwargs = inputs(context)
     original = kwargs["decisions"][0].model_dump(
         mode="python",
@@ -122,8 +124,11 @@ def test_model_mismatch_is_reported_without_rewriting_hash(context) -> None:
 
     report = producer.observe_signal_batch(**kwargs)
 
-    assert report.reason == "decision_model_mismatch"
     assert report.status == "blocked"
+    assert report.reason == "shadow_feature_contract_invalid"
+    assert report.shadow_block_reason == "shadow_feature_contract_invalid"
+    assert report.operational_model_mismatch_observed is True
+    assert report.operational_model_mismatch_count == 1
     assert report.new_signal_count == 0
     assert decision.model_hash == original["model_hash"]
     assert kwargs["signals"] == before
@@ -234,14 +239,25 @@ def test_evidence_failure_preserves_publication_and_order(
     )
 
     report = signal_producer.build_active_signals(enabled)
+    evidence = report["qlib_v3_natural_evidence"]
 
-    assert report["qlib_v3_natural_evidence"]["status"] == "blocked"
-    assert report["qlib_v3_natural_evidence"]["reason"] == {
-        "model": "decision_model_mismatch",
+    assert evidence["status"] == "blocked"
+    assert evidence["reason"] == {
+        "model": "shadow_feature_contract_invalid",
         "persistence": "producer_boundary_failed:OSError",
         "config": "producer_enabled_must_be_boolean",
     }[failure]
-    assert report["qlib_v3_natural_evidence"]["new_signal_count"] == 0
+    assert evidence["new_signal_count"] == 0
+
+    if failure == "model":
+        assert evidence["operational_model_mismatch_observed"] is True
+        assert evidence["operational_model_mismatch_count"] == 1
+        assert evidence["shadow_block_reason"] == "shadow_feature_contract_invalid"
+    else:
+        assert evidence["operational_model_mismatch_observed"] is False
+        assert evidence["operational_model_mismatch_count"] == 0
+        assert evidence["shadow_block_reason"] is None
+
     assert report["status"] == baseline["status"] == "ok"
     assert report["written_primary"]
     assert report["written_pinned"]
