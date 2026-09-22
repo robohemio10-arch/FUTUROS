@@ -55,6 +55,9 @@ class ProducerReport:
     shadow_selected_count: int = 0
     shadow_control_count: int = 0
     shadow_market_source: str | None = None
+    operational_model_mismatch_observed: bool = False
+    operational_model_mismatch_count: int = 0
+    shadow_block_reason: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -71,6 +74,13 @@ class ProducerReport:
             "shadow_selected_count": self.shadow_selected_count,
             "shadow_control_count": self.shadow_control_count,
             "shadow_market_source": self.shadow_market_source,
+            "operational_model_mismatch_observed": (
+                self.operational_model_mismatch_observed
+            ),
+            "operational_model_mismatch_count": (
+                self.operational_model_mismatch_count
+            ),
+            "shadow_block_reason": self.shadow_block_reason,
             "research_only": True,
             "operational_authority": False,
             "paper_behavior_changed": False,
@@ -400,10 +410,13 @@ def observe_signal_batch(
             for signal, record in pending
         }
 
-        original_model_mismatch = any(
+        operational_model_mismatch_count = sum(
             record.model_hash
             != activation.identity.model_artifact_sha256
             for record in pending_decisions
+        )
+        operational_model_mismatch_observed = bool(
+            operational_model_mismatch_count
         )
 
         from .economic_shadow_decision_producer import (
@@ -420,17 +433,18 @@ def observe_signal_batch(
         )
 
         if shadow.report.status != "ok":
-            reason = (
-                "decision_model_mismatch"
-                if original_model_mismatch
-                else (
-                    "shadow_decision_source_blocked:"
-                    f"{shadow.report.reason}"
-                )
+            shadow_block_reason = str(
+                shadow.report.reason
+            )
+            LOGGER.warning(
+                "qlib_v3_shadow_blocked "
+                "reason=%s operational_model_mismatch_count=%s",
+                shadow_block_reason,
+                operational_model_mismatch_count,
             )
             return ProducerReport(
                 "blocked",
-                reason,
+                shadow_block_reason,
                 write_requested=True,
                 shadow_decision_source=(
                     shadow.report.decision_source
@@ -447,6 +461,13 @@ def observe_signal_batch(
                 shadow_market_source=(
                     shadow.report.market_source
                 ),
+                operational_model_mismatch_observed=(
+                    operational_model_mismatch_observed
+                ),
+                operational_model_mismatch_count=(
+                    operational_model_mismatch_count
+                ),
+                shadow_block_reason=shadow_block_reason,
             )
 
         resolved_signals = shadow.signals
@@ -653,6 +674,13 @@ def observe_signal_batch(
             shadow_market_source=(
                 shadow.report.market_source
             ),
+            operational_model_mismatch_observed=(
+                operational_model_mismatch_observed
+            ),
+            operational_model_mismatch_count=(
+                operational_model_mismatch_count
+            ),
+            shadow_block_reason=None,
         )
 
     except Exception as exc:

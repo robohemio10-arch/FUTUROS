@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "8c8127385ff3a563c45041edd13b6499729829978199eddc063a6c53c4edad06",
+  "aggregate_sha256": "d077ed263b0c6cea7f8637c885b568f8f603b4cf3e8dfdece84763d7197240bd",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 314,
-    "manifested_files_total": 2125,
-    "python_files": 1665,
+    "docs_files": 315,
+    "manifested_files_total": 2127,
+    "python_files": 1666,
     "runtime_excluded_files_total": 0,
-    "test_files": 453,
-    "tracked_files_total": 2126,
+    "test_files": 454,
+    "tracked_files_total": 2128,
     "workflows": 2
   },
   "deterministic": true,
@@ -972,6 +972,12 @@
       "hash_mode": "text_lf",
       "path": "docs/CANONICAL_SOURCE_OF_TRUTH_INDEX.md",
       "sha256": "24296af0525d59b1cdfd0a4328afdf5124f3824e89c23b542b03466c43f55a8d"
+    },
+    {
+      "bytes": 3686,
+      "hash_mode": "text_lf",
+      "path": "docs/CANONICAL_TREATMENT_SCORER_COVERAGE_DIAGNOSTICS_V1.md",
+      "sha256": "800e50fdefd7efa3ae80b3ec8defc26cfcc116a14293ede261824f4de68ba412"
     },
     {
       "bytes": 1269,
@@ -7244,10 +7250,10 @@
       "sha256": "c1ae5fc693557c21ccd2e684419b2ecf8999b0a0f2617794b3cc0e3ed5cc55ba"
     },
     {
-      "bytes": 33326,
+      "bytes": 34541,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
-      "sha256": "f0298e510c835f62ddc084e965617cf289b7cf9273bf1d3040cb3aa51276d379"
+      "sha256": "fdb2a605d2b1c623381fbaf1398e99b9d3f0c1cd10d6aded89da515316925932"
     },
     {
       "bytes": 7891,
@@ -10370,6 +10376,12 @@
       "sha256": "1ac9221a744f1e3cfb3f2105eff23e31428629c7775e57de7539f89bc08c704f"
     },
     {
+      "bytes": 8757,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_treatment_scorer_coverage_diagnostics_v1.py",
+      "sha256": "beb87f4fe9fff1338545cac1b91c170e1fff3b7bf10e6eaa5c3bac57d49349d8"
+    },
+    {
       "bytes": 7177,
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_treatment_signal_publisher_v1.py",
@@ -12320,10 +12332,10 @@
       "sha256": "903c36b132b957dd91fd062b5543131bd6a9e46296138100789de77ba06cbebf"
     },
     {
-      "bytes": 11118,
+      "bytes": 11775,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_evidence_runtime_parity_v1.py",
-      "sha256": "af7b54fb0f5fa9a8fa24d054038656ba116f49422a574a31114e987416064ca3"
+      "sha256": "920cb597c77a1f4dbabdf5427aacb2b36f3cd0778cfebe61bcb4814f477d8e03"
     },
     {
       "bytes": 13677,
