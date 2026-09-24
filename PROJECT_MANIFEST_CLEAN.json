@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "d077ed263b0c6cea7f8637c885b568f8f603b4cf3e8dfdece84763d7197240bd",
+  "aggregate_sha256": "cbbe3470d4146552e78a8411389ecb2204606a99fa0767afa512800106d666b3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 315,
-    "manifested_files_total": 2127,
-    "python_files": 1666,
+    "docs_files": 316,
+    "manifested_files_total": 2134,
+    "python_files": 1672,
     "runtime_excluded_files_total": 0,
-    "test_files": 454,
-    "tracked_files_total": 2128,
+    "test_files": 456,
+    "tracked_files_total": 2135,
     "workflows": 2
   },
   "deterministic": true,
@@ -1296,6 +1296,12 @@
       "hash_mode": "text_lf",
       "path": "docs/DOCKER_PAPER_RUNTIME_PERMISSIONS_AND_RUNTIME_LOCK_V1.md",
       "sha256": "fb81e8457d9dcaa242876f7a770472bd264870632c83afe81fa685f10e9823b8"
+    },
+    {
+      "bytes": 7248,
+      "hash_mode": "text_lf",
+      "path": "docs/ECONOMIC_PHASE_FINAL_FORWARD_PROOF_V1.md",
+      "sha256": "4ebe9c8828e5e4966bfaf7044421f5c114fc3d9e07ba976e242ba2fba898ee5e"
     },
     {
       "bytes": 2938,
@@ -3230,6 +3236,12 @@
       "sha256": "64d53bebae456b6ce7e40372b57910219e0adbe7f7bada31b6411d4cb3d75e91"
     },
     {
+      "bytes": 1372,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_canonical_treatment_causal_governance_v1.py",
+      "sha256": "5a115deb61911fb71aa96e460c00d4c85b1cd68546915ef33488b454ecf4f644"
+    },
+    {
       "bytes": 1761,
       "hash_mode": "text_lf",
       "path": "scripts/build_component_economic_attribution_ledger_v1.py",
@@ -3378,6 +3390,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_economic_control_treatment_scorecard_v1.py",
       "sha256": "dc20af4bdb5df23fcf7d83291b5a5c217e6eda6108dc6b7a4eec2b6cf1503c7b"
+    },
+    {
+      "bytes": 1377,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_economic_phase_final_forward_proof_v1.py",
+      "sha256": "d7ae0cf110e5c531e9227db0094ae4541e827e25955af07b249fdfd61645cfab"
     },
     {
       "bytes": 2374,
@@ -4184,10 +4202,10 @@
       "sha256": "49fa155201ed7840bca6f6e2f019f894d522d66cc68557311c7d65637aeea6c1"
     },
     {
-      "bytes": 26689,
+      "bytes": 30730,
       "hash_mode": "text_lf",
       "path": "scripts/docker_runtime_permissions_bootstrap.py",
-      "sha256": "eaee15560234bcd14d7ec2b30af8c4ed2493651de1ee2da3a68803b4aaab0846"
+      "sha256": "1f2abcee8b58bb6af61838ae03592a243da96cc46fd7906d02d34a4565e6187d"
     },
     {
       "bytes": 580,
@@ -8270,6 +8288,12 @@
       "sha256": "d8e8cfd41fd0600f02be33f7c1745d7bc86b02f355cd9e1b5c018298899024ee"
     },
     {
+      "bytes": 28686,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/economic_phase_final_forward_proof.py",
+      "sha256": "de0121c99c6bd16f75302b45a043049cdf6cd9a06a7f60ec1b894e2683330636"
+    },
+    {
       "bytes": 18212,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/execution_intelligence_net_pnl_attribution.py",
@@ -8412,6 +8436,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/__init__.py",
       "sha256": "9a19868aa4f1bf252967eb1be5c9a86f804802cbca76363cb6432729411b5261"
+    },
+    {
+      "bytes": 47084,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/causal_governance.py",
+      "sha256": "e8a2939aebfb45b36bff920492bae5cb98e6d28b90ae28d07b8f41cefb2ef1e9"
     },
     {
       "bytes": 16251,
@@ -10376,6 +10406,12 @@
       "sha256": "1ac9221a744f1e3cfb3f2105eff23e31428629c7775e57de7539f89bc08c704f"
     },
     {
+      "bytes": 20304,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_treatment_causal_governance_v1.py",
+      "sha256": "a4e490e496d39310b2979384fdf05d8e15478231d32c600d4f65053049b5d4e8"
+    },
+    {
       "bytes": 8757,
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_treatment_scorer_coverage_diagnostics_v1.py",
@@ -10994,10 +11030,10 @@
       "sha256": "6d1b5a7f586a329a4bb4762908d59a5768b75e7b6f61adb992c5c73cf5ad33ca"
     },
     {
-      "bytes": 9162,
+      "bytes": 14341,
       "hash_mode": "text_lf",
       "path": "tests/test_docker_runtime_permissions_bootstrap.py",
-      "sha256": "3474dbd6a9c837c03b1561e382e277072c9dd38cd8534207965abc876971139e"
+      "sha256": "a42d9b86676c142ee22102aac17da276dfd4c1484d9aa1aa90d3b81327b33e75"
     },
     {
       "bytes": 1777,
@@ -11016,6 +11052,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_economic_control_treatment_scorecard_v1.py",
       "sha256": "d10cb6ad105e5c6ff3018ecd21e9a3a893dce73989dd27c61f71f9c6d192c3a8"
+    },
+    {
+      "bytes": 13068,
+      "hash_mode": "text_lf",
+      "path": "tests/test_economic_phase_final_forward_proof_v1.py",
+      "sha256": "3b1f1c58c9fcb29f28491d4eb77401bf738c19afc19a09975ce1e4b2e3ff33b6"
     },
     {
       "bytes": 15013,

@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO, NoReturn, Protocol, cast
 
-
 SAFE_FLAGS = {
     "paper_only": True,
     "shadow_only": True,
@@ -95,10 +94,19 @@ class RuntimeBootstrapLock(Protocol):
 
 
 @dataclass(frozen=True)
+class RuntimePathPolicy:
+    path: str
+    recursive: bool = True
+    directory_mode: int = DIRECTORY_MODE
+    file_mode: int = FILE_MODE
+
+
+@dataclass(frozen=True)
 class RuntimePermissionProfile:
     service: str
     directories: tuple[str, ...]
     covered_files: tuple[str, ...] = ()
+    path_policies: tuple[RuntimePathPolicy, ...] = ()
 
 
 SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
@@ -126,6 +134,17 @@ SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
             "/app/data/reports",
             "/app/data/runtime",
         ),
+        covered_files=(
+            "/app/data/runtime/trade_event_notifications.sqlite",
+            "/app/data/runtime/trade_event_notifications.sqlite-wal",
+            "/app/data/runtime/trade_event_notifications.sqlite-shm",
+            "/app/data/runtime/trade_event_notifications.sqlite-journal",
+        ),
+        path_policies=(
+            RuntimePathPolicy(
+                "/app/data/runtime", recursive=False, directory_mode=0o755,
+            ),
+        ),
     ),
     QLIB_REFRESH_SERVICE: RuntimePermissionProfile(
         service=QLIB_REFRESH_SERVICE,
@@ -139,6 +158,12 @@ SERVICE_PROFILES: dict[str, RuntimePermissionProfile] = {
             "/app/data/runtime/active_freqtrade_signals.json",
             "/app/data/reports/qlib_market_features_refresh_report.json",
             "/app/data/reports/qlib_market_features_refresh_report.json.tmp",
+        ),
+        path_policies=(
+            RuntimePathPolicy(
+                "/app/data/runtime", recursive=False,
+                directory_mode=0o755, file_mode=0o644,
+            ),
         ),
     ),
 }
@@ -425,6 +450,20 @@ def validate_profile_contract(
         PurePosixPath(directory)
         for directory in profile.directories
     )
+    policy_paths = [policy.path for policy in profile.path_policies]
+    if len(policy_paths) != len(set(policy_paths)):
+        raise RuntimeBootstrapError("duplicate_profile_path_policy")
+    for policy in profile.path_policies:
+        if policy.path not in profile.directories:
+            raise RuntimeBootstrapError("path_policy_outside_profile")
+        if (
+            type(policy.recursive) is not bool
+            or type(policy.directory_mode) is not int
+            or type(policy.file_mode) is not int
+            or policy.directory_mode not in (0o700, 0o755)
+            or policy.file_mode not in (0o600, 0o644)
+        ):
+            raise RuntimeBootstrapError("unsafe_profile_path_policy")
 
     for value in profile.covered_files:
         if (
@@ -456,6 +495,14 @@ def validate_profile_contract(
             raise RuntimeBootstrapError(
                 "profile_file_outside_authorized_directory"
             )
+        for policy in profile.path_policies:
+            root = PurePosixPath(policy.path)
+            if (
+                not policy.recursive
+                and candidate.is_relative_to(root)
+                and candidate.parent != root
+            ):
+                raise RuntimeBootstrapError("shared_root_file_must_be_direct_child")
 
 
 def reject_symlink_components(path: Path) -> None:
@@ -530,8 +577,22 @@ def ensure_runtime_path(
     gid: int,
     chown: Chown = platform_chown,
     chmod: Chmod = platform_chmod,
+    recursive: bool = True,
+    covered_files: Sequence[Path] = (),
+    directory_mode: int = DIRECTORY_MODE,
+    file_mode: int = FILE_MODE,
 ) -> dict[str, int]:
     reject_symlink_components(path)
+    if (
+        type(recursive) is not bool
+        or directory_mode not in (0o700, 0o755)
+        or file_mode not in (0o600, 0o644)
+    ):
+        raise RuntimeBootstrapError("unsafe_runtime_path_policy")
+    for target in covered_files:
+        if not target.is_absolute() or target.parent != path:
+            raise RuntimeBootstrapError("covered_file_outside_direct_root")
+        reject_symlink_components(target)
 
     if not path.parent.is_dir():
         raise RuntimeBootstrapError(
@@ -556,6 +617,25 @@ def ensure_runtime_path(
     file_count = 0
 
     try:
+        if not recursive:
+            # Shared roots grant no authority over other services' descendants.
+            # Only the explicitly owned direct files may be changed.
+            apply_ownership(
+                path, uid=uid, gid=gid, mode=directory_mode, chown=chown, chmod=chmod,
+            )
+            for target in covered_files:
+                reject_symlink_components(target)
+                try:
+                    metadata = target.stat(follow_symlinks=False)
+                except FileNotFoundError:
+                    continue
+                if not stat.S_ISREG(metadata.st_mode):
+                    raise RuntimeBootstrapError("runtime_child_not_regular_file")
+                apply_ownership(
+                    target, uid=uid, gid=gid, mode=file_mode, chown=chown, chmod=chmod,
+                )
+                file_count += 1
+            return {"directory_count": 1, "file_count": file_count}
         for (
             root_value,
             directory_names,
@@ -572,7 +652,7 @@ def ensure_runtime_path(
                 root,
                 uid=uid,
                 gid=gid,
-                mode=DIRECTORY_MODE,
+                mode=directory_mode,
                 chown=chown,
                 chmod=chmod,
             )
@@ -616,7 +696,7 @@ def ensure_runtime_path(
                     file_path,
                     uid=uid,
                     gid=gid,
-                    mode=FILE_MODE,
+                    mode=file_mode,
                     chown=chown,
                     chmod=chmod,
                 )
@@ -642,6 +722,7 @@ def prepare_runtime_permissions(
     chown: Chown = platform_chown,
     chmod: Chmod = platform_chmod,
 ) -> dict[str, int]:
+    validate_profile_contract(profile)
     if os.geteuid() != 0:  # type: ignore[attr-defined]
         raise RuntimeBootstrapError(
             "root_required_for_permission_bootstrap"
@@ -651,12 +732,23 @@ def prepare_runtime_permissions(
     file_count = 0
 
     for directory in profile.directories:
+        policy = next(
+            (item for item in profile.path_policies if item.path == directory),
+            RuntimePathPolicy(directory),
+        )
         summary = ensure_runtime_path(
             Path(directory),
             uid=uid,
             gid=gid,
             chown=chown,
             chmod=chmod,
+            recursive=policy.recursive,
+            covered_files=tuple(
+                Path(value) for value in profile.covered_files
+                if PurePosixPath(value).parent == PurePosixPath(directory)
+            ),
+            directory_mode=policy.directory_mode,
+            file_mode=policy.file_mode,
         )
         directory_count += summary["directory_count"]
         file_count += summary["file_count"]
@@ -926,7 +1018,8 @@ def exec_application(
         )
 
     try:
-        os.execvp(
+        # Trusted container argv is executed directly after privilege drop, without a shell.
+        os.execvp(  # nosec B606
             command[0],
             list(command),
         )
