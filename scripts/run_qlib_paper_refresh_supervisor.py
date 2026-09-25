@@ -6,7 +6,6 @@ import sys
 import time
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -15,6 +14,7 @@ from smartcrypto.qlib_engine.paper_refresh_supervisor import (  # noqa: E402
     DEFAULT_NEXT_RUN_SECONDS,
     DEFAULT_REPORT_PATH,
     PaperRefreshSupervisorConfig,
+    next_refresh_delay,
     run_paper_refresh_supervisor,
 )
 
@@ -82,10 +82,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report.get("status") == "ok" else 1
 
     interval = max(1, int(args.interval_seconds))
+    time.sleep(next_refresh_delay(
+        interval_seconds=interval, timeframe=cfg.timeframe, initial=True,
+    ))
     while True:
         report = run_paper_refresh_supervisor(cfg)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True, default=str), flush=True)
-        time.sleep(interval)
+        time.sleep(next_refresh_delay(interval_seconds=interval, timeframe=cfg.timeframe))
 
 
 if __name__ == "__main__":
