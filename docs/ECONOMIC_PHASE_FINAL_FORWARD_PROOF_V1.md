@@ -65,10 +65,21 @@ and `exact_join_required=true`. B17 is run only after successful registration.
 python scripts/build_economic_phase_final_forward_proof_v1.py --project-root . --runtime-root E:\FUTUROS --json
 ```
 
-The CLI writes only stdout. It consumes the saved audit, rechecks the active
-runtimes, and reads the operational Decision Ledger V4.2, canonical V3 store,
+The CLI writes only stdout. It collects and validates a fresh audit of the active
+runtimes on every invocation, and reads the operational Decision Ledger V4.2, canonical V3 store,
 Treatment ledger and both actual Freqtrade databases. SQLite is opened with
 `mode=ro` and `query_only`. No historical rows are migrated or reconstructed.
+The saved audit is not a renewable runtime lease. The create-once manifest remains
+the registration authority: its sealed audit is validated at formal activation,
+and both fresh audits (before and after evidence collection) must match its runtime
+fingerprints. Current audits older than 300 seconds or dated in the future still
+fail closed. The evaluator neither refreshes saved JSON nor changes activation time.
+A selector restart between evaluations is allowed only for the same container
+with every other attested field unchanged (image, config, activation, freeze,
+artifacts, source hashes and mounts). Its later start must fall after activation
+and no later than the current audit. Raw timestamps and sealed registration remain
+intact. Restarts during an audit or across evidence collection still block; the
+Control, Treatment, publisher and monitor identities retain exact comparison.
 
 The population is sealed Phase13 operational ALLOW decisions at or after formal
 activation, irrespective of whether Treatment observed them. Crosswalk event IDs

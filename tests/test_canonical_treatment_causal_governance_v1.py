@@ -51,6 +51,156 @@ def audit(at: datetime = NOW) -> dict:
     return g.audit_snapshots(snapshots(), git={"commit": "a" * 40, "tree": "b" * 40}, generated=at)
 
 
+def selector_fingerprint(started: datetime) -> dict:
+    return {
+        "container_id": "selector-container",
+        "image": "sha256:" + "a" * 64,
+        "config_sha256": "b" * 64,
+        "activation_file_sha256": "c" * 64,
+        "freeze_file_sha256": "d" * 64,
+        "frozen_artifact_sha256": {"model.txt": "e" * 64},
+        "source_sha256": {"natural_producer.py": "f" * 64},
+        "mounts": [{"Type": "bind", "Source": "/certified", "RW": False}],
+        "environment_evidence_source": "proc_pid1",
+        "started_at": started.isoformat(),
+    }
+
+
+@pytest.fixture
+def registered_selector(tmp_path: Path, monkeypatch) -> tuple[Path, dict, dict]:
+    monkeypatch.setattr(g, "now_utc", lambda: NOW)
+    source = snapshots()
+    for item in source.values():
+        item["started_at"] = (NOW - timedelta(hours=1)).isoformat()
+    source["publisher"]["selector"] = selector_fingerprint(NOW - timedelta(hours=1))
+    path = tmp_path / "manifest.json"
+    g.activate_once(path, g.audit_snapshots(source, git={}, generated=NOW))
+    # Reading the sealed bytes prevents shared fixture dictionaries from concealing tampering.
+    return path, json.loads(path.read_text()), source
+
+
+def test_same_selector_restart_preserves_manifest_and_raw_audit_provenance(
+    registered_selector, monkeypatch
+) -> None:
+    path, manifest, source = registered_selector
+    before = path.read_bytes()
+    source["publisher"]["selector"]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    observed = NOW + timedelta(seconds=10)
+    current = g.audit_snapshots(source, git={}, generated=observed)
+    before_current = deepcopy(current)
+    assert current["fingerprints_sha256"] != manifest["fingerprints_sha256"]
+    g.validate_manifest(manifest, current, observed)
+    monkeypatch.setattr(g, "now_utc", lambda: observed)
+    assert g.activate_once(path, current) == manifest
+    assert path.read_bytes() == before
+    assert current == before_current
+    assert current["fingerprints_sha256"] == digest(current["fingerprints"])
+    assert manifest["fingerprints_sha256"] == digest(manifest["fingerprints"])
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("container_id", "another-selector"),
+        ("image", "sha256:" + "1" * 64),
+        ("config_sha256", "1" * 64),
+        ("activation_file_sha256", "1" * 64),
+        ("freeze_file_sha256", "1" * 64),
+        ("frozen_artifact_sha256", {"model.txt": "1" * 64}),
+        ("source_sha256", {"natural_producer.py": "1" * 64}),
+        ("mounts", [{"Type": "bind", "Source": "/changed", "RW": False}]),
+        ("environment_evidence_source", "docker_inspect_config_env"),
+        ("unknown_new_field", "unattested-change"),
+    ],
+)
+def test_selector_restart_rejects_any_other_provenance_change(
+    registered_selector, field: str, value: object
+) -> None:
+    path, manifest, source = registered_selector
+    before = path.read_bytes()
+    source["publisher"]["selector"].update(
+        started_at=(NOW + timedelta(seconds=1)).isoformat()
+    )
+    source["publisher"]["selector"][field] = value
+    observed = NOW + timedelta(seconds=10)
+    current = g.audit_snapshots(source, git={}, generated=observed)
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, current, observed)
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "started",
+    [
+        None,
+        "not-a-timestamp",
+        (NOW + timedelta(seconds=11)).isoformat(),
+        "2026-10-01T00:00:10.000000001Z",
+        (NOW - timedelta(hours=2)).isoformat(),
+        (NOW - timedelta(minutes=1)).isoformat(),
+    ],
+    ids=[
+        "missing", "invalid", "future", "future-one-nanosecond", "regressed", "before-registration"
+    ],
+)
+def test_selector_restart_rejects_unattested_start_time(
+    registered_selector, started: str | None
+) -> None:
+    path, manifest, source = registered_selector
+    before = path.read_bytes()
+    selector = source["publisher"]["selector"]
+    if started is None:
+        selector.pop("started_at")
+    else:
+        selector["started_at"] = started
+    observed = NOW + timedelta(seconds=10)
+    current = g.audit_snapshots(source, git={}, generated=observed)
+    with pytest.raises(EvidenceError, match="causal_runtime_drift|timestamp"):
+        g.validate_manifest(manifest, current, observed)
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("role", list(g.CONTAINERS))
+def test_selector_restart_exception_does_not_cover_other_process_starts(
+    registered_selector, role: str
+) -> None:
+    _, manifest, source = registered_selector
+    source["publisher"]["selector"]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    source[role]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    observed = NOW + timedelta(seconds=10)
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(
+            manifest, g.audit_snapshots(source, git={}, generated=observed), observed
+        )
+
+
+def test_resealed_manifest_cannot_replace_registered_fingerprints(registered_selector) -> None:
+    _, manifest, source = registered_selector
+    manifest["fingerprints"]["publisher"]["selector"]["source_sha256"] = {"changed.py": "1" * 64}
+    manifest["manifest_sha256"] = digest(
+        {key: value for key, value in manifest.items() if key != "manifest_sha256"}
+    )
+    with pytest.raises(EvidenceError, match="registration_audit_identity_mismatch"):
+        g.validate_manifest(manifest, g.audit_snapshots(source, git={}, generated=NOW), NOW)
+
+
+def test_selector_restart_supports_real_docker_nanosecond_timestamps(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(g, "now_utc", lambda: NOW)
+    source = snapshots()
+    source["publisher"]["selector"] = selector_fingerprint(NOW - timedelta(hours=1))
+    source["publisher"]["selector"]["started_at"] = "2026-09-30T23:00:00.694148427Z"
+    path = tmp_path / "manifest.json"
+    manifest = g.activate_once(path, g.audit_snapshots(source, git={}, generated=NOW))
+    before = path.read_bytes()
+    source = deepcopy(source)
+    source["publisher"]["selector"]["started_at"] = "2026-10-01T00:00:01.1279858Z"
+    observed = NOW + timedelta(seconds=10)
+    g.validate_manifest(manifest, g.audit_snapshots(source, git={}, generated=observed), observed)
+    assert path.read_bytes() == before
+
+
 def test_only_exact_noneconomic_config_differences_allowed() -> None:
     source = snapshots()
     source["treatment"]["config"]["bot_name"] = "Paper-B"

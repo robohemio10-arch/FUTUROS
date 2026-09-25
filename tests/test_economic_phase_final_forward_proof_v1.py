@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from test_canonical_treatment_causal_governance_v1 import audit
+from test_canonical_treatment_causal_governance_v1 import audit, selector_fingerprint, snapshots
 
 from smartcrypto.execution.decision_ledger_v4_2 import seal_decision_record
 from smartcrypto.learning.qlib_v3_prospective.contracts import CANONICAL, digest
@@ -311,3 +311,125 @@ def test_missing_upstream_safety_does_not_become_ready(tmp_path, monkeypatch, st
     result = b17.build_economic_phase_final_forward_proof_from_reports(**case)
     assert result["status"] == "blocked"
     assert stage + "_required_safety_missing_or_invalid" in result["blockers"]
+
+
+def runtime_case(tmp_path: Path, monkeypatch, selector: dict | None = None) -> dict:
+    case = evidence_case(tmp_path, monkeypatch, count=0, selected=0, days=1)
+    source = snapshots()
+    if selector is not None:
+        source["publisher"]["selector"] = selector
+    for role in ("control", "treatment"):
+        source[role]["db_identity"]["url"] = f"sqlite:////{role}.sqlite"
+    source_git = {"commit": "c" * 40, "tree": "d" * 40}
+    registration = g.audit_snapshots(source, git=source_git, generated=START)
+    manifest_path = tmp_path / g.MANIFEST_PATH
+    manifest_path.parent.mkdir(parents=True)
+    g.activate_once(manifest_path, registration)
+    audit_path = tmp_path / g.AUDIT_PATH
+    audit_path.parent.mkdir(parents=True)
+    audit_path.write_text(json.dumps(registration))
+    monkeypatch.setattr(g, "now_utc", lambda: START + timedelta(days=1))
+    monkeypatch.setattr(g, "_git", lambda root: source_git)
+    monkeypatch.setattr(g, "collect_runtime", lambda root: deepcopy(source))
+    monkeypatch.setattr(g, "container_optional_json", lambda *args: None)
+    monkeypatch.setattr(
+        g, "container_read", lambda container, path, mode="file": b"[]" if mode == "sqlite" else b""
+    )
+    monkeypatch.setattr(
+        g, "container_json",
+        lambda container, path: case["v3_evidence"] if path.endswith("evidence.json") else case["treatment_ledger"],
+    )
+    return source
+
+
+@pytest.mark.parametrize("cached_audit", ["stale", "missing"])
+def test_runtime_uses_fresh_canonical_audit_without_rewriting_activation(
+    tmp_path, monkeypatch, cached_audit
+) -> None:
+    runtime_case(tmp_path, monkeypatch)
+    audit_path, manifest_path = tmp_path / g.AUDIT_PATH, tmp_path / g.MANIFEST_PATH
+    if cached_audit == "missing":
+        audit_path.unlink()
+    before = {p: p.read_bytes() for p in tmp_path.rglob("*.json")}
+    report = b17.build_economic_phase_final_forward_proof_v1(project_root=tmp_path, runtime_root=tmp_path)
+    assert report["status"] == "waiting", report["blockers"]
+    assert report["formal_activation_utc"] == START.isoformat()
+    assert report["certification_attempted"] is False
+    assert report["parity_audit_sha256"] != json.loads(manifest_path.read_bytes())["activation_audit_sha256"]
+    assert {p: p.read_bytes() for p in tmp_path.rglob("*.json")} == before
+
+
+@pytest.mark.parametrize("age", [-1, 301])
+@pytest.mark.parametrize("collection", [1, 2])
+def test_runtime_rejects_stale_or_future_current_audit(tmp_path, monkeypatch, age, collection) -> None:
+    runtime_case(tmp_path, monkeypatch)
+    real_audit = g.audit_snapshots
+    calls = 0
+
+    def collect(source, *, git):
+        nonlocal calls
+        calls += 1
+        generated = g.now_utc() - timedelta(seconds=age if calls == collection else 0)
+        return real_audit(source, git=git, generated=generated)
+
+    monkeypatch.setattr(g, "audit_snapshots", collect)
+    report = b17.build_economic_phase_final_forward_proof_v1(project_root=tmp_path, runtime_root=tmp_path)
+    assert report["status"] == "blocked"
+    assert "runtime_parity_stale_or_future" in report["blockers"]
+    assert report["certification_attempted"] is False
+
+
+@pytest.mark.parametrize("collection", [1, 2])
+def test_runtime_drift_before_or_during_evidence_collection_blocks(tmp_path, monkeypatch, collection) -> None:
+    source = runtime_case(tmp_path, monkeypatch)
+    calls = 0
+
+    def collect(root):
+        nonlocal calls
+        calls += 1
+        current = deepcopy(source)
+        if calls == collection:
+            current["publisher"]["source_sha256"]["publisher.py"] = "f" * 64
+        return current
+
+    monkeypatch.setattr(g, "collect_runtime", collect)
+    report = b17.build_economic_phase_final_forward_proof_v1(project_root=tmp_path, runtime_root=tmp_path)
+    assert report["status"] == "blocked"
+    assert "causal_runtime_drift" in report["blockers"]
+    assert report["certification_attempted"] is False
+
+
+def test_selector_restart_between_audits_is_not_hidden_by_cohort_comparison(tmp_path, monkeypatch) -> None:
+    source = runtime_case(tmp_path, monkeypatch, selector_fingerprint(START - timedelta(hours=1)))
+    calls = 0
+
+    def collect(root):
+        nonlocal calls
+        calls += 1
+        current = deepcopy(source)
+        current["publisher"]["selector"]["started_at"] = (START + timedelta(hours=calls)).isoformat()
+        return current
+
+    monkeypatch.setattr(g, "collect_runtime", collect)
+    report = b17.build_economic_phase_final_forward_proof_v1(project_root=tmp_path, runtime_root=tmp_path)
+    assert report["status"] == "blocked"
+    assert "runtime_changed_during_evidence_collection" in report["blockers"]
+    assert report["certification_attempted"] is False
+
+
+@pytest.mark.parametrize("age", [-1, 301])
+def test_fresh_runtime_does_not_rescue_invalid_registration_time(tmp_path, monkeypatch, age) -> None:
+    runtime_case(tmp_path, monkeypatch)
+    path = tmp_path / g.MANIFEST_PATH
+    manifest = json.loads(path.read_bytes())
+    registration = manifest["registration_audit"]
+    registration["generated_at_utc"] = (START - timedelta(seconds=age)).isoformat()
+    registration["audit_sha256"] = digest({k: v for k, v in registration.items() if k != "audit_sha256"})
+    manifest["activation_audit_sha256"] = registration["audit_sha256"]
+    manifest["manifest_sha256"] = digest({k: v for k, v in manifest.items() if k != "manifest_sha256"})
+    path.write_text(json.dumps(manifest))
+    before = path.read_bytes()
+    report = b17.build_economic_phase_final_forward_proof_v1(project_root=tmp_path, runtime_root=tmp_path)
+    assert report["status"] == "blocked"
+    assert "runtime_parity_stale_or_future" in report["blockers"]
+    assert path.read_bytes() == before

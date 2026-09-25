@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import time
 from dataclasses import dataclass
@@ -9,14 +10,16 @@ from typing import Any, Callable
 
 from smartcrypto.execution.signal_producer import build_active_signals, inspect_signal_file
 from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
-from smartcrypto.qlib_engine.market_features_refresh import refresh_qlib_market_features
+from smartcrypto.qlib_engine.market_features_refresh import (
+    _interval_to_ms,
+    refresh_qlib_market_features,
+)
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 from smartcrypto.runtime.integrity_traceability_v2 import atomic_write_json
 from smartcrypto.runtime.shared_freqtrade_signal_artifact import (
     SharedFreqtradeSignalArtifactError,
     publish_shared_freqtrade_signal_artifact,
 )
-
 
 OK = "ok"
 BLOCKED = "blocked"
@@ -31,6 +34,7 @@ DEFAULT_MARKET_FEATURES_PATH = Path("data/features/market_features_60d.parquet")
 DEFAULT_PREDICTIONS_PATH = Path("data/predictions/latest_qlib_predictions.parquet")
 DEFAULT_SIGNAL_CONFIG_PATH = Path("config/signal_producer.yml")
 DEFAULT_NEXT_RUN_SECONDS = 900
+REFRESH_CANDLE_SETTLE_SECONDS = 5
 TRUE_VALUES = {"1", "true", "yes", "y", "on"}
 
 MarketRefreshFn = Callable[..., dict[str, Any]]
@@ -233,17 +237,46 @@ def run_paper_refresh_supervisor(
     return report
 
 
+def next_refresh_delay(
+    *, interval_seconds: int, timeframe: str, initial: bool = False,
+    now: float | None = None,
+) -> float:
+    """Schedule closed-candle cycles without adding compute time to their cadence.
+
+    Missed slots are skipped, never replayed. Non-candle cadences retain their
+    existing behavior. This controls collection time, not decision timestamps
+    or the PIT freshness/coverage thresholds.
+    """
+    interval = max(1, int(interval_seconds))
+    candle_seconds = _interval_to_ms(timeframe) / 1000
+    if candle_seconds <= 0:
+        raise ValueError("timeframe_must_be_positive")
+    if interval % candle_seconds:
+        return 0.0 if initial else float(interval)
+    current = time.time() if now is None else now
+    if not math.isfinite(current):
+        raise ValueError("refresh_clock_must_be_finite")
+    slot = math.floor((current - REFRESH_CANDLE_SETTLE_SECONDS) / interval) + 1
+    return slot * interval + REFRESH_CANDLE_SETTLE_SECONDS - current
+
+
 def run_supervisor_loop(
     config: PaperRefreshSupervisorConfig,
     *,
     interval_seconds: int,
     once: bool = True,
 ) -> dict[str, Any]:
+    if not once:
+        time.sleep(next_refresh_delay(
+            interval_seconds=interval_seconds, timeframe=config.timeframe, initial=True,
+        ))
     last_report = run_paper_refresh_supervisor(config)
     if once:
         return last_report
     while True:
-        time.sleep(max(1, int(interval_seconds)))
+        time.sleep(next_refresh_delay(
+            interval_seconds=interval_seconds, timeframe=config.timeframe,
+        ))
         last_report = run_paper_refresh_supervisor(config)
 
 

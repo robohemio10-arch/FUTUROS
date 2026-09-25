@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "cbbe3470d4146552e78a8411389ecb2204606a99fa0767afa512800106d666b3",
+  "aggregate_sha256": "f7d5ce8d3278f07cfe864a803ff9c358e30b3c53fc68208a9ab96587e3176b96",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 316,
-    "manifested_files_total": 2134,
-    "python_files": 1672,
+    "docs_files": 317,
+    "manifested_files_total": 2139,
+    "python_files": 1676,
     "runtime_excluded_files_total": 0,
-    "test_files": 456,
-    "tracked_files_total": 2135,
+    "test_files": 458,
+    "tracked_files_total": 2140,
     "workflows": 2
   },
   "deterministic": true,
@@ -1298,10 +1298,10 @@
       "sha256": "fb81e8457d9dcaa242876f7a770472bd264870632c83afe81fa685f10e9823b8"
     },
     {
-      "bytes": 7248,
+      "bytes": 8164,
       "hash_mode": "text_lf",
       "path": "docs/ECONOMIC_PHASE_FINAL_FORWARD_PROOF_V1.md",
-      "sha256": "4ebe9c8828e5e4966bfaf7044421f5c114fc3d9e07ba976e242ba2fba898ee5e"
+      "sha256": "75ea08896691f92c4ce6b29d734677695bcbeaddb2769373eb312e502dd161e1"
     },
     {
       "bytes": 2938,
@@ -1836,6 +1836,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_WATERMARK_ACCUMULATION_RECHECK_V1.md",
       "sha256": "89bef22de6fad8e4bf791979a6fff389323ffd0141d8ef4e22e96d0262707845"
+    },
+    {
+      "bytes": 4375,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_POSTFIX_CAUSAL_SOAK_FOUNDATION_V1.md",
+      "sha256": "14ee7d9985471d36c3c22814a6545697f17a93d5b9db47e19150969a02db03b8"
     },
     {
       "bytes": 3393,
@@ -3716,6 +3722,12 @@
       "sha256": "38ab0c9082945ab6968f8a91b772fdfe06c8d9201b1b0b76d12f02dc6d20f5ef"
     },
     {
+      "bytes": 3802,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_postfix_causal_soak_foundation_v1.py",
+      "sha256": "0d132c653ff0bb85601d15bb65f237e7a4f4e9dfd68ccb424ea7077616071731"
+    },
+    {
       "bytes": 2753,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_candidate_filter_runtime_observation_pack_v1.py",
@@ -5054,10 +5066,10 @@
       "sha256": "bf9eb4d7d77bf65a2118060f6fb192ee167e97576d76743d80d298b947bb48cf"
     },
     {
-      "bytes": 4265,
+      "bytes": 4466,
       "hash_mode": "text_lf",
       "path": "scripts/run_qlib_paper_refresh_supervisor.py",
-      "sha256": "e95a6b3a3caf52961f72139c53d0d89a77cd012220ff6c77b3f18e65e397de37"
+      "sha256": "45f6598db9beb1fc221d55b3e95f949591077ffe848f6632148429452ab6db8a"
     },
     {
       "bytes": 1659,
@@ -8192,10 +8204,10 @@
       "sha256": "b81f70041f83772d7ad8ec3ce1dc4baa41bad04ff80e92bbfe99a5438a4ab86d"
     },
     {
-      "bytes": 12512,
+      "bytes": 13809,
       "hash_mode": "text_lf",
       "path": "smartcrypto/qlib_engine/paper_refresh_supervisor.py",
-      "sha256": "dba9dc595880e2091e4c67b643c0d69828a389eb1be09b97a387b9b886c3380a"
+      "sha256": "bf617b257a8d9a484ef5f7c422e6111356c46800d60c2bcc9e3a5fd4c0e32bf9"
     },
     {
       "bytes": 7123,
@@ -8288,10 +8300,10 @@
       "sha256": "d8e8cfd41fd0600f02be33f7c1745d7bc86b02f355cd9e1b5c018298899024ee"
     },
     {
-      "bytes": 28686,
+      "bytes": 28848,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/economic_phase_final_forward_proof.py",
-      "sha256": "de0121c99c6bd16f75302b45a043049cdf6cd9a06a7f60ec1b894e2683330636"
+      "sha256": "60f89fb6a0cd0ab5f5d5fd675086aa0648b2efbc851f7a50bc773030e88d3f7b"
     },
     {
       "bytes": 18212,
@@ -8438,16 +8450,22 @@
       "sha256": "9a19868aa4f1bf252967eb1be5c9a86f804802cbca76363cb6432729411b5261"
     },
     {
-      "bytes": 47084,
+      "bytes": 49296,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/causal_governance.py",
-      "sha256": "e8a2939aebfb45b36bff920492bae5cb98e6d28b90ae28d07b8f41cefb2ef1e9"
+      "sha256": "4ca0daeee88cfc5d74cdc104c392741e81a0f0a281966590339eb25651fcc199"
     },
     {
       "bytes": 16251,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/economic_monitor.py",
       "sha256": "b27a9522326efb7f2741313f4334cac06eedd3605d975c8c9a90472ddc1904a4"
+    },
+    {
+      "bytes": 46087,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/postfix_causal_soak_foundation.py",
+      "sha256": "97633b6de4bab1b6f3621a015769a03e069e7537dedd9ca1b95b097df198078a"
     },
     {
       "bytes": 19806,
@@ -10406,10 +10424,10 @@
       "sha256": "1ac9221a744f1e3cfb3f2105eff23e31428629c7775e57de7539f89bc08c704f"
     },
     {
-      "bytes": 20304,
+      "bytes": 26682,
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_treatment_causal_governance_v1.py",
-      "sha256": "a4e490e496d39310b2979384fdf05d8e15478231d32c600d4f65053049b5d4e8"
+      "sha256": "4e2b55118cfa4a152b7758ea9843745811c0bfef907cccbb38753a100bd8df51"
     },
     {
       "bytes": 8757,
@@ -11054,10 +11072,10 @@
       "sha256": "d10cb6ad105e5c6ff3018ecd21e9a3a893dce73989dd27c61f71f9c6d192c3a8"
     },
     {
-      "bytes": 13068,
+      "bytes": 18822,
       "hash_mode": "text_lf",
       "path": "tests/test_economic_phase_final_forward_proof_v1.py",
-      "sha256": "3b1f1c58c9fcb29f28491d4eb77401bf738c19afc19a09975ce1e4b2e3ff33b6"
+      "sha256": "cf8b389e97256d19bf98c24a62785ed9cc39d8f6f9a9a6f87e758909ac65a10d"
     },
     {
       "bytes": 15013,
@@ -11786,6 +11804,12 @@
       "sha256": "47a9a25fef15761f71711c603d94e149b55afd127baf406d667eca095007b512"
     },
     {
+      "bytes": 13172,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_b_postfix_causal_soak_foundation_v1.py",
+      "sha256": "058d026d4d89fd0cd76c7404f4b1f781f111da289661e844070152fbe92701dd"
+    },
+    {
       "bytes": 10096,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_candidate_filter_runtime_observation_pack_v1.py",
@@ -12300,6 +12324,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_prediction_freshness_guard.py",
       "sha256": "caf3b500f0e1fd905f3f98bfe54b0b32563050e1ccbf934aa0cd99d76ed0e67a"
+    },
+    {
+      "bytes": 4424,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_refresh_candle_schedule_v1.py",
+      "sha256": "8514ddd6bf0bb40144c0444430c4eb24c092a5bdf1f8f91d046ac448b77f2a7a"
     },
     {
       "bytes": 10184,

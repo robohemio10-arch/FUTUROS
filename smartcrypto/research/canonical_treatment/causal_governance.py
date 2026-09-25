@@ -936,6 +936,51 @@ def validate_audit(report: Mapping[str, Any], now: datetime) -> None:
         raise EvidenceError("governance_safety_invalid")
 
 
+def _docker_start_key(value: object) -> tuple[datetime, int]:
+    """Compare Docker RFC3339Nano in UTC without truncating future nanoseconds."""
+    match = re.fullmatch(
+        r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(?:Z|\+00:00)",
+        value if isinstance(value, str) else "",
+    )
+    if match is None:
+        raise EvidenceError("selector_start_timestamp_invalid")
+    return utc(match[1] + "Z"), int((match[2] or "").ljust(9, "0"))
+
+
+def _same_runtime_after_selector_restart(
+    registered: Mapping[str, Any], current: Mapping[str, Any],
+    activation: datetime, observed: datetime,
+) -> bool:
+    """Allow only a later start of the same fully attested selector container."""
+    if registered == current:
+        return True
+    old_publisher, new_publisher = registered.get("publisher"), current.get("publisher")
+    if not isinstance(old_publisher, dict) or not isinstance(new_publisher, dict):
+        return False
+    old = old_publisher.get("selector", {})
+    new = new_publisher.get("selector", {})
+    if not isinstance(old, dict) or not isinstance(new, dict):
+        return False
+    required = {
+        "container_id", "image", "config_sha256", "activation_file_sha256",
+        "freeze_file_sha256", "frozen_artifact_sha256", "source_sha256", "mounts",
+        "environment_evidence_source", "started_at",
+    }
+    if any(not selector.get(key) for selector in (old, new) for key in required):
+        return False
+    activated = (activation.replace(microsecond=0), activation.microsecond * 1000)
+    attested = (observed.replace(microsecond=0), observed.microsecond * 1000)
+    if not _docker_start_key(old["started_at"]) <= activated < _docker_start_key(new["started_at"]) <= attested:
+        return False
+    # Keep the raw timestamps in both sealed reports. Only this comparison
+    # separates process lifetime from the selector's immutable causal identity.
+    normalized = dict(current)
+    normalized["publisher"] = dict(
+        current["publisher"], selector=dict(new, started_at=old["started_at"])
+    )
+    return registered == normalized
+
+
 def validate_manifest(manifest: Mapping[str, Any], audit: Mapping[str, Any], now: datetime) -> None:
     validate_audit(audit, now)
     if manifest.get("schema_version") != MANIFEST_SCHEMA or manifest.get(
@@ -956,11 +1001,13 @@ def validate_manifest(manifest: Mapping[str, Any], audit: Mapping[str, Any], now
     validate_audit(registration, utc(manifest["formal_activation_utc"]))
     if registration["fingerprints_sha256"] != manifest.get("fingerprints_sha256") or registration[
         "audit_sha256"
-    ] != manifest.get("activation_audit_sha256"):
+    ] != manifest.get("activation_audit_sha256") or registration["fingerprints"] != manifest.get(
+        "fingerprints"
+    ):
         raise EvidenceError("registration_audit_identity_mismatch")
-    if (
-        manifest.get("fingerprints_sha256") != audit["fingerprints_sha256"]
-        or manifest.get("fingerprints") != audit["fingerprints"]
+    if not _same_runtime_after_selector_restart(
+        manifest["fingerprints"], audit["fingerprints"],
+        utc(manifest["formal_activation_utc"]), utc(audit["generated_at_utc"]),
     ):
         raise EvidenceError("causal_runtime_drift")
     if manifest.get("provenance_warnings") != registration.get("provenance_warnings"):

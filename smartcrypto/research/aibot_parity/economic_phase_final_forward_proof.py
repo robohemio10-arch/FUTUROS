@@ -641,14 +641,14 @@ def build_economic_phase_final_forward_proof_v1(
             is not None
         }
         result["upstream"] = _upstream(upstream)
-        parity = read_object(project / governance.AUDIT_PATH)
-        governance.validate_audit(parity, now)
+        # The saved audit is a registration artifact, not a current health lease.
+        # Reuse the canonical collector/validator without rewriting that artifact
+        # or the create-once activation; the manifest anchors runtime identity.
+        source_git = governance._git(project)
         current = governance.audit_snapshots(
-            governance.collect_runtime(Path(runtime_root)), git=parity["git"]
+            governance.collect_runtime(Path(runtime_root)), git=source_git
         )
         governance.validate_audit(current, governance.now_utc())
-        if current["fingerprints_sha256"] != parity["fingerprints_sha256"]:
-            raise EvidenceError("runtime_changed_since_materialized_audit")
         manifest_path = project / governance.MANIFEST_PATH
         if not manifest_path.exists():
             result["blockers"].append("causal_activation_not_registered")
@@ -693,9 +693,11 @@ def build_economic_phase_final_forward_proof_v1(
         )
         # Audit again after reads to detect process/source/DB-mount changes during collection.
         after = governance.audit_snapshots(
-            governance.collect_runtime(Path(runtime_root)), git=parity["git"]
+            governance.collect_runtime(Path(runtime_root)), git=source_git
         )
         governance.validate_manifest(manifest, after, governance.now_utc())
+        if current["fingerprints"] != after["fingerprints"]:
+            raise EvidenceError("runtime_changed_during_evidence_collection")
         return result
     except (EvidenceError, OSError, ValueError, KeyError, TypeError) as exc:
         result.update(
