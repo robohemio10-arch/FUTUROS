@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "f7d5ce8d3278f07cfe864a803ff9c358e30b3c53fc68208a9ab96587e3176b96",
+  "aggregate_sha256": "996124222df1c816b46d85908bba2103148ba418371debd5cd85f924df0a9e75",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 317,
-    "manifested_files_total": 2139,
-    "python_files": 1676,
+    "docs_files": 318,
+    "manifested_files_total": 2143,
+    "python_files": 1679,
     "runtime_excluded_files_total": 0,
-    "test_files": 458,
-    "tracked_files_total": 2140,
+    "test_files": 459,
+    "tracked_files_total": 2144,
     "workflows": 2
   },
   "deterministic": true,
@@ -1842,6 +1842,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_B_POSTFIX_CAUSAL_SOAK_FOUNDATION_V1.md",
       "sha256": "14ee7d9985471d36c3c22814a6545697f17a93d5b9db47e19150969a02db03b8"
+    },
+    {
+      "bytes": 2794,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_POSTFIX_LATENCY_COVERAGE_MONITOR_V1.md",
+      "sha256": "032c7895681c85fa69af7584b83e102748670752d8042dcfa16c276071cb17b5"
     },
     {
       "bytes": 3393,
@@ -3726,6 +3732,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_postfix_causal_soak_foundation_v1.py",
       "sha256": "0d132c653ff0bb85601d15bb65f237e7a4f4e9dfd68ccb424ea7077616071731"
+    },
+    {
+      "bytes": 1318,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_postfix_latency_coverage_monitor_v1.py",
+      "sha256": "e8e2c5be6f299ce9d4dcce013d5aa8639d987d9e1f02406063d4a715d85afc18"
     },
     {
       "bytes": 2753,
@@ -8450,10 +8462,10 @@
       "sha256": "9a19868aa4f1bf252967eb1be5c9a86f804802cbca76363cb6432729411b5261"
     },
     {
-      "bytes": 49296,
+      "bytes": 52152,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/causal_governance.py",
-      "sha256": "4ca0daeee88cfc5d74cdc104c392741e81a0f0a281966590339eb25651fcc199"
+      "sha256": "ac004b2ed08459718498892052b448394c815bc5645b0bf0a4a09e921d1acdb4"
     },
     {
       "bytes": 16251,
@@ -8466,6 +8478,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/postfix_causal_soak_foundation.py",
       "sha256": "97633b6de4bab1b6f3621a015769a03e069e7537dedd9ca1b95b097df198078a"
+    },
+    {
+      "bytes": 22550,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/postfix_latency_coverage_monitor.py",
+      "sha256": "5c2701167b3734d1d4482ecf45ab7e78f797e302def09521302314ecb019cb85"
     },
     {
       "bytes": 19806,
@@ -10424,10 +10442,10 @@
       "sha256": "1ac9221a744f1e3cfb3f2105eff23e31428629c7775e57de7539f89bc08c704f"
     },
     {
-      "bytes": 26682,
+      "bytes": 35767,
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_treatment_causal_governance_v1.py",
-      "sha256": "4e2b55118cfa4a152b7758ea9843745811c0bfef907cccbb38753a100bd8df51"
+      "sha256": "077db305bf41072c93c461c443980ed6e128b0bbf593a03dc7e90d324906d93d"
     },
     {
       "bytes": 8757,
@@ -11808,6 +11826,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_postfix_causal_soak_foundation_v1.py",
       "sha256": "058d026d4d89fd0cd76c7404f4b1f781f111da289661e844070152fbe92701dd"
+    },
+    {
+      "bytes": 9476,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_b_postfix_latency_coverage_monitor_v1.py",
+      "sha256": "48e62771d1f4af905137711c954666e5af38f018139d8114e0c11597a367e7fb"
     },
     {
       "bytes": 10096,

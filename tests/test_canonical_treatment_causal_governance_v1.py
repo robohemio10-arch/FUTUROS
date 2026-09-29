@@ -161,17 +161,240 @@ def test_selector_restart_rejects_unattested_start_time(
 
 
 @pytest.mark.parametrize("role", list(g.CONTAINERS))
-def test_selector_restart_exception_does_not_cover_other_process_starts(
+def test_registered_role_restart_requires_stable_identity(
     registered_selector, role: str
 ) -> None:
-    _, manifest, source = registered_selector
+    path, manifest, source = registered_selector
+    before = path.read_bytes()
     source["publisher"]["selector"]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
     source[role]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    observed = NOW + timedelta(seconds=10)
+    report = g.audit_snapshots(source, git={}, generated=observed)
+    g.validate_manifest(manifest, report, observed)
+    assert path.read_bytes() == before
+
+
+def test_all_roles_and_selector_restart_with_stable_identity(registered_selector) -> None:
+    path, manifest, source = registered_selector
+    before = path.read_bytes()
+    for role in g.CONTAINERS:
+        source[role]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    source["publisher"]["selector"]["started_at"] = (
+        NOW + timedelta(seconds=2)
+    ).isoformat()
+    observed = NOW + timedelta(seconds=10)
+    report = g.audit_snapshots(source, git={}, generated=observed)
+    g.validate_manifest(manifest, report, observed)
+    assert report["fingerprints_sha256"] == digest(report["fingerprints"])
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "started",
+    [
+        "2026-09-30T22:00:00Z",
+        "2026-09-30T23:30:00Z",
+        "2026-10-01T00:00:11Z",
+        "2026-10-01T00:00:10.000000001Z",
+        "invalid",
+    ],
+)
+@pytest.mark.parametrize("role", list(g.CONTAINERS))
+def test_role_restart_rejects_nonmonotonic_or_unattested_time(
+    registered_selector, role: str, started: str
+) -> None:
+    _, manifest, source = registered_selector
+    source[role]["started_at"] = started
     observed = NOW + timedelta(seconds=10)
     with pytest.raises(EvidenceError, match="causal_runtime_drift"):
         g.validate_manifest(
             manifest, g.audit_snapshots(source, git={}, generated=observed), observed
         )
+
+
+@pytest.mark.parametrize(
+    "role,field,value",
+    [
+        ("treatment", "container_id", "recreated"),
+        ("treatment", "image", "different"),
+        ("treatment", "db_identity", {"source": "other-db"}),
+        ("treatment", "command_sha256", "different"),
+        ("treatment", "strategy_sha256", "different"),
+        ("treatment", "config_sha256", "different"),
+        ("treatment", "source_sha256", {"publisher.py": "different"}),
+        ("treatment", "mounts", [{"Destination": "/db", "RW": True}]),
+        ("publisher", "service_environment_sha256", "different"),
+        ("monitor", "image", "different"),
+        ("control", "container_id", "recreated"),
+    ],
+)
+def test_restart_cannot_cover_identity_or_safety_drift(
+    registered_selector, role: str, field: str, value: object
+) -> None:
+    _, manifest, source = registered_selector
+    source[role]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    source[role][field] = value
+    observed = NOW + timedelta(seconds=10)
+    report = g.audit_snapshots(source, git={}, generated=observed)
+    with pytest.raises(EvidenceError):
+        g.validate_manifest(manifest, report, observed)
+
+
+def _host_config_restart(
+    registered_selector, monkeypatch, host_config: dict,
+    old_host_config: dict | None = None,
+) -> tuple:
+    existing_path, _, source = registered_selector
+    path = existing_path.with_name("host-config-manifest.json")
+    old_host = old_host_config if old_host_config is not None else {
+        "Dns": None, "DnsOptions": None, "DnsSearch": None, "NetworkMode": "bridge"
+    }
+    old_spec = {
+        "host_config_sha256": digest(old_host),
+        "configured_user": "ftuser",
+        "command_sha256": "a" * 64,
+        "mounts": [{"Destination": "/db", "RW": True}],
+    }
+    source["treatment"].update(
+        live_container_spec_snapshot=old_spec,
+        live_container_spec_sha256=digest(old_spec),
+    )
+    # Registration is created from the historic representation, not rewritten later.
+    g.activate_once(path, g.audit_snapshots(source, git={}, generated=NOW))
+    manifest = json.loads(path.read_text())
+    before = path.read_bytes()
+    observed = NOW + timedelta(seconds=10)
+    for role in g.CONTAINERS:
+        source[role]["started_at"] = (NOW + timedelta(seconds=1)).isoformat()
+    source["publisher"]["selector"]["started_at"] = (
+        NOW + timedelta(seconds=2)
+    ).isoformat()
+    new_spec = dict(old_spec, host_config_sha256=digest(host_config))
+    source["treatment"].update(
+        live_container_spec_snapshot=new_spec,
+        live_container_spec_sha256=digest(new_spec),
+    )
+    report = g.audit_snapshots(source, git={}, generated=observed)
+    inspected = {
+        "Id": source["treatment"]["container_id"],
+        "State": {"StartedAt": source["treatment"]["started_at"]},
+        "HostConfig": host_config,
+    }
+
+    def inspect(args: list[str]) -> bytes:
+        assert args == ["docker", "inspect", g.CONTAINERS["treatment"]]
+        return json.dumps([inspected]).encode()
+
+    monkeypatch.setattr(g, "command", inspect)
+    return path, before, manifest, report, observed, inspected
+
+
+def test_empty_dns_representation_equivalence_requires_live_hostconfig_proof(
+    registered_selector, monkeypatch
+) -> None:
+    host_config = {"Dns": [], "DnsOptions": [], "DnsSearch": [], "NetworkMode": "bridge"}
+    path, before, manifest, report, observed, inspected = _host_config_restart(
+        registered_selector, monkeypatch, host_config
+    )
+    current_before = deepcopy(report)
+    g.validate_manifest(manifest, report, observed)
+    assert path.read_bytes() == before
+    assert report == current_before
+    assert inspected["HostConfig"] == host_config
+
+
+@pytest.mark.parametrize(
+    "old_dns,new_dns",
+    [
+        (([], [], []), (None, None, None)),
+        ((None, [], None), ([], None, [])),
+    ],
+)
+def test_dns_null_empty_equivalence_is_bidirectional(
+    registered_selector, monkeypatch, old_dns: tuple, new_dns: tuple
+) -> None:
+    keys = ("Dns", "DnsOptions", "DnsSearch")
+    old_host = {"NetworkMode": "bridge", **dict(zip(keys, old_dns, strict=True))}
+    current_host = {"NetworkMode": "bridge", **dict(zip(keys, new_dns, strict=True))}
+    _, _, manifest, report, observed, _ = _host_config_restart(
+        registered_selector, monkeypatch, current_host, old_host
+    )
+    g.validate_manifest(manifest, report, observed)
+
+
+@pytest.mark.parametrize("key", ["Dns", "DnsOptions", "DnsSearch"])
+def test_nonempty_dns_change_is_blocked(
+    registered_selector, monkeypatch, key: str
+) -> None:
+    host_config = {"Dns": [], "DnsOptions": [], "DnsSearch": [], "NetworkMode": "bridge"}
+    host_config[key] = ["synthetic-dns-value"]
+    _, _, manifest, report, observed, _ = _host_config_restart(
+        registered_selector, monkeypatch, host_config
+    )
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, report, observed)
+
+
+def test_removing_real_dns_value_is_blocked(registered_selector, monkeypatch) -> None:
+    old_host = {"Dns": ["synthetic-dns-value"], "DnsOptions": None,
+                "DnsSearch": None, "NetworkMode": "bridge"}
+    current_host = {"Dns": [], "DnsOptions": [], "DnsSearch": [],
+                    "NetworkMode": "bridge"}
+    _, _, manifest, report, observed, _ = _host_config_restart(
+        registered_selector, monkeypatch, current_host, old_host
+    )
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, report, observed)
+
+
+def test_other_hostconfig_change_is_blocked(registered_selector, monkeypatch) -> None:
+    host_config = {"Dns": [], "DnsOptions": [], "DnsSearch": [], "NetworkMode": "host"}
+    _, _, manifest, report, observed, _ = _host_config_restart(
+        registered_selector, monkeypatch, host_config
+    )
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, report, observed)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("configured_user", "root"),
+        ("mounts", [{"Destination": "/db", "RW": False}]),
+    ],
+)
+def test_dns_equivalence_cannot_cover_user_or_mount_change(
+    registered_selector, monkeypatch, field: str, value: object
+) -> None:
+    host_config = {"Dns": [], "DnsOptions": [], "DnsSearch": [], "NetworkMode": "bridge"}
+    _, _, manifest, report, observed, _ = _host_config_restart(
+        registered_selector, monkeypatch, host_config
+    )
+    spec = report["fingerprints"]["treatment"]["live_container_spec_snapshot"]
+    spec[field] = value
+    report["fingerprints"]["treatment"]["live_container_spec_sha256"] = digest(spec)
+    report["fingerprints_sha256"] = digest(report["fingerprints"])
+    report["audit_sha256"] = digest({k: v for k, v in report.items() if k != "audit_sha256"})
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, report, observed)
+
+
+@pytest.mark.parametrize("mutation", ["id", "started_at", "host_config"])
+def test_dns_proof_must_match_audited_container(
+    registered_selector, monkeypatch, mutation: str
+) -> None:
+    host_config = {"Dns": [], "DnsOptions": [], "DnsSearch": [], "NetworkMode": "bridge"}
+    _, _, manifest, report, observed, inspected = _host_config_restart(
+        registered_selector, monkeypatch, host_config
+    )
+    if mutation == "id":
+        inspected["Id"] = "recreated"
+    elif mutation == "started_at":
+        inspected["State"]["StartedAt"] = "2026-10-01T00:00:03Z"
+    else:
+        inspected["HostConfig"]["NetworkMode"] = "host"
+    with pytest.raises(EvidenceError, match="causal_runtime_drift"):
+        g.validate_manifest(manifest, report, observed)
 
 
 def test_resealed_manifest_cannot_replace_registered_fingerprints(registered_selector) -> None:
