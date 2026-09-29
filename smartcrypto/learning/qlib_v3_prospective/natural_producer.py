@@ -510,11 +510,12 @@ def observe_signal_batch(
 
         resolved_signals = shadow.signals
         resolved_decisions = shadow.decisions
+        active_stage = "shadow_output_validation"
         for _, record in pending:
             if record.signal_id not in returned_signal_ids:
-                probe.mark_signal(record.signal_id, "shadow_resolution_completed", "blocked", "shadow_signal_missing")
+                probe.mark_signal(record.signal_id, "shadow_output_validation", "blocked", "shadow_signal_missing")
             elif record.signal_id not in returned_decision_ids:
-                probe.mark_signal(record.signal_id, "shadow_resolution_completed", "blocked", "shadow_decision_missing")
+                probe.mark_signal(record.signal_id, "shadow_output_validation", "blocked", "shadow_decision_missing")
         resolved_records = {
             record.event_id: record
             for record in resolved_decisions
@@ -527,7 +528,6 @@ def observe_signal_batch(
             )
 
         incoming: list[Envelope] = []
-        active_stage = "crosswalk_created"
         for signal in resolved_signals:
             active_signal_id = str(signal.get("signal_id", ""))
             envelope = signal.get(
@@ -611,6 +611,8 @@ def observe_signal_batch(
                 )
             _, operational_record = original
 
+            probe.mark_signal(record.signal_id, "shadow_output_validation", "ok")
+            active_stage = "crosswalk_created"
             crosswalk = seal_operational_crosswalk(
                 operational_record=operational_record,
                 v3_decision=record,
@@ -642,11 +644,11 @@ def observe_signal_batch(
             active_stage = "admission_validated"
             incoming.append(admission.signal(row, activation, clock))
             probe.mark_signal(record.signal_id, "admission_validated", "ok")
-            active_stage = "crosswalk_created"
+            active_stage = "shadow_output_validation"
         active_signal_id = None
 
-        probe.mark_pending([str(row["signal_id"]) for row in incoming], "persistence_started", "ok")
-        active_stage = "persistence_started"
+        probe.mark_pending([str(row["signal_id"]) for row in incoming], "store_reconciliation", "ok")
+        active_stage = "store_reconciliation"
         with store.exclusive(path):
             prior, outcomes = _state(
                 path,
@@ -691,12 +693,15 @@ def observe_signal_batch(
             )
             count = len(merged) - len(prior)
             if count:
+                probe.mark_pending([str(row["signal_id"]) for row in truly_new], "persistence_started", "ok")
+                active_stage = "persistence_started"
                 _persist(
                     path,
                     activation,
                     merged,
                     outcomes,
                 )
+                active_stage = "persisted"
         for row in incoming:
             signal_id = str(row["signal_id"])
             probe.mark_signal(signal_id, "persisted", "ok" if count else "already_present")
