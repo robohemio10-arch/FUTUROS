@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "7bf7448e6a7880cd9eda0cedc43dca0bfbd02627ea009b8dd884548fee9c3da3",
+  "aggregate_sha256": "0817f5fb44c0e3ce803078f22cc85f7f979c761b5cf86e401d69fb2cc1518208",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 318,
-    "manifested_files_total": 2143,
-    "python_files": 1679,
+    "manifested_files_total": 2145,
+    "python_files": 1681,
     "runtime_excluded_files_total": 0,
-    "test_files": 459,
-    "tracked_files_total": 2144,
+    "test_files": 460,
+    "tracked_files_total": 2146,
     "workflows": 2
   },
   "deterministic": true,
@@ -7280,6 +7280,12 @@
       "sha256": "cecfd5d5787f03086d4b8d6e2403321b57ccc37e14e4b19f3f0e77d06d37918d"
     },
     {
+      "bytes": 4968,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/learning/qlib_v3_prospective/admission_lineage_probe.py",
+      "sha256": "b6fced0e2dd91ff03464869899bcbb41a17dde636bb87849dc171b69909169b2"
+    },
+    {
       "bytes": 3314,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/contracts.py",
@@ -7292,10 +7298,10 @@
       "sha256": "c1ae5fc693557c21ccd2e684419b2ecf8999b0a0f2617794b3cc0e3ed5cc55ba"
     },
     {
-      "bytes": 34541,
+      "bytes": 38884,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
-      "sha256": "fdb2a605d2b1c623381fbaf1398e99b9d3f0c1cd10d6aded89da515316925932"
+      "sha256": "78451b5ff451ecee21b0d6b430c866b14244bda0807437db6c5964e3ca496e27"
     },
     {
       "bytes": 7891,
@@ -12422,6 +12428,12 @@
       "sha256": "802c254f985d78ea0d53abdeef87c475ab70abe68c29c1ece378f075049d1a0f"
     },
     {
+      "bytes": 7221,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_natural_admission_lineage_probe_v1.py",
+      "sha256": "0cc020fccb4028c02a4ebf2f28c9d473be631ac9bca85cded49e43c1db66807e"
+    },
+    {
       "bytes": 14781,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_evidence_producer_wiring_v1.py",
@@ -12431,7 +12443,7 @@
       "bytes": 11775,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_evidence_runtime_parity_v1.py",
-      "sha256": "920cb597c77a1f4dbabdf5427aacb2b36f3cd0778cfebe61bcb4814f477d8e03"
+      "sha256": "92d4c6e8df25415b904b33a1de815730d63a5753878027a05a9b239f7a8c60eb"
     },
     {
       "bytes": 13677,
