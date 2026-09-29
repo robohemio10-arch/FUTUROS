@@ -25,6 +25,7 @@ from smartcrypto.execution.decision_ledger_v4_2.contracts import (
 from smartcrypto.runtime.integrity_traceability_v2 import AtomicWriteError
 
 from . import admission, store
+from .admission_lineage_probe import AdmissionLineageProbe
 from .activation import Activation, load_activation, read_object, safe_path
 from .contracts import CANONICAL, EvidenceError, digest, utc
 from .orchestrator import merge
@@ -284,11 +285,19 @@ def observe_signal_batch(
     """
 
     try:
+        probe = AdmissionLineageProbe(project_root, signals)
+    except Exception as exc:
+        LOGGER.warning("qlib_v3_admission_probe_init_failed error_type=%s", type(exc).__name__)
+        probe = AdmissionLineageProbe(project_root, ())
+    active_stage = "input_received"
+    active_signal_id: str | None = None
+    try:
         activation = _activation(
             project_root,
             config_source,
         )
         if activation is None:
+            probe.mark_all("blocked/error", "blocked", "producer_not_enabled")
             return ProducerReport(
                 "disabled",
                 "producer_not_enabled",
@@ -320,18 +329,14 @@ def observe_signal_batch(
                 "duplicate_decision_event_id"
             )
 
-        validated: list[
-            tuple[Mapping[str, Any], DecisionRecordV42]
-        ] = [
-            (
-                signal,
-                _validated_input_decision(
-                    signal,
-                    records,
-                ),
-            )
-            for signal in signals
-        ]
+        validated: list[tuple[Mapping[str, Any], DecisionRecordV42]] = []
+        active_stage = "input_validated"
+        for signal in signals:
+            active_signal_id = str(signal.get("signal_id", ""))
+            record = _validated_input_decision(signal, records)
+            validated.append((signal, record))
+            probe.mark_signal(record.signal_id, "input_validated", "ok")
+        active_signal_id = None
 
         signal_ids = [
             record.signal_id
@@ -347,6 +352,7 @@ def observe_signal_batch(
             activation.identity,
         )
         prior_by_signal: dict[str, Envelope] = {}
+        active_stage = "prior_store_checked"
 
         if path.exists():
             with store.exclusive(path):
@@ -364,13 +370,16 @@ def observe_signal_batch(
             tuple[Mapping[str, Any], DecisionRecordV42]
         ] = []
         for signal, record in validated:
+            active_signal_id = record.signal_id
             persisted = prior_by_signal.get(
                 record.signal_id
             )
             if persisted is None:
+                probe.mark_signal(record.signal_id, "prior_store_checked", "absent")
                 pending.append(
                     (signal, record)
                 )
+                probe.mark_signal(record.signal_id, "pending_for_shadow", "ok")
                 continue
 
             _existing_signal_is_noop(
@@ -379,6 +388,10 @@ def observe_signal_batch(
                 persisted_row=persisted,
                 activation=activation,
             )
+            probe.mark_signal(record.signal_id, "prior_store_checked", "already_present")
+            for row in probe.matching(record.signal_id):
+                row["persisted_to_v3_store"] = True
+        active_signal_id = None
 
         if not pending:
             return ProducerReport(
@@ -409,6 +422,7 @@ def observe_signal_batch(
             )
             for signal, record in pending
         }
+        pending_ids = list(pending_by_signal)
 
         operational_model_mismatch_count = sum(
             record.model_hash
@@ -423,6 +437,8 @@ def observe_signal_batch(
             resolve_shadow_decision_batch,
         )
 
+        probe.mark_pending(pending_ids, "shadow_resolution_started", "ok")
+        active_stage = "shadow_resolution_started"
         shadow = resolve_shadow_decision_batch(
             project_root=project_root,
             signals=pending_signals,
@@ -431,6 +447,28 @@ def observe_signal_batch(
             activation=activation,
             config_source=config_source,
         )
+        for _, record in pending:
+            for row in probe.matching(record.signal_id):
+                row.update(
+                    shadow_report_status=shadow.report.status,
+                    shadow_report_reason=AdmissionLineageProbe.safe_reason(shadow.report.reason),
+                    candidate_count=shadow.report.candidate_count,
+                    scored_count=shadow.report.scored_count,
+                    selected_count=shadow.report.selected_count,
+                    control_count=shadow.report.control_count,
+                )
+            probe.mark_signal(
+                record.signal_id, "shadow_resolution_completed", shadow.report.status,
+                shadow.report.reason,
+            )
+        returned_signal_ids = {str(signal.get("signal_id", "")) for signal in shadow.signals}
+        returned_decision_ids = {record.signal_id for record in shadow.decisions}
+        for _, record in pending:
+            found_signal = record.signal_id in returned_signal_ids
+            found_decision = record.signal_id in returned_decision_ids
+            for row in probe.matching(record.signal_id):
+                row["shadow_signal_present"] = found_signal
+                row["shadow_decision_present"] = found_decision
 
         if shadow.report.status != "ok":
             shadow_block_reason = str(
@@ -472,6 +510,11 @@ def observe_signal_batch(
 
         resolved_signals = shadow.signals
         resolved_decisions = shadow.decisions
+        for _, record in pending:
+            if record.signal_id not in returned_signal_ids:
+                probe.mark_signal(record.signal_id, "shadow_resolution_completed", "blocked", "shadow_signal_missing")
+            elif record.signal_id not in returned_decision_ids:
+                probe.mark_signal(record.signal_id, "shadow_resolution_completed", "blocked", "shadow_decision_missing")
         resolved_records = {
             record.event_id: record
             for record in resolved_decisions
@@ -484,7 +527,9 @@ def observe_signal_batch(
             )
 
         incoming: list[Envelope] = []
+        active_stage = "crosswalk_created"
         for signal in resolved_signals:
+            active_signal_id = str(signal.get("signal_id", ""))
             envelope = signal.get(
                 "decision_ledger"
             )
@@ -570,6 +615,10 @@ def observe_signal_batch(
                 operational_record=operational_record,
                 v3_decision=record,
             )
+            probe.mark_signal(record.signal_id, "crosswalk_created", "ok")
+            for trace in probe.matching(record.signal_id):
+                trace["crosswalk_created"] = True
+                trace["v3_decision_event_id"] = AdmissionLineageProbe.safe_reason(record.event_id)
 
             row = {
                 "epoch_version": "v3",
@@ -590,14 +639,14 @@ def observe_signal_batch(
                 ),
                 "operational_crosswalk": crosswalk,
             }
-            incoming.append(
-                admission.signal(
-                    row,
-                    activation,
-                    clock,
-                )
-            )
+            active_stage = "admission_validated"
+            incoming.append(admission.signal(row, activation, clock))
+            probe.mark_signal(record.signal_id, "admission_validated", "ok")
+            active_stage = "crosswalk_created"
+        active_signal_id = None
 
+        probe.mark_pending([str(row["signal_id"]) for row in incoming], "persistence_started", "ok")
+        active_stage = "persistence_started"
         with store.exclusive(path):
             prior, outcomes = _state(
                 path,
@@ -648,6 +697,11 @@ def observe_signal_batch(
                     merged,
                     outcomes,
                 )
+        for row in incoming:
+            signal_id = str(row["signal_id"])
+            probe.mark_signal(signal_id, "persisted", "ok" if count else "already_present")
+            for trace in probe.matching(signal_id):
+                trace["persisted_to_v3_store"] = True
 
         return ProducerReport(
             "ok",
@@ -684,10 +738,21 @@ def observe_signal_batch(
         )
 
     except Exception as exc:
+        reason = "persistence_failed" if active_stage == "persistence_started" else (
+            str(exc) if isinstance(exc, EvidenceError) else "observer_stage_error"
+        )
+        if active_signal_id is None:
+            probe.mark_all(active_stage, "error", reason)
+            probe.mark_all("blocked/error", "error", reason)
+        else:
+            probe.mark_signal(active_signal_id, active_stage, "error", reason)
+            probe.mark_signal(active_signal_id, "blocked/error", "error", reason)
         return _blocked_report(
             exc,
             write=True,
         )
+    finally:
+        probe.flush()
 
 def _operational_parent_index(
     signals: Sequence[Envelope],
