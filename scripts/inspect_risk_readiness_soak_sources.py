@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,16 @@ from smartcrypto.dashboard.risk_readiness_soak_panel import (  # noqa: E402
 )
 
 DEFAULT_REPORT_PATH = Path("data/reports/risk_readiness_soak_dashboard_sources_report.json")
+UTC_TIMESTAMP_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|\+00:00)\Z")
+
+
+def parse_now_utc(value: str) -> datetime:
+    if not UTC_TIMESTAMP_PATTERN.fullmatch(value):
+        raise argparse.ArgumentTypeError("--now-utc requires an ISO-8601 UTC timestamp")
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--now-utc requires a valid ISO-8601 UTC timestamp") from exc
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -44,6 +56,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--report", default=str(DEFAULT_REPORT_PATH))
     parser.add_argument("--required-paper-days", type=int, default=7)
     parser.add_argument("--max-stale-signal-age-seconds", type=int, default=900)
+    parser.add_argument("--now-utc", type=parse_now_utc)
     parser.add_argument("--strict", action="store_true")
     return parser.parse_args(argv)
 
@@ -68,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
         required_paper_days=args.required_paper_days,
         max_stale_signal_age_seconds=args.max_stale_signal_age_seconds,
         strict=args.strict,
+        now=args.now_utc,
     )
     report_path = Path(args.report)
     report_path.parent.mkdir(parents=True, exist_ok=True)

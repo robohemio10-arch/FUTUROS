@@ -17,6 +17,7 @@ import subprocess  # nosec B404
 import tempfile
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from itertools import product
 from pathlib import Path
 from typing import Any
 
@@ -951,10 +952,32 @@ def _same_runtime_after_selector_restart(
     registered: Mapping[str, Any], current: Mapping[str, Any],
     activation: datetime, observed: datetime,
 ) -> bool:
-    """Allow only a later start of the same fully attested selector container."""
+    """Allow later starts with unchanged identities and exact DNS representation proof."""
     if registered == current:
         return True
-    old_publisher, new_publisher = registered.get("publisher"), current.get("publisher")
+    if set(registered) != set(CONTAINERS) or set(current) != set(CONTAINERS):
+        return False
+    activated = (activation.replace(microsecond=0), activation.microsecond * 1000)
+    attested = (observed.replace(microsecond=0), observed.microsecond * 1000)
+    normalized: dict[str, Any] = {}
+    for role in CONTAINERS:
+        old_role, new_role = registered[role], current[role]
+        if not isinstance(old_role, dict) or not isinstance(new_role, dict):
+            return False
+        old_start, new_start = old_role.get("started_at"), new_role.get("started_at")
+        if old_start != new_start:
+            try:
+                if not _docker_start_key(old_start) <= activated < _docker_start_key(new_start) <= attested:
+                    return False
+            except EvidenceError:
+                return False
+        normalized[role] = (
+            dict(new_role, started_at=old_start)
+            if old_start != new_start
+            else dict(new_role)
+        )
+
+    old_publisher, new_publisher = registered["publisher"], current["publisher"]
     if not isinstance(old_publisher, dict) or not isinstance(new_publisher, dict):
         return False
     old = old_publisher.get("selector", {})
@@ -968,15 +991,62 @@ def _same_runtime_after_selector_restart(
     }
     if any(not selector.get(key) for selector in (old, new) for key in required):
         return False
-    activated = (activation.replace(microsecond=0), activation.microsecond * 1000)
-    attested = (observed.replace(microsecond=0), observed.microsecond * 1000)
-    if not _docker_start_key(old["started_at"]) <= activated < _docker_start_key(new["started_at"]) <= attested:
-        return False
-    # Keep the raw timestamps in both sealed reports. Only this comparison
-    # separates process lifetime from the selector's immutable causal identity.
-    normalized = dict(current)
+    if old["started_at"] != new["started_at"]:
+        try:
+            if not _docker_start_key(old["started_at"]) <= activated < _docker_start_key(new["started_at"]) <= attested:
+                return False
+        except EvidenceError:
+            return False
     normalized["publisher"] = dict(
-        current["publisher"], selector=dict(new, started_at=old["started_at"])
+        normalized["publisher"], selector=dict(new, started_at=old["started_at"])
+    )
+    if registered == normalized:
+        return True
+
+    old_treatment = registered["treatment"]
+    new_treatment = normalized["treatment"]
+    old_spec = old_treatment.get("live_container_spec_snapshot")
+    new_spec = new_treatment.get("live_container_spec_snapshot")
+    if not isinstance(old_spec, dict) or not isinstance(new_spec, dict):
+        return False
+    old_hash = old_spec.get("host_config_sha256")
+    new_hash = new_spec.get("host_config_sha256")
+    if (
+        not isinstance(old_hash, str)
+        or not isinstance(new_hash, str)
+        or old_hash == new_hash
+        or old_treatment.get("live_container_spec_sha256") != digest(old_spec)
+        or new_treatment.get("live_container_spec_sha256") != digest(new_spec)
+        or old_spec != dict(new_spec, host_config_sha256=old_hash)
+    ):
+        return False
+
+    inspected = parse_json(command(["docker", "inspect", CONTAINERS["treatment"]]))
+    if not isinstance(inspected, list) or len(inspected) != 1:
+        return False
+    info = inspected[0]
+    if not isinstance(info, dict) or not isinstance(info.get("HostConfig"), dict):
+        return False
+    if (
+        info.get("Id") != new_treatment.get("container_id")
+        or info.get("State", {}).get("StartedAt") != current["treatment"].get("started_at")
+        or digest(info["HostConfig"]) != new_hash
+    ):
+        return False
+    host_config = info["HostConfig"]
+    dns_keys = ("Dns", "DnsOptions", "DnsSearch")
+    if any(host_config.get(key) is not None and host_config.get(key) != [] for key in dns_keys):
+        return False
+    dns_representations: tuple[None | list[object], ...] = (None, [])
+    if not any(
+        digest(dict(host_config, **dict(zip(dns_keys, values, strict=True)))) == old_hash
+        for values in product(dns_representations, repeat=len(dns_keys))
+    ):
+        return False
+    normalized["treatment"] = dict(
+        new_treatment,
+        live_container_spec_snapshot=old_spec,
+        live_container_spec_sha256=old_treatment["live_container_spec_sha256"],
     )
     return registered == normalized
 
