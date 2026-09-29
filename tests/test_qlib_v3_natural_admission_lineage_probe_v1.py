@@ -42,8 +42,9 @@ def test_healthy_signal_reaches_persisted_with_exact_lineage(context):
     assert [stage for stage, _ in _stages(row)] == [
         "input_received", "input_validated", "prior_store_checked",
         "pending_for_shadow", "shadow_resolution_started",
-        "shadow_resolution_completed", "crosswalk_created",
-        "admission_validated", "persistence_started", "persisted",
+        "shadow_resolution_completed", "shadow_output_validation",
+        "crosswalk_created", "admission_validated",
+        "store_reconciliation", "persistence_started", "persisted",
     ]
     assert row["operational_authority"] is False
     assert row["sends_orders"] is False
@@ -80,8 +81,8 @@ def test_missing_signal_in_shadow_response_is_not_silent(context, monkeypatch):
     assert report.status == "ok" and report.new_signal_count == 0
     assert row["shadow_signal_present"] is False
     assert row["shadow_decision_present"] is False
-    assert row["first_failed_stage"] == "shadow_resolution_completed"
-    assert ("shadow_resolution_completed", "blocked") in _stages(row)
+    assert row["first_failed_stage"] == "shadow_output_validation"
+    assert ("shadow_output_validation", "blocked") in _stages(row)
     assert row["stages"][-1]["reason"] == "shadow_signal_missing"
     assert not row["crosswalk_created"] and not row["persisted_to_v3_store"]
 
@@ -99,7 +100,7 @@ def test_missing_decision_in_shadow_response_is_explicit(context, monkeypatch):
     assert report.status == "blocked"
     assert row["shadow_signal_present"] is True
     assert row["shadow_decision_present"] is False
-    assert row["first_failed_stage"] == "shadow_resolution_completed"
+    assert row["first_failed_stage"] == "shadow_output_validation"
     assert any(item["reason"] == "shadow_decision_missing" for item in row["stages"])
     assert not row["crosswalk_created"] and not row["persisted_to_v3_store"]
 
@@ -115,6 +116,57 @@ def test_input_validation_failure_is_attributed_without_shadow_call(context):
     assert "shadow_resolution_started" not in [stage for stage, _ in _stages(row)]
 
 
+def test_invalid_shadow_output_fails_before_crosswalk(context, monkeypatch):
+    resolve = shadow_producer.resolve_shadow_decision_batch
+
+    def mismatched(**kwargs):
+        batch = resolve(**kwargs)
+        signal = dict(batch.signals[0], pair="unexpected/pair")
+        return shadow_producer.ShadowDecisionBatch((signal,), batch.decisions, batch.report)
+
+    monkeypatch.setattr(shadow_producer, "resolve_shadow_decision_batch", mismatched)
+    report = producer.observe_signal_batch(**inputs(context))
+    row = _trace(context)[0]
+    assert report.status == "blocked" and report.reason == "published_signal_identity_mismatch"
+    assert row["first_failed_stage"] == "shadow_output_validation"
+    assert not row["crosswalk_created"] and not row["persisted_to_v3_store"]
+    assert "crosswalk_created" not in [stage for stage, _ in _stages(row)]
+    assert not evidence_path(context).exists()
+
+
+def test_crosswalk_seal_failure_is_attributed_to_creation(context, monkeypatch):
+    def fail(**_kwargs):
+        raise producer.EvidenceError("synthetic_crosswalk_failure")
+
+    monkeypatch.setattr(producer, "seal_operational_crosswalk", fail)
+    report = producer.observe_signal_batch(**inputs(context))
+    row = _trace(context)[0]
+    assert report.status == "blocked" and report.reason == "synthetic_crosswalk_failure"
+    assert row["first_failed_stage"] == "crosswalk_created"
+    assert ("shadow_output_validation", "ok") in _stages(row)
+    assert not row["crosswalk_created"] and not row["persisted_to_v3_store"]
+    assert not evidence_path(context).exists()
+
+
+def test_store_reconciliation_conflict_is_not_persistence_failure(context, monkeypatch):
+    def conflict(*_args):
+        raise producer.EvidenceError("causal_identity_content_conflict")
+
+    def unexpected_persist(*_args):
+        raise AssertionError("persist must not be called")
+
+    monkeypatch.setattr(producer, "merge", conflict)
+    monkeypatch.setattr(producer, "_persist", unexpected_persist)
+    report = producer.observe_signal_batch(**inputs(context))
+    row = _trace(context)[0]
+    assert report.status == "blocked" and report.reason == "causal_identity_content_conflict"
+    assert row["first_failed_stage"] == "store_reconciliation"
+    assert row["stages"][-1]["reason"] == "causal_identity_content_conflict"
+    assert ("persistence_started", "ok") not in _stages(row)
+    assert not row["persisted_to_v3_store"]
+    assert not evidence_path(context).exists()
+
+
 def test_persistence_failure_keeps_crosswalk_but_does_not_claim_persisted(context, monkeypatch):
     def fail(*_args):
         raise OSError("synthetic persistence failure")
@@ -127,6 +179,7 @@ def test_persistence_failure_keeps_crosswalk_but_does_not_claim_persisted(contex
     assert row["persisted_to_v3_store"] is False
     assert row["first_failed_stage"] == "persistence_started"
     assert row["stages"][-1]["reason"] == "persistence_failed"
+    assert ("store_reconciliation", "ok") in _stages(row)
     assert not evidence_path(context).exists()
 
 
@@ -146,11 +199,16 @@ def test_diagnostic_write_failure_does_not_change_admission(context, monkeypatch
     assert "synthetic diagnostic failure" not in caplog.text
 
 
-def test_store_first_idempotency_preserved_and_reobserved(context):
+def test_store_first_idempotency_preserved_and_reobserved(context, monkeypatch):
     kwargs = inputs(context)
     assert producer.observe_signal_batch(**kwargs).new_signal_count == 1
     path = evidence_path(context)
     before = path.read_bytes()
+
+    def unexpected_shadow(**_kwargs):
+        raise AssertionError("reobserved signal must not be rescored")
+
+    monkeypatch.setattr(shadow_producer, "resolve_shadow_decision_batch", unexpected_shadow)
     report = producer.observe_signal_batch(**kwargs)
     assert report.status == "ok" and report.write_performed is False
     assert path.read_bytes() == before
