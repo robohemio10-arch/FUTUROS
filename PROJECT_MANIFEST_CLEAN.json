@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "996124222df1c816b46d85908bba2103148ba418371debd5cd85f924df0a9e75",
+  "aggregate_sha256": "7bf7448e6a7880cd9eda0cedc43dca0bfbd02627ea009b8dd884548fee9c3da3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -4472,10 +4472,10 @@
       "sha256": "c6324787191f8f0470c3d378062cadbf04cb8d2255ee8f74aeceaa380b37299b"
     },
     {
-      "bytes": 3842,
+      "bytes": 4464,
       "hash_mode": "text_lf",
       "path": "scripts/inspect_risk_readiness_soak_sources.py",
-      "sha256": "b077c57ead0c2f9bfcfa9ae662fc9292c7fe2410a9457fdc5bcb9d2b21ec37bf"
+      "sha256": "e120a02bbdc9d52ae67b6512beb6a570b92f4283050512c5ff36e77c1fb12ed0"
     },
     {
       "bytes": 2631,
@@ -10844,10 +10844,10 @@
       "sha256": "678932a14250047efeb8e80ace26b6ec1dd9b095d5965a1c0b3286b1300100c1"
     },
     {
-      "bytes": 19054,
+      "bytes": 20335,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_risk_readiness_soak_panel.py",
-      "sha256": "30266e7d46a00752329e839c0d33e9b0ca3a6c07307a6569595d03ab91d06451"
+      "sha256": "6875bac9f03d2a2e63f05b2883ec3b3d849b1243fdfa2eb542e4222f18e63a47"
     },
     {
       "bytes": 10648,

@@ -6,6 +6,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from smartcrypto.dashboard.risk_readiness_soak_panel import (
     RUNTIME_MODE_LABELS,
     load_risk_readiness_soak_state,
@@ -449,45 +451,47 @@ def test_dashboard_does_not_touch_runtime_registry_models_signal_producer_or_fre
     assert {path: path.read_text(encoding="utf-8") for path in sentinels} == before
 
 
+def cli_args(paths: dict[str, Path], report_path: Path) -> list[str]:
+    return [
+        sys.executable,
+        str(ROOT / "scripts" / "inspect_risk_readiness_soak_sources.py"),
+        "--paper-soak-report",
+        str(paths["paper_soak_report"]),
+        "--paper-session-report",
+        str(paths["paper_session_report"]),
+        "--ai-governance-report",
+        str(paths["ai_governance_report"]),
+        "--data-quality-report",
+        str(paths["data_quality_report"]),
+        "--dataset-manifest",
+        str(paths["dataset_manifest"]),
+        "--anti-leakage-report",
+        str(paths["anti_leakage_report"]),
+        "--monte-carlo-report",
+        str(paths["monte_carlo_report"]),
+        "--monte-carlo-risk-budget-policy-report",
+        str(paths["monte_carlo_risk_budget_policy_report"]),
+        "--backtest-report",
+        str(paths["backtest_report"]),
+        "--kill-switch",
+        str(paths["kill_switch"]),
+        "--active-signals",
+        str(paths["active_signals"]),
+        "--signal-decisions",
+        str(paths["signal_decisions"]),
+        "--report",
+        str(report_path),
+        "--required-paper-days",
+        "7",
+    ]
+
+
 def test_cli_inspect_risk_readiness_sources_runs_successfully(tmp_path):
     paths = write_all_sources(tmp_path / "sources")
     report_path = tmp_path / "risk_readiness_report.json"
 
     result = subprocess.run(
-        [
-            sys.executable,
-            str(ROOT / "scripts" / "inspect_risk_readiness_soak_sources.py"),
-            "--paper-soak-report",
-            str(paths["paper_soak_report"]),
-            "--paper-session-report",
-            str(paths["paper_session_report"]),
-            "--ai-governance-report",
-            str(paths["ai_governance_report"]),
-            "--data-quality-report",
-            str(paths["data_quality_report"]),
-            "--dataset-manifest",
-            str(paths["dataset_manifest"]),
-            "--anti-leakage-report",
-            str(paths["anti_leakage_report"]),
-            "--monte-carlo-report",
-            str(paths["monte_carlo_report"]),
-            "--monte-carlo-risk-budget-policy-report",
-            str(paths["monte_carlo_risk_budget_policy_report"]),
-            "--backtest-report",
-            str(paths["backtest_report"]),
-            "--kill-switch",
-            str(paths["kill_switch"]),
-            "--active-signals",
-            str(paths["active_signals"]),
-            "--signal-decisions",
-            str(paths["signal_decisions"]),
-            "--report",
-            str(report_path),
-            "--required-paper-days",
-            "7",
-            "--max-stale-signal-age-seconds",
-            "9999999",
-        ],
+        [*cli_args(paths, report_path), "--now-utc", "2026-06-03T12:00:00Z"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -498,3 +502,44 @@ def test_cli_inspect_risk_readiness_sources_runs_successfully(tmp_path):
     assert payload["status"] in {"ok", "warning"}
     assert payload["paper_days"] == 9
     assert report_path.exists()
+
+
+@pytest.mark.parametrize(
+    "value", ["not-a-date", "2026-06-03T12:00:00", "2026-06-03T12:00:00+01:00", "2026-02-30T12:00:00Z"]
+)
+def test_cli_inspect_risk_readiness_rejects_invalid_now_utc(tmp_path, value):
+    report_path = tmp_path / "risk_readiness_report.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "inspect_risk_readiness_soak_sources.py"),
+            "--report",
+            str(report_path),
+            "--now-utc",
+            value,
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--now-utc requires" in result.stderr
+    assert not report_path.exists()
+
+
+def test_cli_inspect_risk_readiness_blocked_still_exits_one(tmp_path):
+    paths = write_all_sources(tmp_path / "sources", paper_soak_report=soak_payload(paper_days=1))
+    report_path = tmp_path / "risk_readiness_report.json"
+
+    result = subprocess.run(
+        [*cli_args(paths, report_path), "--now-utc", "2026-06-03T12:00:00Z"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout)["status"] == "blocked"
+    assert json.loads(report_path.read_text(encoding="utf-8"))["status"] == "blocked"
