@@ -9,10 +9,8 @@
       "reason": "cryptography_49_vulnerable_and_mlflow_3_15_crypto50_incompatible"
     },
     "security_clean_resolution": {
-      "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
-      "artifact_id": 9953246950,
-      "audited_dependency_count": 188,
-      "hashed_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+      "audited_dependency_count": 190,
+      "hashed_lock_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
       "known_vulnerability_count": 0,
       "packages": {
         "cryptography": "50.0.0",
@@ -20,16 +18,23 @@
         "mlflow-skinny": "3.16.0",
         "mlflow-tracing": "3.16.0",
         "pyarrow": "25.0.1",
-        "pyqlib": "0.9.7"
+        "pyqlib": "0.9.7",
+        "urllib3": "2.8.0"
       },
       "pip_audit_exit_code": 0,
-      "pip_audit_report_sha256": "f45009431f3819934ce49d77c6bb82f4566fd7efa48da8ff599f61c307b98c62",
+      "pip_audit_report_sha256": "483b91e2e9d2c574c8cc41e08e376be842f9d972a62653fbdb6ec2bc1601b883",
       "resolved_package_count": 190,
-      "resolver_report_sha256": "eac458203563777b0592b246a8c62771cc1563596e37469a73bc7b86c4d0977c",
+      "resolver_report_sha256": "882437147170f8bf8b84e3469f4ef79a61d7daf696ecfa8db92bd8ee5862b0f1",
       "resolver_status": "resolved",
       "security_status": "clean",
-      "workflow_head_sha": "452c6d953cac21634aaf6ce004eef4d392b1a3b2",
-      "workflow_run_id": 33916166319
+      "provenance": "candidate_pre_ci_recertification"
+    },
+    "prior_graph_ci_certification": {
+      "hashed_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+      "security_workflow_run_id": 33916166319,
+      "functional_workflow_run_id": 34157486425,
+      "functional_proof_commit_sha": "eeb87895b9e9705990e905c51b8fcfd0c2c6046d",
+      "status": "historical_only_not_current_graph_proof"
     }
   },
   "decision": "MANTER_EM_RESEARCH",
@@ -38,12 +43,10 @@
   ],
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
   "expected_security_lock_package_count": 190,
-  "expected_security_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
-  "expected_security_resolution_evidence_sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8",
-  "p08_allowed": true,
+  "expected_security_lock_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
+  "expected_security_resolution_evidence_sha256": "8394b204c7c8ce26be2205e7bd2fab9161f29c379f9c58e8d6f49303cd9b02a3",
+  "p08_allowed": false,
   "p08_functional_regression": {
-    "certified_proof_commit_sha": "eeb87895b9e9705990e905c51b8fcfd0c2c6046d",
-    "certified_workflow_run_id": 34157486425,
     "exact_certified_graph_required": true,
     "fallback_allowed": false,
     "network_mode": "none",
@@ -52,12 +55,12 @@
     "repository_mount": "readonly",
     "required": true,
     "schema_version": "qlib_security_functional_regression_v1",
-    "status": "ci_certified"
+    "status": "pending_ci_certification"
   },
   "p08_security_gate_bypassed": false,
-  "p08_security_gate_remains_blocked": false,
+  "p08_security_gate_remains_blocked": true,
   "policy_status": "active_security_clean",
-  "policy_version": "2026-09-07.v4",
+  "policy_version": "2026-09-30.v5",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": true,
   "requirements_file": "requirements-qlib.lock",
@@ -97,6 +100,27 @@
       "package": "mlflow",
       "published_date": "2026-09-01",
       "severity": "HIGH",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-8988-9cw3-xx77": {
+      "package": "urllib3",
+      "observed_affected_version": "2.7.0",
+      "fixed_minimum": "2.8.0",
+      "certified_version": "2.8.0",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-gh4c-6fx4-qh6g": {
+      "package": "urllib3",
+      "observed_affected_version": "2.7.0",
+      "fixed_minimum": "2.8.0",
+      "certified_version": "2.8.0",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-vxq7-64xx-v4gw": {
+      "package": "urllib3",
+      "observed_affected_version": "2.7.0",
+      "fixed_minimum": "2.8.0",
+      "certified_version": "2.8.0",
       "status": "remediated_by_certified_pin"
     }
   },

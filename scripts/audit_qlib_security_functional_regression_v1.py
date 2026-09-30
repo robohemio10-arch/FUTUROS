@@ -24,6 +24,19 @@ EXPECTED_PACKAGES = {
     "mlflow-tracing": "3.16.0",
     "cryptography": "50.0.0",
     "pyarrow": "25.0.1",
+    "urllib3": "2.8.0",
+}
+URLLIB3_ADVISORIES = (
+    "GHSA-8988-9cw3-xx77",
+    "GHSA-gh4c-6fx4-qh6g",
+    "GHSA-vxq7-64xx-v4gw",
+)
+EXPECTED_URLLIB3_ADVISORY = {
+    "package": "urllib3",
+    "observed_affected_version": "2.7.0",
+    "fixed_minimum": "2.8.0",
+    "certified_version": "2.8.0",
+    "status": "remediated_by_certified_pin",
 }
 EXPECTED_GHSA = {
     "package": "mlflow",
@@ -184,6 +197,8 @@ def validate_policy_contract(
     advisories = _as_mapping(policy.get("security_advisories"), name="security_advisories")
     _validate_advisory(advisories, "GHSA-gqvg-gmmx-x4hm", EXPECTED_GHSA)
     _validate_advisory(advisories, "CVE-2026-69247", EXPECTED_CRYPTOGRAPHY_CVE)
+    for advisory_id in URLLIB3_ADVISORIES:
+        _validate_advisory(advisories, advisory_id, EXPECTED_URLLIB3_ADVISORY)
 
     functional = _as_mapping(
         policy.get("p08_functional_regression"), name="p08_functional_regression"
@@ -231,6 +246,7 @@ def validate_policy_contract(
         "advisories_explicitly_enforced": [
             "GHSA-gqvg-gmmx-x4hm",
             "CVE-2026-69247",
+            *URLLIB3_ADVISORIES,
         ],
     }
 

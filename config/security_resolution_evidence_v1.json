@@ -11,15 +11,16 @@
     "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
   },
   "evidence_status": "certified_clean",
+  "ci_certification_status": "pending_ci_certification",
   "locks": {
     "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
-    "requirements_dev_sha256": "239dcd5b6ac80c18a96963ede1d62e544b9ac788ef6bcb7ce960a6f7de034257",
-    "requirements_qlib_security_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
-    "requirements_runtime_sha256": "1c636f288549f933727161491e00b5fb772daeee2a0335fee31efe3d3e7d2da8"
+    "requirements_dev_sha256": "59a5cb67830b8b88a301ae7df443c01f9da696a15b89d59571b82a7bd8dd7929",
+    "requirements_qlib_security_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
+    "requirements_runtime_sha256": "0a7d746dde399913ca1946138d42386d7dccf60a59051d9dc4104e68e07321f6"
   },
   "qlib": {
-    "audited_dependency_count": 188,
-    "hashed_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+    "audited_dependency_count": 190,
+    "hashed_lock_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
     "known_vulnerability_count": 0,
     "packages": {
       "cryptography": "50.0.0",
@@ -27,14 +28,16 @@
       "mlflow-skinny": "3.16.0",
       "mlflow-tracing": "3.16.0",
       "pyarrow": "25.0.1",
-      "pyqlib": "0.9.7"
+      "pyqlib": "0.9.7",
+      "urllib3": "2.8.0"
     },
     "pip_audit_exit_code": 0,
-    "pip_audit_report_sha256": "f45009431f3819934ce49d77c6bb82f4566fd7efa48da8ff599f61c307b98c62",
+    "pip_audit_report_sha256": "483b91e2e9d2c574c8cc41e08e376be842f9d972a62653fbdb6ec2bc1601b883",
     "python_version": "3.12",
     "resolved_package_count": 190,
-    "resolver_report_sha256": "eac458203563777b0592b246a8c62771cc1563596e37469a73bc7b86c4d0977c",
+    "resolver_report_sha256": "882437147170f8bf8b84e3469f4ef79a61d7daf696ecfa8db92bd8ee5862b0f1",
     "resolver_status": "resolved",
+    "resolver_platform": "linux_x86_64_python_3_12",
     "security_status": "clean"
   },
   "safety": {
@@ -54,7 +57,32 @@
     "shadow_only": true
   },
   "schema_version": "dev_security_resolution_evidence_v1",
-  "workflow": {
+  "provenance": "candidate_pre_ci_recertification",
+  "local_candidate_evidence": {
+    "directory": "E:/FUTUROS_LOCAL_CHECKPOINTS/URLLIB3_2_8_RECERTIFICATION_V1",
+    "dev_resolver_report_sha256": "116878b607d97e91e35d7b42b82adae45957f1aec61e33e85ef60ce8cf5773a8",
+    "dev_pip_audit_report_sha256": "4122be3095a57f3ad9cc30037431b9b4f04f3dcf6d2cd16d08b5a148686cdf77",
+    "runtime_resolver_report_sha256": "4cbb5133c797a70a5e9a47ef316095387c2ca58b534b2e7eba305276db017cd6",
+    "runtime_pip_audit_report_sha256": "b83159e17a247cd1fe2051e0082d9d6a61bb7b83f5b8ec0cb002e6cf6f8d2193"
+  },
+  "runtime_dependency_security": {
+    "package": "GitPython",
+    "previous_version": "3.1.58",
+    "certified_version": "3.1.60",
+    "minimum_clean_version": "3.1.60",
+    "observed_advisories": [
+      "PYSEC-2026-3785",
+      "PYSEC-2026-3786",
+      "PYSEC-2026-3787",
+      "PYSEC-2026-3788",
+      "PYSEC-2026-3837",
+      "PYSEC-2026-3982",
+      "PYSEC-2026-3984"
+    ],
+    "pip_audit_exit_code": 0,
+    "known_vulnerability_count": 0
+  },
+  "historical_workflow": {
     "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
     "artifact_id": 9953246950,
     "artifact_name": "security-resolution-evidence",

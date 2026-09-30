@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "a881d24e2a6b6aad3210d00b7d37b5c93d962adcb20eaf494f486a3c3f733b10",
+  "aggregate_sha256": "4f44f10b94401d4c2ea56e74c01542a7f03b5dcd27697c74f0a65fe2523ea9b5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -512,10 +512,10 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
-      "bytes": 4563,
+      "bytes": 5331,
       "hash_mode": "text_lf",
       "path": "config/qlib_dependency_security_policy_v1.json",
-      "sha256": "1c672fa4c657a0c5c8a5ebcb8013e7589bf63fe9a13318c04db0e6380bfc9611"
+      "sha256": "1dc75ff2ec5d86c8869f1c1d0bcd9a38aab649f7824ed4babcc92b8aeace618b"
     },
     {
       "bytes": 2036,
@@ -632,10 +632,10 @@
       "sha256": "53382c7c76b10a0810306ebe81818060adf3792c085cc77e41d11e2e794b5994"
     },
     {
-      "bytes": 2871,
+      "bytes": 4055,
       "hash_mode": "text_lf",
       "path": "config/security_resolution_evidence_v1.json",
-      "sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8"
+      "sha256": "8394b204c7c8ce26be2205e7bd2fab9161f29c379f9c58e8d6f49303cd9b02a3"
     },
     {
       "bytes": 1027,
@@ -2705,7 +2705,7 @@
       "bytes": 120502,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "4f5639050535a199936f1a445cb381c7e892ed10f37a0272b4e9ea2efe15e584"
+      "sha256": "59a5cb67830b8b88a301ae7df443c01f9da696a15b89d59571b82a7bd8dd7929"
     },
     {
       "bytes": 66,
@@ -2717,7 +2717,7 @@
       "bytes": 254817,
       "hash_mode": "text_lf",
       "path": "requirements-qlib-security.lock",
-      "sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57"
+      "sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0"
     },
     {
       "bytes": 189,
@@ -2729,7 +2729,7 @@
       "bytes": 96801,
       "hash_mode": "text_lf",
       "path": "requirements-runtime.lock",
-      "sha256": "1c636f288549f933727161491e00b5fb772daeee2a0335fee31efe3d3e7d2da8"
+      "sha256": "0a7d746dde399913ca1946138d42386d7dccf60a59051d9dc4104e68e07321f6"
     },
     {
       "bytes": 1286,
@@ -3056,10 +3056,10 @@
       "sha256": "6f958fac00f74dc1d322969cd7c3acfee7fabfd3f3b567cfc0ddd4a225aaa73e"
     },
     {
-      "bytes": 19795,
+      "bytes": 20289,
       "hash_mode": "text_lf",
       "path": "scripts/audit_qlib_security_functional_regression_v1.py",
-      "sha256": "e5b3a568a4867a14fa38237ca460b6e19905cd3693a0b6a3a9320f5754f99776"
+      "sha256": "82adfc951d3b79af070533c0f5a591a5c375eee5c49af8698b545c201fd6e77a"
     },
     {
       "bytes": 3520,
@@ -7208,10 +7208,10 @@
       "sha256": "22bdc5d7ff41e8574a0bed1ce2b453634e4be0fc6e38c5ec0c938ba829b4b5b4"
     },
     {
-      "bytes": 19510,
+      "bytes": 20279,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_dependency_security_hardening/audit.py",
-      "sha256": "2440af8cd61278a23802f60e21d4ab4c1ceb5edd4254892ef6d8fc469044a990"
+      "sha256": "a5e77e015489ae13dc6a0150e46202f4cf75cfbdb7bea410ea18cbe50f9464bc"
     },
     {
       "bytes": 211,
@@ -12284,10 +12284,10 @@
       "sha256": "b3fa308efbd31c8d6e3e45133279faf1c9a46544b4e356f8d1dafe9f7189068a"
     },
     {
-      "bytes": 11365,
+      "bytes": 12212,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_dependency_security_hardening_v1.py",
-      "sha256": "b68b72a8c26cb924e23610917153319e4e8afde1599d4dd6c54acb7450a48963"
+      "sha256": "c93a0654937e3e2622b7994904929181640f5dcc48ec805a0d8104f4137c16e3"
     },
     {
       "bytes": 7567,
@@ -12392,10 +12392,10 @@
       "sha256": "4548e3ecc38d9bd27a068c14a7df66ecaf6aa9c5216daabbdfa140aeeb76203b"
     },
     {
-      "bytes": 2234,
+      "bytes": 3281,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_security_functional_regression_v1.py",
-      "sha256": "dbd8162d20d5f23a4ab9bb814fd7d0b8911f170be817192be706f32de0efde80"
+      "sha256": "8a3e974c6885d6cbddec1200a872a118d8825c803b931521b699c71b17fab6ca"
     },
     {
       "bytes": 9828,

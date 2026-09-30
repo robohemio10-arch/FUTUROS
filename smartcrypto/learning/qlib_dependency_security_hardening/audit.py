@@ -46,7 +46,13 @@ ANCHOR_PACKAGES = {
     "mlflow": "3.16.0",
     "cryptography": "50.0.0",
     "pyarrow": "25.0.1",
+    "urllib3": "2.8.0",
 }
+URLLIB3_ADVISORIES = (
+    "GHSA-8988-9cw3-xx77",
+    "GHSA-gh4c-6fx4-qh6g",
+    "GHSA-vxq7-64xx-v4gw",
+)
 
 
 class PolicyError(ValueError):
@@ -210,6 +216,18 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
     for name, version in ANCHOR_PACKAGES.items():
         if str(packages.get(name, "")) != version:
             raise PolicyError(f"certified_anchor_package_mismatch:{name}")
+    advisories = _as_mapping(policy.get("security_advisories"), name="security_advisories")
+    for advisory_id in URLLIB3_ADVISORIES:
+        advisory = _as_mapping(advisories.get(advisory_id), name=f"advisory:{advisory_id}")
+        for key, expected_value in (
+            ("package", "urllib3"),
+            ("observed_affected_version", "2.7.0"),
+            ("fixed_minimum", "2.8.0"),
+            ("certified_version", "2.8.0"),
+            ("status", "remediated_by_certified_pin"),
+        ):
+            if advisory.get(key) != expected_value:
+                raise PolicyError(f"advisory_contract_mismatch:{advisory_id}:{key}")
 
 
 def _audit_file_identity(path: Path, expected_sha: str) -> dict[str, Any]:

@@ -31,8 +31,36 @@ def test_repository_static_contract_enforces_advisories_and_p08_state() -> None:
     assert report["advisories_explicitly_enforced"] == [
         "GHSA-gqvg-gmmx-x4hm",
         "CVE-2026-69247",
+        "GHSA-8988-9cw3-xx77",
+        "GHSA-gh4c-6fx4-qh6g",
+        "GHSA-vxq7-64xx-v4gw",
     ]
-    assert report["p08_allowed"] is (report["functional_status"] == "ci_certified")
+    assert report["functional_status"] == "pending_ci_certification"
+    assert report["p08_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "advisory_id",
+    ["GHSA-8988-9cw3-xx77", "GHSA-gh4c-6fx4-qh6g", "GHSA-vxq7-64xx-v4gw"],
+)
+def test_missing_urllib3_advisory_is_fail_closed(advisory_id: str) -> None:
+    policy = copy.deepcopy(_policy())
+    advisories = policy["security_advisories"]
+    assert isinstance(advisories, dict)
+    del advisories[advisory_id]
+
+    with pytest.raises(FunctionalRegressionError, match=f"advisory:{advisory_id}"):
+        validate_policy_contract(policy, parse_security_lock(SECURITY_LOCK))
+
+
+def test_urllib3_downgrade_is_fail_closed(tmp_path: Path) -> None:
+    lock = tmp_path / "requirements-qlib-security.lock"
+    lock.write_text(
+        SECURITY_LOCK.read_text(encoding="utf-8").replace("urllib3==2.8.0", "urllib3==2.7.0", 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(FunctionalRegressionError, match="security_lock_anchor_mismatch:urllib3"):
+        parse_security_lock(lock)
 
 
 def test_missing_mlflow_advisory_is_fail_closed() -> None:
