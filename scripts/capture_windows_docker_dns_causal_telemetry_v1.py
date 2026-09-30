@@ -14,12 +14,14 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from smartcrypto.ops.dns_causal_telemetry import (  # noqa: E402
-    DEFAULT_OUTPUT_DIR,
     SystemProbes,
     collect_sample,
     persist_sample,
 )
-from smartcrypto.ops.dns_causal_telemetry.collector import sanitize_error  # noqa: E402
+from smartcrypto.ops.dns_causal_telemetry.collector import (  # noqa: E402
+    resolve_output_dir,
+    sanitize_error,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--once", action="store_true", help="Capture one sample (the default).")
     mode.add_argument("--interval-seconds", type=float, help="Repeat until interrupted.")
     parser.add_argument("--container", help="Exact running container name; no fuzzy discovery.")
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout-seconds", type=float, default=8.0)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -39,11 +41,12 @@ def main(argv: list[str] | None = None) -> int:
 
     probes = SystemProbes()
     try:
+        output_dir = resolve_output_dir(args.output_dir)
         while True:
             sample = collect_sample(
                 probes, container_name=args.container, timeout_seconds=args.timeout_seconds
             )
-            jsonl_path, snapshot_path = persist_sample(args.output_dir, sample)
+            jsonl_path, snapshot_path = persist_sample(output_dir, sample)
             output = {
                 "sampled_at_utc": sample["sampled_at_utc"],
                 "classification": sample["classification"],

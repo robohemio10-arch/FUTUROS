@@ -296,3 +296,79 @@ def test_cli_once_uses_fake_probes_without_real_dns(
     output = json.loads(capsys.readouterr().out)
     assert output["classification"] == "HOST_AND_DIRECT_DNS_OK"
     assert Path(output["jsonl_path"]).is_file()
+
+
+def test_cli_explicit_output_overrides_invalid_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import scripts.capture_windows_docker_dns_causal_telemetry_v1 as cli
+
+    monkeypatch.setenv(collector.OUTPUT_DIR_ENV, "relative-output")
+    monkeypatch.setattr(cli, "SystemProbes", FakeProbes)
+    destination = tmp_path / "explicit"
+    assert main(["--once", "--output-dir", str(destination), "--json"]) == 0
+    assert Path(json.loads(capsys.readouterr().out)["jsonl_path"]).parent == destination
+
+
+def test_cli_uses_absolute_environment_output(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import scripts.capture_windows_docker_dns_causal_telemetry_v1 as cli
+
+    destination = tmp_path / "configured"
+    monkeypatch.setenv(collector.OUTPUT_DIR_ENV, str(destination))
+    monkeypatch.setattr(cli, "SystemProbes", FakeProbes)
+    assert main(["--once", "--json"]) == 0
+    assert Path(json.loads(capsys.readouterr().out)["jsonl_path"]).parent == destination
+
+
+def test_cli_uses_portable_home_fallback(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import scripts.capture_windows_docker_dns_causal_telemetry_v1 as cli
+
+    monkeypatch.delenv(collector.OUTPUT_DIR_ENV, raising=False)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(cli, "SystemProbes", FakeProbes)
+    assert main(["--once", "--json"]) == 0
+    destination = tmp_path / "FUTUROS_LOCAL_CHECKPOINTS" / "DNS_CAUSAL_TELEMETRY_V1"
+    assert Path(json.loads(capsys.readouterr().out)["jsonl_path"]).parent == destination
+
+
+def test_cli_relative_environment_output_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import scripts.capture_windows_docker_dns_causal_telemetry_v1 as cli
+
+    monkeypatch.setenv(collector.OUTPUT_DIR_ENV, "relative-output")
+    monkeypatch.setattr(cli, "SystemProbes", FakeProbes)
+    assert main(["--once", "--json"]) == 2
+    assert "output_dir_must_be_absolute" in capsys.readouterr().err
+    assert not (tmp_path / "relative-output").exists()
+
+
+def test_cli_git_worktree_output_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import scripts.capture_windows_docker_dns_causal_telemetry_v1 as cli
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".git").mkdir()
+    monkeypatch.setenv(collector.OUTPUT_DIR_ENV, str(root / "data" / "reports"))
+    monkeypatch.setattr(cli, "SystemProbes", FakeProbes)
+    assert main(["--once", "--json"]) == 2
+    assert "outside_git_worktree" in capsys.readouterr().err
+    assert not (root / "data").exists()
+
+
+def test_operational_python_has_no_windows_project_root_literal() -> None:
+    root = Path(__file__).resolve().parents[1]
+    offenders = [
+        path.relative_to(root).as_posix()
+        for base in (root / "scripts", root / "smartcrypto")
+        for path in base.rglob("*.py")
+        if "E:/FUTUROS" in path.read_text(encoding="utf-8")
+        or "E:\\FUTUROS" in path.read_text(encoding="utf-8")
+    ]
+    assert offenders == []

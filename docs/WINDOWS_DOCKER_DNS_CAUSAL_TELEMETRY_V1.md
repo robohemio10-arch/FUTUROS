@@ -16,10 +16,17 @@ python scripts/capture_windows_docker_dns_causal_telemetry_v1.py --once --contai
 
 `--interval-seconds N` enables foreground sampling until Ctrl+C. Each external
 probe has an independent timeout (default 8 seconds; maximum 30). Omitting the
-container records Docker as unavailable; it never guesses a container. The
-default output directory is
-`E:\FUTUROS_LOCAL_CHECKPOINTS\DNS_CAUSAL_TELEMETRY_V1\`, outside Git.
-`--output-dir` must be absolute and outside a Git worktree.
+container records Docker as unavailable; it never guesses a container.
+Output selection is `--output-dir` first, then
+`FUTUROS_DNS_CAUSAL_TELEMETRY_OUTPUT_DIR`, then
+`Path.home() / "FUTUROS_LOCAL_CHECKPOINTS" / "DNS_CAUSAL_TELEMETRY_V1"`.
+The selected directory must be absolute and outside a Git worktree. An invalid
+configured path blocks the run; it does not fall back to another destination.
+For this project's Windows deployment, use the approved external path explicitly:
+
+```powershell
+python scripts/capture_windows_docker_dns_causal_telemetry_v1.py --once --container <exact-name> --output-dir E:\FUTUROS_LOCAL_CHECKPOINTS\DNS_CAUSAL_TELEMETRY_V1 --json
+```
 
 ## Evidence
 
