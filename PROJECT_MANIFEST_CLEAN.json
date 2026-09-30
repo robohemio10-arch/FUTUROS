@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a881d24e2a6b6aad3210d00b7d37b5c93d962adcb20eaf494f486a3c3f733b10",
+  "aggregate_sha256": "210f06d67b7425943f501f79dafbd315571a0e24d5d8a1b8cc8f81f045adf6b3",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 318,
-    "manifested_files_total": 2145,
-    "python_files": 1681,
+    "docs_files": 319,
+    "manifested_files_total": 2150,
+    "python_files": 1685,
     "runtime_excluded_files_total": 0,
-    "test_files": 460,
-    "tracked_files_total": 2146,
+    "test_files": 461,
+    "tracked_files_total": 2151,
     "workflows": 2
   },
   "deterministic": true,
@@ -2570,6 +2570,12 @@
       "sha256": "684db5a6ab783568ca1a87b437b4902db010289c02301a3d789e1574dcfdaf8f"
     },
     {
+      "bytes": 3062,
+      "hash_mode": "text_lf",
+      "path": "docs/WINDOWS_DOCKER_DNS_CAUSAL_TELEMETRY_V1.md",
+      "sha256": "8f4e06784496fbfb41220e58ef89ce641a173f75dc7ed3323bfa345fd278714e"
+    },
+    {
       "bytes": 2728,
       "hash_mode": "text_lf",
       "path": "docs/ZIP_STANDALONE_AUDIT_FALLBACK.md",
@@ -4044,6 +4050,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/canonical_treatment_report_healthcheck_v1.py",
       "sha256": "b3549649ff4187020cfe276e150cc64187b61b911f3145fde7e2411196df2345"
+    },
+    {
+      "bytes": 2595,
+      "hash_mode": "text_lf",
+      "path": "scripts/capture_windows_docker_dns_causal_telemetry_v1.py",
+      "sha256": "68831bcffc113be17fd872b90fa8426a25f1923066cab0ac362a6d77c4c7ad3c"
     },
     {
       "bytes": 2008,
@@ -7986,6 +7998,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/dashboard_snapshots/status.py",
       "sha256": "4a5319cec7b5c60cf8ed092b69b8b31097c2a745b9187a26220b1f80d6fb9595"
+    },
+    {
+      "bytes": 294,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dns_causal_telemetry/__init__.py",
+      "sha256": "164a62dd4583d2130bb73e1ae091102df8c0a403e2f02de8d2dcac254dd5796b"
+    },
+    {
+      "bytes": 25276,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/dns_causal_telemetry/collector.py",
+      "sha256": "83b828cd0ebe84cd0dc024ea03127b7df56dbbcc8279dcda7dde4f6816cf5145"
     },
     {
       "bytes": 24358,
@@ -12876,6 +12900,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_walkforward_split.py",
       "sha256": "7ed7d24bf852446490e67f168646407e1496495dd6c5e8e843fc737e4d87a42b"
+    },
+    {
+      "bytes": 12303,
+      "hash_mode": "text_lf",
+      "path": "tests/test_windows_docker_dns_causal_telemetry_v1.py",
+      "sha256": "18e562c3184fb5f160a1885db3ec62be7f3cf2c990c1d864e6636af724bb4cb1"
     },
     {
       "bytes": 8808,
