@@ -19,7 +19,8 @@ from typing import Any, BinaryIO, Iterator, Literal, Protocol
 
 SCHEMA_VERSION = "windows_docker_dns_causal_telemetry_v1"
 TARGET_HOST = "fapi.binance.com"
-DEFAULT_OUTPUT_DIR = Path(r"E:\FUTUROS_LOCAL_CHECKPOINTS\DNS_CAUSAL_TELEMETRY_V1")
+DEFAULT_OUTPUT_DIR = Path.home() / "FUTUROS_LOCAL_CHECKPOINTS" / "DNS_CAUSAL_TELEMETRY_V1"
+OUTPUT_DIR_ENV = "FUTUROS_DNS_CAUSAL_TELEMETRY_OUTPUT_DIR"
 CONTAINER_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SECRET_ASSIGNMENT = re.compile(
     r"(?i)\b(token|secret|password|passwd|authorization|api[_-]?key|proxy)\b\s*[:=]\s*[^\s,;]+"
@@ -538,6 +539,16 @@ def _validate_output_dir(path: Path) -> Path:
         if (ancestor / ".git").exists():
             raise ValueError("output_dir_must_be_outside_git_worktree")
     return resolved
+
+
+def resolve_output_dir(explicit: Path | None = None) -> Path:
+    if explicit is not None:
+        selected = explicit
+    elif OUTPUT_DIR_ENV in os.environ:
+        selected = Path(os.environ[OUTPUT_DIR_ENV])
+    else:
+        selected = Path.home() / "FUTUROS_LOCAL_CHECKPOINTS" / "DNS_CAUSAL_TELEMETRY_V1"
+    return _validate_output_dir(selected)
 
 
 @contextmanager
