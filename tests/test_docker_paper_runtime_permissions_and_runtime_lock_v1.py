@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 from typing import Any
 
@@ -152,13 +153,22 @@ def test_runtime_lock_contains_exactly_one_safe_gitpython_pin() -> None:
         buffer.append(stripped.rstrip("\\").strip())
         if stripped.endswith("\\"):
             continue
-        requirements.append(" ".join(buffer).split(" --hash=", 1)[0].strip())
+        requirements.append(" ".join(buffer))
         buffer = []
-    gitpython = [line for line in requirements if line.lower().startswith("gitpython==")]
+    assert not buffer
+    assert requirements
 
-    assert gitpython == ["GitPython==3.1.58"]
-    assert all("==" in requirement for requirement in requirements)
-    assert "--hash=sha256:" in RUNTIME_LOCK.read_text(encoding="utf-8")
+    pins: list[str] = []
+    for requirement in requirements:
+        pin, *hashes = requirement.split(" --hash=sha256:")
+        assert re.fullmatch(r"[A-Za-z0-9_.-]+(?:\[[^]]+\])?==[^;\s]+", pin)
+        assert hashes
+        assert all(re.fullmatch(r"[0-9a-f]{64}", digest) for digest in hashes)
+        pins.append(pin)
+
+    assert [pin for pin in pins if pin.casefold().startswith("gitpython==")] == [
+        "GitPython==3.1.60"
+    ]
 
 
 def test_no_world_writable_mode_or_generic_data_authority() -> None:
