@@ -47,11 +47,17 @@ ANCHOR_PACKAGES = {
     "cryptography": "50.0.0",
     "pyarrow": "25.0.1",
     "urllib3": "2.8.0",
+    "tornado": "6.5.9",
 }
 URLLIB3_ADVISORIES = (
     "GHSA-8988-9cw3-xx77",
     "GHSA-gh4c-6fx4-qh6g",
     "GHSA-vxq7-64xx-v4gw",
+)
+TORNADO_ADVISORIES = (
+    "GHSA-chx6-46f5-w4vp",
+    "GHSA-c2m8-h5v5-343r",
+    "GHSA-3hv7-mjh2-fv65",
 )
 
 
@@ -224,6 +230,16 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
             ("observed_affected_version", "2.7.0"),
             ("fixed_minimum", "2.8.0"),
             ("certified_version", "2.8.0"),
+            ("status", "remediated_by_certified_pin"),
+        ):
+            if advisory.get(key) != expected_value:
+                raise PolicyError(f"advisory_contract_mismatch:{advisory_id}:{key}")
+    for advisory_id in TORNADO_ADVISORIES:
+        advisory = _as_mapping(advisories.get(advisory_id), name=f"advisory:{advisory_id}")
+        for key, expected_value in (
+            ("package", "tornado"),
+            ("affected_version", "6.5.8"),
+            ("remediated_version", "6.5.9"),
             ("status", "remediated_by_certified_pin"),
         ):
             if advisory.get(key) != expected_value:

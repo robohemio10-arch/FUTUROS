@@ -55,6 +55,7 @@ def clean_external_evidence(root: Path) -> tuple[Path, Path]:
                 {"metadata": {"name": "cryptography", "version": "50.0.0"}},
                 {"metadata": {"name": "pyarrow", "version": "25.0.1"}},
                 {"metadata": {"name": "urllib3", "version": "2.8.0"}},
+                {"metadata": {"name": "tornado", "version": "6.5.9"}},
             ]
         },
     )
@@ -91,6 +92,8 @@ def test_certified_anchor_versions_and_zero_vulnerabilities() -> None:
     assert evidence["packages"]["cryptography"] == "50.0.0"
     assert evidence["packages"]["pyarrow"] == "25.0.1"
     assert evidence["packages"]["urllib3"] == "2.8.0"
+    assert evidence["packages"]["tornado"] == "6.5.9"
+    assert evidence["audited_dependency_count"] == 183
 
 
 def test_direct_and_full_locks_are_hash_locked() -> None:
@@ -105,6 +108,7 @@ def test_direct_and_full_locks_are_hash_locked() -> None:
     assert lock["security_lock"]["hash_locked"] is True
     assert lock["security_lock_anchors_match_policy"] is True
     assert lock["security_lock"]["packages"]["urllib3"] == "2.8.0"
+    assert lock["security_lock"]["packages"]["tornado"] == "6.5.9"
 
 
 @pytest.mark.parametrize(
@@ -112,6 +116,23 @@ def test_direct_and_full_locks_are_hash_locked() -> None:
     ["GHSA-8988-9cw3-xx77", "GHSA-gh4c-6fx4-qh6g", "GHSA-vxq7-64xx-v4gw"],
 )
 def test_missing_urllib3_advisory_blocks_policy(tmp_path: Path, advisory_id: str) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    del policy["security_advisories"][advisory_id]
+    write_json(path, policy)
+
+    report = load_module().audit_project(tmp_path)
+    assert report["status"] == "blocked"
+    assert report["reason"] == "policy_invalid_or_incomplete"
+    assert advisory_id in report["policy_error"]
+
+
+@pytest.mark.parametrize(
+    "advisory_id",
+    ["GHSA-chx6-46f5-w4vp", "GHSA-c2m8-h5v5-343r", "GHSA-3hv7-mjh2-fv65"],
+)
+def test_missing_tornado_advisory_blocks_policy(tmp_path: Path, advisory_id: str) -> None:
     copy_project(tmp_path)
     path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
     policy = json.loads(path.read_text(encoding="utf-8"))

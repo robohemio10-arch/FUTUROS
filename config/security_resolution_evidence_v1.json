@@ -14,13 +14,13 @@
   "ci_certification_status": "pending_ci_certification",
   "locks": {
     "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
-    "requirements_dev_sha256": "59a5cb67830b8b88a301ae7df443c01f9da696a15b89d59571b82a7bd8dd7929",
-    "requirements_qlib_security_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
-    "requirements_runtime_sha256": "0a7d746dde399913ca1946138d42386d7dccf60a59051d9dc4104e68e07321f6"
+    "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
+    "requirements_qlib_security_sha256": "381b8bd5d03e788b870b8cf9aaf89a857a386f12ea458168df75cc156a37b117",
+    "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7"
   },
   "qlib": {
-    "audited_dependency_count": 190,
-    "hashed_lock_sha256": "9b47786aa707a485afef476c2b19d27dfe5c9a96847bb7d69194dade8852cde0",
+    "audited_dependency_count": 183,
+    "hashed_lock_sha256": "381b8bd5d03e788b870b8cf9aaf89a857a386f12ea458168df75cc156a37b117",
     "known_vulnerability_count": 0,
     "packages": {
       "cryptography": "50.0.0",
@@ -29,13 +29,14 @@
       "mlflow-tracing": "3.16.0",
       "pyarrow": "25.0.1",
       "pyqlib": "0.9.7",
-      "urllib3": "2.8.0"
+      "urllib3": "2.8.0",
+      "tornado": "6.5.9"
     },
     "pip_audit_exit_code": 0,
-    "pip_audit_report_sha256": "483b91e2e9d2c574c8cc41e08e376be842f9d972a62653fbdb6ec2bc1601b883",
+    "pip_audit_report_sha256": "745ce6a95c05bcb1d161d1bc81a146494c4f8f8d586f19f2eb987bcd94e1a16a",
     "python_version": "3.12",
     "resolved_package_count": 190,
-    "resolver_report_sha256": "882437147170f8bf8b84e3469f4ef79a61d7daf696ecfa8db92bd8ee5862b0f1",
+    "resolver_report_sha256": "099583716161b4737ec68ccd5d58c2af84fc25d346847958422bbcdb305f34cc",
     "resolver_status": "resolved",
     "resolver_platform": "linux_x86_64_python_3_12",
     "security_status": "clean"
@@ -59,11 +60,13 @@
   "schema_version": "dev_security_resolution_evidence_v1",
   "provenance": "candidate_pre_ci_recertification",
   "local_candidate_evidence": {
-    "directory": "E:/FUTUROS_LOCAL_CHECKPOINTS/URLLIB3_2_8_RECERTIFICATION_V1",
-    "dev_resolver_report_sha256": "116878b607d97e91e35d7b42b82adae45957f1aec61e33e85ef60ce8cf5773a8",
-    "dev_pip_audit_report_sha256": "4122be3095a57f3ad9cc30037431b9b4f04f3dcf6d2cd16d08b5a148686cdf77",
-    "runtime_resolver_report_sha256": "4cbb5133c797a70a5e9a47ef316095387c2ca58b534b2e7eba305276db017cd6",
-    "runtime_pip_audit_report_sha256": "b83159e17a247cd1fe2051e0082d9d6a61bb7b83f5b8ec0cb002e6cf6f8d2193"
+    "directory": "E:/FUTUROS_LOCAL_CHECKPOINTS/TORNADO_6_5_9_RECERTIFICATION_V1",
+    "dev_resolver_report_sha256": "5aff9c52c88d2ddcc8f23a6e7971ca969fd3642c9e7e0f01344ee5ed87e07b0c",
+    "dev_pip_audit_report_sha256": "5f8048290e3a9177b973e7fc418b96aae1d13160d001e3face9350c14b0a45dc",
+    "runtime_resolver_report_sha256": "5aff9c52c88d2ddcc8f23a6e7971ca969fd3642c9e7e0f01344ee5ed87e07b0c",
+    "runtime_pip_audit_report_sha256": "21dc88c7e5f52ea1259c6f3d754aef4518c8b523ddfc7df389f88947110b47a3",
+    "qlib_resolver_report_sha256": "099583716161b4737ec68ccd5d58c2af84fc25d346847958422bbcdb305f34cc",
+    "qlib_pip_audit_report_sha256": "745ce6a95c05bcb1d161d1bc81a146494c4f8f8d586f19f2eb987bcd94e1a16a"
   },
   "runtime_dependency_security": {
     "package": "GitPython",
@@ -78,6 +81,18 @@
       "PYSEC-2026-3837",
       "PYSEC-2026-3982",
       "PYSEC-2026-3984"
+    ],
+    "pip_audit_exit_code": 0,
+    "known_vulnerability_count": 0
+  },
+  "tornado_dependency_security": {
+    "package": "tornado",
+    "affected_version": "6.5.8",
+    "remediated_version": "6.5.9",
+    "observed_advisories": [
+      "GHSA-chx6-46f5-w4vp",
+      "GHSA-c2m8-h5v5-343r",
+      "GHSA-3hv7-mjh2-fv65"
     ],
     "pip_audit_exit_code": 0,
     "known_vulnerability_count": 0
