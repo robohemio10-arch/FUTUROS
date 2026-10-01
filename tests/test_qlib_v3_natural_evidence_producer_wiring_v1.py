@@ -128,7 +128,7 @@ def test_missing_or_divergent_signal_lineage_fails_closed(context, case):
 def test_guard_and_corrupt_store_block_without_overwrite(context):
     kwargs = inputs(context)
     path = evidence_path(context)
-    with store.exclusive(path):
+    with store.exclusive(path, owner="qlib_v3_test_holder", invocation_id="test-holder"):
         assert producer.observe_signal_batch(**kwargs).status == "blocked"
         assert not path.exists()
     path.write_text('{"schema_version":"wrong"}')

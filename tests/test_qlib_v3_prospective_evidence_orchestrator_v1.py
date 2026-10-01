@@ -224,7 +224,7 @@ def test_identity_conflict_never_overwrites(fixture, tmp_path):
 
 def test_store_lock_contention_blocks(fixture, tmp_path):
     path = store.location(tmp_path, fixture["expected"])
-    with store.exclusive(path):
+    with store.exclusive(path, owner="qlib_v3_test_holder", invocation_id="test-holder"):
         result = run_cycle(**fixture, write=True)
     assert result["status"] == "blocked"
     assert "store_busy" in result["reason"]

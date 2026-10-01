@@ -62,6 +62,10 @@ class AdmissionLineageProbe:
                 "shadow_decision_present": None,
                 "crosswalk_created": False,
                 "persisted_to_v3_store": False,
+                "store_guard_status": None,
+                "store_guard_reason_code": None,
+                "store_guard_wait_seconds": 0.0,
+                "store_guard_contention_count": 0,
                 "research_only": True,
                 "operational_authority": False,
                 "sends_orders": False,
@@ -96,6 +100,20 @@ class AdmissionLineageProbe:
         for signal_id in signal_ids:
             self.mark_signal(signal_id, stage, result, reason)
 
+    def guard_acquired(self, receipt: store.GuardReceipt) -> None:
+        for row in self.rows:
+            if row["store_guard_status"] != "contention_recovered":
+                row["store_guard_status"] = receipt.status
+            row["store_guard_wait_seconds"] += receipt.wait_seconds
+            row["store_guard_contention_count"] += receipt.contention_count
+
+    def guard_timeout(self, error: store.StoreGuardAcquireTimeout) -> None:
+        for row in self.rows:
+            row["store_guard_status"] = "contention_timeout"
+            row["store_guard_reason_code"] = error.reason_code
+            row["store_guard_wait_seconds"] += error.wait_seconds
+            row["store_guard_contention_count"] += error.contention_count
+
     def flush(self) -> None:
         """A diagnostic I/O failure cannot change the observer's return value."""
         if not self.rows:
@@ -105,7 +123,8 @@ class AdmissionLineageProbe:
                 (json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
                 for row in self.rows
             )
-            with store.exclusive(self.path):
+            with store.exclusive(self.path, owner="qlib_v3_admission_lineage_probe",
+                                 invocation_id=self.invocation_id):
                 fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
                 try:
                     view = memoryview(payload)

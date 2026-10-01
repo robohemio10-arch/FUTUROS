@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a881d24e2a6b6aad3210d00b7d37b5c93d962adcb20eaf494f486a3c3f733b10",
+  "aggregate_sha256": "58b5cce2c7c1298379b0070f9c0431d4c4643838051e5cfec5c776bcdaf18774",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 318,
-    "manifested_files_total": 2145,
-    "python_files": 1681,
+    "docs_files": 319,
+    "manifested_files_total": 2147,
+    "python_files": 1682,
     "runtime_excluded_files_total": 0,
-    "test_files": 460,
-    "tracked_files_total": 2146,
+    "test_files": 461,
+    "tracked_files_total": 2148,
     "workflows": 2
   },
   "deterministic": true,
@@ -2280,6 +2280,12 @@
       "hash_mode": "text_lf",
       "path": "docs/QLIB_V3_REPRODUCIBLE_FREEZE_EPOCH_V1.md",
       "sha256": "c840e5fbf0ccd30100e0594b18136444866a03cf89adeb833cc2d736bb2af089"
+    },
+    {
+      "bytes": 2567,
+      "hash_mode": "text_lf",
+      "path": "docs/QLIB_V3_STORE_GUARD_CONTENTION_REMEDIATION_V1.md",
+      "sha256": "91449aaada626498597768d28198050f3414db67fbc018da758941173f7d94bd"
     },
     {
       "bytes": 9451,
@@ -7280,10 +7286,10 @@
       "sha256": "cecfd5d5787f03086d4b8d6e2403321b57ccc37e14e4b19f3f0e77d06d37918d"
     },
     {
-      "bytes": 4968,
+      "bytes": 6009,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/admission_lineage_probe.py",
-      "sha256": "b6fced0e2dd91ff03464869899bcbb41a17dde636bb87849dc171b69909169b2"
+      "sha256": "dd9ecebc2d996742fefb1dcd1574a3c2dcfad00798754919546f6ea490787834"
     },
     {
       "bytes": 3314,
@@ -7298,22 +7304,22 @@
       "sha256": "c1ae5fc693557c21ccd2e684419b2ecf8999b0a0f2617794b3cc0e3ed5cc55ba"
     },
     {
-      "bytes": 39229,
+      "bytes": 41896,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
-      "sha256": "7d748bdd0d138d5c6a7d5550edc2e4e939295f5e72627ba7c6ef46310de2e654"
+      "sha256": "47810e6cd7ec43ec1fd55df8d91a68a2f95cdfa71bfe9f48c2dae21250fd9d88"
     },
     {
-      "bytes": 7891,
+      "bytes": 8580,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/orchestrator.py",
-      "sha256": "afec096b2799347ec3ea62a7d84e7716cc1058652b2464f6b25a8cc0e5e02a9f"
+      "sha256": "c8a48ea330e90b467e822e35f9cffda9f4bb3b2a93ae591c2bd2684aa7242db2"
     },
     {
-      "bytes": 2604,
+      "bytes": 9251,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_v3_prospective/store.py",
-      "sha256": "f89b1821a35d49026176b9c35e8616135c93e8927718277e693a938d58089419"
+      "sha256": "71b4651a26c9496bc5c5a5a54a932308a4dc30d701dba6eed80ab222f545f7ed"
     },
     {
       "bytes": 5219,
@@ -12428,28 +12434,28 @@
       "sha256": "802c254f985d78ea0d53abdeef87c475ab70abe68c29c1ece378f075049d1a0f"
     },
     {
-      "bytes": 10004,
+      "bytes": 13399,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_admission_lineage_probe_v1.py",
-      "sha256": "a3f7e14a121d3b5331acdb524a0e16d40741f6a2bdfb20396ed12537d77ed29d"
+      "sha256": "496ae0833a143640081f8728f196966d2621286f5326f7a8f8651bed9bd64603"
     },
     {
-      "bytes": 14781,
+      "bytes": 14839,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_evidence_producer_wiring_v1.py",
-      "sha256": "903c36b132b957dd91fd062b5543131bd6a9e46296138100789de77ba06cbebf"
+      "sha256": "0479d8d4c451d97ef9fa8907f6ab444be62f0b1e0ba572c92a437f32f0c9912d"
     },
     {
       "bytes": 11775,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_natural_evidence_runtime_parity_v1.py",
-      "sha256": "a1a75a83bf11d4950711e93c070501139a2f993413b0ade9a70f2965f6bb284c"
+      "sha256": "4f98c22ecfb2608bb1eceece5f020216e24ea3191c6bf164818afd38d7f2e3d5"
     },
     {
-      "bytes": 13677,
+      "bytes": 13735,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_prospective_evidence_orchestrator_v1.py",
-      "sha256": "185d33682f8875f2f515dca1b9723b9175a4d84469dc2fe8a01274a82a44c841"
+      "sha256": "4c12ce6bbfdde241c8906055ae9e37fad07e3c3a8d3047bd886a3620d36285e9"
     },
     {
       "bytes": 5244,
@@ -12468,6 +12474,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_v3_shadow_store_first_idempotency_v1.py",
       "sha256": "580133f56e2ec33bf74db3e40bf2abadbbc35909bd573e013b3b8d9c3723534d"
+    },
+    {
+      "bytes": 9446,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_v3_store_guard_contention_remediation_v1.py",
+      "sha256": "1ef1f99ed9a076b341949f1c73e522e3ddf6b4db705179493fd5f5fe6c2af986"
     },
     {
       "bytes": 11388,

@@ -88,7 +88,7 @@ def test_exact_recovered_runtime_source_parity(relative: str, expected: str) -> 
     [
         (
             "smartcrypto/learning/qlib_v3_prospective/natural_producer.py",
-            "7d748bdd0d138d5c6a7d5550edc2e4e939295f5e72627ba7c6ef46310de2e654",
+            "47810e6cd7ec43ec1fd55df8d91a68a2f95cdfa71bfe9f48c2dae21250fd9d88",
         ),
         (
             "smartcrypto/execution/paper_candidate_trade_lineage_propagation_v1/"

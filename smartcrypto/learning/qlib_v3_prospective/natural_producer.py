@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
+from uuid import uuid4
 
 from smartcrypto.execution.decision_ledger_v4_2.contracts import (
     DecisionRecordV42,
@@ -59,6 +60,10 @@ class ProducerReport:
     operational_model_mismatch_observed: bool = False
     operational_model_mismatch_count: int = 0
     shadow_block_reason: str | None = None
+    store_guard_status: str | None = None
+    store_guard_reason_code: str | None = None
+    store_guard_wait_seconds: float = 0.0
+    store_guard_contention_count: int = 0
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -82,6 +87,10 @@ class ProducerReport:
                 self.operational_model_mismatch_count
             ),
             "shadow_block_reason": self.shadow_block_reason,
+            "store_guard_status": self.store_guard_status,
+            "store_guard_reason_code": self.store_guard_reason_code,
+            "store_guard_wait_seconds": self.store_guard_wait_seconds,
+            "store_guard_contention_count": self.store_guard_contention_count,
             "research_only": True,
             "operational_authority": False,
             "paper_behavior_changed": False,
@@ -128,7 +137,7 @@ def _persist(path: Path, activation: Activation, signals: list[Envelope], outcom
                          "signals": signals, "outcomes": outcomes})
 
 
-def _blocked_report(exc: Exception, *, write: bool) -> ProducerReport:
+def _blocked_report(exc: Exception, *, write: bool, write_performed: bool = False) -> ProducerReport:
     if isinstance(exc, EvidenceError):
         reason = str(exc)
     elif isinstance(exc, AtomicWriteError):
@@ -137,8 +146,15 @@ def _blocked_report(exc: Exception, *, write: bool) -> ProducerReport:
         reason = "producer_boundary_failed:" + type(exc).__name__
     # Never include a row, sealed payload, configuration or exception values in logs.
     LOGGER.error("qlib_v3_evidence_blocked reason=%s error_type=%s", reason, type(exc).__name__)
-    return ProducerReport("blocked", reason, write_requested=write,
-                          write_performed=isinstance(exc, AtomicWriteError) and exc.promoted)
+    timeout = exc if isinstance(exc, store.StoreGuardAcquireTimeout) else None
+    return ProducerReport(
+        "blocked", reason, write_requested=write,
+        write_performed=write_performed or (isinstance(exc, AtomicWriteError) and exc.promoted),
+        store_guard_status="contention_timeout" if timeout else None,
+        store_guard_reason_code=timeout.reason_code if timeout else None,
+        store_guard_wait_seconds=timeout.wait_seconds if timeout else 0.0,
+        store_guard_contention_count=timeout.contention_count if timeout else 0,
+    )
 
 
 def _validated_input_decision(
@@ -291,6 +307,7 @@ def observe_signal_batch(
         probe = AdmissionLineageProbe(project_root, ())
     active_stage = "input_received"
     active_signal_id: str | None = None
+    write_committed = False
     try:
         activation = _activation(
             project_root,
@@ -355,7 +372,9 @@ def observe_signal_batch(
         active_stage = "prior_store_checked"
 
         if path.exists():
-            with store.exclusive(path):
+            with store.exclusive(path, owner="qlib_v3_natural_signal_observer",
+                                 invocation_id=probe.invocation_id) as receipt:
+                probe.guard_acquired(receipt)
                 prior_signals, _ = _state(
                     path,
                     activation,
@@ -399,6 +418,9 @@ def observe_signal_batch(
                 "no_new_natural_signals",
                 write_requested=True,
                 write_performed=False,
+                store_guard_status=probe.rows[0]["store_guard_status"] if probe.rows else None,
+                store_guard_wait_seconds=probe.rows[0]["store_guard_wait_seconds"] if probe.rows else 0.0,
+                store_guard_contention_count=probe.rows[0]["store_guard_contention_count"] if probe.rows else 0,
                 shadow_decision_source=(
                     "persisted_v3_signal"
                 ),
@@ -649,7 +671,9 @@ def observe_signal_batch(
 
         probe.mark_pending([str(row["signal_id"]) for row in incoming], "store_reconciliation", "ok")
         active_stage = "store_reconciliation"
-        with store.exclusive(path):
+        with store.exclusive(path, owner="qlib_v3_natural_signal_observer",
+                             invocation_id=probe.invocation_id) as receipt:
+            probe.guard_acquired(receipt)
             prior, outcomes = _state(
                 path,
                 activation,
@@ -701,6 +725,7 @@ def observe_signal_batch(
                     merged,
                     outcomes,
                 )
+                write_committed = True
                 active_stage = "persisted"
         for row in incoming:
             signal_id = str(row["signal_id"])
@@ -740,9 +765,17 @@ def observe_signal_batch(
                 operational_model_mismatch_count
             ),
             shadow_block_reason=None,
+            store_guard_status=probe.rows[0]["store_guard_status"] if probe.rows else None,
+            store_guard_wait_seconds=probe.rows[0]["store_guard_wait_seconds"] if probe.rows else 0.0,
+            store_guard_contention_count=probe.rows[0]["store_guard_contention_count"] if probe.rows else 0,
         )
 
     except Exception as exc:
+        if write_committed:
+            for trace in probe.rows:
+                trace["persisted_to_v3_store"] = True
+        if isinstance(exc, store.StoreGuardAcquireTimeout):
+            probe.guard_timeout(exc)
         reason = "persistence_failed" if active_stage == "persistence_started" else (
             str(exc) if isinstance(exc, EvidenceError) else "observer_stage_error"
         )
@@ -755,6 +788,7 @@ def observe_signal_batch(
         return _blocked_report(
             exc,
             write=True,
+            write_performed=write_committed,
         )
     finally:
         probe.flush()
@@ -967,6 +1001,7 @@ def observe_feedback_close(
     proximity, fuzzy identity, or nearest-neighbour inference.
     """
 
+    write_committed = False
     try:
         activation = _activation(
             project_root,
@@ -991,10 +1026,11 @@ def observe_feedback_close(
             )
 
         with (
-            store.exclusive(path)
+            store.exclusive(path, owner="qlib_v3_feedback_close_observer",
+                            invocation_id=uuid4().hex)
             if write
             else nullcontext()
-        ):
+        ) as guard_receipt:
             signals, prior = _state(
                 path,
                 activation,
@@ -1131,6 +1167,7 @@ def observe_feedback_close(
                     signals,
                     merged,
                 )
+                write_committed = True
 
         return ProducerReport(
             "ok",
@@ -1143,9 +1180,13 @@ def observe_feedback_close(
             write_performed=bool(
                 write and count
             ),
+            store_guard_status=guard_receipt.status if guard_receipt else None,
+            store_guard_wait_seconds=guard_receipt.wait_seconds if guard_receipt else 0.0,
+            store_guard_contention_count=guard_receipt.contention_count if guard_receipt else 0,
         )
     except Exception as exc:
         return _blocked_report(
             exc,
             write=write,
+            write_performed=write_committed,
         )

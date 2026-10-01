@@ -8,6 +8,7 @@ from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from pydantic import ValidationError
 
@@ -98,7 +99,8 @@ def run_cycle(*, project_root: Path, activation_path: Path, freeze_path: Path,
         report["freeze_file_sha256"] = activation.freeze_file_sha256
         path = store.location(project_root, expected)
         # The outer guard covers read/merge/write, not just the final replacement.
-        with store.exclusive(path) if write else nullcontext():
+        with (store.exclusive(path, owner="qlib_v3_orchestrator", invocation_id=uuid4().hex)
+              if write else nullcontext()) as guard_receipt:
             previous = store.load(path, expected)
             signals = [admission.signal(r, activation, clock) for r in previous["signals"]]
             signals = merge(signals, "signal_id")
@@ -137,9 +139,17 @@ def run_cycle(*, project_root: Path, activation_path: Path, freeze_path: Path,
         report["status"] = "ok" if signals else "waiting"
         report["decision"] = "OBSERVING_NATURAL_V3_EVIDENCE" if signals else "AWAITING_NATURAL_V3_EVIDENCE"
         report["reason"] = report["natural_source_status"]
+        if guard_receipt is not None:
+            report["store_guard_status"] = guard_receipt.status
+            report["store_guard_wait_seconds"] = guard_receipt.wait_seconds
+            report["store_guard_contention_count"] = guard_receipt.contention_count
     except AtomicWriteError as exc:
         report.update(status="blocked", reason=exc.reason, write_performed=exc.promoted)
     except (EvidenceError, ValidationError, OSError, TypeError, KeyError, ValueError) as exc:
         report.update(status="blocked", reason=str(exc) if isinstance(exc, EvidenceError)
                       else f"invalid_or_unreadable_source:{type(exc).__name__}")
+        if isinstance(exc, store.StoreGuardAcquireTimeout):
+            report.update(store_guard_status="contention_timeout", store_guard_reason_code=exc.reason_code,
+                          store_guard_wait_seconds=exc.wait_seconds,
+                          store_guard_contention_count=exc.contention_count)
     return report

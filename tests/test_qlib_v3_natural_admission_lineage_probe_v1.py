@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import threading
 
 from smartcrypto.learning.qlib_v3_prospective import (
     admission_lineage_probe as lineage,
     economic_shadow_decision_producer as shadow_producer,
     natural_producer as producer,
+    store,
 )
 from test_qlib_v3_natural_evidence_producer_wiring_v1 import evidence_path, inputs
 
@@ -217,3 +219,83 @@ def test_store_first_idempotency_preserved_and_reobserved(context, monkeypatch):
     assert ("prior_store_checked", "already_present") in _stages(second)
     assert second["persisted_to_v3_store"] is True
     assert "shadow_resolution_started" not in [stage for stage, _ in _stages(second)]
+
+
+def test_recovered_store_contention_persists_once_with_probe_receipt(context, monkeypatch):
+    path = evidence_path(context)
+    ready, release = threading.Event(), threading.Event()
+
+    def holder():
+        with store.exclusive(path, owner="qlib_v3_test_holder", invocation_id="holder"):
+            ready.set()
+            assert release.wait(5)
+
+    thread = threading.Thread(target=holder)
+    thread.start()
+    try:
+        assert ready.wait(5)
+        actual_read = store.read_guard_metadata
+
+        def release_on_contention(guard):
+            metadata = actual_read(guard)
+            release.set()
+            return metadata
+
+        monkeypatch.setattr(store, "read_guard_metadata", release_on_contention)
+        report = producer.observe_signal_batch(**inputs(context))
+    finally:
+        release.set()
+        thread.join(5)
+
+    row = _trace(context)[0]
+    assert report.status == "ok" and report.new_signal_count == 1
+    assert report.store_guard_status == "contention_recovered"
+    assert row["store_guard_status"] == "contention_recovered"
+    assert row["store_guard_contention_count"] > 0
+    assert row["persisted_to_v3_store"] is True
+    assert row["first_failed_stage"] is None
+    assert store.load(path, context[0]["expected"])["store_sha256"]
+
+
+def test_store_timeout_is_distinct_and_does_not_start_persistence(context, monkeypatch):
+    path = evidence_path(context)
+    actual_exclusive = store.exclusive
+    with actual_exclusive(path, owner="qlib_v3_test_holder", invocation_id="holder"):
+        def short_exclusive(target, **kwargs):
+            return actual_exclusive(target, timeout_seconds=0.1, poll_seconds=0.02, **kwargs)
+
+        monkeypatch.setattr(store, "exclusive", short_exclusive)
+        report = producer.observe_signal_batch(**inputs(context))
+        row = _trace(context)[0]
+        assert path.with_suffix(".guard").exists()
+
+    assert report.status == "blocked"
+    assert report.reason == "store_busy_or_stale_guard_requires_review"
+    assert report.store_guard_status == "contention_timeout"
+    assert report.store_guard_reason_code == "store_guard_acquire_timeout"
+    assert row["first_failed_stage"] == "store_reconciliation"
+    assert row["store_guard_status"] == "contention_timeout"
+    assert row["store_guard_reason_code"] == "store_guard_acquire_timeout"
+    assert row["crosswalk_created"] is True
+    assert row["persisted_to_v3_store"] is False
+    assert "persistence_started" not in [stage for stage, _ in _stages(row)]
+    assert not path.exists()
+
+
+def test_release_failure_after_write_preserves_write_audit(context, monkeypatch):
+    path = evidence_path(context)
+    actual_release = store._release_guard
+
+    def fail_store_release(guard, expected, acquired_stat):
+        if guard == path.with_suffix(".guard"):
+            raise producer.EvidenceError("store_guard_release_ownership_lost")
+        return actual_release(guard, expected, acquired_stat)
+
+    monkeypatch.setattr(store, "_release_guard", fail_store_release)
+    report = producer.observe_signal_batch(**inputs(context))
+    row = _trace(context)[0]
+    assert report.status == "blocked"
+    assert report.reason == "store_guard_release_ownership_lost"
+    assert report.write_performed is True
+    assert row["persisted_to_v3_store"] is True
+    assert store.load(path, context[0]["expected"])["store_sha256"]
