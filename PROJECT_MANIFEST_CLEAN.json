@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "15e896262ef7d3e266231c3eee6329ba912c0014cd2d51d8fdd8d19ebed6e568",
+  "aggregate_sha256": "63d8ef41a455eeb5c78d8a709bfb4f505c3599168a1cb8ec70853a324e729e8e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -512,10 +512,10 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
-      "bytes": 6387,
+      "bytes": 6704,
       "hash_mode": "text_lf",
       "path": "config/qlib_dependency_security_policy_v1.json",
-      "sha256": "2b8e2bcbaeb9007e63a5f427b61aef57f9dd2ec79381169240c276485bff415a"
+      "sha256": "398e4309e4a775c676dd4182a2c80da0982911df8346db21043159b8544cd1cc"
     },
     {
       "bytes": 2036,
@@ -632,10 +632,10 @@
       "sha256": "53382c7c76b10a0810306ebe81818060adf3792c085cc77e41d11e2e794b5994"
     },
     {
-      "bytes": 4222,
+      "bytes": 5717,
       "hash_mode": "text_lf",
       "path": "config/security_resolution_evidence_v1.json",
-      "sha256": "7b90941c16253c855e8816a2148dfd47d9933afa62ab45f4e75b377c7d710252"
+      "sha256": "3cf9cf20c96c0e3e7d2a36d54f87db4a299024a3eb7e4a1e130ae62cc7744289"
     },
     {
       "bytes": 1027,
