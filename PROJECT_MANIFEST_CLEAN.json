@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a881d24e2a6b6aad3210d00b7d37b5c93d962adcb20eaf494f486a3c3f733b10",
+  "aggregate_sha256": "e78142b07f54abc88570a33917ec31093fa1a8719468d1e0cafa25feb9dffe8f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 318,
-    "manifested_files_total": 2145,
-    "python_files": 1681,
+    "docs_files": 319,
+    "manifested_files_total": 2149,
+    "python_files": 1684,
     "runtime_excluded_files_total": 0,
-    "test_files": 460,
-    "tracked_files_total": 2146,
+    "test_files": 461,
+    "tracked_files_total": 2150,
     "workflows": 2
   },
   "deterministic": true,
@@ -1848,6 +1848,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_B_POSTFIX_LATENCY_COVERAGE_MONITOR_V1.md",
       "sha256": "032c7895681c85fa69af7584b83e102748670752d8042dcfa16c276071cb17b5"
+    },
+    {
+      "bytes": 2075,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_SELECTOR_ECONOMIC_ATTRIBUTION_V1.md",
+      "sha256": "c42f1390b3f2f80e8445243e4d910ec7385f3147ad881747502e90f2bb219c47"
     },
     {
       "bytes": 3393,
@@ -3738,6 +3744,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_postfix_latency_coverage_monitor_v1.py",
       "sha256": "e8e2c5be6f299ce9d4dcce013d5aa8639d987d9e1f02406063d4a715d85afc18"
+    },
+    {
+      "bytes": 1303,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_selector_economic_attribution_v1.py",
+      "sha256": "015387abf177c2e0d0c8f737fa81186f6253d9f3213be8c80ae3d3528ca01a7a"
     },
     {
       "bytes": 2753,
@@ -8498,6 +8510,12 @@
       "sha256": "e046cfa9fd585b588a1ab24e3a861b4b6b38036bdeebe567ed4dd85917fe4aaa"
     },
     {
+      "bytes": 19343,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/selector_economic_attribution.py",
+      "sha256": "6dddbcc783075ed2f8ab890421cf861473516ab7a66617aca94681eb0738cc62"
+    },
+    {
       "bytes": 17591,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_candidate_shadow_rule_registry.py",
@@ -11838,6 +11856,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_postfix_latency_coverage_monitor_v1.py",
       "sha256": "48e62771d1f4af905137711c954666e5af38f018139d8114e0c11597a367e7fb"
+    },
+    {
+      "bytes": 8867,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_b_selector_economic_attribution_v1.py",
+      "sha256": "22a664b0f03003811c215862bbd674b0021717be6962cf6d3cf45d252ab2337f"
     },
     {
       "bytes": 10096,
