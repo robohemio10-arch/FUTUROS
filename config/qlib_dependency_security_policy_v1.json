@@ -9,27 +9,36 @@
       "reason": "cryptography_49_vulnerable_and_mlflow_3_15_crypto50_incompatible"
     },
     "security_clean_resolution": {
-      "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
-      "artifact_id": 9953246950,
       "audited_dependency_count": 188,
-      "hashed_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
+      "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+      "certification_date": "2026-10-02",
+      "certification_source": "controlled_linux_container",
+      "ci_revalidation_required": false,
+      "functional_ci_conclusion": "success",
+      "functional_ci_head_sha": "3991888034280444b15f2993d62694f334e6665a",
+      "functional_ci_run_id": 37071277916,
+      "functional_ci_run_number": 1522,
+      "hashed_lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
       "known_vulnerability_count": 0,
       "packages": {
         "cryptography": "50.0.0",
+        "gitpython": "3.1.61",
+        "jupyterlab": "4.6.4",
         "mlflow": "3.16.0",
         "mlflow-skinny": "3.16.0",
         "mlflow-tracing": "3.16.0",
+        "notebook": "7.6.3",
         "pyarrow": "25.0.1",
-        "pyqlib": "0.9.7"
+        "pyqlib": "0.9.7",
+        "tornado": "6.5.9",
+        "urllib3": "2.8.0"
       },
       "pip_audit_exit_code": 0,
-      "pip_audit_report_sha256": "f45009431f3819934ce49d77c6bb82f4566fd7efa48da8ff599f61c307b98c62",
+      "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
       "resolved_package_count": 190,
-      "resolver_report_sha256": "eac458203563777b0592b246a8c62771cc1563596e37469a73bc7b86c4d0977c",
+      "resolver_report_sha256": "647eb22a2d25210afbc12958fca17fb3490a1eb3e9ee3c7733748fedc05c374e",
       "resolver_status": "resolved",
-      "security_status": "clean",
-      "workflow_head_sha": "452c6d953cac21634aaf6ce004eef4d392b1a3b2",
-      "workflow_run_id": 33916166319
+      "security_status": "clean"
     }
   },
   "decision": "MANTER_EM_RESEARCH",
@@ -38,12 +47,12 @@
   ],
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
   "expected_security_lock_package_count": 190,
-  "expected_security_lock_sha256": "da879b2d3c41406a05158b049d2ceab47cc0fdb383f00c4670ab9a0e4ac83a57",
-  "expected_security_resolution_evidence_sha256": "734ce4265c29b61c49d81ddf365815c8b0d50704f7b0e846aa4aed59d48ac3e8",
+  "expected_security_lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+  "expected_security_resolution_evidence_sha256": "3cf9cf20c96c0e3e7d2a36d54f87db4a299024a3eb7e4a1e130ae62cc7744289",
   "p08_allowed": true,
   "p08_functional_regression": {
-    "certified_proof_commit_sha": "eeb87895b9e9705990e905c51b8fcfd0c2c6046d",
-    "certified_workflow_run_id": 34157486425,
+    "certified_proof_commit_sha": "3991888034280444b15f2993d62694f334e6665a",
+    "certified_workflow_run_id": 37071277916,
     "exact_certified_graph_required": true,
     "fallback_allowed": false,
     "network_mode": "none",
@@ -57,7 +66,7 @@
   "p08_security_gate_bypassed": false,
   "p08_security_gate_remains_blocked": false,
   "policy_status": "active_security_clean",
-  "policy_version": "2026-09-07.v4",
+  "policy_version": "2026-10-02.v6",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": true,
   "requirements_file": "requirements-qlib.lock",
@@ -88,6 +97,24 @@
       "package": "cryptography",
       "status": "remediated_by_certified_pin"
     },
+    "GHSA-3hv7-mjh2-fv65": {
+      "certified_version": "6.5.9",
+      "fixed_minimum": "6.5.9",
+      "package": "tornado",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-c2m8-h5v5-343r": {
+      "certified_version": "6.5.9",
+      "fixed_minimum": "6.5.9",
+      "package": "tornado",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-chx6-46f5-w4vp": {
+      "certified_version": "6.5.9",
+      "fixed_minimum": "6.5.9",
+      "package": "tornado",
+      "status": "remediated_by_certified_pin"
+    },
     "GHSA-gqvg-gmmx-x4hm": {
       "affected_spec": ">=2.1.0,<3.15.0",
       "certified_version": "3.16.0",
@@ -97,6 +124,48 @@
       "package": "mlflow",
       "published_date": "2026-09-01",
       "severity": "HIGH",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4055": {
+      "certified_version": "4.6.4",
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4056": {
+      "certified_version": "4.6.4",
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4057": {
+      "certified_version": "4.6.4",
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4112": {
+      "certified_version": "7.6.3",
+      "fixed_minimum": "7.6.3",
+      "package": "notebook",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4175": {
+      "certified_version": "2.8.0",
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4176": {
+      "certified_version": "2.8.0",
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
+      "status": "remediated_by_certified_pin"
+    },
+    "PYSEC-2026-4177": {
+      "certified_version": "2.8.0",
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
       "status": "remediated_by_certified_pin"
     }
   },
