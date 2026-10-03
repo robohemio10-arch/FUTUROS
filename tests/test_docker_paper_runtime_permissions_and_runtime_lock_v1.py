@@ -156,7 +156,7 @@ def test_runtime_lock_contains_exactly_one_safe_gitpython_pin() -> None:
         buffer = []
     gitpython = [line for line in requirements if line.lower().startswith("gitpython==")]
 
-    assert gitpython == ["GitPython==3.1.58"]
+    assert gitpython == ["GitPython==3.1.60"]
     assert all("==" in requirement for requirement in requirements)
     assert "--hash=sha256:" in RUNTIME_LOCK.read_text(encoding="utf-8")
 
