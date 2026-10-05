@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "0eefcedebe9c95c254f639ebf1465370cdced1ba96e1afbbf7b64572eaed82c4",
+  "aggregate_sha256": "d0dba6e78aa195a827a360abc8a3088071825f658bdeed756e8f8bcae755d563",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 319,
-    "manifested_files_total": 2149,
-    "python_files": 1684,
+    "docs_files": 320,
+    "manifested_files_total": 2153,
+    "python_files": 1687,
     "runtime_excluded_files_total": 0,
-    "test_files": 461,
-    "tracked_files_total": 2150,
+    "test_files": 462,
+    "tracked_files_total": 2154,
     "workflows": 2
   },
   "deterministic": true,
@@ -1854,6 +1854,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_B_SELECTOR_ECONOMIC_ATTRIBUTION_V1.md",
       "sha256": "c42f1390b3f2f80e8445243e4d910ec7385f3147ad881747502e90f2bb219c47"
+    },
+    {
+      "bytes": 3311,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_SOAK_CHECKPOINT_CERTIFICATION_V1.md",
+      "sha256": "2ae960113543b9b03cbcb9883a8aef06b568bf29749929a919c0c2a81ddbb5f2"
     },
     {
       "bytes": 3393,
@@ -3750,6 +3756,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_selector_economic_attribution_v1.py",
       "sha256": "015387abf177c2e0d0c8f737fa81186f6253d9f3213be8c80ae3d3528ca01a7a"
+    },
+    {
+      "bytes": 1414,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_soak_checkpoint_certification_v1.py",
+      "sha256": "e2237fb40adcb6901082aacd1eccfc72c7049bd29a703c97ddaae564f77bf866"
     },
     {
       "bytes": 2753,
@@ -8516,6 +8528,12 @@
       "sha256": "6dddbcc783075ed2f8ab890421cf861473516ab7a66617aca94681eb0738cc62"
     },
     {
+      "bytes": 15194,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/soak_checkpoint_certification.py",
+      "sha256": "8a2d8febbf45beb75ae56b330cfb883c0f1403f07c54451ce8dc4a6ae1f90b78"
+    },
+    {
       "bytes": 17591,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/daily_candidate_shadow_rule_registry.py",
@@ -11862,6 +11880,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_selector_economic_attribution_v1.py",
       "sha256": "22a664b0f03003811c215862bbd674b0021717be6962cf6d3cf45d252ab2337f"
+    },
+    {
+      "bytes": 11818,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_b_soak_checkpoint_certification_v1.py",
+      "sha256": "4a24b2638393ac5d17202aedf7f69337592e908f5170d8ed545c5694ccfb9e99"
     },
     {
       "bytes": 10096,
