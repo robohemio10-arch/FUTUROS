@@ -5,17 +5,17 @@
     "resolver_report_sha256": "b4aca35b3c6b1a5b188482ed8f2376ffbaa1f0a94bc052ed239a9c87305413f5",
     "resolver_status": "resolved"
   },
-  "ci_certification_status": "ci_certified",
+  "ci_certification_status": "pending_functional_ci_revalidation",
   "container_digests": {
     "freqtrade_stable": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
     "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
     "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
   },
-  "evidence_status": "certified_clean",
+  "evidence_status": "security_clean_pending_functional_ci_revalidation",
   "functional_ci_certification": {
-    "conclusion": "success",
+    "conclusion": "superseded_by_dependency_refresh",
     "container_healthcheck_smoke": "success",
-    "exact_certified_graph": true,
+    "exact_certified_graph": false,
     "full_test_suite": {
       "passed": 5811,
       "skipped": 3,
@@ -24,7 +24,7 @@
     },
     "head_sha": "3991888034280444b15f2993d62694f334e6665a",
     "institutional_audit": "success",
-    "lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+    "lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "qlib_dependency_security_policy_audit": "success",
     "qlib_full_graph_dependency_audit": "success",
     "qlib_locked_functional_security_regression": {
@@ -49,37 +49,37 @@
     "workflow": "CI"
   },
   "latest_security_refresh": {
-    "ci_revalidation_required": false,
+    "ci_revalidation_required": true,
     "container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
-    "date": "2026-10-02",
+    "date": "2026-10-06",
     "functional_ci_conclusion": "success",
     "functional_ci_head_sha": "3991888034280444b15f2993d62694f334e6665a",
     "functional_ci_run_id": 37071277916,
     "functional_ci_run_number": 1522,
     "known_vulnerability_count": 0,
-    "p08_functional_regression_status": "ci_certified",
+    "p08_functional_regression_status": "pending_ci_certification",
     "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
     "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
-    "requirements_qlib_security_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+    "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7",
     "resolved_package_count": 190,
     "resolver_report_sha256": "647eb22a2d25210afbc12958fca17fb3490a1eb3e9ee3c7733748fedc05c374e",
-    "scope": "dependency_security_refresh",
-    "source": "controlled_linux_container"
+    "scope": "dependency_security_refresh_october_advisories",
+    "source": "github_ci_full_graph_audit"
   },
   "locks": {
     "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
     "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
-    "requirements_qlib_security_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+    "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7"
   },
   "qlib": {
     "audited_dependency_count": 188,
     "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
-    "certification_date": "2026-10-02",
-    "certification_source": "controlled_linux_container",
-    "ci_revalidation_required": false,
-    "hashed_lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+    "certification_date": "2026-10-06",
+    "certification_source": "github_ci_full_graph_audit",
+    "ci_revalidation_required": true,
+    "hashed_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "known_vulnerability_count": 0,
     "packages": {
       "cryptography": "50.0.0",
@@ -92,7 +92,10 @@
       "pyarrow": "25.0.1",
       "pyqlib": "0.9.7",
       "tornado": "6.5.9",
-      "urllib3": "2.8.0"
+      "urllib3": "2.8.0",
+      "multidict": "6.9.1",
+      "pymongo": "4.18.2",
+      "werkzeug": "3.1.9"
     },
     "pip_audit_exit_code": 0,
     "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
