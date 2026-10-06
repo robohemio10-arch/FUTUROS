@@ -89,11 +89,9 @@ jobs:
         run: make audit
 
       - name: Qlib full-graph dependency audit
-        run: >-
-          python -m pip_audit
-          -r requirements-qlib-security.lock
-          --progress-spinner off
-          --strict
+        run: |
+          python -m pip install --dry-run --ignore-installed --require-hashes --report qlib-resolver-report.json -r requirements-qlib-security.lock
+          python -m pip_audit -r requirements-qlib-security.lock --progress-spinner off --strict
 
       - name: Qlib dependency security policy audit
         run: >-
