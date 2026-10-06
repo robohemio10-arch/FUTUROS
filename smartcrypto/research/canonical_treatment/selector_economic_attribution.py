@@ -16,6 +16,7 @@ from smartcrypto.research.aibot_parity.economic_phase_final_forward_proof import
     _operational_population,
 )
 from smartcrypto.research.canonical_treatment import causal_governance as governance
+from smartcrypto.research.canonical_treatment import causal_epoch2_foundation as epoch2
 from smartcrypto.research.canonical_treatment.economic_monitor import _decision_id, _time
 from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation import (
     DEFAULT_BASELINE_RELATIVE_PATH,
@@ -24,7 +25,10 @@ from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation imp
     validate_baseline,
 )
 from smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor import (
+    build_epoch2_foundation,
     build_monitor_report,
+    load_epoch2_registration,
+    report_output_path,
     validate_historical_baseline,
 )
 from smartcrypto.runtime.integrity_traceability_v2 import AtomicWritePolicy, atomic_write_json
@@ -173,7 +177,7 @@ def build_attribution_report(
     treatment_trades: Sequence[Mapping[str, Any]],
     generated_at_utc: str,
 ) -> dict[str, Any]:
-    """Attribute only closed, exactly linked outcomes in the Branch-01 cohort."""
+    """Attribute only closed, exactly linked outcomes in the selected cohort."""
     if foundation.get("status") != "ok" or coverage.get("status") != "ok":
         raise EvidenceError("upstream_foundation_or_coverage_blocked")
     pre = foundation["historical_debt"]
@@ -184,6 +188,16 @@ def build_attribution_report(
     pre_scored_at_fix = set(pre["scored_event_ids_at_fix"])
     post_ids = set(post["eligible_event_ids"])
     eligible = pre_ids | post_ids
+    epoch = foundation.get("epoch")
+    if epoch:
+        if (epoch.get("epoch_id") != epoch2.EPOCH2_ID or pre_ids
+                or coverage.get("epoch") != epoch
+                or foundation.get("baseline_sha256") != epoch.get("epoch_baseline_sha256")
+                or any(utc(row["decision_timestamp"]) < utc(epoch["formal_activation_utc"])
+                       for row in operational.values())):
+            raise EvidenceError("attribution_epoch2_identity_or_boundary_invalid")
+    elif coverage.get("epoch") is not None:
+        raise EvidenceError("attribution_coverage_epoch_mismatch")
     if pre_ids & post_ids or eligible != set(operational):
         raise EvidenceError("attribution_population_partition_invalid")
     if (len(pre_ids) != pre["eligible"] or len(pre_scored_at_fix) != pre["scored_at_fix"]
@@ -203,8 +217,8 @@ def build_attribution_report(
     for event in sorted(eligible, key=lambda item: (utc(operational[item]["decision_timestamp"]), item)):
         op = operational[event]
         selection = scored.get(event)
-        epoch = "PRE_FIX" if event in pre_ids else "POST_FIX"
-        if epoch == "PRE_FIX" and event not in pre_scored_at_fix:
+        row_epoch = "EPOCH_2" if epoch else "PRE_FIX" if event in pre_ids else "POST_FIX"
+        if row_epoch == "PRE_FIX" and event not in pre_scored_at_fix:
             selection = None
         decision = None if selection is None else "ALLOW" if selection["selected"] is True else "ABSTAIN"
         control_values = control.get(event)
@@ -226,7 +240,7 @@ def build_attribution_report(
         margin = selection.get("score_margin") if selection else None
         rows.append({
             "decision_event_id": event,
-            "epoch": epoch,
+            "epoch": row_epoch,
             "symbol": op["symbol"],
             "side": op["side"],
             "direction": op["side"].upper(),
@@ -272,28 +286,46 @@ def build_attribution_report(
         "safety": dict(SAFETY),
         "write_performed": False,
     }
+    if epoch:
+        report["epoch"] = dict(epoch)
     report["report_sha256"] = digest(report)
     return report
 
 
-def run_attribution(*, project_root: Path, runtime_root: Path, write_report: bool = False) -> dict[str, Any]:
+def run_attribution(
+    *, project_root: Path, runtime_root: Path, write_report: bool = False,
+    epoch_registration: Path | None = None,
+) -> dict[str, Any]:
     project, runtime = project_root.resolve(), runtime_root.resolve()
     now = governance.now_utc()
     try:
-        baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
-        validate_historical_baseline(baseline)
-        validate_baseline(baseline)
+        registration = None
+        if epoch_registration is None:
+            baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
+            validate_historical_baseline(baseline)
+            validate_baseline(baseline)
         current = governance.audit_snapshots(governance.collect_runtime(runtime), git=governance._git(project))
         governance.validate_audit(current, governance.now_utc())
-        manifest = read_object(project / governance.MANIFEST_PATH)
-        governance.validate_manifest(manifest, current, governance.now_utc())
-        boundary = utc(manifest["formal_activation_utc"])
+        if epoch_registration is None:
+            manifest = read_object(project / governance.MANIFEST_PATH)
+            governance.validate_manifest(manifest, current, governance.now_utc())
+            boundary = utc(manifest["formal_activation_utc"])
+        else:
+            registration = load_epoch2_registration(epoch_registration, current)
+            manifest = registration["epoch_manifest"]
+            baseline = registration["epoch_baseline"]
+            boundary = utc(manifest["formal_activation_utc"])
         publisher = governance.CONTAINERS["publisher"]
         raw = governance.container_read(
             publisher, "/app/data/runtime/decision_ledger_paper_v1/decision_ledger_v4_2.jsonl"
         )
         records = [parse_json(line) for line in raw.splitlines() if line.strip()]
         population = _operational_population(records, boundary, governance.now_utc())
+        pre_activation_event_ids: set[str] | None = None
+        if registration is not None:
+            predecessor_boundary = utc(registration["predecessor_closeout"]["formal_activation_utc"])
+            preceding = _operational_population(records, predecessor_boundary, governance.now_utc())
+            pre_activation_event_ids = set(preceding) - set(population)
         evidence = governance.container_json(
             publisher, "/app/data/research/qlib_v3/prospective_evidence/"
             + CANONICAL.epoch_id + "/" + CANONICAL.activation_sha256 + "/evidence.json"
@@ -304,13 +336,16 @@ def run_attribution(*, project_root: Path, runtime_root: Path, write_report: boo
         scored, missing = _causal_rows(population, evidence, ledger, boundary, governance.now_utc())
         snapshot = Snapshot(
             generated_at_utc=now.isoformat(), formal_activation_utc=boundary.isoformat(),
-            causal_manifest_sha256=manifest["manifest_sha256"], parity_audit_sha256=current["audit_sha256"],
+            causal_manifest_sha256=(manifest["manifest_sha256"] if registration is None
+                                    else manifest["epoch_manifest_sha256"]),
+            parity_audit_sha256=current["audit_sha256"],
             eligible_event_times={event: record.decision_timestamp for event, record in population.items()},
             scored_rows=scored, current_missing_event_ids=tuple(sorted(missing)),
             decision_ledger_row_count=len(ledger["rows"]), v3_signal_count=len(evidence["signals"]),
             v3_outcome_count=len(evidence["outcomes"]),
         )
-        foundation = build_foundation_report(baseline, snapshot)
+        foundation = (build_foundation_report(baseline, snapshot) if registration is None
+                      else build_epoch2_foundation(registration, snapshot))
         db_paths = {}
         trades = {}
         for role in ("control", "treatment"):
@@ -329,13 +364,17 @@ def run_attribution(*, project_root: Path, runtime_root: Path, write_report: boo
             for event, record in population.items()
         }
         source_hashes = {
-            "baseline_sha256": baseline["baseline_sha256"],
-            "causal_manifest_sha256": manifest["manifest_sha256"],
+            "baseline_sha256": (baseline["baseline_sha256"] if registration is None
+                                else baseline["epoch_baseline_sha256"]),
+            "causal_manifest_sha256": (manifest["manifest_sha256"] if registration is None
+                                       else manifest["epoch_manifest_sha256"]),
             "operational_ledger_sha256": hashlib.sha256(raw).hexdigest(),
             "v3_store_sha256": evidence["store_sha256"],
             "treatment_ledger_sha256": digest(ledger),
             "runtime_fingerprints_sha256": current["fingerprints_sha256"],
         }
+        if registration is not None:
+            source_hashes["epoch_registration_sha256"] = registration["registration_sha256"]
         coverage = build_monitor_report(
             foundation=foundation, scored_rows=scored, treatment_rows=ledger["rows"],
             treatment_trades=trades["treatment"], operational_rows=operational,
@@ -344,22 +383,32 @@ def run_attribution(*, project_root: Path, runtime_root: Path, write_report: boo
                 for role in ("control", "treatment", "publisher", "monitor")}},
             runtime_fingerprints=current["fingerprints"], source_hashes=source_hashes,
             generated_at_utc=now.isoformat(),
+            pre_activation_event_ids=pre_activation_event_ids,
         )
         report = build_attribution_report(
             foundation={**foundation,
-                        "pre_fix_eligible_event_ids": baseline["baseline_population"]["eligible_event_ids"],
+                        "pre_fix_eligible_event_ids": (
+                            baseline["baseline_population"]["eligible_event_ids"]
+                            if registration is None else []),
                         "historical_debt": {**foundation["historical_debt"],
-                                            "scored_event_ids_at_fix": baseline["baseline_population"]["scored_event_ids"]}},
+                                            "scored_event_ids_at_fix": (
+                                                baseline["baseline_population"]["scored_event_ids"]
+                                                if registration is None else [])}},
             coverage=coverage, operational=operational, scored=scored,
             control_trades=trades["control"], treatment_trades=trades["treatment"],
             generated_at_utc=now.isoformat(),
         )
         after = governance.audit_snapshots(governance.collect_runtime(runtime), git=governance._git(project))
-        governance.validate_manifest(manifest, after, governance.now_utc())
+        if registration is None:
+            governance.validate_manifest(manifest, after, governance.now_utc())
+        else:
+            epoch2.validate_current_epoch2_runtime(registration, after)
         if current["fingerprints"] != after["fingerprints"]:
             raise EvidenceError("runtime_changed_during_attribution_read")
-    except (EvidenceError, OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-        reason = str(exc) if isinstance(exc, EvidenceError) else "attribution_source_invalid:" + type(exc).__name__
+    except (EvidenceError, epoch2.CausalEpoch2FoundationError, OSError, ValueError,
+            KeyError, TypeError, json.JSONDecodeError) as exc:
+        reason = (str(exc) if isinstance(exc, (EvidenceError, epoch2.CausalEpoch2FoundationError))
+                  else "attribution_source_invalid:" + type(exc).__name__)
         report = {"schema_version": SCHEMA_VERSION, "generated_at_utc": now.isoformat(),
                   "status": "blocked", "reason": reason, "summary": None,
                   "safety": dict(SAFETY), "write_performed": False}
@@ -367,7 +416,7 @@ def run_attribution(*, project_root: Path, runtime_root: Path, write_report: boo
     report.pop("report_sha256", None)
     report["report_sha256"] = digest(report)
     if write_report:
-        output = project / DEFAULT_REPORT
+        output = report_output_path(project, DEFAULT_REPORT, epoch_registration)
         output.parent.mkdir(parents=True, exist_ok=True)
         report["write_performed"] = True
         report["report_sha256"] = digest({k: v for k, v in report.items() if k != "report_sha256"})

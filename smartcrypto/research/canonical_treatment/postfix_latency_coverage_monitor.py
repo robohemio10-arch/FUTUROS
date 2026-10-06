@@ -16,6 +16,7 @@ from smartcrypto.research.aibot_parity.economic_phase_final_forward_proof import
     _operational_population,
 )
 from smartcrypto.research.canonical_treatment import causal_governance as governance
+from smartcrypto.research.canonical_treatment import causal_epoch2_foundation as epoch2
 from smartcrypto.research.canonical_treatment.economic_monitor import _decision_id, _time
 from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation import (
     DEFAULT_BASELINE_RELATIVE_PATH,
@@ -33,6 +34,12 @@ BRANCH01_BASELINE_SHA256 = "bd0d44440b6b7f8f2db6f3fc200ee32d74d3612a813f792e40e2
 BRANCH01_BASELINE_COUNTS = (109, 98, 11)
 
 
+def report_output_path(project: Path, relative: Path, epoch_registration: Path | None) -> Path:
+    if epoch_registration is None:
+        return project / relative
+    return project / relative.parent / epoch2.EPOCH2_ID / relative.name
+
+
 def validate_historical_baseline(baseline: Mapping[str, Any]) -> None:
     """Require the create-once Branch01 seal, not just a self-consistent replacement."""
     validate_baseline(baseline)
@@ -41,6 +48,70 @@ def validate_historical_baseline(baseline: Mapping[str, Any]) -> None:
             or (population["eligible"], population["scored"], population["misses"])
             != BRANCH01_BASELINE_COUNTS):
         raise EvidenceError("branch01_baseline_identity_or_counts_changed")
+
+
+def load_epoch2_registration(
+    path: Path, current_audit: Mapping[str, Any]
+) -> dict[str, Any]:
+    registration = read_object(path)
+    try:
+        epoch2.validate_registration(registration)
+        epoch2.validate_current_epoch2_runtime(registration, current_audit)
+    except epoch2.CausalEpoch2FoundationError as exc:
+        raise EvidenceError(str(exc)) from exc
+    return registration
+
+
+def epoch2_identity(registration: Mapping[str, Any]) -> dict[str, str]:
+    manifest = registration["epoch_manifest"]
+    baseline = registration["epoch_baseline"]
+    return {
+        "epoch_id": registration["epoch_id"],
+        "formal_activation_utc": manifest["formal_activation_utc"],
+        "registration_sha256": registration["registration_sha256"],
+        "epoch_manifest_sha256": manifest["epoch_manifest_sha256"],
+        "epoch_baseline_sha256": baseline["epoch_baseline_sha256"],
+    }
+
+
+def build_epoch2_foundation(
+    registration: Mapping[str, Any], snapshot: Snapshot
+) -> dict[str, Any]:
+    identity = epoch2_identity(registration)
+    boundary = utc(identity["formal_activation_utc"])
+    eligible = set(snapshot.eligible_event_times)
+    scored = set(snapshot.scored_rows)
+    missing = set(snapshot.current_missing_event_ids)
+    if utc(snapshot.formal_activation_utc) != boundary or any(
+        timestamp < boundary for timestamp in snapshot.eligible_event_times.values()
+    ):
+        raise EvidenceError("epoch2_pre_activation_population")
+    if scored - eligible or missing != eligible - scored:
+        raise EvidenceError("epoch2_population_partition_invalid")
+    post = {
+        "eligible": len(eligible),
+        "scored": len(scored),
+        "misses": len(missing),
+        "eligible_event_ids": sorted(eligible),
+        "scored_event_ids": sorted(scored),
+        "missing_event_ids": sorted(missing),
+        "coverage": len(scored) / len(eligible) if eligible else None,
+    }
+    return {
+        "status": "ok",
+        "blockers": [],
+        "baseline_sha256": identity["epoch_baseline_sha256"],
+        "epoch": identity,
+        "post_fix_counters": post,
+        "historical_debt": {
+            "eligible": 0,
+            "scored_at_fix": 0,
+            "misses_at_fix": 0,
+            "missing_event_ids": [],
+            "late_resolved_after_fix_event_ids": [],
+            "root_cause_summary": {},
+        },
+    }
 
 
 def _latency(values: Sequence[float], *, eligible: int, formula: str, sources: list[str]) -> dict[str, Any]:
@@ -92,6 +163,7 @@ def _trade_funnel(
     operational_rows: Mapping[str, Mapping[str, Any]],
     fix: datetime,
     as_of: datetime,
+    pre_activation_event_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     executed: set[str] = set()
     events_with_open_trade: set[str] = set()
@@ -111,6 +183,8 @@ def _trade_funnel(
             raise EvidenceError("treatment_trade_id_invalid_or_duplicate")
         seen_trade_ids.add(trade_id)
         event = _decision_id(row.get("enter_tag"))
+        if pre_activation_event_ids and event in pre_activation_event_ids:
+            continue
         if event is None or event not in eligible:
             orphan.append(trade_id)
             if event is not None:
@@ -169,11 +243,13 @@ def build_monitor_report(
     runtime_fingerprints: Mapping[str, Any],
     source_hashes: Mapping[str, str],
     generated_at_utc: str,
+    pre_activation_event_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     """Summarize already validated exact causal joins; never repair identities."""
     post = foundation["post_fix_counters"]
-    cumulative = foundation["b17_cumulative_counters"]
-    fix = utc(foundation["fix_deployed_at_utc"])
+    epoch = foundation.get("epoch")
+    cumulative = None if epoch else foundation["b17_cumulative_counters"]
+    fix = utc(epoch["formal_activation_utc"] if epoch else foundation["fix_deployed_at_utc"])
     eligible_ids = set(post["eligible_event_ids"])
     scored_ids = set(post["scored_event_ids"])
     missing_ids = set(post["missing_event_ids"])
@@ -183,6 +259,20 @@ def build_monitor_report(
         post["eligible"], post["scored"], post["misses"]
     ):
         raise EvidenceError("postfix_population_counts_invalid")
+    if epoch:
+        if (epoch.get("epoch_id") != epoch2.EPOCH2_ID
+                or source_hashes.get("epoch_registration_sha256") != epoch.get("registration_sha256")
+                or source_hashes.get("baseline_sha256") != epoch.get("epoch_baseline_sha256")
+                or source_hashes.get("causal_manifest_sha256") != epoch.get("epoch_manifest_sha256")
+                or foundation["historical_debt"]["eligible"] != 0
+                or foundation["historical_debt"]["scored_at_fix"] != 0
+                or foundation["historical_debt"]["misses_at_fix"] != 0
+                or foundation.get("b17_cumulative_counters") is not None):
+            raise EvidenceError("epoch2_cross_epoch_identity_or_carryover")
+        if any(utc(operational_rows[event]["decision_timestamp"]) < fix for event in eligible_ids):
+            raise EvidenceError("epoch2_pre_activation_population")
+        if pre_activation_event_ids and pre_activation_event_ids & eligible_ids:
+            raise EvidenceError("epoch2_population_overlap")
 
     by_event: dict[str, Mapping[str, Any]] = {}
     for row in treatment_rows:
@@ -202,7 +292,7 @@ def build_monitor_report(
     selected = {event for event in scored_ids if scored_rows[event].get("selected") is True}
     funnel = _trade_funnel(
         treatment_trades, eligible_ids, selected, scored_rows, operational_rows,
-        fix, utc(generated_at_utc),
+        fix, utc(generated_at_utc), pre_activation_event_ids,
     )
     funnel.update(
         eligible_decision_count=len(eligible_ids),
@@ -366,7 +456,6 @@ def build_monitor_report(
             **post, "missing_details": missing_detail,
             "late_resolved_event_ids": foundation["historical_debt"]["late_resolved_after_fix_event_ids"],
         },
-        "b17_cumulative": cumulative,
         "causal_funnel": funnel,
         "latency": latency,
         "latency_comparison": latency_comparison,
@@ -379,32 +468,53 @@ def build_monitor_report(
         "write_requested": False,
         "write_performed": False,
     }
+    if epoch:
+        report["epoch"] = dict(epoch)
+    else:
+        report["b17_cumulative"] = cumulative
     report["report_sha256"] = digest(report)
     return report
 
 
-def run_monitor(*, project_root: Path, runtime_root: Path, write_report: bool = False) -> dict[str, Any]:
+def run_monitor(
+    *, project_root: Path, runtime_root: Path, write_report: bool = False,
+    epoch_registration: Path | None = None,
+) -> dict[str, Any]:
     """Collect canonical read-only evidence; fail closed on any source mismatch."""
     project = project_root.resolve()
     runtime = runtime_root.resolve()
-    output = project / DEFAULT_REPORT
+    output = report_output_path(project, DEFAULT_REPORT, epoch_registration)
     now = governance.now_utc()
     try:
-        baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
-        validate_historical_baseline(baseline)
+        registration = None
+        if epoch_registration is None:
+            baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
+            validate_historical_baseline(baseline)
         current = governance.audit_snapshots(
             governance.collect_runtime(runtime), git=governance._git(project)
         )
         governance.validate_audit(current, governance.now_utc())
-        manifest = read_object(project / governance.MANIFEST_PATH)
-        governance.validate_manifest(manifest, current, governance.now_utc())
-        boundary = utc(manifest["formal_activation_utc"])
+        if epoch_registration is None:
+            manifest = read_object(project / governance.MANIFEST_PATH)
+            governance.validate_manifest(manifest, current, governance.now_utc())
+            boundary = utc(manifest["formal_activation_utc"])
+        else:
+            registration = load_epoch2_registration(epoch_registration, current)
+            identity = epoch2_identity(registration)
+            manifest = registration["epoch_manifest"]
+            baseline = registration["epoch_baseline"]
+            boundary = utc(identity["formal_activation_utc"])
         publisher = governance.CONTAINERS["publisher"]
         raw = governance.container_read(
             publisher, "/app/data/runtime/decision_ledger_paper_v1/decision_ledger_v4_2.jsonl"
         )
         records = [parse_json(line) for line in raw.splitlines() if line.strip()]
         population = _operational_population(records, boundary, governance.now_utc())
+        pre_activation_event_ids: set[str] | None = None
+        if registration is not None:
+            predecessor_boundary = utc(registration["predecessor_closeout"]["formal_activation_utc"])
+            preceding = _operational_population(records, predecessor_boundary, governance.now_utc())
+            pre_activation_event_ids = set(preceding) - set(population)
         evidence = governance.container_json(
             publisher, "/app/data/research/qlib_v3/prospective_evidence/"
             + CANONICAL.epoch_id + "/" + CANONICAL.activation_sha256 + "/evidence.json",
@@ -416,7 +526,8 @@ def run_monitor(*, project_root: Path, runtime_root: Path, write_report: bool = 
         snapshot = Snapshot(
             generated_at_utc=now.isoformat(),
             formal_activation_utc=boundary.isoformat(),
-            causal_manifest_sha256=manifest["manifest_sha256"],
+            causal_manifest_sha256=(manifest["manifest_sha256"] if registration is None
+                                    else manifest["epoch_manifest_sha256"]),
             parity_audit_sha256=current["audit_sha256"],
             eligible_event_times={event: record.decision_timestamp for event, record in population.items()},
             scored_rows=scored,
@@ -425,7 +536,8 @@ def run_monitor(*, project_root: Path, runtime_root: Path, write_report: bool = 
             v3_signal_count=len(evidence["signals"]),
             v3_outcome_count=len(evidence["outcomes"]),
         )
-        foundation = build_foundation_report(baseline, snapshot)
+        foundation = (build_foundation_report(baseline, snapshot) if registration is None
+                      else build_epoch2_foundation(registration, snapshot))
         db_url = current["fingerprints"]["treatment"]["db_identity"]["url"]
         if not isinstance(db_url, str) or not db_url.startswith("sqlite:////"):
             raise EvidenceError("treatment_db_not_sqlite")
@@ -435,13 +547,17 @@ def run_monitor(*, project_root: Path, runtime_root: Path, write_report: bool = 
         if not isinstance(trades, list):
             raise EvidenceError("treatment_trades_not_list")
         source_hashes = {
-            "baseline_sha256": baseline["baseline_sha256"],
-            "causal_manifest_sha256": manifest["manifest_sha256"],
+            "baseline_sha256": (baseline["baseline_sha256"] if registration is None
+                                else baseline["epoch_baseline_sha256"]),
+            "causal_manifest_sha256": (manifest["manifest_sha256"] if registration is None
+                                       else manifest["epoch_manifest_sha256"]),
             "operational_ledger_sha256": hashlib.sha256(raw).hexdigest(),
             "v3_store_sha256": evidence["store_sha256"],
             "treatment_ledger_sha256": digest(ledger),
             "runtime_fingerprints_sha256": current["fingerprints_sha256"],
         }
+        if registration is not None:
+            source_hashes["epoch_registration_sha256"] = registration["registration_sha256"]
         registration_starts = {
             role: manifest["fingerprints"][role]["started_at"]
             for role in ("control", "treatment", "publisher", "monitor")
@@ -457,21 +573,28 @@ def run_monitor(*, project_root: Path, runtime_root: Path, write_report: bool = 
             baseline={**baseline, "causal_runtime_registered_started_at_utc": registration_starts},
             runtime_fingerprints=current["fingerprints"], source_hashes=source_hashes,
             generated_at_utc=now.isoformat(),
+            pre_activation_event_ids=pre_activation_event_ids,
         )
         after = governance.audit_snapshots(
             governance.collect_runtime(runtime), git=governance._git(project)
         )
-        governance.validate_manifest(manifest, after, governance.now_utc())
+        if registration is None:
+            governance.validate_manifest(manifest, after, governance.now_utc())
+        else:
+            epoch2.validate_current_epoch2_runtime(registration, after)
         if current["fingerprints"] != after["fingerprints"]:
             raise EvidenceError("runtime_changed_during_monitor_read")
-    except (EvidenceError, OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+    except (EvidenceError, epoch2.CausalEpoch2FoundationError, OSError, ValueError,
+            KeyError, TypeError, json.JSONDecodeError) as exc:
         report = {
             "schema_version": SCHEMA_VERSION,
             "generated_at_utc": now.isoformat(),
             "status": "blocked",
             "decision": "RESEARCH_ONLY_MONITOR",
-            "reason": str(exc) if isinstance(exc, EvidenceError) else "monitor_source_invalid:" + type(exc).__name__,
-            "blockers": [str(exc) if isinstance(exc, EvidenceError) else "monitor_source_invalid:" + type(exc).__name__],
+            "reason": str(exc) if isinstance(exc, (EvidenceError, epoch2.CausalEpoch2FoundationError))
+            else "monitor_source_invalid:" + type(exc).__name__,
+            "blockers": [str(exc) if isinstance(exc, (EvidenceError, epoch2.CausalEpoch2FoundationError))
+                         else "monitor_source_invalid:" + type(exc).__name__],
             "safety": dict(SAFETY_FLAGS),
             "write_performed": False,
         }

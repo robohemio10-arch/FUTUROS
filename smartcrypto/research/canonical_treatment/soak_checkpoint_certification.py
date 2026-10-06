@@ -13,6 +13,8 @@ from smartcrypto.learning.qlib_v3_prospective.contracts import (
     digest,
     utc,
 )
+from smartcrypto.research.canonical_treatment import causal_epoch2_foundation as epoch2
+from smartcrypto.research.canonical_treatment import causal_governance as governance
 from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation import (
     DEFAULT_BASELINE_RELATIVE_PATH,
     validate_baseline,
@@ -20,6 +22,10 @@ from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation imp
 from smartcrypto.research.canonical_treatment.selector_economic_attribution import (
     SCHEMA_VERSION as ATTRIBUTION_SCHEMA_VERSION,
     run_attribution,
+)
+from smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor import (
+    epoch2_identity,
+    report_output_path,
 )
 from smartcrypto.runtime.integrity_traceability_v2 import (
     AtomicWritePolicy,
@@ -131,14 +137,18 @@ def _checkpoint_state(observed: float | int, required: float | int) -> str:
     return "PASS" if observed >= required else "PENDING_SAMPLE"
 
 
-def _postfix_summary(attribution: Mapping[str, Any]) -> Mapping[str, Any]:
+def _postfix_summary(
+    attribution: Mapping[str, Any], epoch_identity: Mapping[str, str] | None = None
+) -> Mapping[str, Any]:
     by = attribution.get("by")
     if not isinstance(by, Mapping):
         raise EvidenceError("checkpoint_attribution_groups_invalid")
     epoch = by.get("epoch")
     if not isinstance(epoch, Mapping):
         raise EvidenceError("checkpoint_attribution_epoch_group_invalid")
-    postfix = epoch.get("POST_FIX")
+    if epoch_identity is not None and set(epoch) != {"EPOCH_2"}:
+        raise EvidenceError("checkpoint_cross_epoch_group_invalid")
+    postfix = epoch.get("EPOCH_2" if epoch_identity is not None else "POST_FIX")
     if not isinstance(postfix, Mapping):
         raise EvidenceError("checkpoint_postfix_summary_missing")
     return postfix
@@ -150,6 +160,7 @@ def build_checkpoint_report(
     formal_activation_utc: str,
     fix_deployed_at_utc: str,
     baseline_sha256: str,
+    epoch_identity: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Certify post-fix sample/soak maturity without declaring economic edge."""
 
@@ -170,6 +181,15 @@ def build_checkpoint_report(
     )
     if attribution.get("baseline_sha256") != baseline_sha:
         raise EvidenceError("checkpoint_baseline_identity_mismatch")
+    if epoch_identity is not None:
+        if (epoch_identity.get("epoch_id") != epoch2.EPOCH2_ID
+                or attribution.get("epoch") != epoch_identity
+                or epoch_identity.get("epoch_baseline_sha256") != baseline_sha
+                or utc(epoch_identity["formal_activation_utc"]) != utc(formal_activation_utc)
+                or utc(fix_deployed_at_utc) != utc(formal_activation_utc)):
+            raise EvidenceError("checkpoint_epoch2_identity_or_boundary_invalid")
+    elif attribution.get("epoch") is not None:
+        raise EvidenceError("checkpoint_unexpected_epoch_identity")
 
     coverage_sha256 = _require_hex64(
         attribution.get("coverage_report_sha256"),
@@ -193,7 +213,9 @@ def build_checkpoint_report(
     if not isinstance(funnel, Mapping):
         raise EvidenceError("checkpoint_coverage_funnel_invalid")
 
-    postfix_summary = _postfix_summary(attribution)
+    postfix_summary = _postfix_summary(attribution, epoch_identity)
+    if epoch_identity is not None and attribution.get("summary") != postfix_summary:
+        raise EvidenceError("checkpoint_cross_epoch_summary_invalid")
 
     postfix_eligible = _require_count(
         funnel.get("eligible_decision_count"),
@@ -242,6 +264,8 @@ def build_checkpoint_report(
 
     if resolved_count > postfix_eligible:
         raise EvidenceError("checkpoint_resolved_exceeds_postfix_eligible")
+    if epoch_identity is not None and postfix_summary.get("eligible_count") != postfix_eligible:
+        raise EvidenceError("checkpoint_epoch2_eligible_mismatch")
     if selected_closed_count > postfix_selected:
         raise EvidenceError("checkpoint_selected_closed_exceeds_selected")
 
@@ -372,6 +396,11 @@ def build_checkpoint_report(
         "safety": dict(SAFETY),
         "write_performed": False,
     }
+    if epoch_identity is not None:
+        report["epoch"] = dict(epoch_identity)
+        report["observation"]["epoch_activation_utc"] = report["observation"].pop(
+            "fix_deployed_at_utc"
+        )
     report["report_sha256"] = digest(report)
     return report
 
@@ -381,18 +410,20 @@ def run_certification(
     project_root: Path,
     runtime_root: Path,
     write_report: bool = False,
+    epoch_registration: Path | None = None,
 ) -> dict[str, Any]:
     """Build BR04 certification from the existing BR03 attribution."""
 
     project = project_root.resolve()
     runtime = runtime_root.resolve()
-    output = project / DEFAULT_REPORT
+    output = report_output_path(project, DEFAULT_REPORT, epoch_registration)
 
     try:
         attribution = run_attribution(
             project_root=project,
             runtime_root=runtime,
             write_report=False,
+            **({"epoch_registration": epoch_registration} if epoch_registration is not None else {}),
         )
         if attribution.get("status") != "ok":
             raise EvidenceError(
@@ -400,17 +431,35 @@ def run_certification(
                 + str(attribution.get("reason", "unknown"))
             )
 
-        baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
-        validate_baseline(baseline)
+        registration = None
+        if epoch_registration is None:
+            baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
+            validate_baseline(baseline)
+        else:
+            registration = read_object(epoch_registration)
+            epoch2.validate_registration(registration)
+            baseline = registration["epoch_baseline"]
+            current = governance.audit_snapshots(
+                governance.collect_runtime(runtime), git=governance._git(project)
+            )
+            epoch2.validate_current_epoch2_runtime(registration, current)
 
         report = build_checkpoint_report(
             attribution=attribution,
             formal_activation_utc=str(baseline["formal_activation_utc"]),
-            fix_deployed_at_utc=str(baseline["fix_deployed_at_utc"]),
-            baseline_sha256=str(baseline["baseline_sha256"]),
+            fix_deployed_at_utc=str(
+                baseline["fix_deployed_at_utc"] if registration is None
+                else baseline["formal_activation_utc"]
+            ),
+            baseline_sha256=str(
+                baseline["baseline_sha256"] if registration is None
+                else baseline["epoch_baseline_sha256"]
+            ),
+            epoch_identity=epoch2_identity(registration) if registration is not None else None,
         )
     except (
         EvidenceError,
+        epoch2.CausalEpoch2FoundationError,
         OSError,
         ValueError,
         KeyError,
@@ -419,7 +468,7 @@ def run_certification(
     ) as exc:
         reason = (
             str(exc)
-            if isinstance(exc, EvidenceError)
+            if isinstance(exc, (EvidenceError, epoch2.CausalEpoch2FoundationError))
             else "checkpoint_source_invalid:" + type(exc).__name__
         )
         report = {

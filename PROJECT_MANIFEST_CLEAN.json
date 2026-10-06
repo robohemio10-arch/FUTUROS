@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "9cd8cd8ad8a28ca19672a1be6862211ff41c89ff84a5dbc6edd7dde02fd6b094",
+  "aggregate_sha256": "f2f7bc483825fdbdfc0a4b5fd32603a2725f8ac8647d0f7bee7b0b4a39d825f2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -3758,22 +3758,22 @@
       "sha256": "0d132c653ff0bb85601d15bb65f237e7a4f4e9dfd68ccb424ea7077616071731"
     },
     {
-      "bytes": 1318,
+      "bytes": 1496,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_postfix_latency_coverage_monitor_v1.py",
-      "sha256": "e8e2c5be6f299ce9d4dcce013d5aa8639d987d9e1f02406063d4a715d85afc18"
+      "sha256": "572911096c317ea7e54b04eab5682bbc7854709ebc2eca910fa9ecf08f12bf16"
     },
     {
-      "bytes": 1303,
+      "bytes": 1481,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_selector_economic_attribution_v1.py",
-      "sha256": "015387abf177c2e0d0c8f737fa81186f6253d9f3213be8c80ae3d3528ca01a7a"
+      "sha256": "b7d30cd0d6910f820d67393df88957045013edfcc8945746bb5e9838c0605099"
     },
     {
-      "bytes": 1414,
+      "bytes": 1592,
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_soak_checkpoint_certification_v1.py",
-      "sha256": "e2237fb40adcb6901082aacd1eccfc72c7049bd29a703c97ddaae564f77bf866"
+      "sha256": "39e4028e1595212d71e93c3da1a3d4811e5682ee55ea300a4af533fff816a19c"
     },
     {
       "bytes": 2753,
@@ -8528,10 +8528,10 @@
       "sha256": "97633b6de4bab1b6f3621a015769a03e069e7537dedd9ca1b95b097df198078a"
     },
     {
-      "bytes": 22550,
+      "bytes": 28467,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/postfix_latency_coverage_monitor.py",
-      "sha256": "5c2701167b3734d1d4482ecf45ab7e78f797e302def09521302314ecb019cb85"
+      "sha256": "8a1ac1040352f176f9a05a6df57b48d7c58a08ac57aa5a9c829f40514cd4ae48"
     },
     {
       "bytes": 19806,
@@ -8540,16 +8540,16 @@
       "sha256": "e046cfa9fd585b588a1ab24e3a861b4b6b38036bdeebe567ed4dd85917fe4aaa"
     },
     {
-      "bytes": 19343,
+      "bytes": 22114,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/selector_economic_attribution.py",
-      "sha256": "6dddbcc783075ed2f8ab890421cf861473516ab7a66617aca94681eb0738cc62"
+      "sha256": "8be2d4a7f15e1904cebfb52b924c4f8c0a9e0bcb8fed84c092c01d3b8bfcb06d"
     },
     {
-      "bytes": 15194,
+      "bytes": 17996,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/soak_checkpoint_certification.py",
-      "sha256": "8a2d8febbf45beb75ae56b330cfb883c0f1403f07c54451ce8dc4a6ae1f90b78"
+      "sha256": "479364db075438b7a3427de6afcafd49f39ce6eebff3229740e13aec7fddaa40"
     },
     {
       "bytes": 17591,
@@ -11894,22 +11894,22 @@
       "sha256": "058d026d4d89fd0cd76c7404f4b1f781f111da289661e844070152fbe92701dd"
     },
     {
-      "bytes": 9476,
+      "bytes": 15266,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_postfix_latency_coverage_monitor_v1.py",
-      "sha256": "48e62771d1f4af905137711c954666e5af38f018139d8114e0c11597a367e7fb"
+      "sha256": "2513bfa5120c13ba2949f0667cae0f36c416415867dded3ff4c3df8b4dff0a05"
     },
     {
-      "bytes": 8867,
+      "bytes": 11654,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_selector_economic_attribution_v1.py",
-      "sha256": "22a664b0f03003811c215862bbd674b0021717be6962cf6d3cf45d252ab2337f"
+      "sha256": "70166e50b147b9a8e66be8d126073c7e0968492a95a7335317f6932a3f244807"
     },
     {
-      "bytes": 11818,
+      "bytes": 14837,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_soak_checkpoint_certification_v1.py",
-      "sha256": "4a24b2638393ac5d17202aedf7f69337592e908f5170d8ed545c5694ccfb9e99"
+      "sha256": "14020e138fa79c5f3651d673a0675a9288abe8c29f6cb8e13fd9e4ba75756f8a"
     },
     {
       "bytes": 10096,

@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from scripts.build_paper_b_selector_economic_attribution_v1 import main
 from smartcrypto.learning.qlib_v3_prospective.contracts import EvidenceError
 from smartcrypto.research.canonical_treatment.selector_economic_attribution import (
     build_attribution_report,
@@ -193,3 +194,64 @@ def test_missing_runtime_sources_are_blocked_without_default_write(tmp_path: Pat
     assert report["summary"] is None
     assert report["write_performed"] is False
     assert not (tmp_path / "data/reports").exists()
+
+
+def _epoch2_inputs() -> dict[str, Any]:
+    inputs = _inputs()
+    old = inputs["foundation"]["pre_fix_eligible_event_ids"][0]
+    inputs["operational"].pop(old)
+    inputs["scored"].pop(old)
+    inputs["control_trades"] = [row for row in inputs["control_trades"] if old not in row["enter_tag"]]
+    inputs["foundation"]["pre_fix_eligible_event_ids"] = []
+    inputs["foundation"]["historical_debt"] = {
+        "eligible": 0, "scored_at_fix": 0, "scored_event_ids_at_fix": [], "missing_event_ids": [],
+    }
+    identity = {
+        "epoch_id": "paper-b-epoch-2", "formal_activation_utc": "2026-09-25T21:00:00Z",
+        "registration_sha256": "a" * 64, "epoch_baseline_sha256": "b" * 64,
+    }
+    inputs["foundation"]["epoch"] = identity
+    inputs["foundation"]["baseline_sha256"] = identity["epoch_baseline_sha256"]
+    inputs["coverage"]["epoch"] = identity.copy()
+    return inputs
+
+
+def test_epoch2_attribution_contains_only_post_activation_opportunities() -> None:
+    inputs = _epoch2_inputs()
+    report = build_attribution_report(**inputs)
+    assert report["epoch"] == inputs["foundation"]["epoch"]
+    assert report["summary"]["eligible_count"] == 3
+    assert set(report["by"]["epoch"]) == {"EPOCH_2"}
+    assert all(row["epoch"] == "EPOCH_2" for row in report["rows"])
+    assert not any(row["decision_event_id"] == _inputs()["foundation"]["pre_fix_eligible_event_ids"][0]
+                   for row in report["rows"])
+
+
+def test_epoch2_attribution_rejects_boundary_and_identity_mismatch() -> None:
+    inputs = _epoch2_inputs()
+    inputs["coverage"]["epoch"]["registration_sha256"] = "c" * 64
+    with pytest.raises(EvidenceError, match="attribution_epoch2_identity_or_boundary_invalid"):
+        build_attribution_report(**inputs)
+    inputs = _epoch2_inputs()
+    first = next(iter(inputs["operational"]))
+    inputs["operational"][first]["decision_timestamp"] = "2026-09-25T20:59:59Z"
+    with pytest.raises(EvidenceError, match="attribution_epoch2_identity_or_boundary_invalid"):
+        build_attribution_report(**inputs)
+
+
+def test_epoch2_attribution_cli_forwards_registration_without_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run_attribution(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"status": "ok", "write_performed": False}
+
+    monkeypatch.setattr(
+        "scripts.build_paper_b_selector_economic_attribution_v1.run_attribution",
+        fake_run_attribution,
+    )
+    assert main(["--runtime-root", "C:/runtime", "--epoch-registration", "C:/epoch.json"]) == 0
+    assert captured["epoch_registration"] == Path("C:/epoch.json")
+    assert captured["write_report"] is False
