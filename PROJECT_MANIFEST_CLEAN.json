@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "5173ee9b51bd8962bcde1346c23ad73c1ab7865861947dbd856ee61108461e8f",
+  "aggregate_sha256": "9cd8cd8ad8a28ca19672a1be6862211ff41c89ff84a5dbc6edd7dde02fd6b094",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 320,
-    "manifested_files_total": 2153,
-    "python_files": 1687,
+    "docs_files": 321,
+    "manifested_files_total": 2157,
+    "python_files": 1690,
     "runtime_excluded_files_total": 0,
-    "test_files": 462,
-    "tracked_files_total": 2154,
+    "test_files": 463,
+    "tracked_files_total": 2158,
     "workflows": 2
   },
   "deterministic": true,
@@ -1836,6 +1836,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_AUTOTRAIN_WATERMARK_ACCUMULATION_RECHECK_V1.md",
       "sha256": "89bef22de6fad8e4bf791979a6fff389323ffd0141d8ef4e22e96d0262707845"
+    },
+    {
+      "bytes": 4024,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_CAUSAL_EPOCH2_FOUNDATION_V1.md",
+      "sha256": "b80a2a1b242b75e7e003c7ad7a1e84e1946491b6113081db6f6a085e3c6bb940"
     },
     {
       "bytes": 4375,
@@ -3738,6 +3744,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_autotrain_watermark_accumulation_recheck_v1.py",
       "sha256": "38ab0c9082945ab6968f8a91b772fdfe06c8d9201b1b0b76d12f02dc6d20f5ef"
+    },
+    {
+      "bytes": 2138,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_causal_epoch2_foundation_v1.py",
+      "sha256": "0bef24a11392cf3ff6137ded933b99aaa78d5d59c64a9a5e42a651a9b7cb47ac"
     },
     {
       "bytes": 3802,
@@ -8492,6 +8504,12 @@
       "sha256": "9a19868aa4f1bf252967eb1be5c9a86f804802cbca76363cb6432729411b5261"
     },
     {
+      "bytes": 29429,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/causal_epoch2_foundation.py",
+      "sha256": "945bdc78d233dc9ccb0d0912cebfc3b5f6adc4d1d5cb80d7c1ba5acc43ddc428"
+    },
+    {
       "bytes": 52152,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/causal_governance.py",
@@ -11862,6 +11880,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_autotrain_watermark_accumulation_recheck_v1.py",
       "sha256": "47a9a25fef15761f71711c603d94e149b55afd127baf406d667eca095007b512"
+    },
+    {
+      "bytes": 11562,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_b_causal_epoch2_foundation_v1.py",
+      "sha256": "9cdf4382a244c708864e63735509db786f8d21e71f820f9acb02e22a34d6c979"
     },
     {
       "bytes": 13172,
