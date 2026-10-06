@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "f2f7bc483825fdbdfc0a4b5fd32603a2725f8ac8647d0f7bee7b0b4a39d825f2",
+  "aggregate_sha256": "4d98e3897672057e9615681e4b9d1f881fe43669ec8422772e13ef83ecef9cda",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8528,10 +8528,10 @@
       "sha256": "97633b6de4bab1b6f3621a015769a03e069e7537dedd9ca1b95b097df198078a"
     },
     {
-      "bytes": 28467,
+      "bytes": 29207,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/postfix_latency_coverage_monitor.py",
-      "sha256": "8a1ac1040352f176f9a05a6df57b48d7c58a08ac57aa5a9c829f40514cd4ae48"
+      "sha256": "0534424bac303c4e906c76ddee5f4d2b0101527964f14cc35bfa61db8296a925"
     },
     {
       "bytes": 19806,
@@ -8546,10 +8546,10 @@
       "sha256": "8be2d4a7f15e1904cebfb52b924c4f8c0a9e0bcb8fed84c092c01d3b8bfcb06d"
     },
     {
-      "bytes": 17996,
+      "bytes": 17919,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/soak_checkpoint_certification.py",
-      "sha256": "479364db075438b7a3427de6afcafd49f39ce6eebff3229740e13aec7fddaa40"
+      "sha256": "7256eef71a6ffadb96c5a840938ff7fbc9fff181b9ce9e125d9959098cf0e538"
     },
     {
       "bytes": 17591,
@@ -11894,10 +11894,10 @@
       "sha256": "058d026d4d89fd0cd76c7404f4b1f781f111da289661e844070152fbe92701dd"
     },
     {
-      "bytes": 15266,
+      "bytes": 16351,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_postfix_latency_coverage_monitor_v1.py",
-      "sha256": "2513bfa5120c13ba2949f0667cae0f36c416415867dded3ff4c3df8b4dff0a05"
+      "sha256": "c5e18a8d7cb5d29276fb20e13edc2d70f78b198427d9df853d4184e6aab40107"
     },
     {
       "bytes": 11654,
