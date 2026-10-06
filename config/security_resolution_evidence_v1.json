@@ -11,7 +11,7 @@
     "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
     "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
   },
-  "evidence_status": "security_clean_pending_functional_ci_revalidation",
+  "evidence_status": "certified_clean",
   "functional_ci_certification": {
     "conclusion": "superseded_by_dependency_refresh",
     "container_healthcheck_smoke": "success",
