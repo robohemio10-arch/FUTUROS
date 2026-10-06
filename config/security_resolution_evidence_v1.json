@@ -5,7 +5,7 @@
     "resolver_report_sha256": "b4aca35b3c6b1a5b188482ed8f2376ffbaa1f0a94bc052ed239a9c87305413f5",
     "resolver_status": "resolved"
   },
-  "ci_certification_status": "pending_functional_ci_revalidation",
+  "ci_certification_status": "ci_certified",
   "container_digests": {
     "freqtrade_stable": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
     "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
@@ -13,16 +13,16 @@
   },
   "evidence_status": "certified_clean",
   "functional_ci_certification": {
-    "conclusion": "superseded_by_dependency_refresh",
+    "conclusion": "success",
     "container_healthcheck_smoke": "success",
-    "exact_certified_graph": false,
+    "exact_certified_graph": true,
     "full_test_suite": {
-      "passed": 5811,
+      "passed": 5837,
       "skipped": 3,
       "status": "success",
       "warnings": 209
     },
-    "head_sha": "3991888034280444b15f2993d62694f334e6665a",
+    "head_sha": "35d00079b76256449bd9f415ef078b789c293946",
     "institutional_audit": "success",
     "lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "qlib_dependency_security_policy_audit": "success",
@@ -43,29 +43,29 @@
       "train_rows": 36,
       "valid_rows": 12
     },
-    "run_id": 37071277916,
-    "run_number": 1522,
+    "run_id": 37467299675,
+    "run_number": 1568,
     "security_scan": "success",
     "workflow": "CI"
   },
   "latest_security_refresh": {
-    "ci_revalidation_required": true,
+    "ci_revalidation_required": false,
     "container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
     "date": "2026-10-06",
     "functional_ci_conclusion": "success",
-    "functional_ci_head_sha": "3991888034280444b15f2993d62694f334e6665a",
-    "functional_ci_run_id": 37071277916,
-    "functional_ci_run_number": 1522,
+    "functional_ci_head_sha": "35d00079b76256449bd9f415ef078b789c293946",
+    "functional_ci_run_id": 37467299675,
+    "functional_ci_run_number": 1568,
     "known_vulnerability_count": 0,
-    "p08_functional_regression_status": "pending_ci_certification",
-    "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
+    "p08_functional_regression_status": "ci_certified",
+    "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
     "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
     "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7",
     "resolved_package_count": 190,
-    "resolver_report_sha256": "647eb22a2d25210afbc12958fca17fb3490a1eb3e9ee3c7733748fedc05c374e",
+    "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
     "scope": "dependency_security_refresh_october_advisories",
-    "source": "github_ci_full_graph_audit"
+    "source": "github_ci_full_graph_and_functional_regression"
   },
   "locks": {
     "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
@@ -77,8 +77,8 @@
     "audited_dependency_count": 188,
     "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
     "certification_date": "2026-10-06",
-    "certification_source": "github_ci_full_graph_audit",
-    "ci_revalidation_required": true,
+    "certification_source": "github_ci_full_graph_and_functional_regression",
+    "ci_revalidation_required": false,
     "hashed_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
     "known_vulnerability_count": 0,
     "packages": {
@@ -98,10 +98,10 @@
       "werkzeug": "3.1.9"
     },
     "pip_audit_exit_code": 0,
-    "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
+    "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
     "python_version": "3.12",
     "resolved_package_count": 190,
-    "resolver_report_sha256": "647eb22a2d25210afbc12958fca17fb3490a1eb3e9ee3c7733748fedc05c374e",
+    "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
     "resolver_status": "resolved",
     "security_status": "clean"
   },
