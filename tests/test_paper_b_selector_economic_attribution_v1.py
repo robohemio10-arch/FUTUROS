@@ -227,6 +227,27 @@ def test_epoch2_attribution_contains_only_post_activation_opportunities() -> Non
                    for row in report["rows"])
 
 
+def test_empty_epoch2_attribution_materializes_zero_group() -> None:
+    inputs = _epoch2_inputs()
+    inputs["operational"] = {}
+    inputs["scored"] = {}
+    inputs["control_trades"] = []
+    inputs["treatment_trades"] = []
+    inputs["foundation"]["post_fix_counters"] = {
+        "eligible": 0, "scored": 0, "misses": 0,
+        "eligible_event_ids": [], "scored_event_ids": [], "missing_event_ids": [],
+        "coverage": None,
+    }
+    inputs["coverage"]["postfix_population"] = {
+        "eligible_event_ids": [], "scored_event_ids": [],
+    }
+    report = build_attribution_report(**inputs)
+    assert report["summary"]["eligible_count"] == 0
+    assert set(report["by"]["epoch"]) == {"EPOCH_2"}
+    assert report["by"]["epoch"]["EPOCH_2"] == report["summary"]
+    assert report["rows"] == []
+
+
 def test_epoch2_attribution_rejects_boundary_and_identity_mismatch() -> None:
     inputs = _epoch2_inputs()
     inputs["coverage"]["epoch"]["registration_sha256"] = "c" * 64
