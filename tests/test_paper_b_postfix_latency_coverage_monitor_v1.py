@@ -13,6 +13,8 @@ from scripts.build_paper_b_postfix_latency_coverage_monitor_v1 import main
 from smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor import (
     BRANCH01_BASELINE_COUNTS,
     BRANCH01_BASELINE_SHA256,
+    EPOCH2_CANONICAL_ACTIVATION_UTC,
+    EPOCH2_CANONICAL_REGISTRATION_SHA256,
     build_epoch2_foundation,
     build_monitor_report,
     load_epoch2_registration,
@@ -272,7 +274,11 @@ def test_epoch2_monitor_ignores_exact_old_trades_but_blocks_unknown_orphans() ->
 def test_epoch2_registration_validation_and_drift_fail_closed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
-    registration = {"epoch_id": "paper-b-epoch-2"}
+    registration = {
+        "epoch_id": "paper-b-epoch-2",
+        "registration_sha256": EPOCH2_CANONICAL_REGISTRATION_SHA256,
+        "epoch_manifest": {"formal_activation_utc": EPOCH2_CANONICAL_ACTIVATION_UTC},
+    }
     calls: list[str] = []
     monkeypatch.setattr(
         "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
@@ -288,6 +294,28 @@ def test_epoch2_registration_validation_and_drift_fail_closed(
     )
     assert load_epoch2_registration(tmp_path / "registration.json", {}) is registration
     assert calls == ["registration", "runtime"]
+
+    for changed in (
+        {**registration, "registration_sha256": "0" * 64},
+        {
+            **registration,
+            "epoch_manifest": {
+                **registration["epoch_manifest"],
+                "formal_activation_utc": "2026-10-06T19:08:33.155008Z",
+            },
+        },
+    ):
+        monkeypatch.setattr(
+            "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
+            lambda _path, payload=changed: payload,
+        )
+        with pytest.raises(EvidenceError, match="epoch2_canonical_registration_identity_mismatch"):
+            load_epoch2_registration(tmp_path / "registration.json", {})
+
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
+        lambda _path: registration,
+    )
 
     def drift(_registration: object, _audit: object) -> None:
         raise CausalEpoch2FoundationError("epoch2_runtime_drift")
