@@ -32,6 +32,8 @@ SCHEMA_VERSION = "paper_b_postfix_latency_coverage_monitor_v1"
 DEFAULT_REPORT = Path("data/reports/canonical_treatment/paper_b_postfix_latency_coverage_monitor_v1.json")
 BRANCH01_BASELINE_SHA256 = "bd0d44440b6b7f8f2db6f3fc200ee32d74d3612a813f792e40e2c8a69b75eabc"
 BRANCH01_BASELINE_COUNTS = (109, 98, 11)
+EPOCH2_CANONICAL_REGISTRATION_SHA256 = "74901c73f766f20d9cbf157d63b52573e2c1eb56cf7a73b313ae056ce51549eb"
+EPOCH2_CANONICAL_ACTIVATION_UTC = "2026-10-06T19:08:33.155007Z"
 
 
 def report_output_path(project: Path, relative: Path, epoch_registration: Path | None) -> Path:
@@ -50,12 +52,24 @@ def validate_historical_baseline(baseline: Mapping[str, Any]) -> None:
         raise EvidenceError("branch01_baseline_identity_or_counts_changed")
 
 
+def validate_canonical_epoch2_registration(registration: Mapping[str, Any]) -> None:
+    manifest = registration.get("epoch_manifest")
+    if (
+        registration.get("epoch_id") != epoch2.EPOCH2_ID
+        or registration.get("registration_sha256") != EPOCH2_CANONICAL_REGISTRATION_SHA256
+        or not isinstance(manifest, Mapping)
+        or manifest.get("formal_activation_utc") != EPOCH2_CANONICAL_ACTIVATION_UTC
+    ):
+        raise EvidenceError("epoch2_canonical_registration_identity_mismatch")
+
+
 def load_epoch2_registration(
     path: Path, current_audit: Mapping[str, Any]
 ) -> dict[str, Any]:
     registration = read_object(path)
     try:
         epoch2.validate_registration(registration)
+        validate_canonical_epoch2_registration(registration)
         epoch2.validate_current_epoch2_runtime(registration, current_audit)
     except epoch2.CausalEpoch2FoundationError as exc:
         raise EvidenceError(str(exc)) from exc
