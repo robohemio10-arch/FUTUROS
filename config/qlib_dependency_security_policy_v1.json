@@ -51,7 +51,7 @@
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
   "expected_security_lock_package_count": 190,
   "expected_security_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
-  "expected_security_resolution_evidence_sha256": "8d9f45089d301b94d4644d50e6c294b3e56b3d4c7e6d630c8b69e0641c0fc274",
+  "expected_security_resolution_evidence_sha256": "9a7ead0dd9f5453aaf8186c73b7ab9f7bd2648481f5c39fe884c824dfc73d410",
   "p08_allowed": false,
   "p08_functional_regression": {
     "exact_certified_graph_required": true,
