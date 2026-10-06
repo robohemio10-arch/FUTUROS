@@ -347,3 +347,103 @@ def test_missing_runtime_sources_block_without_default_write(tmp_path: Path) -> 
     assert report["ready_for_separate_economic_decision"] is False
     assert report["write_performed"] is False
     assert not (tmp_path / "data" / "reports").exists()
+
+
+def _epoch2_attribution() -> tuple[dict[str, Any], dict[str, str]]:
+    attribution = _attribution()
+    post = attribution["by"]["epoch"]["POST_FIX"]
+    attribution["by"]["epoch"] = {"EPOCH_2": post}
+    attribution["summary"] = post
+    identity = {
+        "epoch_id": "paper-b-epoch-2", "formal_activation_utc": FIX_DEPLOYED,
+        "registration_sha256": "a" * 64, "epoch_baseline_sha256": BASELINE_SHA,
+    }
+    attribution["epoch"] = identity
+    attribution.pop("report_sha256")
+    attribution["report_sha256"] = digest(attribution)
+    return attribution, identity
+
+
+def test_epoch2_checkpoint_uses_only_its_epoch_and_activation_clock() -> None:
+    attribution, identity = _epoch2_attribution()
+    report = build_checkpoint_report(
+        attribution=attribution, formal_activation_utc=FIX_DEPLOYED,
+        fix_deployed_at_utc=FIX_DEPLOYED, baseline_sha256=BASELINE_SHA,
+        epoch_identity=identity,
+    )
+    assert report["epoch"] == identity
+    assert report["observation"]["postfix_resolved_count"] == 30
+    assert report["observation"]["postfix_observation_days"] == 20.0
+    assert report["observation"]["epoch_activation_utc"] == FIX_DEPLOYED
+    assert "fix_deployed_at_utc" not in report["observation"]
+
+
+def test_empty_epoch2_checkpoint_stays_pending_not_blocked() -> None:
+    attribution, identity = _epoch2_attribution()
+    zero = _summary(eligible_count=0, resolved_count=0, selected_closed_count=0)
+    attribution["generated_at_utc"] = FIX_DEPLOYED
+    attribution["summary"] = zero
+    attribution["by"]["epoch"] = {"EPOCH_2": zero}
+    attribution["coverage_funnel"] = {
+        "eligible_decision_count": 0,
+        "scored_decision_count": 0,
+        "selected_decision_count": 0,
+        "allow_decision_count": 0,
+        "executed_decision_count": 0,
+        "closed_decision_count": 0,
+        "coverage": None,
+    }
+    attribution.pop("report_sha256")
+    attribution["report_sha256"] = digest(attribution)
+    report = build_checkpoint_report(
+        attribution=attribution,
+        formal_activation_utc=FIX_DEPLOYED,
+        fix_deployed_at_utc=FIX_DEPLOYED,
+        baseline_sha256=BASELINE_SHA,
+        epoch_identity=identity,
+    )
+    assert report["status"] == "ok"
+    assert report["decision"] == "CONTINUE_NATURAL_COLLECTION"
+    assert report["observation"]["postfix_eligible"] == 0
+    assert report["sample_readiness_passed"] is False
+
+
+def test_epoch2_checkpoint_rejects_predecessor_group_and_identity_drift() -> None:
+    attribution, identity = _epoch2_attribution()
+    attribution["by"]["epoch"]["PRE_FIX"] = _summary(
+        eligible_count=109, resolved_count=109, selected_closed_count=50
+    )
+    attribution.pop("report_sha256")
+    attribution["report_sha256"] = digest(attribution)
+    with pytest.raises(EvidenceError, match="checkpoint_cross_epoch_group_invalid"):
+        build_checkpoint_report(
+            attribution=attribution, formal_activation_utc=FIX_DEPLOYED,
+            fix_deployed_at_utc=FIX_DEPLOYED, baseline_sha256=BASELINE_SHA,
+            epoch_identity=identity,
+        )
+    attribution, identity = _epoch2_attribution()
+    identity = {**identity, "registration_sha256": "f" * 64}
+    with pytest.raises(EvidenceError, match="checkpoint_epoch2_identity_or_boundary_invalid"):
+        build_checkpoint_report(
+            attribution=attribution, formal_activation_utc=FIX_DEPLOYED,
+            fix_deployed_at_utc=FIX_DEPLOYED, baseline_sha256=BASELINE_SHA,
+            epoch_identity=identity,
+        )
+
+
+def test_epoch2_checkpoint_cli_forwards_registration_without_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run_certification(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"status": "ok", "write_performed": False}
+
+    monkeypatch.setattr(
+        "scripts.build_paper_b_soak_checkpoint_certification_v1.run_certification",
+        fake_run_certification,
+    )
+    assert main(["--runtime-root", "C:/runtime", "--epoch-registration", "C:/epoch.json"]) == 0
+    assert captured["epoch_registration"] == Path("C:/epoch.json")
+    assert captured["write_report"] is False

@@ -21,6 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
     parser.add_argument("--runtime-root", type=Path, required=True)
+    parser.add_argument("--epoch-registration", type=Path)
     parser.add_argument("--write-report", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -29,6 +30,8 @@ def main(argv: list[str] | None = None) -> int:
         project_root=args.project_root,
         runtime_root=args.runtime_root,
         write_report=bool(args.write_report),
+        **({"epoch_registration": args.epoch_registration}
+           if args.epoch_registration is not None else {}),
     )
     print(
         json.dumps(

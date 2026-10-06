@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 
@@ -11,8 +13,17 @@ from scripts.build_paper_b_postfix_latency_coverage_monitor_v1 import main
 from smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor import (
     BRANCH01_BASELINE_COUNTS,
     BRANCH01_BASELINE_SHA256,
+    EPOCH2_CANONICAL_ACTIVATION_UTC,
+    EPOCH2_CANONICAL_REGISTRATION_SHA256,
+    build_epoch2_foundation,
     build_monitor_report,
+    load_epoch2_registration,
+    report_output_path,
     validate_historical_baseline,
+)
+from smartcrypto.research.canonical_treatment.postfix_causal_soak_foundation import Snapshot
+from smartcrypto.research.canonical_treatment.causal_epoch2_foundation import (
+    CausalEpoch2FoundationError,
 )
 
 
@@ -198,3 +209,145 @@ def test_branch01_baseline_identity_and_counts_are_anchored(monkeypatch: pytest.
         validate_historical_baseline({**baseline, "baseline_sha256": "0" * 64})
     with pytest.raises(EvidenceError, match="branch01_baseline_identity_or_counts_changed"):
         validate_historical_baseline({**baseline, "baseline_population": {**population, "eligible": 98}})
+
+
+def test_epoch2_foundation_uses_inclusive_activation_without_historical_carryover() -> None:
+    activation = "2026-10-06T19:08:33.155007Z"
+    registration = {
+        "epoch_id": "paper-b-epoch-2", "registration_sha256": "a" * 64,
+        "epoch_manifest": {"formal_activation_utc": activation, "epoch_manifest_sha256": "b" * 64},
+        "epoch_baseline": {"epoch_baseline_sha256": "c" * 64},
+    }
+    boundary = datetime.fromisoformat(activation.replace("Z", "+00:00"))
+    snapshot = Snapshot(
+        generated_at_utc=activation, formal_activation_utc=activation,
+        causal_manifest_sha256="b" * 64, parity_audit_sha256="d" * 64,
+        eligible_event_times={"at-boundary": boundary, "later": boundary.replace(second=34)},
+        scored_rows={"at-boundary": {}}, current_missing_event_ids=("later",),
+        decision_ledger_row_count=10, v3_signal_count=5, v3_outcome_count=0,
+    )
+    foundation = build_epoch2_foundation(registration, snapshot)
+    assert foundation["post_fix_counters"]["eligible_event_ids"] == ["at-boundary", "later"]
+    assert foundation["historical_debt"]["eligible"] == 0
+    assert "b17_cumulative_counters" not in foundation
+    bad = Snapshot(**{**snapshot.__dict__, "eligible_event_times": {
+        "old": datetime(2026, 10, 6, 19, 8, 32, tzinfo=UTC)}})
+    with pytest.raises(EvidenceError, match="epoch2_pre_activation_population"):
+        build_epoch2_foundation(registration, bad)
+
+
+def test_epoch2_monitor_ignores_exact_old_trades_but_blocks_unknown_orphans() -> None:
+    data = fixture_inputs()
+    data["foundation"]["epoch"] = {
+        "epoch_id": "paper-b-epoch-2", "formal_activation_utc": FIX,
+        "registration_sha256": "a" * 64,
+        "epoch_baseline_sha256": "b" * 64,
+        "epoch_manifest_sha256": "c" * 64,
+    }
+    data["foundation"]["historical_debt"] = {
+        "eligible": 0, "scored_at_fix": 0, "misses_at_fix": 0,
+        "missing_event_ids": [], "late_resolved_after_fix_event_ids": [],
+    }
+    data["foundation"].pop("b17_cumulative_counters")
+    data["source_hashes"] = {
+        "epoch_registration_sha256": "a" * 64,
+        "baseline_sha256": "b" * 64,
+        "causal_manifest_sha256": "c" * 64,
+    }
+    data["pre_activation_event_ids"] = {"old-event"}
+    data["treatment_trades"].append({
+        "id": 11, "open_date": "2026-09-25T00:03:00Z", "close_date": None,
+        "is_open": 1, "enter_tag": "decision_event_id=old-event",
+    })
+    report = build_monitor_report(**data)
+    assert report["status"] == "ok"
+    assert report["epoch"] == data["foundation"]["epoch"]
+    assert "b17_cumulative" not in report
+    assert report["causal_funnel"]["orphan_trade_ids"] == []
+    data["treatment_trades"][-1]["enter_tag"] = "decision_event_id=unknown"
+    assert build_monitor_report(**data)["causal_funnel"]["orphan_trade_ids"] == [11]
+    data["foundation"]["historical_debt"]["eligible"] = 1
+    with pytest.raises(EvidenceError, match="epoch2_cross_epoch_identity_or_carryover"):
+        build_monitor_report(**data)
+
+
+def test_epoch2_registration_validation_and_drift_fail_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    registration = {
+        "epoch_id": "paper-b-epoch-2",
+        "registration_sha256": EPOCH2_CANONICAL_REGISTRATION_SHA256,
+        "epoch_manifest": {"formal_activation_utc": EPOCH2_CANONICAL_ACTIVATION_UTC},
+    }
+    calls: list[str] = []
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
+        lambda _path: registration,
+    )
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.epoch2.validate_registration",
+        lambda _registration: calls.append("registration"),
+    )
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.epoch2.validate_current_epoch2_runtime",
+        lambda _registration, _audit: calls.append("runtime"),
+    )
+    assert load_epoch2_registration(tmp_path / "registration.json", {}) is registration
+    assert calls == ["registration", "runtime"]
+
+    for changed in (
+        {**registration, "registration_sha256": "0" * 64},
+        {
+            **registration,
+            "epoch_manifest": {
+                **registration["epoch_manifest"],
+                "formal_activation_utc": "2026-10-06T19:08:33.155008Z",
+            },
+        },
+    ):
+        monkeypatch.setattr(
+            "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
+            lambda _path, payload=changed: payload,
+        )
+        with pytest.raises(EvidenceError, match="epoch2_canonical_registration_identity_mismatch"):
+            load_epoch2_registration(tmp_path / "registration.json", {})
+
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.read_object",
+        lambda _path: registration,
+    )
+
+    def drift(_registration: object, _audit: object) -> None:
+        raise CausalEpoch2FoundationError("epoch2_runtime_drift")
+
+    monkeypatch.setattr(
+        "smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor.epoch2.validate_current_epoch2_runtime",
+        drift,
+    )
+    with pytest.raises(EvidenceError, match="epoch2_runtime_drift"):
+        load_epoch2_registration(tmp_path / "registration.json", {})
+
+
+def test_epoch2_report_path_cannot_overwrite_legacy_report(tmp_path: Path) -> None:
+    relative = Path("data/reports/canonical_treatment/report.json")
+    assert report_output_path(tmp_path, relative, None) == tmp_path / relative
+    assert report_output_path(tmp_path, relative, tmp_path / "registration.json") == (
+        tmp_path / "data/reports/canonical_treatment/paper-b-epoch-2/report.json"
+    )
+
+
+def test_cli_passes_explicit_epoch_registration_without_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run_monitor(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"status": "ok", "write_performed": False}
+
+    monkeypatch.setattr(
+        "scripts.build_paper_b_postfix_latency_coverage_monitor_v1.run_monitor", fake_run_monitor
+    )
+    assert main(["--runtime-root", "C:/runtime", "--epoch-registration", "C:/epoch.json"]) == 0
+    assert captured["epoch_registration"] == Path("C:/epoch.json")
+    assert captured["write_report"] is False
