@@ -25,6 +25,7 @@ from smartcrypto.research.canonical_treatment.selector_economic_attribution impo
 )
 from smartcrypto.research.canonical_treatment.postfix_latency_coverage_monitor import (
     epoch2_identity,
+    load_epoch2_registration,
     report_output_path,
 )
 from smartcrypto.runtime.integrity_traceability_v2 import (
@@ -436,13 +437,11 @@ def run_certification(
             baseline = read_object(runtime / DEFAULT_BASELINE_RELATIVE_PATH)
             validate_baseline(baseline)
         else:
-            registration = read_object(epoch_registration)
-            epoch2.validate_registration(registration)
-            baseline = registration["epoch_baseline"]
             current = governance.audit_snapshots(
                 governance.collect_runtime(runtime), git=governance._git(project)
             )
-            epoch2.validate_current_epoch2_runtime(registration, current)
+            registration = load_epoch2_registration(epoch_registration, current)
+            baseline = registration["epoch_baseline"]
 
         report = build_checkpoint_report(
             attribution=attribution,
