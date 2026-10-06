@@ -88,18 +88,18 @@ jobs:
       - name: Institutional audit
         run: make audit
 
-      - name: Qlib dependency security policy audit
-        run: >-
-          python scripts/audit_qlib_dependency_security_hardening_v1.py
-          --project-root .
-          --json
-
       - name: Qlib full-graph dependency audit
         run: >-
           python -m pip_audit
           -r requirements-qlib-security.lock
           --progress-spinner off
           --strict
+
+      - name: Qlib dependency security policy audit
+        run: >-
+          python scripts/audit_qlib_dependency_security_hardening_v1.py
+          --project-root .
+          --json
 
       - name: Paper runtime check
         run: make paper-check
