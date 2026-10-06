@@ -378,6 +378,36 @@ def test_epoch2_checkpoint_uses_only_its_epoch_and_activation_clock() -> None:
     assert "fix_deployed_at_utc" not in report["observation"]
 
 
+def test_empty_epoch2_checkpoint_stays_pending_not_blocked() -> None:
+    attribution, identity = _epoch2_attribution()
+    zero = _summary(eligible_count=0, resolved_count=0, selected_closed_count=0)
+    attribution["generated_at_utc"] = FIX_DEPLOYED
+    attribution["summary"] = zero
+    attribution["by"]["epoch"] = {"EPOCH_2": zero}
+    attribution["coverage_funnel"] = {
+        "eligible_decision_count": 0,
+        "scored_decision_count": 0,
+        "selected_decision_count": 0,
+        "allow_decision_count": 0,
+        "executed_decision_count": 0,
+        "closed_decision_count": 0,
+        "coverage": None,
+    }
+    attribution.pop("report_sha256")
+    attribution["report_sha256"] = digest(attribution)
+    report = build_checkpoint_report(
+        attribution=attribution,
+        formal_activation_utc=FIX_DEPLOYED,
+        fix_deployed_at_utc=FIX_DEPLOYED,
+        baseline_sha256=BASELINE_SHA,
+        epoch_identity=identity,
+    )
+    assert report["status"] == "ok"
+    assert report["decision"] == "CONTINUE_NATURAL_COLLECTION"
+    assert report["observation"]["postfix_eligible"] == 0
+    assert report["sample_readiness_passed"] is False
+
+
 def test_epoch2_checkpoint_rejects_predecessor_group_and_identity_drift() -> None:
     attribution, identity = _epoch2_attribution()
     attribution["by"]["epoch"]["PRE_FIX"] = _summary(
