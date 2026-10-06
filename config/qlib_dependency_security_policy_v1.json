@@ -11,14 +11,14 @@
     "security_clean_resolution": {
       "audited_dependency_count": 188,
       "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
-      "certification_date": "2026-10-02",
-      "certification_source": "controlled_linux_container",
+      "certification_date": "2026-10-06",
+      "certification_source": "github_ci_full_graph_and_functional_regression",
       "ci_revalidation_required": false,
       "functional_ci_conclusion": "success",
-      "functional_ci_head_sha": "3991888034280444b15f2993d62694f334e6665a",
-      "functional_ci_run_id": 37071277916,
-      "functional_ci_run_number": 1522,
-      "hashed_lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
+      "functional_ci_head_sha": "35d00079b76256449bd9f415ef078b789c293946",
+      "functional_ci_run_id": 37467299675,
+      "functional_ci_run_number": 1568,
+      "hashed_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
       "known_vulnerability_count": 0,
       "packages": {
         "cryptography": "50.0.0",
@@ -31,12 +31,15 @@
         "pyarrow": "25.0.1",
         "pyqlib": "0.9.7",
         "tornado": "6.5.9",
-        "urllib3": "2.8.0"
+        "urllib3": "2.8.0",
+        "multidict": "6.9.1",
+        "pymongo": "4.18.2",
+        "werkzeug": "3.1.9"
       },
       "pip_audit_exit_code": 0,
-      "pip_audit_report_sha256": "9b4177484414a7272b352e8ba8b245390b284850dfcf331656f50b2d2de37072",
+      "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
       "resolved_package_count": 190,
-      "resolver_report_sha256": "647eb22a2d25210afbc12958fca17fb3490a1eb3e9ee3c7733748fedc05c374e",
+      "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
       "resolver_status": "resolved",
       "security_status": "clean"
     }
@@ -47,12 +50,10 @@
   ],
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
   "expected_security_lock_package_count": 190,
-  "expected_security_lock_sha256": "8acbf8b3e7540f16a12b8363a4409ff047bfe1e1a16e016049e208cd88ebbd8c",
-  "expected_security_resolution_evidence_sha256": "3cf9cf20c96c0e3e7d2a36d54f87db4a299024a3eb7e4a1e130ae62cc7744289",
+  "expected_security_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+  "expected_security_resolution_evidence_sha256": "ee6aa92abe5742b588c380a33720274673d70e2d2e897644a495ef625b0e993b",
   "p08_allowed": true,
   "p08_functional_regression": {
-    "certified_proof_commit_sha": "3991888034280444b15f2993d62694f334e6665a",
-    "certified_workflow_run_id": 37071277916,
     "exact_certified_graph_required": true,
     "fallback_allowed": false,
     "network_mode": "none",
@@ -61,12 +62,14 @@
     "repository_mount": "readonly",
     "required": true,
     "schema_version": "qlib_security_functional_regression_v1",
-    "status": "ci_certified"
+    "status": "ci_certified",
+    "certified_workflow_run_id": 37467299675,
+    "certified_proof_commit_sha": "35d00079b76256449bd9f415ef078b789c293946"
   },
   "p08_security_gate_bypassed": false,
   "p08_security_gate_remains_blocked": false,
   "policy_status": "active_security_clean",
-  "policy_version": "2026-10-02.v6",
+  "policy_version": "2026-10-06.v8",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": true,
   "requirements_file": "requirements-qlib.lock",
@@ -166,6 +169,42 @@
       "certified_version": "2.8.0",
       "fixed_minimum": "2.8.0",
       "package": "urllib3",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-54p9-h82j-f925": {
+      "package": "multidict",
+      "certified_version": "6.9.1",
+      "fixed_minimum": "6.9.1",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-8fvv-fgr5-f8ch": {
+      "package": "pymongo",
+      "certified_version": "4.18.2",
+      "fixed_minimum": "4.18.1",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-qx36-8mw2-4r3x": {
+      "package": "pymongo",
+      "certified_version": "4.18.2",
+      "fixed_minimum": "4.18.2",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-v4x9-3549-crwv": {
+      "package": "pymongo",
+      "certified_version": "4.18.2",
+      "fixed_minimum": "4.18.2",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-vp6j-j7w5-5xjj": {
+      "package": "pymongo",
+      "certified_version": "4.18.2",
+      "fixed_minimum": "4.18.2",
+      "status": "remediated_by_certified_pin"
+    },
+    "GHSA-g6x2-hccm-hh4m": {
+      "package": "werkzeug",
+      "certified_version": "3.1.9",
+      "fixed_minimum": "3.1.9",
       "status": "remediated_by_certified_pin"
     }
   },
