@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "4d98e3897672057e9615681e4b9d1f881fe43669ec8422772e13ef83ecef9cda",
+  "aggregate_sha256": "a29aabee0805eed310dbd04d509d1d81bb3c446910f0b16924d86bfbf7383469",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8540,10 +8540,10 @@
       "sha256": "e046cfa9fd585b588a1ab24e3a861b4b6b38036bdeebe567ed4dd85917fe4aaa"
     },
     {
-      "bytes": 22114,
+      "bytes": 22199,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/selector_economic_attribution.py",
-      "sha256": "8be2d4a7f15e1904cebfb52b924c4f8c0a9e0bcb8fed84c092c01d3b8bfcb06d"
+      "sha256": "f9545349a2bfea9252b2c38a1c33176fe167f054d3755e54eb52e34afabeecd7"
     },
     {
       "bytes": 17919,
@@ -11900,16 +11900,16 @@
       "sha256": "c5e18a8d7cb5d29276fb20e13edc2d70f78b198427d9df853d4184e6aab40107"
     },
     {
-      "bytes": 11654,
+      "bytes": 12459,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_selector_economic_attribution_v1.py",
-      "sha256": "70166e50b147b9a8e66be8d126073c7e0968492a95a7335317f6932a3f244807"
+      "sha256": "6e0204c3b6fa32cb40f56bc4c08bdde59e6302a728846287def525a3af4c41f0"
     },
     {
-      "bytes": 14837,
+      "bytes": 16005,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_b_soak_checkpoint_certification_v1.py",
-      "sha256": "14020e138fa79c5f3651d673a0675a9288abe8c29f6cb8e13fd9e4ba75756f8a"
+      "sha256": "4e492d6ff7dbec071358680a602e9b7944b1f17c66675c26d7b93420dcc6c87b"
     },
     {
       "bytes": 10096,
