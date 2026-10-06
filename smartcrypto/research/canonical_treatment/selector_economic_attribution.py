@@ -264,6 +264,8 @@ def build_attribution_report(
             for value in values
         }
     summary = _summarize(rows)
+    if epoch and not groups["epoch"]:
+        groups["epoch"] = {"EPOCH_2": summary}
     closed = summary["selected_closed_count"]
     report: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
