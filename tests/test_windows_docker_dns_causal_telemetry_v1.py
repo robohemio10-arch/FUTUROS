@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -296,6 +297,30 @@ def test_cli_once_uses_fake_probes_without_real_dns(
     output = json.loads(capsys.readouterr().out)
     assert output["classification"] == "HOST_AND_DIRECT_DNS_OK"
     assert Path(output["jsonl_path"]).is_file()
+
+
+def test_cli_help_needs_no_optional_data_dependencies() -> None:
+    script = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "capture_windows_docker_dns_causal_telemetry_v1.py"
+    )
+    result = subprocess.run(
+        [sys.executable, "-S", str(script), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--output-dir" in result.stdout
+
+
+def test_legacy_ops_exports_keep_function_identity() -> None:
+    import smartcrypto.ops as ops
+    from smartcrypto.ops import paper_session
+
+    assert ops.build_session_state is paper_session.build_session_state
+    assert ops.collect_evidence is paper_session.collect_evidence
 
 
 def test_cli_explicit_output_overrides_invalid_environment(
