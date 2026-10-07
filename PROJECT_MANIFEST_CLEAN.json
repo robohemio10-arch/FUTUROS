@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "babbeef76f51d846e7e0ea0a17df8eefaf1652058ea3c71924bc9278cd48bca9",
+  "aggregate_sha256": "ad826f3e79257e798e097252291b66cf2aa690356a1473e25fabada42fd6d3ba",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 322,
-    "manifested_files_total": 2162,
-    "python_files": 1694,
+    "manifested_files_total": 2165,
+    "python_files": 1697,
     "runtime_excluded_files_total": 0,
-    "test_files": 464,
-    "tracked_files_total": 2163,
+    "test_files": 465,
+    "tracked_files_total": 2166,
     "workflows": 2
   },
   "deterministic": true,
@@ -3264,6 +3264,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_bitradex_ocr_legacy_canonical_xlsx_transition_v2.py",
       "sha256": "123bd195a147681fa46a840a2adde860dafa6526cc17aa97f2c0ac676d18df59"
+    },
+    {
+      "bytes": 1968,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_br10_capacity_constrained_oos_redeployment_v1.py",
+      "sha256": "349ee762c8cf9d1b65d6d3d43c619564d32aac4cd66905939e38325f035e59d7"
     },
     {
       "bytes": 2287,
@@ -8354,6 +8360,12 @@
       "sha256": "dc1dbaefafdfbfe221c232277036eb2dafb74aca455e86c33e991bbce005d560"
     },
     {
+      "bytes": 16934,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/br10_capacity_constrained_oos_redeployment.py",
+      "sha256": "176c820bbae26300eeffd7a18313f1c1628d447e02f113d0e5139a872b4a7f0c"
+    },
+    {
       "bytes": 24519,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/component_economic_attribution_ledger.py",
@@ -10512,6 +10524,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_bitradex_ocr_v11_single_command_ingestion_orchestrator.py",
       "sha256": "d56ae5a53211d7ebfab7045bc1d97bcb1fa123a87210a73a0dc24f102e7a70c5"
+    },
+    {
+      "bytes": 12842,
+      "hash_mode": "text_lf",
+      "path": "tests/test_br10_capacity_constrained_oos_redeployment_v1.py",
+      "sha256": "7d8880e00ef331156183c210e6b6e14b094b11d87c9f2afeee1471f8e4717442"
     },
     {
       "bytes": 33907,
