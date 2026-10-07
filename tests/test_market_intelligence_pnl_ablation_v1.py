@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from smartcrypto.learning.feature_contracts.dataset_manifest import frame_hash
 from smartcrypto.learning.walkforward.purged_split_engine import (
@@ -118,10 +119,34 @@ def test_feature_blocks_partition_exact_frozen_features() -> None:
     assert not any(feature.startswith("label_") for feature in flattened)
 
 
+def _capital_population(frame: pd.DataFrame) -> pd.DataFrame:
+    capital = np.arange(100.0, 100.0 + len(frame))
+    duration_hours = (
+        frame["close_time_utc"] - frame["open_time_utc"]
+    ).dt.total_seconds().to_numpy() / 3600.0
+    return pd.DataFrame(
+        {
+            "trade_sequence": frame["trade_sequence"],
+            "symbol": frame["symbol"],
+            "side": frame["side"],
+            "open_time_utc": frame["open_time_utc"],
+            "close_time_utc": frame["close_time_utc"],
+            "economic_net_pnl": frame["label_economic_net_pnl"],
+            "capital_proxy_usdt": capital,
+            "capital_hours": capital * duration_hours,
+        }
+    )
+
+
 def test_ablation_runs_on_reconstructed_walkforward_without_operational_authority(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _write_bundle(tmp_path)
+    monkeypatch.setattr(
+        ablation,
+        "_load_official_capital_population",
+        lambda manifest: (_capital_population(_dataset()), tmp_path / "master.xlsx"),
+    )
 
     report = ablation.build_market_intelligence_pnl_ablation_v1(
         project_root=tmp_path,
@@ -133,6 +158,27 @@ def test_ablation_runs_on_reconstructed_walkforward_without_operational_authorit
     assert report["feature_block_count"] == 4
     assert set(report["ablations"]) == set(ablation.FEATURE_BLOCKS)
     assert report["full_model"]["fold_count"] == 3
+    full = report["full_model"]
+    assert full["control"]["capital_proxy_total_usdt"] > full["treatment"]["capital_proxy_total_usdt"]
+    assert full["control"]["roi_on_deployed_capital_proxy"] == pytest.approx(
+        full["control"]["net_pnl"] / full["control"]["capital_proxy_total_usdt"]
+    )
+    assert full["treatment"]["net_pnl_per_capital_hour"] == pytest.approx(
+        full["treatment"]["net_pnl"] / full["treatment"]["capital_hours_total"]
+    )
+    abstention = full["abstention"]
+    assert abstention["abstained_trade_count"] == (
+        full["control"]["trade_count"] - full["treatment"]["trade_count"]
+    )
+    assert abstention["abstained_net_pnl_usdt"] == pytest.approx(
+        full["control"]["net_pnl"] - full["treatment"]["net_pnl"]
+    )
+    assert abstention["net_pnl_foregone_per_capital_hour_released"] == pytest.approx(
+        abstention["abstained_net_pnl_usdt"] / abstention["capital_hours_released"]
+    )
+    assert sum(fold["abstention"]["abstained_trade_count"] for fold in full["folds"]) == (
+        abstention["abstained_trade_count"]
+    )
     assert report["priority_segment"]["future_duration_used_as_feature"] is False
     assert report["operational_authority"] is False
     assert report["sends_orders"] is False
@@ -173,3 +219,38 @@ def test_duplicate_artifact_discovery_is_ambiguous_and_blocks(tmp_path: Path) ->
     assert report["reason"].startswith(
         f"artifact_ambiguous:{ablation.DATASET_FILE}:"
     )
+
+
+def test_official_capital_link_rejects_identity_mismatch() -> None:
+    dataset = _dataset(4)
+    population = _capital_population(dataset)
+    population.loc[0, "symbol"] = "ETHUSDT"
+    with pytest.raises(ablation.AblationError, match="official_master_identity_mismatch:symbol"):
+        ablation._attach_capital_proxy(dataset, population)
+
+
+def test_official_capital_requires_frozen_master_lineage() -> None:
+    with pytest.raises(ablation.AblationError, match="official_master_sha256_manifest_mismatch"):
+        ablation._load_official_capital_population({"official_master_sha256": "wrong"})
+
+
+def test_official_capital_link_rejects_missing_trade_sequence() -> None:
+    dataset = _dataset(4)
+    population = _capital_population(dataset).iloc[1:]
+    with pytest.raises(ablation.AblationError, match="dataset_trade_sequence_absent_from_master"):
+        ablation._attach_capital_proxy(dataset, population)
+
+
+def test_abstention_efficiency_keeps_signed_control_outcome() -> None:
+    rows = pd.DataFrame(
+        {
+            ablation.TARGET_COLUMN: [-5.0, 2.0],
+            "capital_hours": [100.0, 100.0],
+        }
+    )
+    metrics = ablation._abstention_metrics(rows)
+    assert metrics["abstained_trade_count"] == 2
+    assert metrics["abstained_net_pnl_usdt"] == -3.0
+    assert metrics["capital_hours_released"] == 200.0
+    assert metrics["net_pnl_foregone_per_capital_hour_released"] == pytest.approx(-0.015)
+    assert metrics["outcome_basis"] == "closed_control_pnl_signed"

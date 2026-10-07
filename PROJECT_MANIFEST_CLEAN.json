@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "c0b018ae49d3cc274699af71891171537934acdd8eb2ba9ed0cbef6481d8d9c2",
+  "aggregate_sha256": "11c69401b596c2e35e8d56bfff42ec5b854aa8e0ac1f56411ab72c970fc0996e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8372,10 +8372,10 @@
       "sha256": "45a3195030ab064c1b3b215e30d837d40bdacece8a7c736e41d777a12f085ff6"
     },
     {
-      "bytes": 26543,
+      "bytes": 27629,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/economic_control_treatment_scorecard.py",
-      "sha256": "d8e8cfd41fd0600f02be33f7c1745d7bc86b02f355cd9e1b5c018298899024ee"
+      "sha256": "8cf1d879e9327e0f2e12cbc95b2d727897c98f08f767d84bcd785e0ed554380c"
     },
     {
       "bytes": 28848,
@@ -8390,16 +8390,16 @@
       "sha256": "4def5c94afb69dd1a2b6ffe44d04e0269bacc3d7e999d59ead1ddc14b309b914"
     },
     {
-      "bytes": 24307,
+      "bytes": 29148,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/market_intelligence_pnl_ablation.py",
-      "sha256": "69986434e786fa1bb5ff17decd284f3a9c154784149c6b9559625a544014e779"
+      "sha256": "2c7c421cd0b605e836ea455dba06ea97d2af840849c75fe36681e82287231a84"
     },
     {
-      "bytes": 19167,
+      "bytes": 19596,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/opportunity_allocator_capital_hour_uplift.py",
-      "sha256": "17b7131200b2fec7bdf90894d1ddbcfc54a39554a1c2e46eb349114ec694e3e3"
+      "sha256": "e63db89fcce15438d7994cd271cd90a6408284c7e5d0b8e8f0be950206febcc6"
     },
     {
       "bytes": 2125,
@@ -11168,10 +11168,10 @@
       "sha256": "71e9b46e39b05a37fccb8c9a5a86556db0fc863430a83ff3f0384b461b872eed"
     },
     {
-      "bytes": 7048,
+      "bytes": 8884,
       "hash_mode": "text_lf",
       "path": "tests/test_economic_control_treatment_scorecard_v1.py",
-      "sha256": "d10cb6ad105e5c6ff3018ecd21e9a3a893dce73989dd27c61f71f9c6d192c3a8"
+      "sha256": "3599e96e6d7aaaa94207bb37e8a5ccdf615773a3c06ba6634f66e178a1db21a9"
     },
     {
       "bytes": 18822,
@@ -11486,10 +11486,10 @@
       "sha256": "9348f27c1c466ae8ab3bc2f63fe0a13c93f993d3acb7b3bb0c0318b01a5febb0"
     },
     {
-      "bytes": 6252,
+      "bytes": 9749,
       "hash_mode": "text_lf",
       "path": "tests/test_market_intelligence_pnl_ablation_v1.py",
-      "sha256": "2243ae5403352f770ec32b54a66f7fc16f1c58e2061cd18e7a450e8a961ce207"
+      "sha256": "de1830f1eda2db7e2f5a93f9215a0e184f2466de66bde4dfa847a424657d67f9"
     },
     {
       "bytes": 5476,
@@ -11702,10 +11702,10 @@
       "sha256": "0228531524f04ac7acc43fad2e6efad3846baa90d6af147bd042631fc54c898d"
     },
     {
-      "bytes": 4401,
+      "bytes": 4698,
       "hash_mode": "text_lf",
       "path": "tests/test_opportunity_allocator_capital_hour_uplift_v1.py",
-      "sha256": "c446b4552aac70a14d9ba8c98edeedc53693d5edd3c557fae2ab7ddb94f29f9f"
+      "sha256": "608a78edcd6e7c16367bd8bb494c1adeaf38dd9553ae9cfd6af86c0fa8b5ef8b"
     },
     {
       "bytes": 5386,
