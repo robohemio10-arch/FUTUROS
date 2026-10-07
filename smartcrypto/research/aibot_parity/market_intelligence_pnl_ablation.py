@@ -185,7 +185,9 @@ def _validate_feature_partition(feature_columns: Sequence[str]) -> None:
         raise AblationError("feature_block_overlap_detected")
 
 
-def _load_official_capital_population(manifest: Mapping[str, Any]) -> tuple[pd.DataFrame, Path]:
+def _load_official_capital_population(
+    manifest: Mapping[str, Any], *, project_root: Path
+) -> tuple[pd.DataFrame, Path]:
     if manifest.get("official_master_sha256") != OFFICIAL_MASTER_SHA256:
         raise AblationError("official_master_sha256_manifest_mismatch")
     paths = manifest.get("source_paths")
@@ -199,7 +201,8 @@ def _load_official_capital_population(manifest: Mapping[str, Any]) -> tuple[pd.D
     ]
     if len(candidates) != 1:
         raise AblationError("official_master_source_lineage_ambiguous")
-    path = candidates[0]
+    candidate = candidates[0]
+    path = candidate if candidate.is_absolute() else (project_root / candidate).resolve()
     if not path.is_file() or _sha256(path) != OFFICIAL_MASTER_SHA256:
         raise AblationError("official_master_source_unavailable_or_drifted")
     try:
@@ -379,7 +382,9 @@ def _load_bundle(
         "split_count": len(splits),
         "embargo_seconds": embargo_seconds,
     }
-    population, master_path = _load_official_capital_population(manifest)
+    population, master_path = _load_official_capital_population(
+        manifest, project_root=root
+    )
     dataset = _attach_capital_proxy(dataset, population)
     source["official_master_path"] = str(master_path)
     source["official_master_sha256"] = OFFICIAL_MASTER_SHA256

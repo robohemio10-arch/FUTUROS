@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -145,7 +146,10 @@ def test_ablation_runs_on_reconstructed_walkforward_without_operational_authorit
     monkeypatch.setattr(
         ablation,
         "_load_official_capital_population",
-        lambda manifest: (_capital_population(_dataset()), tmp_path / "master.xlsx"),
+        lambda manifest, *, project_root: (
+            _capital_population(_dataset()),
+            project_root / "master.xlsx",
+        ),
     )
 
     report = ablation.build_market_intelligence_pnl_ablation_v1(
@@ -231,7 +235,69 @@ def test_official_capital_link_rejects_identity_mismatch() -> None:
 
 def test_official_capital_requires_frozen_master_lineage() -> None:
     with pytest.raises(ablation.AblationError, match="official_master_sha256_manifest_mismatch"):
-        ablation._load_official_capital_population({"official_master_sha256": "wrong"})
+        ablation._load_official_capital_population(
+            {"official_master_sha256": "wrong"}, project_root=Path(".")
+        )
+
+
+@pytest.mark.parametrize("relative", [True, False])
+def test_official_master_source_uses_project_root_not_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, relative: bool,
+) -> None:
+    project_root = tmp_path / "project"
+    master_path = project_root / "data" / "trades" / "trades_master.xlsx"
+    master_path.parent.mkdir(parents=True)
+    master_path.write_bytes(b"frozen-test-master")
+    master_hash = ablation._sha256(master_path)
+    source_path = "data/trades/trades_master.xlsx" if relative else str(master_path)
+    manifest = {
+        "official_master_sha256": master_hash,
+        "source_paths": [source_path],
+        "source_hashes": {source_path: master_hash},
+    }
+    monkeypatch.setattr(ablation, "OFFICIAL_MASTER_SHA256", master_hash)
+
+    def load_master(path: Path) -> SimpleNamespace:
+        assert path == master_path
+        return SimpleNamespace(
+            audit=SimpleNamespace(master_sha256=master_hash),
+            frame=pd.DataFrame(),
+        )
+
+    monkeypatch.setattr(ablation, "load_official_trades_master", load_master)
+    monkeypatch.setattr(
+        ablation,
+        "_prepare_population",
+        lambda frame, *, enforce_canonical_population: (pd.DataFrame(), {}),
+    )
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    _, resolved_path = ablation._load_official_capital_population(
+        manifest, project_root=project_root
+    )
+    assert resolved_path == master_path
+
+
+def test_missing_relative_master_source_blocks_from_other_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    source_path = "data/trades/missing_master.xlsx"
+    manifest = {
+        "official_master_sha256": ablation.OFFICIAL_MASTER_SHA256,
+        "source_paths": [source_path],
+        "source_hashes": {source_path: ablation.OFFICIAL_MASTER_SHA256},
+    }
+    with pytest.raises(ablation.AblationError, match="official_master_source_unavailable_or_drifted"):
+        ablation._load_official_capital_population(
+            manifest, project_root=project_root
+        )
 
 
 def test_official_capital_link_rejects_missing_trade_sequence() -> None:
