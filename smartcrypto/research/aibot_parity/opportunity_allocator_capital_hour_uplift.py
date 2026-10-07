@@ -9,7 +9,6 @@ capital-hour.  Test-period outcomes, realized holding duration and Branch 08's
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
 from typing import Any
 
@@ -227,8 +226,10 @@ def _metrics(frame: pd.DataFrame) -> dict[str, Any]:
             "max_drawdown": None,
             "capital_hour_eligible_trade_count": 0,
             "capital_hour_coverage_rate": None,
+            "capital_proxy_total_usdt": 0.0,
             "capital_hours_total": 0.0,
             "capital_hour_net_pnl": 0.0,
+            "roi_on_deployed_capital_proxy": None,
             "net_pnl_per_capital_hour": None,
         }
 
@@ -260,6 +261,7 @@ def _metrics(frame: pd.DataFrame) -> dict[str, Any]:
     capital_hours_total = float(
         eligible_frame["capital_hours"].sum()
     )
+    capital_proxy_total = float(eligible_frame["capital_proxy_usdt"].sum())
     capital_hour_net_pnl = float(
         eligible_frame["economic_net_pnl"].sum()
     )
@@ -273,8 +275,14 @@ def _metrics(frame: pd.DataFrame) -> dict[str, Any]:
         "max_drawdown": _max_drawdown(pnl),
         "capital_hour_eligible_trade_count": int(len(eligible_frame)),
         "capital_hour_coverage_rate": float(len(eligible_frame) / len(ordered)),
+        "capital_proxy_total_usdt": capital_proxy_total,
         "capital_hours_total": capital_hours_total,
         "capital_hour_net_pnl": capital_hour_net_pnl,
+        "roi_on_deployed_capital_proxy": (
+            capital_hour_net_pnl / capital_proxy_total
+            if capital_proxy_total > 0.0 and len(eligible_frame) == len(ordered)
+            else None
+        ),
         "net_pnl_per_capital_hour": (
             capital_hour_net_pnl / capital_hours_total
             if capital_hours_total > 0.0

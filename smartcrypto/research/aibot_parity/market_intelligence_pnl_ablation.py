@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
@@ -16,6 +15,15 @@ from smartcrypto.learning.feature_contracts.dataset_manifest import frame_hash
 from smartcrypto.learning.walkforward.purged_split_engine import (
     build_walkforward_splits,
     public_split,
+)
+from smartcrypto.research.aibot_parity.opportunity_allocator_capital_hour_uplift import (
+    OpportunityAllocatorError,
+    _prepare_population,
+)
+from smartcrypto.research.trades_master_official.contracts import OFFICIAL_MASTER_SHA256
+from smartcrypto.research.trades_master_official.loader import (
+    OfficialMasterValidationError,
+    load_official_trades_master,
 )
 
 SCHEMA_VERSION = "market_intelligence_pnl_ablation_v1"
@@ -177,6 +185,72 @@ def _validate_feature_partition(feature_columns: Sequence[str]) -> None:
         raise AblationError("feature_block_overlap_detected")
 
 
+def _load_official_capital_population(
+    manifest: Mapping[str, Any], *, project_root: Path
+) -> tuple[pd.DataFrame, Path]:
+    if manifest.get("official_master_sha256") != OFFICIAL_MASTER_SHA256:
+        raise AblationError("official_master_sha256_manifest_mismatch")
+    paths = manifest.get("source_paths")
+    hashes = manifest.get("source_hashes")
+    if not isinstance(paths, list) or not isinstance(hashes, Mapping):
+        raise AblationError("official_master_source_lineage_missing")
+    candidates = [
+        Path(path)
+        for path in paths
+        if isinstance(path, str) and hashes.get(path) == OFFICIAL_MASTER_SHA256
+    ]
+    if len(candidates) != 1:
+        raise AblationError("official_master_source_lineage_ambiguous")
+    candidate = candidates[0]
+    path = candidate if candidate.is_absolute() else (project_root / candidate).resolve()
+    if not path.is_file() or _sha256(path) != OFFICIAL_MASTER_SHA256:
+        raise AblationError("official_master_source_unavailable_or_drifted")
+    try:
+        master = load_official_trades_master(path)
+        if master.audit.master_sha256 != OFFICIAL_MASTER_SHA256:
+            raise AblationError("official_master_audit_sha256_mismatch")
+        population, _ = _prepare_population(
+            master.frame, enforce_canonical_population=True
+        )
+    except (OfficialMasterValidationError, OpportunityAllocatorError) as exc:
+        raise AblationError(f"official_master_capital_invalid:{exc}") from exc
+    return population, path
+
+
+def _attach_capital_proxy(dataset: pd.DataFrame, population: pd.DataFrame) -> pd.DataFrame:
+    if "trade_sequence" not in dataset.columns or dataset["trade_sequence"].duplicated().any():
+        raise AblationError("dataset_trade_sequence_missing_or_duplicated")
+    if population["trade_sequence"].duplicated().any():
+        raise AblationError("master_trade_sequence_duplicated")
+    indexed = population.set_index("trade_sequence")
+    if not dataset["trade_sequence"].isin(indexed.index).all():
+        raise AblationError("dataset_trade_sequence_absent_from_master")
+    matched = indexed.loc[dataset["trade_sequence"].tolist()].reset_index(drop=True)
+    for field in ("symbol", "side", "open_time_utc", "close_time_utc"):
+        left = dataset[field].reset_index(drop=True)
+        right = matched[field]
+        if field.endswith("_utc"):
+            left = pd.to_datetime(left, utc=True)
+            right = pd.to_datetime(right, utc=True)
+        if not left.equals(right):
+            raise AblationError(f"official_master_identity_mismatch:{field}")
+    if not np.array_equal(
+        dataset[TARGET_COLUMN].to_numpy(dtype=float),
+        matched["economic_net_pnl"].to_numpy(dtype=float),
+    ):
+        raise AblationError("official_master_identity_mismatch:economic_net_pnl")
+    capital = matched["capital_proxy_usdt"].to_numpy(dtype=float)
+    hours = matched["capital_hours"].to_numpy(dtype=float)
+    if not np.isfinite(capital).all() or not np.isfinite(hours).all():
+        raise AblationError("official_master_capital_non_finite")
+    if (capital <= 0.0).any() or (hours <= 0.0).any():
+        raise AblationError("official_master_capital_denominator_non_positive")
+    result = dataset.copy()
+    result["capital_proxy_usdt"] = capital
+    result["capital_hours"] = hours
+    return result
+
+
 def _load_bundle(
     *,
     project_root: str | Path,
@@ -308,6 +382,12 @@ def _load_bundle(
         "split_count": len(splits),
         "embargo_seconds": embargo_seconds,
     }
+    population, master_path = _load_official_capital_population(
+        manifest, project_root=root
+    )
+    dataset = _attach_capital_proxy(dataset, population)
+    source["official_master_path"] = str(master_path)
+    source["official_master_sha256"] = OFFICIAL_MASTER_SHA256
     return dataset, feature_columns, splits, source
 
 
@@ -342,6 +422,38 @@ def _metrics(pnl: Sequence[float]) -> dict[str, Any]:
         "profit_factor": profit_factor,
         "win_rate": float(np.mean(values > 0.0)),
         "max_drawdown": max_drawdown,
+    }
+
+
+def _economic_metrics(rows: pd.DataFrame) -> dict[str, Any]:
+    result = _metrics(rows[TARGET_COLUMN].astype(float).tolist())
+    capital_total = float(rows["capital_proxy_usdt"].sum())
+    hours_total = float(rows["capital_hours"].sum())
+    net_pnl = float(result["net_pnl"])
+    result.update(
+        capital_proxy_total_usdt=capital_total,
+        capital_hours_total=hours_total,
+        roi_on_deployed_capital_proxy=(
+            net_pnl / capital_total if capital_total > 0.0 else None
+        ),
+        net_pnl_per_capital_hour=(
+            net_pnl / hours_total if hours_total > 0.0 else None
+        ),
+    )
+    return result
+
+
+def _abstention_metrics(rows: pd.DataFrame) -> dict[str, Any]:
+    pnl = float(rows[TARGET_COLUMN].sum())
+    hours = float(rows["capital_hours"].sum())
+    return {
+        "abstained_trade_count": int(len(rows)),
+        "abstained_net_pnl_usdt": pnl,
+        "capital_hours_released": hours,
+        "outcome_basis": "closed_control_pnl_signed",
+        "net_pnl_foregone_per_capital_hour_released": (
+            pnl / hours if hours > 0.0 else None
+        ),
     }
 
 
@@ -437,8 +549,6 @@ def _evaluate_variant(
     model_factory: ModelFactory,
 ) -> dict[str, Any]:
     fold_reports: list[dict[str, Any]] = []
-    aggregate_control: list[float] = []
-    aggregate_treatment: list[float] = []
     aggregate_selected_rows: list[pd.DataFrame] = []
     aggregate_test_rows: list[pd.DataFrame] = []
 
@@ -462,10 +572,6 @@ def _evaluate_variant(
         threshold = float(calibration["threshold"])
         selected = test_scores >= threshold
 
-        control_pnl = test[TARGET_COLUMN].to_numpy(dtype=float)
-        treatment_pnl = control_pnl[selected]
-        aggregate_control.extend(control_pnl.tolist())
-        aggregate_treatment.extend(treatment_pnl.tolist())
         test_copy = test.copy()
         test_copy["_score"] = test_scores
         test_copy["_selected"] = selected
@@ -486,21 +592,23 @@ def _evaluate_variant(
                 ],
                 "test_selected_trade_count": int(selected.sum()),
                 "test_coverage": float(selected.mean()),
-                "control": _metrics(control_pnl),
-                "treatment": _metrics(treatment_pnl),
+                "control": _economic_metrics(test_copy),
+                "treatment": _economic_metrics(test_copy.loc[selected]),
+                "abstention": _abstention_metrics(test_copy.loc[~selected]),
             }
         )
 
-    control = _metrics(aggregate_control)
-    treatment = _metrics(aggregate_treatment)
+    all_test = pd.concat(aggregate_test_rows, ignore_index=True)
+    selected_test = pd.concat(aggregate_selected_rows, ignore_index=True)
+    control = _economic_metrics(all_test)
+    treatment = _economic_metrics(selected_test)
+    abstention = _abstention_metrics(all_test.loc[~all_test["_selected"]])
     coverage = (
         treatment["trade_count"] / control["trade_count"]
         if control["trade_count"]
         else None
     )
 
-    all_test = pd.concat(aggregate_test_rows, ignore_index=True)
-    selected_test = pd.concat(aggregate_selected_rows, ignore_index=True)
     all_test["_duration_seconds"] = (
         all_test["close_time_utc"] - all_test["open_time_utc"]
     ).dt.total_seconds()
@@ -522,6 +630,7 @@ def _evaluate_variant(
         "folds": fold_reports,
         "control": control,
         "treatment": treatment,
+        "abstention": abstention,
         "coverage": coverage,
         "delta_net_pnl_vs_control": (
             float(treatment["net_pnl"]) - float(control["net_pnl"])

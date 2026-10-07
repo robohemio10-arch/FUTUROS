@@ -154,6 +154,27 @@ def _empty_kpis(reason: str) -> dict[str, dict[str, Any]]:
     }
 
 
+def _materialized_metric(
+    control: Mapping[str, Any],
+    treatment: Mapping[str, Any],
+    *,
+    source: str,
+    field: str,
+    unit: str,
+    unavailable_reason: str,
+) -> dict[str, Any]:
+    control_value = _optional(control.get(field), f"{source}.control.{field}")
+    treatment_value = _optional(treatment.get(field), f"{source}.treatment.{field}")
+    available = control_value is not None and treatment_value is not None
+    return _metric(
+        control_value,
+        treatment_value,
+        unit,
+        available=available,
+        reason=None if available else unavailable_reason,
+    )
+
+
 def _decision(
     kpis: Mapping[str, Mapping[str, Any]],
     treatment_count: int,
@@ -254,12 +275,13 @@ def _branch10(report: Mapping[str, Any]) -> dict[str, Any]:
             _number(treatment.get("net_pnl"), "branch10.treatment.net_pnl"),
             "USDT",
         ),
-        "roi": _metric(
-            None,
-            None,
-            "ratio",
-            available=False,
-            reason="capital_denominator_not_materialized_in_branch10_report",
+        "roi": _materialized_metric(
+            control,
+            treatment,
+            source="branch10",
+            field="roi_on_deployed_capital_proxy",
+            unit="ratio",
+            unavailable_reason="capital_denominator_not_materialized_in_branch10_report",
         ),
         "expectancy": _metric(
             _optional(control.get("expectancy"), "branch10.control.expectancy"),
@@ -276,12 +298,13 @@ def _branch10(report: Mapping[str, Any]) -> dict[str, Any]:
             _optional(treatment.get("max_drawdown"), "branch10.treatment.max_drawdown"),
             "USDT",
         ),
-        "net_pnl_per_capital_hour": _metric(
-            None,
-            None,
-            "USDT_per_capital_hour",
-            available=False,
-            reason="capital_hour_denominator_not_materialized_in_branch10_report",
+        "net_pnl_per_capital_hour": _materialized_metric(
+            control,
+            treatment,
+            source="branch10",
+            field="net_pnl_per_capital_hour",
+            unit="USDT_per_capital_hour",
+            unavailable_reason="capital_hour_denominator_not_materialized_in_branch10_report",
         ),
     }
     return _row(
@@ -302,7 +325,13 @@ def _branch10(report: Mapping[str, Any]) -> dict[str, Any]:
             "model": "market_intelligence_full_model",
             "regime": {"available": False, "reason": "common_pit_regime_not_materialized"},
             "symbol_side": {"available": False, "reason": "not_exposed_by_branch10_report"},
-            "capital_hour": {"available": False, "reason": "not_exposed_by_branch10_report"},
+            "capital_hour": {
+                "available": kpis["net_pnl_per_capital_hour"]["available"],
+                "reason": (
+                    None if kpis["net_pnl_per_capital_hour"]["available"]
+                    else "not_exposed_by_branch10_report"
+                ),
+            },
         },
     )
 
@@ -317,12 +346,13 @@ def _branch12(report: Mapping[str, Any]) -> dict[str, Any]:
             _number(treatment.get("net_pnl"), "branch12.treatment.net_pnl"),
             "USDT",
         ),
-        "roi": _metric(
-            None,
-            None,
-            "ratio",
-            available=False,
-            reason="capital_total_not_materialized_in_branch12_report",
+        "roi": _materialized_metric(
+            control,
+            treatment,
+            source="branch12",
+            field="roi_on_deployed_capital_proxy",
+            unit="ratio",
+            unavailable_reason="capital_total_not_materialized_in_branch12_report",
         ),
         "expectancy": _metric(
             _optional(control.get("expectancy"), "branch12.control.expectancy"),

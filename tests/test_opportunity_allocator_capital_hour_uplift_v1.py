@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from smartcrypto.research.aibot_parity.opportunity_allocator_capital_hour_uplift import (
     TOP_N_OPPORTUNITIES,
@@ -123,4 +124,10 @@ def test_capital_hour_objective_produces_positive_uplift_in_fixture() -> None:
         > combined["control"]["net_pnl_per_capital_hour"]
     )
     assert combined["net_pnl_per_capital_hour_uplift"] > 0.0
+    for arm in ("control", "treatment"):
+        metrics = combined[arm]
+        assert metrics["capital_proxy_total_usdt"] > 0.0
+        assert metrics["roi_on_deployed_capital_proxy"] == pytest.approx(
+            metrics["net_pnl"] / metrics["capital_proxy_total_usdt"]
+        )
     assert report["decision"] == "CAPITAL_HOUR_UPLIFT_OBSERVED_RESEARCH_ONLY"

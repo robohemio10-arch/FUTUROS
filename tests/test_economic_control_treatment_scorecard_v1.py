@@ -61,6 +61,10 @@ def _branch10() -> dict[str, object]:
             "control": {
                 "trade_count": 100,
                 "net_pnl": 100.0,
+                "capital_proxy_total_usdt": 1000.0,
+                "capital_hours_total": 100.0,
+                "roi_on_deployed_capital_proxy": 0.1,
+                "net_pnl_per_capital_hour": 1.0,
                 "expectancy": 1.0,
                 "profit_factor": 1.5,
                 "max_drawdown": 10.0,
@@ -68,6 +72,10 @@ def _branch10() -> dict[str, object]:
             "treatment": {
                 "trade_count": 80,
                 "net_pnl": 98.0,
+                "capital_proxy_total_usdt": 900.0,
+                "capital_hours_total": 85.0,
+                "roi_on_deployed_capital_proxy": 98.0 / 900.0,
+                "net_pnl_per_capital_hour": 98.0 / 85.0,
                 "expectancy": 1.225,
                 "profit_factor": 1.7,
                 "max_drawdown": 9.0,
@@ -99,6 +107,8 @@ def _branch12() -> dict[str, object]:
             "control": {
                 "trade_count": 200,
                 "net_pnl": 200.0,
+                "capital_proxy_total_usdt": 2000.0,
+                "roi_on_deployed_capital_proxy": 0.1,
                 "expectancy": 1.0,
                 "profit_factor": 1.5,
                 "max_drawdown": 20.0,
@@ -107,6 +117,8 @@ def _branch12() -> dict[str, object]:
             "treatment": {
                 "trade_count": 100,
                 "net_pnl": 120.0,
+                "capital_proxy_total_usdt": 1000.0,
+                "roi_on_deployed_capital_proxy": 0.12,
                 "expectancy": 1.2,
                 "profit_factor": 1.7,
                 "max_drawdown": 25.0,
@@ -177,6 +189,9 @@ def test_market_intelligence_no_metric_cherry_pick() -> None:
     assert market["kpis"]["net_pnl"]["delta"] == pytest.approx(-2.0)
     assert market["kpis"]["expectancy"]["delta"] > 0.0
     assert market["kpis"]["profit_factor"]["delta"] > 0.0
+    assert market["kpis"]["roi"]["available"] is True
+    assert market["kpis"]["roi"]["delta"] > 0.0
+    assert market["kpis"]["net_pnl_per_capital_hour"]["available"] is True
     assert market["research_decision"] == "RECALIBRATE"
     assert "net_pnl_uplift_not_positive" in market["decision_blockers"]
 
@@ -190,8 +205,30 @@ def test_allocator_efficiency_alone_not_candidate() -> None:
     assert allocator["kpis"]["net_pnl_per_capital_hour"]["delta"] == pytest.approx(0.001)
     assert allocator["kpis"]["net_pnl"]["delta"] == pytest.approx(-80.0)
     assert allocator["research_decision"] == "RECALIBRATE"
-    assert "roi_unavailable" in allocator["decision_blockers"]
+    assert allocator["kpis"]["roi"]["available"] is True
+    assert allocator["kpis"]["roi"]["delta"] == pytest.approx(0.02)
+    assert "roi_unavailable" not in allocator["decision_blockers"]
     assert "max_drawdown_ratio_exceeded" in allocator["decision_blockers"]
+
+
+def test_legacy_reports_keep_unmaterialized_efficiency_unavailable() -> None:
+    branch10 = deepcopy(_branch10())
+    branch12 = deepcopy(_branch12())
+    for arm in ("control", "treatment"):
+        branch10["full_model"][arm].pop("roi_on_deployed_capital_proxy")
+        branch10["full_model"][arm].pop("net_pnl_per_capital_hour")
+        branch12["combined_oos"][arm].pop("roi_on_deployed_capital_proxy")
+    report = build_economic_control_treatment_scorecard_from_reports(
+        branch09_report=_branch09(),
+        branch10_report=branch10,
+        branch11_report=_branch11(),
+        branch12_report=branch12,
+        ledger_report=_ledger(),
+    )
+    market, allocator = report["scorecards"][1:]
+    assert market["kpis"]["roi"]["available"] is False
+    assert market["kpis"]["net_pnl_per_capital_hour"]["available"] is False
+    assert allocator["kpis"]["roi"]["available"] is False
 
 
 def test_ledger_divergence_fails_closed() -> None:
