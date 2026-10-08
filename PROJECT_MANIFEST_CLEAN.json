@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ad826f3e79257e798e097252291b66cf2aa690356a1473e25fabada42fd6d3ba",
+  "aggregate_sha256": "ed0b29ac912a5befde94332eb4ee2a9da05c7874377a78b07c37041bc195103f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 322,
-    "manifested_files_total": 2165,
-    "python_files": 1697,
+    "manifested_files_total": 2168,
+    "python_files": 1700,
     "runtime_excluded_files_total": 0,
-    "test_files": 465,
-    "tracked_files_total": 2166,
+    "test_files": 466,
+    "tracked_files_total": 2169,
     "workflows": 2
   },
   "deterministic": true,
@@ -3270,6 +3270,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_br10_capacity_constrained_oos_redeployment_v1.py",
       "sha256": "349ee762c8cf9d1b65d6d3d43c619564d32aac4cd66905939e38325f035e59d7"
+    },
+    {
+      "bytes": 1659,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_br10_profit_recalibration_v1.py",
+      "sha256": "078f283381a4bc428f9ac528b59bf53987f6fbb201645eaf0f242390249cee9e"
     },
     {
       "bytes": 2287,
@@ -8366,6 +8372,12 @@
       "sha256": "176c820bbae26300eeffd7a18313f1c1628d447e02f113d0e5139a872b4a7f0c"
     },
     {
+      "bytes": 12641,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/br10_profit_recalibration.py",
+      "sha256": "56b4857448a2a8eaa9be61b7c269c8426253467e02bcfa28ebe5cffc41a70e4b"
+    },
+    {
       "bytes": 24519,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/component_economic_attribution_ledger.py",
@@ -10530,6 +10542,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_br10_capacity_constrained_oos_redeployment_v1.py",
       "sha256": "7d8880e00ef331156183c210e6b6e14b094b11d87c9f2afeee1471f8e4717442"
+    },
+    {
+      "bytes": 5545,
+      "hash_mode": "text_lf",
+      "path": "tests/test_br10_profit_recalibration_v1.py",
+      "sha256": "f4698b60a0de1cb210b83876ce0bc63c8529c03dee0579ec908b9cbf5f721a33"
     },
     {
       "bytes": 33907,
