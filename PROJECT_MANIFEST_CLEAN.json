@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "99f1ac15a227487fdedf4c719c930432a4b362cc0a332c42edc6cd96631c26f9",
+  "aggregate_sha256": "1d550f1e217c7b05cda3bd5a320dd6b4fcd6e9872fab23f8a7a5f3887bb8f48f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 322,
-    "manifested_files_total": 2174,
-    "python_files": 1706,
+    "manifested_files_total": 2185,
+    "python_files": 1717,
     "runtime_excluded_files_total": 0,
-    "test_files": 468,
-    "tracked_files_total": 2175,
+    "test_files": 471,
+    "tracked_files_total": 2186,
     "workflows": 2
   },
   "deterministic": true,
@@ -3518,6 +3518,18 @@
       "sha256": "14f6850bd1cc8a5f6a77634c9116fb553f71cb44b8ffabb503887dd44f79cc1f"
     },
     {
+      "bytes": 1866,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_market_intelligence_event_flow_discovery_v1.py",
+      "sha256": "d95dc80d4f30446922a4b51ee16440a11c9e3c45305b8d041da58ff9e8d1cd7b"
+    },
+    {
+      "bytes": 1663,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_market_intelligence_flow_lite_oos_ablation_v1.py",
+      "sha256": "a4e5ee92326355ee8a0e3816d636536d9149364473615176ce0625d06d69231c"
+    },
+    {
       "bytes": 1979,
       "hash_mode": "text_lf",
       "path": "scripts/build_market_intelligence_pit_source_foundation_v1.py",
@@ -3906,6 +3918,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_shadow_survivor_remediation_research_v1.py",
       "sha256": "064b88d92065a28754765fdba114405438d04d78af146f07532d7662baf31659"
+    },
+    {
+      "bytes": 1448,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_perpetual_relative_value_fresh_oos_v1.py",
+      "sha256": "762b0d8fccfeff6df8a54b601a16917de2c8f27d10c074cc0bcc8412ffce2497"
     },
     {
       "bytes": 30341,
@@ -8426,6 +8444,24 @@
       "sha256": "4def5c94afb69dd1a2b6ffe44d04e0269bacc3d7e999d59ead1ddc14b309b914"
     },
     {
+      "bytes": 11574,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/market_intelligence_event_flow_discovery.py",
+      "sha256": "dda82915897504214c8f63c7f737849551c68a8b0a4bcf64995ecb057aa4b9b1"
+    },
+    {
+      "bytes": 13874,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/market_intelligence_event_flow_source.py",
+      "sha256": "533a29665c40c21b9f41d9d54d2e68a26d876e3283107baaaf02b7232bc140be"
+    },
+    {
+      "bytes": 18807,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/market_intelligence_flow_lite_oos_ablation.py",
+      "sha256": "190b5482c770ba96d09f84ce4fdf6a3d09cfde90a66c0c91d2c6c495bd534105"
+    },
+    {
       "bytes": 22011,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/market_intelligence_pit_source_foundation.py",
@@ -8454,6 +8490,18 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/performance_reconciliation.py",
       "sha256": "38ad6659011682fe113817d92913ab4eef5e1dcf419b22fffcbde56bcf1700e2"
+    },
+    {
+      "bytes": 23714,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/perpetual_relative_value_fresh_oos.py",
+      "sha256": "9a1c82c97c4fbbb8d022bbcbfd5fb25320824b1071f290ad7742567a9c90772a"
+    },
+    {
+      "bytes": 7250,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/perpetual_relative_value_source.py",
+      "sha256": "b5bee77bf844ef9d845cfb9d72a5dece99cbf25f1f6fc9b45d474a152baaf512"
     },
     {
       "bytes": 3866,
@@ -11546,6 +11594,18 @@
       "sha256": "9348f27c1c466ae8ab3bc2f63fe0a13c93f993d3acb7b3bb0c0318b01a5febb0"
     },
     {
+      "bytes": 13415,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_event_flow_discovery_v1.py",
+      "sha256": "bc43b5b8184529ae71b052a18408bff1f19f84d38524cda8e46060a6ee923d54"
+    },
+    {
+      "bytes": 14109,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_flow_lite_oos_ablation_v1.py",
+      "sha256": "497eb5e010934bae6cfe5955a82080828f2fe2c418778c9cb414cbadb2e3ec95"
+    },
+    {
       "bytes": 10254,
       "hash_mode": "text_lf",
       "path": "tests/test_market_intelligence_pit_source_foundation_v1.py",
@@ -12288,6 +12348,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_signal_riskmanager_runtime_wiring_v1.py",
       "sha256": "491d6904aada4b206724bd04d8bf6182c37b295ff178367af349dce9d6fe40c1"
+    },
+    {
+      "bytes": 13666,
+      "hash_mode": "text_lf",
+      "path": "tests/test_perpetual_relative_value_fresh_oos_v1.py",
+      "sha256": "834a2aa3df5013fe83b933efea1e61174484a64eff8fa40b5d72baf4eb2162a7"
     },
     {
       "bytes": 303,
