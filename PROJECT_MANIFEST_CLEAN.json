@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "ed0b29ac912a5befde94332eb4ee2a9da05c7874377a78b07c37041bc195103f",
+  "aggregate_sha256": "5ef5835d295467a81bcd1f95ee38378de04c1fd70dd14b1c25ba892d280e5f36",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 322,
-    "manifested_files_total": 2168,
-    "python_files": 1700,
+    "manifested_files_total": 2171,
+    "python_files": 1703,
     "runtime_excluded_files_total": 0,
-    "test_files": 466,
-    "tracked_files_total": 2169,
+    "test_files": 467,
+    "tracked_files_total": 2172,
     "workflows": 2
   },
   "deterministic": true,
@@ -3528,6 +3528,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_market_intelligence_snapshot_v1.py",
       "sha256": "1e8c20e813a0aed9cb061a2676bf52a1e95f2d5a80fbd03a958ca9e344680334"
+    },
+    {
+      "bytes": 1876,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_market_intelligence_v2_oos_ablation_v1.py",
+      "sha256": "b303987854d4cb9f93fbd1e4865b39a6f6873e3d08bd135d5b79ea70bb9edfbc"
     },
     {
       "bytes": 296,
@@ -8420,6 +8426,12 @@
       "sha256": "5db0da552a03bbd601b0f5a8a4e22a8547c00562fcc936dd139f5d91162a6cc8"
     },
     {
+      "bytes": 19997,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/aibot_parity/market_intelligence_v2_oos_ablation.py",
+      "sha256": "d0c5041be444ff3f9c702f795ccd04ba99fee5b9078f9c1423f99e1abe5e35f9"
+    },
+    {
       "bytes": 19596,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/opportunity_allocator_capital_hour_uplift.py",
@@ -11526,6 +11538,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_market_intelligence_pnl_ablation_v1.py",
       "sha256": "e83103af4057a80e4d027743265eb47703821387eee629ae1475d43300c07142"
+    },
+    {
+      "bytes": 9090,
+      "hash_mode": "text_lf",
+      "path": "tests/test_market_intelligence_v2_oos_ablation_v1.py",
+      "sha256": "bb551e8a2cfad90bd974012576f3aeb11148ce0f90cc5b9043857a129fd8e394"
     },
     {
       "bytes": 5476,
