@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "1d550f1e217c7b05cda3bd5a320dd6b4fcd6e9872fab23f8a7a5f3887bb8f48f",
+  "aggregate_sha256": "9e56b062e5d731f20362d16be717ab00ddffb14c9dda8b3f7b6dc00cdeea4b52",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 322,
-    "manifested_files_total": 2185,
-    "python_files": 1717,
+    "docs_files": 323,
+    "manifested_files_total": 2189,
+    "python_files": 1720,
     "runtime_excluded_files_total": 0,
-    "test_files": 471,
-    "tracked_files_total": 2186,
+    "test_files": 472,
+    "tracked_files_total": 2190,
     "workflows": 2
   },
   "deterministic": true,
@@ -1326,6 +1326,12 @@
       "hash_mode": "text_lf",
       "path": "docs/EXECUTION_COST_NOTIONAL_CALIBRATION_V1.md",
       "sha256": "038443056bed8bdf3a1116860a49091423955fa2edfb440ae3cb7caaf133feee"
+    },
+    {
+      "bytes": 4970,
+      "hash_mode": "text_lf",
+      "path": "docs/EXECUTION_PROSPECTIVE_EVIDENCE_READINESS_V1.md",
+      "sha256": "6213cef5e1e841093524b22600a34abb398fa64547f7c5a20200a0d353e0f841"
     },
     {
       "bytes": 958,
@@ -3456,6 +3462,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_execution_intelligence_net_pnl_attribution_v1.py",
       "sha256": "b6e4f3b9d0e7ff342f7eb8cb340c32897d0a6f072d24cdcfac663effdb572835"
+    },
+    {
+      "bytes": 2655,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_execution_prospective_evidence_readiness_v1.py",
+      "sha256": "3f7f8ccf857dd2b44b87196a5f1ce1261294ed3ced12dc113118d3dcaf1beb31"
     },
     {
       "bytes": 1628,
@@ -8816,6 +8828,12 @@
       "sha256": "1a48309091b856b2f602f435ca7de12aa5e2b72c440697435a406520ba5f67dc"
     },
     {
+      "bytes": 24665,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/execution_intelligence/evidence_readiness.py",
+      "sha256": "dbfe9c5a8d69ecf65a23125b98f9f5e5f11dedc0a7ca98534251a690bb7bf06f"
+    },
+    {
       "bytes": 5962,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/execution_intelligence/fill_model.py",
@@ -11322,6 +11340,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_execution_policy_simulator_v1.py",
       "sha256": "e5deecef0511565adc728cf15bc78a9bbf1a9ae738363a0ae6e168ebcfd64fdb"
+    },
+    {
+      "bytes": 17385,
+      "hash_mode": "text_lf",
+      "path": "tests/test_execution_prospective_evidence_readiness_v1.py",
+      "sha256": "366981f687353733d0b7487a53fa10a761874d23140b02504838e27f960988b1"
     },
     {
       "bytes": 2575,
