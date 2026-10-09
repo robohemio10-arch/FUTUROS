@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "9e56b062e5d731f20362d16be717ab00ddffb14c9dda8b3f7b6dc00cdeea4b52",
+  "aggregate_sha256": "62ec0fa4f889259653eab63d43a46f1798d9bbbcb299987f5f7e0eba5224e9d1",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 323,
-    "manifested_files_total": 2189,
-    "python_files": 1720,
+    "docs_files": 324,
+    "manifested_files_total": 2197,
+    "python_files": 1727,
     "runtime_excluded_files_total": 0,
-    "test_files": 472,
-    "tracked_files_total": 2190,
+    "test_files": 473,
+    "tracked_files_total": 2198,
     "workflows": 2
   },
   "deterministic": true,
@@ -1326,6 +1326,12 @@
       "hash_mode": "text_lf",
       "path": "docs/EXECUTION_COST_NOTIONAL_CALIBRATION_V1.md",
       "sha256": "038443056bed8bdf3a1116860a49091423955fa2edfb440ae3cb7caaf133feee"
+    },
+    {
+      "bytes": 6670,
+      "hash_mode": "text_lf",
+      "path": "docs/EXECUTION_DECISION_L1_PROSPECTIVE_COLLECTOR_V1.md",
+      "sha256": "1e1b9dbdb1cf888e9a08c0c4acaf413f89b2b3ff990995a1a63190eba36dc4d3"
     },
     {
       "bytes": 4970,
@@ -4158,6 +4164,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/clear_phase17_runtime_controls.py",
       "sha256": "7ceded7213329405b35ead6e55166156984c2d00bffed5c80a2265011d43c123"
+    },
+    {
+      "bytes": 5273,
+      "hash_mode": "text_lf",
+      "path": "scripts/collect_execution_decision_l1_prospective_v1.py",
+      "sha256": "1a504cd54a1f46d476832c5f2c1751392087f02c7e39ab9e7a225b8e12cf36b3"
     },
     {
       "bytes": 504,
@@ -8102,6 +8114,36 @@
       "sha256": "1e712f8f5296211adbae2f350ba4e98099a0a8d11e50164287db3ef4dfee3382"
     },
     {
+      "bytes": 69,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/__init__.py",
+      "sha256": "354555eaae4d557fddee35383f1aa8be8a333c98153ff18f830c660311687134"
+    },
+    {
+      "bytes": 5389,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/archive.py",
+      "sha256": "4afce2e1771fca24decdd48c54f695f9af135d772541d01a0148e4150b7e9c63"
+    },
+    {
+      "bytes": 24958,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/collector.py",
+      "sha256": "abad6c8840d489d213891163ff754d3788ca8ccd40d0e4fa4a100e36e3b5c2df"
+    },
+    {
+      "bytes": 8487,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/contracts.py",
+      "sha256": "c81629258449d0be8f620ce13edb871b0ef4c5ec73dbfc1e0186854eab56e503"
+    },
+    {
+      "bytes": 3678,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/transport.py",
+      "sha256": "e622d680eab90c80d62d4281831bcc0ecc6b52cba3bda6dde46f8278f2546859"
+    },
+    {
       "bytes": 24358,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/final_technical_audit.py",
@@ -11328,6 +11370,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_evidence_bundle_secret_redaction_gate_v1.py",
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
+    },
+    {
+      "bytes": 31213,
+      "hash_mode": "text_lf",
+      "path": "tests/test_execution_decision_l1_prospective_collector_v1.py",
+      "sha256": "2807093a04247bf580a6023d00dbd5e08e0efcfee71b7a037cdcfa63d8060989"
     },
     {
       "bytes": 3415,
