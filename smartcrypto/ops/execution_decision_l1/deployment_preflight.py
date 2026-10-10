@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import hashlib
-import json
 import os
 import platform
 import re
@@ -29,7 +28,6 @@ from smartcrypto.research.execution_intelligence.evidence_readiness import (
     _read_stable,
     contract_schema_sha256,
 )
-from smartcrypto.risk.kill_switch_guard import DEFAULT_KILL_SWITCH_PATH, normalize_state
 
 from .archive import validate_external_root
 from .contracts import (
@@ -42,9 +40,9 @@ from .contracts import (
     schema_sha256,
 )
 from .transport import FetchError, PublicClient, PublicHTTPClient
+from .kill_switch_authority import AuthorityDenied, LEDGER_RELATIVE, inspect_authority
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-LEDGER_RELATIVE = Path("data/runtime/decision_ledger_paper_v1/decision_ledger_v4_2.jsonl")
 MAX_LEDGER_RECORDS = 50000
 MAX_LINE_BYTES = 65536
 WINDOWS_HOST = os.name == "nt"
@@ -53,6 +51,7 @@ CODE_PATHS = (
     "smartcrypto/ops/execution_decision_l1/contracts.py",
     "smartcrypto/ops/execution_decision_l1/transport.py",
     "smartcrypto/ops/execution_decision_l1/archive.py",
+    "smartcrypto/ops/execution_decision_l1/kill_switch_authority.py",
     "scripts/collect_execution_decision_l1_prospective_v1.py",
 )
 Status = Literal["PROVEN", "UNPROVEN", "FAILED"]
@@ -241,12 +240,19 @@ def inspect_code(root: Path) -> tuple[dict[str, Any], list[Check]]:
         and "thread.join(" in collector
         and "shutdown_incomplete" in collector
     )
-    imports = [
-        node.module or ""
-        for node in ast.walk(trees[CODE_PATHS[0]])
-        if isinstance(node, ast.ImportFrom)
-    ]
-    external_stop = any("kill_switch" in value for value in imports) or "kill_switch" in collector
+    external_stop = (
+        all(
+            token in collector
+            for token in (
+                "AuthorityMonitor(",
+                "self.authority.start()",
+                "self.authority.require(fresh=True)",
+                "self.archive.bind_authority(",
+                "self.authority.close(",
+            )
+        )
+        and "self._authorize_write()" in sources[CODE_PATHS[3]]
+    )
     bounded = all(
         token in collector
         for token in (
@@ -269,7 +275,7 @@ def inspect_code(root: Path) -> tuple[dict[str, Any], list[Check]]:
             'HTTPSConnection("fapi.binance.com"',
             '"/fapi/v1/ticker/bookTicker?symbol="',
             "subprocess.run(",
-            "timeout=timeout",
+            "timeout=min(0.05, remaining)",
             '"-I"',
             '"-B"',
         )
@@ -353,32 +359,12 @@ def inspect_archive(
     )
 
 
-def inspect_paper_kill_switch(root: Path) -> tuple[dict[str, Any], Check]:
-    path = root / DEFAULT_KILL_SWITCH_PATH
-    _regular_source(path)
-    if path.stat().st_size > 1024 * 1024:
-        raise AuditFailure("kill_switch_size_limit")
-    raw, metadata = _read_stable(path)
-    payload = json.loads(raw)
-    if not isinstance(payload, dict) or not ("global" in payload or "enabled" in payload):
-        raise AuditFailure("explicit_kill_switch_state_required")
-    if "enabled" in payload and not isinstance(payload["enabled"], bool):
-        raise AuditFailure("kill_switch_enabled_must_be_boolean")
-    parsed = normalize_state(payload, "paper")
-    if parsed["runtime_mode"] != "paper":
-        raise AuditFailure("kill_switch_not_paper")
-    enabled = parsed["global"]["enabled"] or any(
-        value["enabled"]
-        for symbol, value in parsed["symbols"].items()
-        if symbol in {"BTCUSDT", "ETHUSDT"}
-    )
-    return {**metadata, "blocks_activation": enabled, "modified": False}, Check(
-        "paper_kill_switch",
-        "FAILED" if enabled else "PROVEN",
-        "canonical_paper_kill_switch_enabled"
-        if enabled
-        else "canonical_paper_kill_switch_clear_snapshot_only",
-        "HOST",
+def inspect_paper_kill_switch(
+    root: Path, symbols: tuple[str, ...] = ("BTCUSDT", "ETHUSDT")
+) -> tuple[dict[str, Any], Check]:
+    metadata = inspect_authority(root, root / LEDGER_RELATIVE, symbols)
+    return {**metadata, "blocks_activation": False, "modified": False}, Check(
+        "paper_kill_switch", "PROVEN", "canonical_paper_kill_switch_clear_snapshot_only", "HOST"
     )
 
 
@@ -483,7 +469,11 @@ def audit_deployment(
 
     def failure(check_id: str, exc: BaseException) -> None:
         # No raw exception, environment, response body or credential strings.
-        reason = exc.reason if isinstance(exc, AuditFailure) else f"{check_id}_{type(exc).__name__}"
+        reason = (
+            exc.reason
+            if isinstance(exc, (AuditFailure, AuthorityDenied))
+            else f"{check_id}_{type(exc).__name__}"
+        )
         checks.append(Check(check_id, "FAILED", reason, "HOST"))
 
     try:
@@ -540,7 +530,9 @@ def audit_deployment(
         except (OSError, ValueError, OverflowError) as exc:
             failure("decision_ledger", exc)
         try:
-            sources["paper_kill_switch"], check = inspect_paper_kill_switch(runtime_root)
+            sources["paper_kill_switch"], check = inspect_paper_kill_switch(
+                runtime_root, limits.symbols
+            )
             checks.append(check)
         except (OSError, ValueError, RuntimeError) as exc:
             failure("paper_kill_switch", exc)
@@ -558,7 +550,19 @@ def audit_deployment(
             "NOT_OBSERVED",
         )
     )
-    sources["transport"] = public_diagnostic(limits, authorized=diagnose_public_connectivity)
+    try:
+        if diagnose_public_connectivity:
+            inspect_authority(
+                runtime_root, (runtime_root or project_root) / LEDGER_RELATIVE, limits.symbols
+            )
+        sources["transport"] = public_diagnostic(limits, authorized=diagnose_public_connectivity)
+    except AuthorityDenied as exc:
+        sources["transport"] = {
+            "status": "FAILED",
+            "reason": exc.reason,
+            "network_calls_executed": False,
+            "market_messages_archived": False,
+        }
     checks.append(
         Check(
             "public_transport",

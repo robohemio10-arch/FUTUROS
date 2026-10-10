@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "926dce5225f841d1912f5c05d2805e9d8901e66fc6e5c36f88179220bd8dc141",
+  "aggregate_sha256": "33312381b3d7d19a3d7569c3b43cbe7bf1198177c2bab5dc91793b7e58706ec5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 325,
-    "manifested_files_total": 2201,
-    "python_files": 1730,
+    "manifested_files_total": 2203,
+    "python_files": 1732,
     "runtime_excluded_files_total": 0,
-    "test_files": 474,
-    "tracked_files_total": 2202,
+    "test_files": 475,
+    "tracked_files_total": 2204,
     "workflows": 2
   },
   "deterministic": true,
@@ -1328,16 +1328,16 @@
       "sha256": "038443056bed8bdf3a1116860a49091423955fa2edfb440ae3cb7caaf133feee"
     },
     {
-      "bytes": 4986,
+      "bytes": 5116,
       "hash_mode": "text_lf",
       "path": "docs/EXECUTION_DECISION_L1_DEPLOYMENT_PREFLIGHT_V1.md",
-      "sha256": "2efed4fa2512b7ab40202bb5cb3927e99c16fd58075c32c819f51e96a87e045a"
+      "sha256": "0bfc9c4335236425eb8bc1187bb51809909c7eab37f87c6d55cc11626d8dab0e"
     },
     {
-      "bytes": 6670,
+      "bytes": 9056,
       "hash_mode": "text_lf",
       "path": "docs/EXECUTION_DECISION_L1_PROSPECTIVE_COLLECTOR_V1.md",
-      "sha256": "1e1b9dbdb1cf888e9a08c0c4acaf413f89b2b3ff990995a1a63190eba36dc4d3"
+      "sha256": "7374468ed6f1b4a66fd18154f7613ad00dc70bf3324f1c25477ca59a725618d6"
     },
     {
       "bytes": 4970,
@@ -4178,10 +4178,10 @@
       "sha256": "7ceded7213329405b35ead6e55166156984c2d00bffed5c80a2265011d43c123"
     },
     {
-      "bytes": 5273,
+      "bytes": 5761,
       "hash_mode": "text_lf",
       "path": "scripts/collect_execution_decision_l1_prospective_v1.py",
-      "sha256": "1a504cd54a1f46d476832c5f2c1751392087f02c7e39ab9e7a225b8e12cf36b3"
+      "sha256": "740739fd756591dc435be2dd706a16c9f7d4a8d711ec256fd569963ef78fbe52"
     },
     {
       "bytes": 504,
@@ -8132,16 +8132,16 @@
       "sha256": "354555eaae4d557fddee35383f1aa8be8a333c98153ff18f830c660311687134"
     },
     {
-      "bytes": 5389,
+      "bytes": 5937,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/archive.py",
-      "sha256": "4afce2e1771fca24decdd48c54f695f9af135d772541d01a0148e4150b7e9c63"
+      "sha256": "a7f7b291ef14f491fbcf45237fdc2728f13d3dd0fd1f12b14bb3ca7979521d42"
     },
     {
-      "bytes": 24958,
+      "bytes": 28867,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/collector.py",
-      "sha256": "abad6c8840d489d213891163ff754d3788ca8ccd40d0e4fa4a100e36e3b5c2df"
+      "sha256": "6bcea5a52d1b5631ce75d6a1eec28b415b36f0c8014a425eabb168b98196451f"
     },
     {
       "bytes": 8487,
@@ -8150,16 +8150,22 @@
       "sha256": "c81629258449d0be8f620ce13edb871b0ef4c5ec73dbfc1e0186854eab56e503"
     },
     {
-      "bytes": 24824,
+      "bytes": 24668,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/deployment_preflight.py",
-      "sha256": "8ea33b600072fd7d37e210738d1ec763e52d5b756bbb148a259449dd2663daa6"
+      "sha256": "64a3d10b6cd22123d7681234d80f1701c30b0d677d0a951043d0c659a202ada9"
     },
     {
-      "bytes": 3678,
+      "bytes": 12554,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/kill_switch_authority.py",
+      "sha256": "36da4126337f8426cbf7588cf71aa1913c203225416897694f2f6b854b849f18"
+    },
+    {
+      "bytes": 5473,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/transport.py",
-      "sha256": "e622d680eab90c80d62d4281831bcc0ecc6b52cba3bda6dde46f8278f2546859"
+      "sha256": "8ad018a94fd122dbf98a33a76a06fa3d6e7fe4fa6213390861d64e6dd3680dc0"
     },
     {
       "bytes": 24358,
@@ -11390,16 +11396,22 @@
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
     },
     {
-      "bytes": 19514,
+      "bytes": 26392,
       "hash_mode": "text_lf",
-      "path": "tests/test_execution_decision_l1_deployment_preflight_v1.py",
-      "sha256": "8e00926ecba540dec6bc80099d5acad8fee64dd5d52d5a7697f875ace21c9e62"
+      "path": "tests/test_execution_decision_l1_canonical_killswitch_gate_v1.py",
+      "sha256": "cdf8f6273c4da6cf6eb6269794227a50e104f810d48124c43de651b1a0a63fd4"
     },
     {
-      "bytes": 31213,
+      "bytes": 19863,
+      "hash_mode": "text_lf",
+      "path": "tests/test_execution_decision_l1_deployment_preflight_v1.py",
+      "sha256": "7fa7e911413edce5c30d1a79faf8101262c180069ea0ca31695e8a5644eeac67"
+    },
+    {
+      "bytes": 32799,
       "hash_mode": "text_lf",
       "path": "tests/test_execution_decision_l1_prospective_collector_v1.py",
-      "sha256": "2807093a04247bf580a6023d00dbd5e08e0efcfee71b7a037cdcfa63d8060989"
+      "sha256": "50ad6c7e6812531ef952aadd7719def1a7bc3b3a1d039a1f0bae18d01e23b6cb"
     },
     {
       "bytes": 3415,

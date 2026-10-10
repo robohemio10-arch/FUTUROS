@@ -80,7 +80,41 @@ confirm shutdown_complete. A session/archive write attempt is reported even on I
 The archive byte budget bounds segment payload bytes; small session/manifest metadata
 and atomic-write temporary space are additional. They contain no raw environment data.
 
-## Readiness Boundary
+## Canonical Kill-Switch Enforcement
+
+An explicit absolute runtime root and its canonical ledger are required, even with
+`--ledger-path`. The sole authority is runtime-root/data/runtime/kill_switch.json,
+using the existing KillSwitchGuard pure normalization, never evaluate/load_state or
+its event logger. No authority file, CLEAR state or bypass is created. Only explicit
+schema-v1 Paper state with boolean entries, UTC metadata and non-default clearance
+can authorize this observer. Missing, corrupt, conflicting, inaccessible, changing,
+symlink/reparse or indeterminate state blocks; global or ANY requested-symbol block
+stops the complete session. Legacy/default-filled state is not proof of clearance.
+
+Authorization precedes public network, archive construction, producer startup and
+each filesystem write (mkdir, session, segment, final manifest). One read-only monitor
+polls at most four times/second (250ms minimum interval), reading at most 64KiB.
+Every request/write boundary waits for a fresh read; critical paths do not perform
+filesystem reads themselves. The read/authorization deadline is 750ms; expired proof
+or monitor failure latches denial, with no automatic recovery or restart.
+
+Revocation stops producers, discards pending archive records without flushing or
+writing a final manifest, and retains the cause in the in-memory process report.
+Public child cancellation checks every 50ms, with a 500ms termination wait. All workers,
+including the authority reader, share the existing shutdown budget (default 15s,
+maximum 30s). A stuck reader, producer, writer or unconfirmed child termination means
+shutdown_incomplete, never PASS. Previously committed archive records are not rewritten.
+
+This is bounded sampled authorization, not an instantaneous filesystem transaction
+with the external authority writer. A state change immediately after a successful
+read is detected on the next read; an atomic write already started cannot be undone.
+No subsequent write is started after observed denial, and delayed/stuck reads cannot
+renew permission. Local-path binding is not proof of the running Paper process or
+clocks. COLLECTOR_KILLSWITCH_ENFORCEMENT is an engineering/session gate only; full
+deployment readiness still requires independent host, clocks, durability and isolation
+evidence. No operational kill-switch was modified or real collection performed.
+
+## Evidence Readiness Boundary
 
 Engineering gate: COLLECTOR_READY_FOR_OPT_IN after focused validation. This captures
 decision L1 only, not submit/ack/fills, actual fees, maker/taker, L2, queue or economic
