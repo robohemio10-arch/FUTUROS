@@ -463,26 +463,139 @@ def test_cancelled_public_child_is_killed_with_bounded_wait(
 def test_failed_child_cancellation_is_incomplete_shutdown(
     runtime: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    cancellation_attempted = threading.Event()
+
     class Process:
         stdout = stderr = None
 
         def communicate(self, timeout: float) -> tuple[str, str]:
             replace_state(runtime, payload(**{"global": entry(True)}))
+            assert value.stop_event.wait(2), "canonical revocation was not observed"
+            assert value.failure == "authority_global_blocked"
             raise subprocess.TimeoutExpired("fixture", timeout)
 
         def poll(self) -> None:
             return None
 
         def kill(self) -> None:
+            assert value.authority.failure == "authority_global_blocked"
+            cancellation_attempted.set()
             raise PermissionError("not-logged-secret")
 
     monkeypatch.setattr(transport.subprocess, "Popen", lambda *args, **kwargs: Process())
     value = session(runtime, client=transport.PublicHTTPClient())
-    report = value.run(0.5)
+    report = value.run(3)
+    assert cancellation_attempted.is_set()
+    assert report["status"] == "blocked"
     assert report["reason"] == "shutdown_incomplete"
+    assert report["canonical_kill_switch"]["reason"] == "authority_global_blocked"
+    assert value.failure == "authority_global_blocked"
     assert not report["shutdown_complete"]
     assert report["metrics"]["shutdown_public_children_unconfirmed"] == 1
     assert report["COLLECTOR_KILLSWITCH_ENFORCEMENT"] == "BLOCKED"
+    assert report["collector_gate"] == "BLOCKED_COLLECTOR_SESSION"
+    assert "not-logged-secret" not in json.dumps(report)
+
+
+def completed_report_fixture(runtime: Path) -> collector.Collector:
+    value = session(runtime)
+    value.started = T0
+    value.authority.snapshot = authority.read_authority(
+        runtime, runtime / authority.LEDGER_RELATIVE, value.config.symbols
+    )
+    value.producers_done.set()
+    value.consumer_done.set()
+    value.metrics.add("decisions_observed")
+    value.metrics.add("matched_decisions")
+    return value
+
+
+@pytest.mark.parametrize("authority_first", [True, False])
+def test_shutdown_reason_independent_of_failure_order(runtime: Path, authority_first: bool) -> None:
+    value = completed_report_fixture(runtime)
+
+    def fail_cancellation() -> None:
+        try:
+            raise PermissionError("fixture-public-child-cannot-terminate")
+        except PermissionError as exc:
+            raise transport.PublicShutdownError("public_child_shutdown_incomplete") from exc
+
+    if authority_first:
+        value.authority.deny("authority_global_blocked")
+    value._guarded(fail_cancellation)
+    if not authority_first:
+        value.authority.deny("authority_global_blocked")
+    original_failure = value.failure
+    report = value.report()
+    assert report["status"] == "blocked" and report["reason"] == "shutdown_incomplete"
+    assert report["canonical_kill_switch"]["reason"] == "authority_global_blocked"
+    assert not report["shutdown_complete"]
+    assert report["COLLECTOR_KILLSWITCH_ENFORCEMENT"] == "BLOCKED"
+    assert report["collector_gate"] == "BLOCKED_COLLECTOR_SESSION"
+    assert report["metrics"]["shutdown_public_children_unconfirmed"] == 1
+    assert report["pit_coverage_pct"] is None
+    assert value.failure == original_failure
+    assert original_failure == (
+        "authority_global_blocked" if authority_first else "shutdown_incomplete"
+    )
+    assert report == value.report()
+
+
+@pytest.mark.parametrize(
+    "counter",
+    [
+        "shutdown_public_children_unconfirmed",
+        "shutdown_workers_alive",
+        "shutdown_producers_alive",
+    ],
+)
+@pytest.mark.parametrize(
+    "prior_failure", [None, "authority_global_blocked", "archive_PermissionError"]
+)
+def test_proven_shutdown_incomplete_overrides_any_prior_reason(
+    runtime: Path, counter: str, prior_failure: str | None
+) -> None:
+    value = completed_report_fixture(runtime)
+    if prior_failure == "authority_global_blocked":
+        value.authority.deny(prior_failure)
+    elif prior_failure:
+        value.halt(prior_failure)
+    value.metrics.add(counter)
+    report = value.report()
+    assert report["reason"] == "shutdown_incomplete" and report["status"] == "blocked"
+    assert report["collector_gate"] == "BLOCKED_COLLECTOR_SESSION"
+    assert report["COLLECTOR_KILLSWITCH_ENFORCEMENT"] == "BLOCKED"
+    assert not report["shutdown_complete"]
+    assert report["pit_coverage_pct"] is None
+    assert report["metrics"][counter] == 1 and value.failure == prior_failure
+    if prior_failure == "authority_global_blocked":
+        assert report["canonical_kill_switch"]["reason"] == prior_failure
+
+
+@pytest.mark.parametrize("failure", ["authority_global_blocked", "archive_PermissionError"])
+def test_report_preserves_failure_without_inventing_incomplete_shutdown(
+    runtime: Path, failure: str
+) -> None:
+    value = completed_report_fixture(runtime)
+    if failure == "authority_global_blocked":
+        value.authority.deny(failure)
+    else:
+        value.halt(failure)
+    report = value.report()
+    assert report["reason"] == failure and report["status"] == "blocked"
+    assert report["shutdown_complete"]
+    assert report["COLLECTOR_KILLSWITCH_ENFORCEMENT"] == "BLOCKED"
+
+
+def test_report_normal_shutdown_remains_pass(runtime: Path) -> None:
+    report = completed_report_fixture(runtime).report()
+    assert report["status"] == "ok" and report["reason"] == "collector_session_completed"
+    assert report["shutdown_complete"]
+    assert report["canonical_kill_switch"]["reason"] is None
+    assert report["COLLECTOR_KILLSWITCH_ENFORCEMENT"] == "PASS"
+    assert report["collector_gate"] == "COLLECTOR_READY_FOR_OPT_IN"
+    assert report["pit_coverage_pct"] == 100
+    assert not report["network_calls_executed"] and not report["write_performed"]
 
 
 def test_unstarted_report_cannot_claim_enforcement_pass(runtime: Path) -> None:

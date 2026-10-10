@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "e1973dc6d0bb4ec3d6454035d2ff4ad6a7e1e2bf1c698a066e2c25ca3c5d0cae",
+  "aggregate_sha256": "33312381b3d7d19a3d7569c3b43cbe7bf1198177c2bab5dc91793b7e58706ec5",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -8138,10 +8138,10 @@
       "sha256": "a7f7b291ef14f491fbcf45237fdc2728f13d3dd0fd1f12b14bb3ca7979521d42"
     },
     {
-      "bytes": 28171,
+      "bytes": 28867,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/collector.py",
-      "sha256": "5c7871905b08b78ddb43f587c385099f0066eab0525057e2ed5c6ea57f141170"
+      "sha256": "6bcea5a52d1b5631ce75d6a1eec28b415b36f0c8014a425eabb168b98196451f"
     },
     {
       "bytes": 8487,
@@ -11396,10 +11396,10 @@
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
     },
     {
-      "bytes": 21553,
+      "bytes": 26392,
       "hash_mode": "text_lf",
       "path": "tests/test_execution_decision_l1_canonical_killswitch_gate_v1.py",
-      "sha256": "f4aec6ab6d4c616c7d5e452c523e9ad2181d6d5be14bed2365a4f3e1a5afb06d"
+      "sha256": "cdf8f6273c4da6cf6eb6269794227a50e104f810d48124c43de651b1a0a63fd4"
     },
     {
       "bytes": 19863,

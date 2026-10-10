@@ -615,55 +615,72 @@ class Collector:
 
     def report(self) -> dict[str, Any]:
         metrics = self.metrics.snapshot()
+        authority_evidence = self.authority.report()
+        with self.failure_lock:
+            recorded_failure = self.failure
+        shutdown_incomplete = any(
+            metrics.get(counter, 0)
+            for counter in (
+                "shutdown_public_children_unconfirmed",
+                "shutdown_workers_alive",
+                "shutdown_producers_alive",
+            )
+        )
+        # Report shutdown severity without replacing the original failure evidence.
+        failure = (
+            "shutdown_incomplete"
+            if shutdown_incomplete
+            else recorded_failure or authority_evidence["reason"]
+        )
+        blocked = failure is not None
+        shutdown_complete = (
+            self.producers_done.is_set()
+            and self.consumer_done.is_set()
+            and not shutdown_incomplete
+            and failure != "shutdown_incomplete"
+            and authority_evidence["shutdown_complete"]
+        )
+        enforcement = (
+            "BLOCKED"
+            if blocked
+            else "PASS"
+            if self.started and self.authority.snapshot and shutdown_complete
+            else "NOT_RUN"
+        )
         observed = metrics.get("decisions_observed", 0)
         loss = any(
             value
             for key, value in metrics.items()
             if key.endswith("_drops") or key.endswith("_at_shutdown")
         )
-        undrained = (
-            self.decisions.qsize()
-            + self.quotes.qsize()
-            + self.notices.qsize()
-            + self.records.qsize()
-        )
+        archive_undrained = self.records.qsize()
+        ingestion_undrained = self.decisions.qsize() + self.quotes.qsize() + self.notices.qsize()
+        undrained = ingestion_undrained + archive_undrained
         loss = loss or undrained > 0
         return {
             "schema_version": "execution_decision_l1_collector_report_v1",
             "schema_sha256": schema_sha256(),
-            "status": "blocked" if self.failure else "ok",
-            "reason": self.failure or "collector_session_completed",
-            "canonical_kill_switch": self.authority.report(),
-            "COLLECTOR_KILLSWITCH_ENFORCEMENT": "BLOCKED"
-            if self.failure
-            else "PASS"
-            if self.started
-            and self.authority.snapshot
-            and self.producers_done.is_set()
-            and self.consumer_done.is_set()
-            else "NOT_RUN",
-            "collector_gate": "BLOCKED_COLLECTOR_SESSION"
-            if self.failure
-            else "COLLECTOR_READY_FOR_OPT_IN",
+            "status": "blocked" if blocked else "ok",
+            "reason": failure or "collector_session_completed",
+            "canonical_kill_switch": authority_evidence,
+            "COLLECTOR_KILLSWITCH_ENFORCEMENT": enforcement,
+            "collector_gate": "BLOCKED_COLLECTOR_SESSION" if blocked else "COLLECTOR_READY_FOR_OPT_IN",
             "execution_readiness": "BLOCKED_MISSING_EXECUTION_EVIDENCE",
             "started_at_utc": self.started.isoformat() if self.started else None,
             "metrics": metrics,
             "pit_coverage_pct": metrics.get("matched_decisions", 0) / observed * 100
-            if observed and not loss and not self.failure
+            if observed and not loss and not blocked
             else None,
             "coverage_status": "PARTIAL_LOSS" if loss else "CONSUMED_UNIQUE_DECISIONS_ONLY",
             "loss_detected": loss,
             "network_calls_executed": metrics.get("public_requests", 0) > 0,
             "source_status": "OBSERVED" if metrics.get("quotes_accepted", 0) else "UNAVAILABLE",
-            "shutdown_complete": not metrics.get("shutdown_workers_alive", 0)
-            and not metrics.get("shutdown_public_children_unconfirmed", 0)
-            if self.producers_done.is_set() and self.consumer_done.is_set()
-            else False,
+            "shutdown_complete": shutdown_complete,
             "sampling": "PUBLIC_REST_SNAPSHOTS_NOT_CONTINUOUS_ORDER_BOOK",
             "clock_synchronization": "UNPROVEN",
             "write_performed": self.archive is not None and self.archive.write_performed,
-            "archive_records_undrained": self.records.qsize(),
-            "ingestion_records_undrained": undrained - self.records.qsize(),
+            "archive_records_undrained": archive_undrained,
+            "ingestion_records_undrained": ingestion_undrained,
             "archive_session": str(self.archive.session) if self.archive else None,
             "safety": {
                 "research_only": True,
