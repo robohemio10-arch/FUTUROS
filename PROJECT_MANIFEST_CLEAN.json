@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "62ec0fa4f889259653eab63d43a46f1798d9bbbcb299987f5f7e0eba5224e9d1",
+  "aggregate_sha256": "926dce5225f841d1912f5c05d2805e9d8901e66fc6e5c36f88179220bd8dc141",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 324,
-    "manifested_files_total": 2197,
-    "python_files": 1727,
+    "docs_files": 325,
+    "manifested_files_total": 2201,
+    "python_files": 1730,
     "runtime_excluded_files_total": 0,
-    "test_files": 473,
-    "tracked_files_total": 2198,
+    "test_files": 474,
+    "tracked_files_total": 2202,
     "workflows": 2
   },
   "deterministic": true,
@@ -1326,6 +1326,12 @@
       "hash_mode": "text_lf",
       "path": "docs/EXECUTION_COST_NOTIONAL_CALIBRATION_V1.md",
       "sha256": "038443056bed8bdf3a1116860a49091423955fa2edfb440ae3cb7caaf133feee"
+    },
+    {
+      "bytes": 4986,
+      "hash_mode": "text_lf",
+      "path": "docs/EXECUTION_DECISION_L1_DEPLOYMENT_PREFLIGHT_V1.md",
+      "sha256": "2efed4fa2512b7ab40202bb5cb3927e99c16fd58075c32c819f51e96a87e045a"
     },
     {
       "bytes": 6670,
@@ -2940,6 +2946,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_docker_compose_readonly_volumes.py",
       "sha256": "d8b31d81e5fe37670ab852be7d8fd9404a8d99131bfcf3d615758caea2180b9c"
+    },
+    {
+      "bytes": 1996,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_execution_decision_l1_deployment_preflight_v1.py",
+      "sha256": "c381ac6ab1a9a221ba7781553b2930f02793c7eb9cc2158c5da0c15ba750216f"
     },
     {
       "bytes": 11306,
@@ -8138,6 +8150,12 @@
       "sha256": "c81629258449d0be8f620ce13edb871b0ef4c5ec73dbfc1e0186854eab56e503"
     },
     {
+      "bytes": 24824,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/ops/execution_decision_l1/deployment_preflight.py",
+      "sha256": "8ea33b600072fd7d37e210738d1ec763e52d5b756bbb148a259449dd2663daa6"
+    },
+    {
       "bytes": 3678,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/transport.py",
@@ -11370,6 +11388,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_evidence_bundle_secret_redaction_gate_v1.py",
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
+    },
+    {
+      "bytes": 19514,
+      "hash_mode": "text_lf",
+      "path": "tests/test_execution_decision_l1_deployment_preflight_v1.py",
+      "sha256": "8e00926ecba540dec6bc80099d5acad8fee64dd5d52d5a7697f875ace21c9e62"
     },
     {
       "bytes": 31213,
