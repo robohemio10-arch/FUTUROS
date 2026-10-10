@@ -50,10 +50,12 @@ PREFLIGHT_READY_FOR_MANUAL_OPT_IN requires the COMPLETE unique checklist with al
 checks PROVEN on the host. No --assume-safe, --force, fake attestation or local-test override.
 No ready gate is fabricated from an operator-supplied boolean or a successful command.
 
-Collector V1 supports Ctrl+C/bounded shutdown, but does NOT consume the canonical external
-kill-switch. This is a proven activation blocker, not silently reclassified as verified.
-An enabled canonical Paper kill-switch also blocks authorization; the auditor never clears
-it. Collector changes/host authorization are separate future work, not made in this branch.
+Collector V1 now consumes the canonical external kill-switch with strict read-only
+authorization and monitored revocation; see its Canonical Kill-Switch Enforcement
+contract. This auditor reuses that same bounded reader. Static integration evidence
+remains UNPROVEN for host deployment. An enabled or indeterminate canonical Paper
+kill-switch blocks activation and the optional public diagnostic; the auditor never
+clears it. No host authorization is manufactured from isolated-fixture tests.
 This read-only audit cannot complete the required write-contract/activation trials and
 therefore must not approve deployment today, even if static tests and public GET pass.
 

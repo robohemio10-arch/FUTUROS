@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import threading
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -64,17 +66,56 @@ class PublicClient(Protocol):
         """Only a public snapshot, with a bounded transport deadline."""
 
 
+class PublicShutdownError(RuntimeError):
+    """The disposable public request child could not be confirmed terminated."""
+
+
 class PublicHTTPClient:
+    def __init__(self) -> None:
+        self.stop_event: threading.Event | None = None
+
+    def _execute(self, command: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
+        if self.stop_event is None:
+            return subprocess.run(
+                command, capture_output=True, text=True, timeout=timeout, check=False
+            )
+        if self.stop_event.is_set():
+            raise FetchError("public_request_cancelled")
+        # Only the collector binds cancellation. Diagnostics retain the same deadline.
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        deadline = time.monotonic() + timeout
+        try:
+            while not self.stop_event.is_set():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise FetchError("public_request_deadline")
+                try:
+                    stdout, stderr = process.communicate(timeout=min(0.05, remaining))
+                    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+                except subprocess.TimeoutExpired:
+                    continue
+            raise FetchError("public_request_cancelled")
+        finally:
+            try:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait(timeout=0.5)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise PublicShutdownError("public_child_shutdown_incomplete") from exc
+            finally:
+                for stream in (process.stdout, process.stderr):
+                    if stream is not None:
+                        stream.close()
+
     def fetch(self, symbol: Symbol, timeout: float) -> ReceivedTicker:
         if symbol not in ("BTCUSDT", "ETHUSDT") or not 0 < timeout <= 10:
             raise FetchError("invalid_public_request")
         try:
-            result = subprocess.run(
+            result = self._execute(
                 [sys.executable, "-I", "-B", "-c", PUBLIC_FETCH_SCRIPT, symbol, str(timeout)],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+                timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise FetchError("public_request_deadline") from exc

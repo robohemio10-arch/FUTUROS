@@ -19,6 +19,10 @@ from smartcrypto.ops.execution_decision_l1.archive import (  # noqa: E402
     validate_external_root,
 )
 from smartcrypto.ops.execution_decision_l1.collector import Collector  # noqa: E402
+from smartcrypto.ops.execution_decision_l1.kill_switch_authority import (  # noqa: E402
+    AuthorityDenied,
+    inspect_authority,
+)
 from smartcrypto.ops.execution_decision_l1.contracts import (  # noqa: E402
     EVENT_ADAPTER,
     SOURCE_URL,
@@ -64,10 +68,7 @@ def main(argv: list[str] | None = None) -> int:
         args.ledger_path
         or args.runtime_root / "data/runtime/decision_ledger_paper_v1/decision_ledger_v4_2.jsonl"
     )
-    ledger_root = next(
-        (part.parent for part in ledger.parents if part.name == "data"), ledger.parent
-    )
-    forbidden = (PROJECT_ROOT, args.runtime_root or ledger_root, ledger_root)
+    forbidden = (PROJECT_ROOT, args.runtime_root) if args.runtime_root else (PROJECT_ROOT,)
     archive: ExternalArchive | None = None
     try:
         config = CollectorConfig.model_validate(
@@ -83,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("invalid_duration")
         if not ledger.is_file() or any(part.is_symlink() for part in (ledger, *ledger.parents)):
             raise ValueError("regular_nonsymlink_ledger_required")
+        authority = inspect_authority(args.runtime_root, ledger, config.symbols)
         if args.output_root:
             validate_external_root(args.output_root, forbidden)
         if not args.collect:
@@ -97,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                 "network_calls_executed": False,
                 "write_performed": False,
                 "runtime_activation_performed": False,
+                "canonical_kill_switch": authority,
+                "COLLECTOR_KILLSWITCH_ENFORCEMENT": "NOT_RUN",
             }
         else:
             archive = (
@@ -110,14 +114,20 @@ def main(argv: list[str] | None = None) -> int:
                 if args.write_archive
                 else None
             )
-            report = Collector(ledger, config, archive=archive).run(args.duration_seconds)
-    except (OSError, ValueError, ValidationError) as exc:
+            report = Collector(ledger, config, runtime_root=args.runtime_root, archive=archive).run(
+                args.duration_seconds
+            )
+    except (OSError, ValueError, ValidationError, KeyboardInterrupt) as exc:
         report = {
             "status": "blocked",
-            "reason": f"collector_preflight_{type(exc).__name__}",
+            "reason": exc.reason
+            if isinstance(exc, AuthorityDenied)
+            else f"collector_preflight_{type(exc).__name__}",
             "collector_gate": "BLOCKED_COLLECTOR_PREFLIGHT",
             "execution_readiness": "BLOCKED_MISSING_EXECUTION_EVIDENCE",
             "write_performed": archive is not None and archive.write_performed,
+            "network_calls_executed": False,
+            "COLLECTOR_KILLSWITCH_ENFORCEMENT": "BLOCKED",
         }
     print(json.dumps(report, sort_keys=True, allow_nan=False, indent=None if args.json else 2))
     return 0 if report["status"] == "ok" else 2

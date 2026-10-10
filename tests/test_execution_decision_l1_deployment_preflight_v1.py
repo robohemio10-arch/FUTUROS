@@ -44,7 +44,20 @@ def runtime(tmp_path: Path, *, kill: object = False) -> Path:
     path.parent.mkdir(parents=True)
     path.write_bytes(record())
     (root / "data/runtime/kill_switch.json").write_text(
-        json.dumps({"runtime_mode": "paper", "enabled": kill, "reason": "unit-test"}),
+        json.dumps(
+            {
+                "schema_version": 1,
+                "runtime_mode": "paper",
+                "updated_at": NOW.isoformat(),
+                "global": {
+                    "enabled": kill,
+                    "reason": "isolated_fixture",
+                    "actor": "pytest",
+                    "updated_at": NOW.isoformat(),
+                },
+                "symbols": {},
+            }
+        ),
         encoding="utf-8",
     )
     return root
@@ -114,18 +127,18 @@ def test_institutional_kill_switch_is_inspected_never_cleared(tmp_path: Path) ->
     original = path.read_bytes()
     result = run(root)
     assert result["decision"] == "BLOCKED_PREFLIGHT_FAILURE"
-    assert "canonical_paper_kill_switch_enabled" in result["failures"]
-    assert "collector_does_not_consume_canonical_kill_switch" in result["failures"]
+    assert "authority_global_blocked" in result["failures"]
+    assert "collector_does_not_consume_canonical_kill_switch" not in result["failures"]
     assert path.read_bytes() == original
 
 
-def test_real_code_static_contracts_do_not_claim_external_kill_switch() -> None:
+def test_real_code_static_contracts_do_not_claim_host_kill_switch_proof() -> None:
     metadata, checks = audit.inspect_code(ROOT)
     by_id = {check.check_id: check for check in checks}
     assert by_id["opt_in_default"].status == "PROVEN"
     assert by_id["collector_stop_contract"].status == "PROVEN"
-    assert by_id["external_kill_switch"].status == "FAILED"
-    assert len(metadata["source_sha256"]) == 5
+    assert by_id["external_kill_switch"].status == "UNPROVEN"
+    assert len(metadata["source_sha256"]) == 6
     assert metadata["paper_or_collector_initialized"] is False
 
 

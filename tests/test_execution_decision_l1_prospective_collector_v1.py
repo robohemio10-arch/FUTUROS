@@ -19,6 +19,7 @@ from smartcrypto.execution.decision_ledger_v4_2.contracts import (
     seal_decision_record,
 )
 from smartcrypto.ops.execution_decision_l1 import archive, collector, transport
+from smartcrypto.ops.execution_decision_l1 import kill_switch_authority as authority
 from smartcrypto.ops.execution_decision_l1.contracts import (
     CollectorConfig,
     DecisionL1Association,
@@ -88,9 +89,44 @@ def association(value: collector.L1State, seconds: float = 2) -> DecisionL1Assoc
 
 
 def ledger(tmp_path: Path, initial: bytes = b"") -> Path:
-    path = tmp_path / "decision.jsonl"
+    path = tmp_path / authority.LEDGER_RELATIVE
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(initial)
+    (tmp_path / "data/runtime/kill_switch.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "runtime_mode": "paper",
+                "updated_at": T0.isoformat(),
+                "global": {
+                    "enabled": False,
+                    "reason": "isolated_fixture",
+                    "actor": "pytest",
+                    "updated_at": T0.isoformat(),
+                },
+                "symbols": {},
+            }
+        ),
+        encoding="ascii",
+    )
     return path
+
+
+@pytest.fixture(autouse=True)
+def bounded_fixture_monitors(monkeypatch: pytest.MonkeyPatch) -> Any:
+    monitors: list[authority.AuthorityMonitor] = []
+    original = authority.AuthorityMonitor.__init__
+
+    def initialize(self: authority.AuthorityMonitor, *args: Any, **kwargs: Any) -> None:
+        original(self, *args, **kwargs)
+        monitors.append(self)
+
+    monkeypatch.setattr(authority.AuthorityMonitor, "__init__", initialize)
+    monkeypatch.setattr(authority, "POLL_SECONDS", 0.01)
+    monkeypatch.setattr(authority, "READ_DEADLINE_SECONDS", 0.2)
+    yield
+    for monitor in monitors:
+        assert monitor.close(1)
 
 
 def append(path: Path, data: bytes) -> None:
@@ -112,7 +148,10 @@ def external(tmp_path: Path, **changes: object) -> archive.ExternalArchive:
 
 def observer(tmp_path: Path, **config: object) -> collector.Collector:
     return collector.Collector(
-        ledger(tmp_path), CollectorConfig.model_validate(config), now=lambda: at(3)
+        ledger(tmp_path),
+        CollectorConfig.model_validate(config),
+        now=lambda: at(3),
+        runtime_root=tmp_path,
     )
 
 
@@ -543,7 +582,11 @@ def test_manual_session_no_write_no_ledger_changes_and_single_use(tmp_path: Path
     before = path.read_bytes()
     client = FixtureClient()
     value = collector.Collector(
-        path, CollectorConfig(symbols=("BTCUSDT",)), client=client, now=lambda: at(3)
+        path,
+        CollectorConfig(symbols=("BTCUSDT",)),
+        runtime_root=tmp_path,
+        client=client,
+        now=lambda: at(3),
     )
     report = value.run(0.04)
     assert client.calls == 1
@@ -551,7 +594,7 @@ def test_manual_session_no_write_no_ledger_changes_and_single_use(tmp_path: Path
     assert report["source_status"] == "OBSERVED"
     assert report["metrics"].get("decisions_observed", 0) == 0
     assert path.read_bytes() == before
-    assert sorted(item.name for item in tmp_path.iterdir()) == ["decision.jsonl"]
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["data"]
     assert report["execution_readiness"] == "BLOCKED_MISSING_EXECUTION_EVIDENCE"
     assert report["safety"]["observed_fills_provided"] is False
     with pytest.raises(ValueError, match="single_use"):
@@ -562,6 +605,7 @@ def test_reconnect_backoff_is_interruptible_and_counted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     value = observer(tmp_path, symbols=("BTCUSDT",))
+    value.authority.start()
 
     class Flaky:
         def fetch(self, symbol: Symbol, timeout: float) -> transport.ReceivedTicker:
@@ -589,6 +633,7 @@ def test_successful_reconnection_count_and_quote_delivered(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     value = observer(tmp_path, symbols=("BTCUSDT",))
+    value.authority.start()
 
     class Recovery:
         def fetch(self, symbol: Symbol, timeout: float) -> transport.ReceivedTicker:
@@ -664,6 +709,7 @@ def test_empty_opt_in_archive_reports_write_not_false_no_write(tmp_path: Path) -
     output = external(tmp_path)
     value = observer(tmp_path)
     value.archive = output
+    value.authority.start()
     value.consumer_done.set()
     value._write()
     manifest = json.loads((output.session / "manifest.json").read_bytes())
@@ -688,8 +734,8 @@ def test_thread_start_failure_is_blocked_and_ledger_closed(
 
     monkeypatch.setattr(collector, "LedgerTail", tail)
     monkeypatch.setattr(threading.Thread, "start", failed_start)
-    assert value.run(0.01)["reason"] == "thread_start_failure"
-    assert handles[0].handle.closed
+    assert value.run(0.01)["reason"] == "authority_monitor_start_failure"
+    assert not handles
 
 
 def test_shutdown_budget_reports_blocked_not_complete(tmp_path: Path) -> None:
@@ -703,7 +749,10 @@ def test_shutdown_budget_reports_blocked_not_complete(tmp_path: Path) -> None:
             return transport.ReceivedTicker(symbol, raw(), at(1.1))
 
     value = collector.Collector(
-        ledger(tmp_path), CollectorConfig(symbols=("BTCUSDT",), shutdown_seconds=1), client=Slow()
+        ledger(tmp_path),
+        CollectorConfig(symbols=("BTCUSDT",), shutdown_seconds=1),
+        runtime_root=tmp_path,
+        client=Slow(),
     )
     try:
         report = value.run(0.03)
@@ -780,6 +829,7 @@ def test_archive_write_failure_blocks_session(
     output = external(tmp_path)
     value = observer(tmp_path)
     value.archive = output
+    value.authority.start()
     value.records.put(quote())
     value.consumer_done.set()
 
@@ -802,13 +852,13 @@ def test_cli_default_preflight_no_network_no_write(
         pytest.fail("collector must not run in preflight")
 
     monkeypatch.setattr(cli.Collector, "run", forbidden)
-    assert cli.main(["--ledger-path", str(path), "--json"]) == 0
+    assert cli.main(["--runtime-root", str(tmp_path), "--ledger-path", str(path), "--json"]) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["network_calls_executed"] is False
     assert report["write_performed"] is False
     assert report["collector_gate"] == "COLLECTOR_READY_FOR_OPT_IN"
     assert report["execution_readiness"] == "BLOCKED_MISSING_EXECUTION_EVIDENCE"
-    assert sorted(item.name for item in tmp_path.iterdir()) == ["decision.jsonl"]
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["data"]
 
 
 @pytest.mark.parametrize(

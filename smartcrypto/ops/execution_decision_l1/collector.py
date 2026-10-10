@@ -32,7 +32,14 @@ from .contracts import (
     schema_sha256,
     require_utc,
 )
-from .transport import FetchError, PublicClient, PublicHTTPClient, ReceivedTicker
+from .transport import (
+    FetchError,
+    PublicClient,
+    PublicHTTPClient,
+    PublicShutdownError,
+    ReceivedTicker,
+)
+from .kill_switch_authority import AuthorityDenied, AuthorityMonitor, POLL_SECONDS
 
 T = TypeVar("T")
 
@@ -292,6 +299,7 @@ class Collector:
         ledger: Path,
         config: CollectorConfig,
         *,
+        runtime_root: Path | None = None,
         client: PublicClient | None = None,
         archive: ExternalArchive | None = None,
         now: Callable[[], datetime] = utc_now,
@@ -312,6 +320,12 @@ class Collector:
         self.failure: str | None = None
         self.failure_lock = threading.Lock()
         self.started: datetime | None = None
+        self.authority = AuthorityMonitor(runtime_root, ledger, config.symbols, self.halt)
+        if isinstance(self.client, PublicHTTPClient):
+            self.client.stop_event = self.stop_event
+
+    def _authorize_persistence(self) -> None:
+        self.authority.require(fresh=True)
 
     def enqueue(self, queue: Queue[T], item: T, counter: str) -> bool:
         try:
@@ -330,11 +344,21 @@ class Collector:
 
     def record(self, value: EventRecord) -> None:
         if self.archive is not None:
+            try:
+                self.authority.require()
+            except AuthorityDenied:
+                self.metrics.add("archive_authority_drops")
+                return
             self.enqueue(self.records, value, "archive_queue_drops")
 
     def _guarded(self, operation: Callable[[], None]) -> None:
         try:
             operation()
+        except AuthorityDenied as exc:
+            self.halt(exc.reason)
+        except PublicShutdownError:
+            self.metrics.add("shutdown_public_children_unconfirmed")
+            self.halt("shutdown_incomplete")
         except Exception as exc:
             # Preserve stack location, not untrusted exception text or payload values.
             logging.getLogger(__name__).error(
@@ -357,11 +381,15 @@ class Collector:
                 if self.stop_event.is_set():
                     break
                 try:
+                    self.authority.require(fresh=True)
+                    if self.stop_event.is_set():
+                        break
                     self.metrics.add("public_requests")
                     received = self.client.fetch(symbol, self.config.request_timeout_seconds)
                     if self.stop_event.is_set():
                         self.metrics.add("quotes_discarded_at_shutdown")
                         break
+                    self.authority.require()
                     if not self.enqueue(self.quotes, received, "quote_queue_drops"):
                         self.enqueue(
                             self.notices,
@@ -480,18 +508,28 @@ class Collector:
         if self.archive is None:
             return
         try:
+            self.archive.bind_authority(self._authorize_persistence)
             while not self.consumer_done.is_set() or not self.records.empty():
+                self.authority.require()
                 try:
                     value = self.records.get(timeout=0.1)
                 except Empty:
                     continue
+                self.authority.require()
                 self.archive.record(value)
+            self.authority.require()
             self.archive.flush()
             summary = self.report()
             # This worker cannot certify its own bounded join in the main thread.
             summary["collector_gate"] = "PENDING_FINAL_SHUTDOWN_REPORT"
             summary["shutdown_validation"] = "PROCESS_REPORT_REQUIRED"
             self.archive.close(summary)
+        except AuthorityDenied as exc:
+            self.metrics.add(
+                "archive_authority_drops", self.records.qsize() + len(self.archive.pending)
+            )
+            self.archive.pending.clear()
+            self.halt(exc.reason)
         except (OSError, ValueError, RuntimeError) as exc:
             self.halt(f"archive_{type(exc).__name__}")
 
@@ -500,12 +538,32 @@ class Collector:
             raise ValueError("duration_must_be_between_zero_and_86400")
         if self.started is not None:
             raise ValueError("collector_session_is_single_use")
-        tail = LedgerTail(self.ledger)
         self.started = self.now()
+        tail: LedgerTail | None = None
+        try:
+            self.authority.start()
+            self.authority.require(fresh=True)
+            tail = LedgerTail(self.ledger)
+            self.authority.require(fresh=True)
+        except (AuthorityDenied, OSError, ValueError, KeyboardInterrupt) as exc:
+            self.halt(
+                exc.reason if isinstance(exc, AuthorityDenied) else f"startup_{type(exc).__name__}"
+            )
+            if isinstance(exc, KeyboardInterrupt):
+                self.metrics.add("keyboard_interrupts")
+            if tail is not None:
+                tail.close()
+            if not self.authority.close(self.config.shutdown_seconds):
+                self.metrics.add("shutdown_workers_alive")
+                self.failure = "shutdown_incomplete"
+            self.producers_done.set()
+            self.consumer_done.set()
+            return self.report()
+        active_tail = tail
         state = L1State(self.config, self.started, self.metrics)
         producer_threads = [
             threading.Thread(target=self._guarded, args=(operation,), daemon=True)
-            for operation in (self._network, lambda: self._ledger(tail))
+            for operation in (self._network, lambda: self._ledger(active_tail))
         ]
         consumer = threading.Thread(
             target=self._guarded, args=(lambda: self._consume(state),), daemon=True
@@ -517,7 +575,13 @@ class Collector:
             for thread in threads:
                 thread.start()
                 launched.append(thread)
-            self.stop_event.wait(duration_seconds)
+            deadline = time.monotonic() + duration_seconds
+            while not self.stop_event.wait(min(POLL_SECONDS, max(0, deadline - time.monotonic()))):
+                self.authority.require()
+                if time.monotonic() >= deadline:
+                    break
+        except AuthorityDenied as exc:
+            self.halt(exc.reason)
         except KeyboardInterrupt:
             self.metrics.add("keyboard_interrupts")
         except RuntimeError:
@@ -529,7 +593,7 @@ class Collector:
                 if thread in launched:
                     thread.join(max(0, deadline - time.monotonic()))
             if producer_threads[1] not in launched:
-                tail.close()
+                active_tail.close()
             producer_live = sum(thread.is_alive() for thread in producer_threads)
             if producer_live:
                 self.metrics.add("shutdown_producers_alive", producer_live)
@@ -542,6 +606,8 @@ class Collector:
             if writer in launched:
                 writer.join(max(0, deadline - time.monotonic()))
             live = sum(thread.is_alive() for thread in threads)
+            if not self.authority.close(max(0, deadline - time.monotonic())):
+                live += 1
             if live:
                 self.metrics.add("shutdown_workers_alive", live)
                 self.failure = "shutdown_incomplete"
@@ -567,6 +633,15 @@ class Collector:
             "schema_sha256": schema_sha256(),
             "status": "blocked" if self.failure else "ok",
             "reason": self.failure or "collector_session_completed",
+            "canonical_kill_switch": self.authority.report(),
+            "COLLECTOR_KILLSWITCH_ENFORCEMENT": "BLOCKED"
+            if self.failure
+            else "PASS"
+            if self.started
+            and self.authority.snapshot
+            and self.producers_done.is_set()
+            and self.consumer_done.is_set()
+            else "NOT_RUN",
             "collector_gate": "BLOCKED_COLLECTOR_SESSION"
             if self.failure
             else "COLLECTOR_READY_FOR_OPT_IN",
@@ -581,6 +656,7 @@ class Collector:
             "network_calls_executed": metrics.get("public_requests", 0) > 0,
             "source_status": "OBSERVED" if metrics.get("quotes_accepted", 0) else "UNAVAILABLE",
             "shutdown_complete": not metrics.get("shutdown_workers_alive", 0)
+            and not metrics.get("shutdown_public_children_unconfirmed", 0)
             if self.producers_done.is_set() and self.consumer_done.is_set()
             else False,
             "sampling": "PUBLIC_REST_SNAPSHOTS_NOT_CONTINUOUS_ORDER_BOOK",

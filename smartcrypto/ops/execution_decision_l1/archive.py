@@ -6,7 +6,7 @@ import hashlib
 import json
 import stat
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from uuid import uuid4
 
 from smartcrypto.runtime.integrity_traceability_v2.atomic_writer import (
@@ -62,6 +62,16 @@ class ExternalArchive:
         self.segments: list[dict[str, Any]] = []
         self.bytes_written = 0
         self.previous_sha256 = "0" * 64
+        self.authority_check: Callable[[], None] | None = None
+
+    def bind_authority(self, check: Callable[[], None]) -> None:
+        if self.opened or self.write_performed:
+            raise ValueError("archive_authority_must_precede_first_write")
+        self.authority_check = check
+
+    def _authorize_write(self) -> None:
+        if self.authority_check is not None:
+            self.authority_check()
 
     def _open(self) -> None:
         if self.closed:
@@ -69,9 +79,11 @@ class ExternalArchive:
         if self.opened:
             return
         validate_external_root(self.session, self.forbidden_roots)
+        self._authorize_write()
         # Conservatively report a write attempt even if mkdir partially fails.
         self.write_performed = True
         self.session.mkdir(parents=True, exist_ok=False)
+        self._authorize_write()
         atomic_write_json(
             self.session / "session.json",
             {
@@ -112,6 +124,7 @@ class ExternalArchive:
         path = self.session / f"segment-{len(self.segments):06d}.json"
         if path.exists():
             raise ValueError("archive_segment_already_exists")
+        self._authorize_write()
         result = atomic_write_json(path, payload, policy=self.policy, allow_nan=False)
         raw_hash = hashlib.sha256(path.read_bytes()).hexdigest()
         self.segments.append(
@@ -137,6 +150,7 @@ class ExternalArchive:
             "summary": summary,
         }
         payload["manifest_sha256"] = canonical_sha256(payload)
+        self._authorize_write()
         atomic_write_json(
             self.session / "manifest.json", payload, policy=self.policy, allow_nan=False
         )
