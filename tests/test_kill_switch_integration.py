@@ -57,10 +57,12 @@ def activate_global(tmp_path: Path) -> None:
 
 
 def activate_symbol(tmp_path: Path, symbol: str = "BTCUSDT") -> None:
-    KillSwitchGuard(
+    guard = KillSwitchGuard(
         state_path=tmp_path / "kill_switch.json",
         event_log_path=tmp_path / "events.jsonl",
-    ).activate_symbol(symbol, reason="symbol halt", actor="risk")
+    )
+    guard.clear_global(actor="risk", reason="explicit_fixture_clear")
+    guard.activate_symbol(symbol, reason="symbol halt", actor="risk")
 
 
 def event_types(path: Path) -> list[str]:
@@ -120,9 +122,7 @@ def test_order_manager_rejects_intent_when_global_kill_switch_is_active(
         kill_switch_path=tmp_path / "kill_switch.json",
         runtime_mode="paper",
         max_capital_global=100.0,
-        risk_manager=RiskManager(
-            RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))
-        ),
+        risk_manager=RiskManager(RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))),
     )
 
     intent = manager.create_order_intent(
@@ -152,9 +152,7 @@ def test_order_manager_rejects_intent_when_symbol_kill_switch_is_active(
         kill_switch_path=tmp_path / "kill_switch.json",
         runtime_mode="paper",
         max_capital_global=100.0,
-        risk_manager=RiskManager(
-            RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))
-        ),
+        risk_manager=RiskManager(RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))),
     )
 
     intent = manager.create_order_intent(

@@ -224,6 +224,9 @@ def test_gate_approves_allowed_pair_with_real_risk_manager() -> None:
 
 
 def test_signal_producer_end_to_end_only_writes_risk_approved_signals(monkeypatch, tmp_path: Path) -> None:
+    project_probe = PROJECT_ROOT / "data/reports/qlib_v3_natural_admission_lineage_probe_v1.jsonl"
+    before_probe = project_probe.read_bytes() if project_probe.exists() else None
+    monkeypatch.chdir(tmp_path)
     predictions_path = tmp_path / "predictions.csv"
     primary_path = tmp_path / "freqtrade_signals.json"
     pinned_path = tmp_path / "active_freqtrade_signals.json"
@@ -274,9 +277,13 @@ def test_signal_producer_end_to_end_only_writes_risk_approved_signals(monkeypatc
     gate = report["risk_manager_gate"]
     assert gate["signals_approved"] == 2
     assert gate["signals_rejected"] == 1
+    assert (project_probe.read_bytes() if project_probe.exists() else None) == before_probe
 
 
 def test_signal_producer_never_overwrites_with_empty_when_all_rejected(monkeypatch, tmp_path: Path) -> None:
+    project_probe = PROJECT_ROOT / "data/reports/qlib_v3_natural_admission_lineage_probe_v1.jsonl"
+    before_probe = project_probe.read_bytes() if project_probe.exists() else None
+    monkeypatch.chdir(tmp_path)
     predictions_path = tmp_path / "predictions.csv"
     primary_path = tmp_path / "freqtrade_signals.json"
     pinned_path = tmp_path / "active_freqtrade_signals.json"
@@ -327,6 +334,7 @@ def test_signal_producer_never_overwrites_with_empty_when_all_rejected(monkeypat
     assert report["reason"] == "no_signals_generated_and_never_overwrite_with_empty_enabled"
     unchanged = json.loads(primary_path.read_text(encoding="utf-8"))
     assert unchanged == previous_payload
+    assert (project_probe.read_bytes() if project_probe.exists() else None) == before_probe
 
 
 # ---------------------------------------------------------------------------

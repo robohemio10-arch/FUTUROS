@@ -19,6 +19,7 @@ from smartcrypto.ops.execution_decision_l1 import (
 from smartcrypto.ops.execution_decision_l1 import kill_switch_authority as authority
 from smartcrypto.ops.execution_decision_l1.contracts import CollectorConfig, Symbol
 from smartcrypto.risk.kill_switch_guard import KillSwitchGuard, default_state
+from smartcrypto.risk import kill_switch_guard as canonical
 
 T0 = datetime(2026, 7, 1, tzinfo=timezone.utc)
 
@@ -143,7 +144,7 @@ def external(tmp_path: Path, runtime: Path) -> archive.ExternalArchive:
             payload(symbols={"btcusdt": entry(), "BTCUSDT": entry(True)}),
             "authority_symbol_identity_collision",
         ),
-        (payload(updated_at="not-a-clock"), "authority_read_ValueError"),
+        (payload(updated_at="not-a-clock"), "authority_explicit_utc_timestamp_required"),
         (payload(**{"global": {"enabled": False}}), "authority_explicit_entry_metadata_required"),
     ],
 )
@@ -605,7 +606,7 @@ def test_unstarted_report_cannot_claim_enforcement_pass(runtime: Path) -> None:
 def test_changed_authority_during_read_is_not_a_clear_snapshot(
     runtime: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    fstat = authority.os.fstat
+    fstat = canonical.os.fstat
     reads = 0
 
     def change(descriptor: int) -> Any:
@@ -618,7 +619,7 @@ def test_changed_authority_during_read_is_not_a_clear_snapshot(
             )
         return result
 
-    monkeypatch.setattr(authority.os, "fstat", change)
+    monkeypatch.setattr(canonical.os, "fstat", change)
     with pytest.raises(authority.AuthorityDenied, match="authority_changed_during_read"):
         authority.read_authority(runtime, runtime / authority.LEDGER_RELATIVE, ("BTCUSDT",))
 

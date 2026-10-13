@@ -23,13 +23,13 @@ def build_guard(tmp_path: Path) -> KillSwitchGuard:
     )
 
 
-def test_missing_state_is_clear_and_does_not_create_runtime_file(tmp_path: Path) -> None:
+def test_missing_state_blocks_and_read_only_inspection_creates_nothing(tmp_path: Path) -> None:
     guard = build_guard(tmp_path)
 
-    result = guard.evaluate("BTCUSDT")
+    result = guard.inspect("BTCUSDT")
 
-    assert result.status == CLEAR
-    assert result.block_operation is False
+    assert result.status == CORRUPTED
+    assert result.block_operation is True
     assert not guard.state_path.exists()
     assert guard.event_logger.read_events() == []
 
@@ -61,7 +61,7 @@ def test_global_kill_switch_blocks_all_symbols_and_records_events(tmp_path: Path
 
 def test_symbol_kill_switch_only_blocks_requested_symbol(tmp_path: Path) -> None:
     guard = build_guard(tmp_path)
-
+    guard.clear_global(actor="risk", reason="explicit_fixture_clear")
     guard.activate_symbol("btcusdt", reason="manual symbol halt", actor="operator-a")
 
     blocked = guard.evaluate("BTCUSDT")

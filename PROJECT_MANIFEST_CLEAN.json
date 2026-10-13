@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "33312381b3d7d19a3d7569c3b43cbe7bf1198177c2bab5dc91793b7e58706ec5",
+  "aggregate_sha256": "c391e92af285e87fb92fcdea433033c81ef21fe79ba5dad6879ed15438f13e2e",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 325,
-    "manifested_files_total": 2203,
-    "python_files": 1732,
+    "docs_files": 326,
+    "manifested_files_total": 2205,
+    "python_files": 1733,
     "runtime_excluded_files_total": 0,
-    "test_files": 475,
-    "tracked_files_total": 2204,
+    "test_files": 476,
+    "tracked_files_total": 2206,
     "workflows": 2
   },
   "deterministic": true,
@@ -1476,6 +1476,12 @@
       "hash_mode": "text_lf",
       "path": "docs/INCREMENTAL_TRAINING_MICROBATCH.md",
       "sha256": "b107503e09d58e0fe6989abcdc08ed4b506ba9fdb1c382b754b5cfd9e6fceb59"
+    },
+    {
+      "bytes": 6186,
+      "hash_mode": "text_lf",
+      "path": "docs/KILL_SWITCH_SCHEMA_INTEROPERABILITY_FAIL_CLOSED_V1.md",
+      "sha256": "ac4c2a72c0e80033c6220063d3475ecc646b625c4fea53c7ce795a4215aeee1d"
     },
     {
       "bytes": 1167,
@@ -5612,10 +5618,10 @@
       "sha256": "53acb0e4098e65de54ff6c6eea62d62fe6538e05b632a42ce8dab3d2df121ffe"
     },
     {
-      "bytes": 7882,
+      "bytes": 7887,
       "hash_mode": "text_lf",
       "path": "smartcrypto/dashboard/command_bus.py",
-      "sha256": "27750ae32e53fe46f933170164aa37896f966531e250e0747c761510bb8769a6"
+      "sha256": "cdc7ec4925c42bb6c86a882cc811659adadb1130b4ba28d730e7935c331a5d3a"
     },
     {
       "bytes": 1748,
@@ -6554,10 +6560,10 @@
       "sha256": "bd4767dc1ba983c2293ce6d4f383721900bcab813786a8c0aabbd3190b961f03"
     },
     {
-      "bytes": 17698,
+      "bytes": 17711,
       "hash_mode": "text_lf",
       "path": "smartcrypto/execution/order_manager.py",
-      "sha256": "51f44ecfdb60dc29ed911321ce8579a2b26ab68a51cd86269a1d66b1eebdf14d"
+      "sha256": "21e8a6b889979bdbcfba8683634a1db72eb3a043540ca2ca5cc3811cbc362bd3"
     },
     {
       "bytes": 5046,
@@ -8150,16 +8156,16 @@
       "sha256": "c81629258449d0be8f620ce13edb871b0ef4c5ec73dbfc1e0186854eab56e503"
     },
     {
-      "bytes": 24668,
+      "bytes": 25212,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/deployment_preflight.py",
-      "sha256": "64a3d10b6cd22123d7681234d80f1701c30b0d677d0a951043d0c659a202ada9"
+      "sha256": "4bd18f23bcf3ded062d92c26e1debb09a56d4794f5220bde1e00874b1d560541"
     },
     {
-      "bytes": 12554,
+      "bytes": 8633,
       "hash_mode": "text_lf",
       "path": "smartcrypto/ops/execution_decision_l1/kill_switch_authority.py",
-      "sha256": "36da4126337f8426cbf7588cf71aa1913c203225416897694f2f6b854b849f18"
+      "sha256": "9fc07af5d3374c70fbd3d07acff0da8a1a3c9c395a450d4601092eaf4f994e0d"
     },
     {
       "bytes": 5473,
@@ -10082,10 +10088,10 @@
       "sha256": "d91a9d93970961a36bf49387bff9907335219b07f7404859fc4039d88a989a8a"
     },
     {
-      "bytes": 17236,
+      "bytes": 26735,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/kill_switch_guard.py",
-      "sha256": "c88cf6538592a7f0cc98d43cb8a646de70767c83605f3e3c81e51af9c59c190c"
+      "sha256": "545586540c13bae92fa64154f83038a4f652f76e6c0fc0654cecf3245f6e192b"
     },
     {
       "bytes": 17163,
@@ -10112,10 +10118,10 @@
       "sha256": "fe0091235f5cd94b0462ff26aee8473f72f4638811a9382b59eda9bcf683bbde"
     },
     {
-      "bytes": 20320,
+      "bytes": 21355,
       "hash_mode": "text_lf",
       "path": "smartcrypto/risk/risk_manager.py",
-      "sha256": "9467c0e0e00971db1e50a496ad74ba4ffc3b4cb3176dcc89b8f269a07133e9a3"
+      "sha256": "76523ef5fc3bf77c745a42ec33b218cfb8711801b14fbb2b46476fcecef55c70"
     },
     {
       "bytes": 26619,
@@ -10982,10 +10988,10 @@
       "sha256": "229b58c6f79bc36d01e6d4183ca1d370cc669509837ca3d863b5239152b1076c"
     },
     {
-      "bytes": 4351,
+      "bytes": 7218,
       "hash_mode": "text_lf",
       "path": "tests/test_dashboard_command_bus.py",
-      "sha256": "e362f823fbf95392c757f196830e25e604f1c2272d86a502a680888e5bd7882a"
+      "sha256": "0dba0ab64a4365cd3e5f85a6fd859af253f14c556a3a393e2f0fb0166511d405"
     },
     {
       "bytes": 4121,
@@ -11396,10 +11402,10 @@
       "sha256": "e32e1c5a78d80c80f5f62cc654f99790d375c0441517230c3dc23b2620eac748"
     },
     {
-      "bytes": 26392,
+      "bytes": 26468,
       "hash_mode": "text_lf",
       "path": "tests/test_execution_decision_l1_canonical_killswitch_gate_v1.py",
-      "sha256": "cdf8f6273c4da6cf6eb6269794227a50e104f810d48124c43de651b1a0a63fd4"
+      "sha256": "190d741678829c9cc1ffebbc9562cf47937c5c67ca985038723c005bee8ed60c"
     },
     {
       "bytes": 19863,
@@ -11600,22 +11606,28 @@
       "sha256": "3f01775dd94bfc998a3db63a33dc169a600dc73068076b9835be1dc2ed6a19df"
     },
     {
-      "bytes": 4055,
+      "bytes": 4132,
       "hash_mode": "text_lf",
       "path": "tests/test_kill_switch_guard.py",
-      "sha256": "3ffbcebbc39775f6f145018cd1b97126e278be1467d13927860b37c60e855d19"
+      "sha256": "c56a3724cf3611a34996160b0a7a6671472a09ef21e46f50ef8dbbd9fab8045c"
     },
     {
-      "bytes": 6619,
+      "bytes": 6663,
       "hash_mode": "text_lf",
       "path": "tests/test_kill_switch_integration.py",
-      "sha256": "0987bde37f8e5e733afa83334855493db7b4cde05af0ec2e915073159e4bcf97"
+      "sha256": "0774d188cf2f4357726a07be9d5169ad8d9ac88059280db1d77d61698ce1bf80"
     },
     {
-      "bytes": 5617,
+      "bytes": 17916,
+      "hash_mode": "text_lf",
+      "path": "tests/test_kill_switch_schema_interoperability_fail_closed_v1.py",
+      "sha256": "b415eb6f5dab20d534a4e8534413e1511f45ad61e3a22d33f05973391ae2fb41"
+    },
+    {
+      "bytes": 5702,
       "hash_mode": "text_lf",
       "path": "tests/test_kill_switch_single_source_of_truth.py",
-      "sha256": "5d0fc4a8e6493eb67f3a7974af2539f2ca2666093689cdeb9c030a44fef99abd"
+      "sha256": "545fae5709e8ea0a84a4ba8642f52cbbc184a6668ab975e0b4052ff0cc652931"
     },
     {
       "bytes": 11063,
@@ -11954,10 +11966,10 @@
       "sha256": "bfefab9802cb9ee0176d682aead30faa3c4afca464630c77f0d3100b745e02fe"
     },
     {
-      "bytes": 7229,
+      "bytes": 7791,
       "hash_mode": "text_lf",
       "path": "tests/test_order_manager_idempotency.py",
-      "sha256": "30eabf2de0ee3407fed403c8afcf33c2661e2a7bf0e60f18029bcfceb05c2d2b"
+      "sha256": "c4a8df096658184f15ad9169f16eaad72f4450cb20c8699da9647f2c4a8fe481"
     },
     {
       "bytes": 3919,
@@ -12452,10 +12464,10 @@
       "sha256": "fed637a030dc8b4b7cf4893b6407fc0f149b2001e4c97338b87c480d8cea60b0"
     },
     {
-      "bytes": 15358,
+      "bytes": 15968,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_signal_riskmanager_runtime_wiring_v1.py",
-      "sha256": "491d6904aada4b206724bd04d8bf6182c37b295ff178367af349dce9d6fe40c1"
+      "sha256": "a7cb86d4a7aa20df41564392f1b6e94d3be368c1cf48ee72684aacd616ece92f"
     },
     {
       "bytes": 13666,
@@ -12848,10 +12860,10 @@
       "sha256": "ba354ff9d6ea45ba26bf53d58c9893aa8c0c487b38f67d4b4d2aa104e57356f1"
     },
     {
-      "bytes": 5532,
+      "bytes": 9612,
       "hash_mode": "text_lf",
       "path": "tests/test_reconciliation_guard.py",
-      "sha256": "3413e9814673a246bbec790e77f2d7659c498225111772d8b7a44e4cedbccda3"
+      "sha256": "2f8817312192dd735e24d1a702498a4ba43f775d7c47e48887ea5c5c0725f591"
     },
     {
       "bytes": 3871,
@@ -13016,10 +13028,10 @@
       "sha256": "94d1889a608797455026b2150f6582b3852d45eeea2dcd6b7736218957146c04"
     },
     {
-      "bytes": 6338,
+      "bytes": 6705,
       "hash_mode": "text_lf",
       "path": "tests/test_runtime_preflight_orchestrator.py",
-      "sha256": "7c405bdb90cc55273611a316d253baca87a8a2513cfa9675985c8b2d76e69b6b"
+      "sha256": "9d1758855d7d8840dcc78bc355a2d345aad21e20a4a4a6c699bc1d0fec511105"
     },
     {
       "bytes": 5187,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import pytest
 
@@ -11,12 +12,23 @@ from smartcrypto.execution.order_manager import (
     OrderSafetyError,
 )
 from smartcrypto.risk.risk_manager import RiskLimits, RiskManager
+from smartcrypto.risk.kill_switch_guard import default_state, disabled_entry
+
+
+def write_explicit_authority(tmp_path: Path) -> Path:
+    state = default_state()
+    state["global"] = disabled_entry("explicit_fixture_clear", "pytest", state["updated_at"])
+    kill_path = tmp_path / "kill_switch.json"
+    kill_path.write_text(json.dumps(state), encoding="utf-8")
+    return kill_path
 
 
 def build_manager(tmp_path: Path, risk_limits: RiskLimits | None = None) -> OrderManager:
+    kill_path = write_explicit_authority(tmp_path)
     return OrderManager(
         state_path=tmp_path / "order_manager_state.json",
         event_log_path=tmp_path / "order_manager_events.jsonl",
+        kill_switch_path=kill_path,
         runtime_mode="paper",
         max_capital_global=100.0,
         risk_manager=RiskManager(
@@ -170,14 +182,14 @@ def test_fills_cancel_and_reject_lifecycle_states(tmp_path: Path) -> None:
 def test_recovers_orders_after_restart(tmp_path: Path) -> None:
     state_path = tmp_path / "order_manager_state.json"
     log_path = tmp_path / "events.jsonl"
+    kill_path = write_explicit_authority(tmp_path)
     first = OrderManager(
         state_path=state_path,
         event_log_path=log_path,
+        kill_switch_path=kill_path,
         runtime_mode="paper",
         max_capital_global=100.0,
-        risk_manager=RiskManager(
-            RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))
-        ),
+        risk_manager=RiskManager(RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))),
     )
     first.create_order_intent(
         correlation_id="corr-1",
@@ -191,11 +203,10 @@ def test_recovers_orders_after_restart(tmp_path: Path) -> None:
     restarted = OrderManager(
         state_path=state_path,
         event_log_path=log_path,
+        kill_switch_path=kill_path,
         runtime_mode="paper",
         max_capital_global=100.0,
-        risk_manager=RiskManager(
-            RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))
-        ),
+        risk_manager=RiskManager(RiskLimits(runtime_mode="paper", allowed_pairs=("BTCUSDT",))),
     )
 
     assert restarted.get_order("client-1").status == "PAPER_SUBMITTED"
