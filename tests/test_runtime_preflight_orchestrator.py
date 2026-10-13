@@ -2,16 +2,25 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import json
 
 import pytest
 
 from smartcrypto.config.schema import load_config_file
+from smartcrypto.risk.kill_switch_guard import default_state, disabled_entry
 from smartcrypto.runtime.preflight_orchestrator import (
     BLOCKED,
     FAILED,
     PASSED,
     RuntimePreflightOrchestrator,
 )
+
+
+@pytest.fixture(autouse=True)
+def explicit_authority(tmp_path: Path) -> None:
+    state = default_state()
+    state["global"] = disabled_entry("explicit_fixture_clear", "pytest", state["updated_at"])
+    (tmp_path / "kill_switch_guard.json").write_text(json.dumps(state), encoding="utf-8")
 
 
 def valid_config(tmp_path: Path) -> dict:
@@ -169,9 +178,7 @@ def test_example_config_is_valid_for_schema(tmp_path: Path) -> None:
     config.setdefault("paths", {})["state_repository"] = str(
         tmp_path / "runtime_preflight_state.json"
     )
-    config["paths"]["financial_event_log"] = str(
-        tmp_path / "runtime_preflight_events.jsonl"
-    )
+    config["paths"]["financial_event_log"] = str(tmp_path / "runtime_preflight_events.jsonl")
     config["paths"]["kill_switch_state"] = str(tmp_path / "kill_switch_guard.json")
 
     orchestrator = RuntimePreflightOrchestrator(

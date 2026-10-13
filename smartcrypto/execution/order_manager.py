@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from smartcrypto.risk.risk_manager import RiskLimits, RiskManager, env_enabled
-from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
+from smartcrypto.risk.kill_switch_guard import DEFAULT_KILL_SWITCH_PATH, KillSwitchGuard
 from smartcrypto.state.capital_reservation_ledger import (
     CapitalReservationLedger,
     DuplicateReservationError,
@@ -83,7 +83,7 @@ class OrderManager:
         risk_manager: RiskManager | None = None,
         state_path: str | Path = DEFAULT_STATE_PATH,
         event_log_path: str | Path = "data/runtime/order_manager_financial_events.jsonl",
-        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
+        kill_switch_path: str | Path = DEFAULT_KILL_SWITCH_PATH,
         runtime_mode: str = "paper",
         max_capital_global: float = 0.0,
         risk_limits: RiskLimits | None = None,

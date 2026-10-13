@@ -8,6 +8,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from smartcrypto.risk.kill_switch_guard import (
+    CORRUPTED,
+    DEFAULT_KILL_SWITCH_PATH,
+    KillSwitchStateError,
+    disabled_entry,
+    enabled_entry,
+    load_operator_state,
+    read_kill_switch_snapshot,
+    require_text,
+    update_global_entry,
+    write_operator_state,
+)
+
 try:
     import pandas as pd
 except Exception:  # pragma: no cover - only used in minimal test runtimes.
@@ -440,18 +453,34 @@ def inspect_prediction_age(path: str | Path, max_age_minutes: int) -> dict[str, 
     return result
 
 
-def load_kill_switch(path: str | Path = "data/runtime/kill_switch.json") -> dict[str, Any]:
-    payload = read_json(path)
-    if not payload:
-        payload = {"enabled": False, "reason": "default_created", "runtime_mode": "paper", "updated_at": iso_now()}
-        write_json(path, payload)
-    return payload
+def load_kill_switch(path: str | Path = DEFAULT_KILL_SWITCH_PATH, *, symbol: str | None = None) -> dict[str, Any]:
+    """Read-only compatibility projection; enabled is derived, never persisted."""
+    try:
+        snapshot = read_kill_switch_snapshot(path)
+        result = snapshot.result(symbol)
+        return {
+            "enabled": result.block_operation,
+            "reason": result.reason,
+            "status": result.status,
+            "runtime_mode": snapshot.state["runtime_mode"],
+            "updated_at": snapshot.state["updated_at"],
+            "source_format": snapshot.source_format,
+            "sha256": snapshot.sha256,
+        }
+    except KillSwitchStateError as exc:
+        return {"enabled": True, "status": CORRUPTED, "reason": exc.reason}
 
 
-def set_kill_switch(enabled: bool, reason: str, path: str | Path = "data/runtime/kill_switch.json") -> dict[str, Any]:
-    current = load_kill_switch(path)
-    payload = {**current, "enabled": bool(enabled), "reason": reason, "runtime_mode": "paper", "updated_at": iso_now()}
-    write_json(path, payload)
+def set_kill_switch(enabled: bool, reason: str, path: str | Path = DEFAULT_KILL_SWITCH_PATH) -> dict[str, Any]:
+    if type(enabled) is not bool:
+        raise ValueError("enabled must be boolean")
+    reason_text = require_text(reason, "reason")
+    target = Path(path)
+    current = load_operator_state(target, "paper", legacy_initialization=True)
+    entry = (enabled_entry if enabled else disabled_entry)(reason_text, "risk_manager.set_kill_switch")
+    payload = update_global_entry(current, entry)
+    payload["updated_at"] = entry["updated_at"]
+    write_operator_state(target, payload)
     return payload
 
 

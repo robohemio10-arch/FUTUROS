@@ -170,11 +170,12 @@ def test_no_runtime_file_written_by_import_or_test_defaults() -> None:
         runtime_mode="paper",
     )
 
-    result = guard.evaluate()
+    result = guard.inspect()
 
-    assert result.block_operation is False
+    assert result.block_operation is True
 
     if not existed_before:
         assert not project_runtime.exists()
 
     assert not Path("data/runtime/_unit_test_should_not_exist_kill_switch.json").exists()
+    assert not Path("data/runtime/_unit_test_should_not_exist_events.jsonl").exists()

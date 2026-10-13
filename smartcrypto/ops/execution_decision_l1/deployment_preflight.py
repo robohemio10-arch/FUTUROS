@@ -40,7 +40,13 @@ from .contracts import (
     schema_sha256,
 )
 from .transport import FetchError, PublicClient, PublicHTTPClient
-from .kill_switch_authority import AuthorityDenied, LEDGER_RELATIVE, inspect_authority
+from .kill_switch_authority import (
+    AuthorityDenied,
+    AuthorityMonitor,
+    LEDGER_RELATIVE,
+    READ_DEADLINE_SECONDS,
+    inspect_authority,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MAX_LEDGER_RECORDS = 50000
@@ -362,9 +368,23 @@ def inspect_archive(
 def inspect_paper_kill_switch(
     root: Path, symbols: tuple[str, ...] = ("BTCUSDT", "ETHUSDT")
 ) -> tuple[dict[str, Any], Check]:
-    metadata = inspect_authority(root, root / LEDGER_RELATIVE, symbols)
-    return {**metadata, "blocks_activation": False, "modified": False}, Check(
-        "paper_kill_switch", "PROVEN", "canonical_paper_kill_switch_clear_snapshot_only", "HOST"
+    monitor = AuthorityMonitor(root, root / LEDGER_RELATIVE, symbols)
+    try:
+        try:
+            monitor.start()
+        except AuthorityDenied:
+            if monitor.snapshot is None or monitor.snapshot.status == "CLEAR":
+                raise
+    finally:
+        if not monitor.close(READ_DEADLINE_SECONDS):
+            raise AuthorityDenied("authority_shutdown_incomplete")
+    metadata = monitor.report()
+    blocked = metadata["reason"] is not None
+    return {**metadata, "blocks_activation": blocked, "modified": False}, Check(
+        "paper_kill_switch",
+        "FAILED" if blocked else "PROVEN",
+        metadata["reason"] if blocked else "canonical_paper_kill_switch_clear_snapshot_only",
+        "HOST",
     )
 
 
