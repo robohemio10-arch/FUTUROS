@@ -14,8 +14,8 @@ fresh authorization checks. The configuration-only `RiskLimits` signal gate
 does not gain a new implicit filesystem dependency.
 
 The operator CLI still calls `risk_manager.set_kill_switch`. Guard mutation
-methods remain explicit operator APIs. The direct OrderManager consumer now
-uses the same canonical default path instead of `kill_switch_guard.json`.
+methods remain explicit operator APIs. OrderManager and DashboardReadonlyCommandBus
+use the same canonical default path instead of `kill_switch_guard.json`.
 Dashboard classification and Paper session snapshots remain advisory, not
 authorization sources.
 
@@ -90,3 +90,16 @@ revocation, and incomplete-shutdown regressions must pass before publication.
 Phase13 regression fixtures bind their working directory to `tmp_path` and
 assert that the checkout's lineage probe is byte-for-byte unchanged. They do
 not suppress the producer or change V3 logic.
+
+Dashboard Command Bus and Reconciliation Guard regressions explicitly create
+structured V1 CLEAR authority fixtures with UTC timestamps, reason, and actor
+inside `tmp_path`, then inject those paths. The allowlist, blocklist, unsafe
+runtime flags, kill-switch evaluation, and rejection events remain enforced.
+Read-only commands are not exempt from a missing, blocked, or invalid authority.
+
+Authorized paper intents exercise the real OrderManager/StateRepository update
+and capital reservation path. Tests verify the persisted intent and reservation,
+including directory creation, before injecting reconciliation divergences.
+Reconciliation does not fabricate intents or repair financial state. Missing
+authority rejects an intent before financial state creation. No alternative
+loader, workflow change, or automatic CLEAR is needed to make these tests pass.

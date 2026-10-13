@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+import json
 from pathlib import Path
 
 import pytest
@@ -11,11 +13,32 @@ from smartcrypto.dashboard.command_bus import (
     DashboardCommandValidationError,
     DashboardReadonlyCommandBus,
 )
+from smartcrypto.risk.kill_switch_guard import (
+    DEFAULT_KILL_SWITCH_PATH,
+    disabled_entry,
+    enabled_entry,
+    utc_timestamp,
+)
 
 
 def build_bus(tmp_path: Path) -> DashboardReadonlyCommandBus:
+    timestamp = utc_timestamp()
+    authority_path = tmp_path / "kill_switch.json"
+    authority_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "runtime_mode": "paper",
+                "global": disabled_entry("explicit_fixture_clear", "pytest", timestamp),
+                "symbols": {},
+                "updated_at": timestamp,
+            }
+        ),
+        encoding="utf-8",
+    )
     return DashboardReadonlyCommandBus(
         event_log_path=tmp_path / "dashboard_command_bus.jsonl",
+        kill_switch_path=authority_path,
         runtime_mode="paper",
         readonly=True,
     )
@@ -141,3 +164,63 @@ def test_all_initial_allowed_commands_are_accepted(tmp_path: Path) -> None:
             source="dashboard",
         )
         assert result.status == ACCEPTED
+
+
+def test_command_bus_default_uses_canonical_authority() -> None:
+    assert (
+        inspect.signature(DashboardReadonlyCommandBus).parameters["kill_switch_path"].default
+        == DEFAULT_KILL_SWITCH_PATH
+    )
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "refresh_metrics",
+        "request_paper_snapshot",
+        "request_reconciliation_check",
+        "request_market_health_check",
+    ],
+)
+@pytest.mark.parametrize("authority", ["missing", "global", "symbol", "corrupt", "legacy_clear"])
+def test_readonly_commands_never_bypass_missing_or_blocked_authority(
+    tmp_path: Path, command: str, authority: str
+) -> None:
+    bus = build_bus(tmp_path)
+    path = bus.kill_switch_guard.state_path
+    state = json.loads(path.read_text(encoding="utf-8"))
+    if authority == "missing":
+        path.unlink()
+    elif authority == "corrupt":
+        path.write_text("{broken-json", encoding="utf-8")
+    elif authority == "legacy_clear":
+        path.write_text(json.dumps({"enabled": False, "runtime_mode": "paper"}), encoding="utf-8")
+    else:
+        blocked = enabled_entry("explicit_fixture_halt", "pytest", state["updated_at"])
+        if authority == "global":
+            state["global"] = blocked
+        else:
+            state["symbols"] = {"BTCUSDT": blocked}
+        path.write_text(json.dumps(state), encoding="utf-8")
+    before = path.read_bytes() if path.exists() else None
+    result = bus.submit(
+        command,
+        correlation_id="corr-blocked",
+        operator="analyst",
+        source="dashboard",
+        payload={"symbol": "BTCUSDT"},
+    )
+    expected_reason = (
+        "kill_switch_global_blocked"
+        if authority == "global"
+        else "kill_switch_symbol_blocked"
+        if authority == "symbol"
+        else "kill_switch_corrupted"
+    )
+    assert result.status == REJECTED
+    assert result.reasons == [expected_reason]
+    event_types = [event["event_type"] for event in bus.event_logger.read_events()]
+    assert event_types[-1] == "dashboard_command_rejected"
+    assert "dashboard_command_received" not in event_types
+    assert "dashboard_command_accepted" not in event_types
+    assert (path.read_bytes() if path.exists() else None) == before

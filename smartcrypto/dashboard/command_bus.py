@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from smartcrypto.risk.kill_switch_guard import KillSwitchGuard
+from smartcrypto.risk.kill_switch_guard import DEFAULT_KILL_SWITCH_PATH, KillSwitchGuard
 from smartcrypto.runtime.preflight_orchestrator import env_enabled
 from smartcrypto.state.financial_event_log import (
     DASHBOARD_COMMAND_EVENT_TYPES,
@@ -76,7 +76,7 @@ class DashboardReadonlyCommandBus:
         readonly: bool = True,
         event_logger: FinancialEventLogger | None = None,
         event_log_path: str | Path = "data/runtime/dashboard_command_bus_events.jsonl",
-        kill_switch_path: str | Path = "data/runtime/kill_switch_guard.json",
+        kill_switch_path: str | Path = DEFAULT_KILL_SWITCH_PATH,
         allowed_commands: set[str] | None = None,
         prohibited_commands: set[str] | None = None,
     ) -> None:
@@ -206,8 +206,7 @@ def has_runtime_guard_reason(reasons: list[str]) -> bool:
         "REAL_ORDER_SUBMISSION_ENABLED=true",
     }
     return any(
-        reason in runtime_reasons
-        or reason.startswith("runtime_mode_not_allowed:")
+        reason in runtime_reasons or reason.startswith("runtime_mode_not_allowed:")
         for reason in reasons
     )
 
