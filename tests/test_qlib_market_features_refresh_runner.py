@@ -12,6 +12,11 @@ from smartcrypto.execution.signal_producer import build_active_signals
 from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
 from smartcrypto.qlib_engine.market_features_refresh import refresh_qlib_market_features
 
+from test_paper_signal_riskmanager_runtime_wiring_v1 import (
+    REAL_RISK_LIMITS_PATH,
+    _write_clear_authority,
+)
+
 
 class DummyProbabilityModel:
     def predict_proba(self, frame):
@@ -171,7 +176,9 @@ def test_invalid_schema_blocks(tmp_path: Path) -> None:
     assert report["reason"] == "invalid_schema"
 
 
-def test_fresh_predictions_and_phase13_accept_refreshed_features(tmp_path: Path) -> None:
+def test_fresh_predictions_and_phase13_accept_refreshed_features(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    authority = _write_clear_authority(tmp_path)
     current = datetime.now(timezone.utc)
     source = tmp_path / "raw.parquet"
     features = tmp_path / "market_features_60d.parquet"
@@ -211,6 +218,8 @@ def test_fresh_predictions_and_phase13_accept_refreshed_features(tmp_path: Path)
                 "primary_signals": str(tmp_path / "primary.json"),
                 "pinned_signals": str(tmp_path / "pinned.json"),
                 "report": str(tmp_path / "signal_report.json"),
+                "risk_limits": str(REAL_RISK_LIMITS_PATH),
+                "kill_switch": str(authority),
             },
             "policy": {
                 "validity_minutes": 45,

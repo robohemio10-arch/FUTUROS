@@ -6,7 +6,11 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from smartcrypto.execution.signal_exporter import SignalExporter
-from smartcrypto.risk.risk_manager import RiskManager
+from smartcrypto.execution.signal_risk_gate import (
+    DEFAULT_KILL_SWITCH_PATH,
+    DEFAULT_RISK_LIMITS_PATH,
+    apply_risk_manager_gate,
+)
 from smartcrypto.settings import RuntimeSettings
 
 
@@ -14,14 +18,18 @@ def run_once(settings: RuntimeSettings) -> None:
     settings.assert_safe()
 
     predictions = _load_predictions(settings.predictions_path)
-    risk_manager = RiskManager.from_yaml("config/risk_limits.yml")
+    gate = apply_risk_manager_gate(
+        predictions,
+        risk_limits_path=DEFAULT_RISK_LIMITS_PATH,
+        kill_switch_path=DEFAULT_KILL_SWITCH_PATH,
+    )
+    if gate.status != "ok":
+        raise RuntimeError(f"signal_risk_gate_blocked:{gate.reason}")
     exporter = SignalExporter(settings.signals_path)
-
-    approved = [decision.signal for decision in risk_manager.approve_many(predictions) if decision.approved]
     exporter.write(
         runtime_mode=settings.runtime_mode,
         model_version=_model_version(predictions),
-        signals=approved,
+        signals=gate.approved_signals,
     )
 
 

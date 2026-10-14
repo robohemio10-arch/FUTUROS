@@ -9,6 +9,11 @@ import pandas as pd
 from smartcrypto.execution.signal_producer import build_active_signals
 from smartcrypto.qlib_engine.prediction_freshness import inspect_qlib_prediction_freshness
 
+from test_paper_signal_riskmanager_runtime_wiring_v1 import (
+    REAL_RISK_LIMITS_PATH,
+    _write_clear_authority,
+)
+
 
 NOW = datetime(2026, 5, 28, 12, 0, tzinfo=timezone.utc)
 
@@ -35,6 +40,7 @@ def write_predictions(path: Path, frame: pd.DataFrame) -> None:
 
 
 def producer_config(tmp_path: Path, predictions_path: Path) -> dict:
+    authority = _write_clear_authority(tmp_path)
     return {
         "runtime_mode": "paper",
         "source": "qlib",
@@ -46,6 +52,8 @@ def producer_config(tmp_path: Path, predictions_path: Path) -> dict:
             "report": str(tmp_path / "report.json"),
             "summary": str(tmp_path / "summary.json"),
             "decision_log": str(tmp_path / "decision_log.jsonl"),
+            "risk_limits": str(REAL_RISK_LIMITS_PATH),
+            "kill_switch": str(authority),
         },
         "policy": {
             "validity_minutes": 30,
@@ -65,6 +73,7 @@ def producer_config(tmp_path: Path, predictions_path: Path) -> dict:
 
 
 def test_fresh_prediction_allows_signal(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     predictions = tmp_path / "latest_qlib_predictions.parquet"
     write_predictions(predictions, prediction_frame(NOW - timedelta(minutes=10)))
     monkeypatch.setattr("smartcrypto.execution.signal_producer.utc_now", lambda: NOW)

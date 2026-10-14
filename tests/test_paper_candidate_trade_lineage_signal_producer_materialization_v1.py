@@ -364,8 +364,9 @@ def _install_stubs(monkeypatch, row: dict[str, Any]):
         ),
     )
 
-    def risk_gate(signals, *, risk_limits_path):
+    def risk_gate(signals, *, risk_limits_path, kill_switch_path):
         del risk_limits_path
+        assert kill_switch_path == "data/runtime/kill_switch.json"
         seen["risk_input"] = [dict(item) for item in signals]
         return _approve(seen["risk_input"])
 

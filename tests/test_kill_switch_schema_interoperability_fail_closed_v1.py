@@ -410,6 +410,41 @@ def test_shared_read_deadline_never_allows_clear(
         assert canonical.inspect_kill_switch(path).reason == "kill_switch_read_deadline"
 
 
+@pytest.mark.parametrize("stage", ["json", "normalization", "snapshot"])
+@pytest.mark.parametrize("elapsed", [0.75, 1.0])
+def test_post_read_processing_deadline_never_returns_clear(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stage: str, elapsed: float
+) -> None:
+    _, path = fixture_runtime(tmp_path, structured())
+    before = path.read_bytes()
+    clock = {"elapsed": 0.0}
+    monkeypatch.setattr(canonical.time, "monotonic", lambda: clock["elapsed"])
+    owner, name = (
+        (canonical.json, "loads") if stage == "json"
+        else (canonical, "normalize_state" if stage == "normalization" else "KillSwitchSnapshot")
+    )
+    original = getattr(owner, name)
+
+    def delayed(*args: Any, **kwargs: Any) -> Any:
+        value = original(*args, **kwargs)
+        clock["elapsed"] = elapsed
+        return value
+
+    monkeypatch.setattr(owner, name, delayed)
+    with pytest.raises(canonical.KillSwitchStateError, match="kill_switch_read_deadline"):
+        canonical.read_kill_switch_snapshot(path)
+    assert path.read_bytes() == before
+
+
+def test_processing_below_deadline_still_returns_explicit_clear(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, path = fixture_runtime(tmp_path, structured())
+    clock = iter([0.0, 0.1, canonical.STATE_READ_DEADLINE_SECONDS - 0.001])
+    monkeypatch.setattr(canonical.time, "monotonic", lambda: next(clock))
+    assert canonical.read_kill_switch_snapshot(path).result("BTCUSDT").status == canonical.CLEAR
+
+
 @pytest.mark.parametrize("symbol", ["", "  ", "BTC USDT"])
 def test_invalid_requested_identity_blocks_safety_readers(tmp_path: Path, symbol: str) -> None:
     _, path = fixture_runtime(tmp_path, structured())
