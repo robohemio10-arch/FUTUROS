@@ -519,12 +519,15 @@ def read_kill_switch_snapshot(
         ):
             interpreted["enabled"] = True
         state = normalize_state(interpreted, runtime_mode)
-        return KillSwitchSnapshot(
+        snapshot = KillSwitchSnapshot(
             payload,
             state,
             hashlib.sha256(raw).hexdigest(),
             "structured_v1" if "schema_version" in payload else "legacy",
         )
+        if time.monotonic() - started >= STATE_READ_DEADLINE_SECONDS:
+            raise KillSwitchStateError("kill_switch_read_deadline")
+        return snapshot
     except KillSwitchStateError:
         raise
     except (OSError, ValueError, TypeError, RuntimeError) as exc:

@@ -191,8 +191,9 @@ def test_risk_manager_receives_lineage_prepared_candidates(
             mutated.append(changed)
         return _Prepared(signals=tuple(mutated))
 
-    def risk_gate(signals, *, risk_limits_path):
+    def risk_gate(signals, *, risk_limits_path, kill_switch_path):
         del risk_limits_path
+        assert kill_switch_path == "data/runtime/kill_switch.json"
         seen["submitted"] = [dict(item) for item in signals]
         return _approve(seen["submitted"])
 
@@ -238,7 +239,7 @@ def test_enabled_observability_publication_block_is_fail_closed(
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.apply_risk_manager_gate",
-        lambda signals, *, risk_limits_path: _approve(list(signals)),
+        lambda signals, *, risk_limits_path, kill_switch_path: _approve(list(signals)),
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.finalize_after_risk_manager",
@@ -279,7 +280,7 @@ def test_required_decision_ledger_disabled_blocks_signal_publication(
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.apply_risk_manager_gate",
-        lambda signals, *, risk_limits_path: _approve(list(signals)),
+        lambda signals, *, risk_limits_path, kill_switch_path: _approve(list(signals)),
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.finalize_after_risk_manager",
@@ -309,8 +310,9 @@ def test_observability_preparation_exception_is_fail_closed(
     def prepare(*args, **kwargs):
         raise RuntimeError("simulated_preparation_failure")
 
-    def risk_gate(signals, *, risk_limits_path):
+    def risk_gate(signals, *, risk_limits_path, kill_switch_path):
         del risk_limits_path
+        assert kill_switch_path == "data/runtime/kill_switch.json"
         seen["risk_called"] = True
         return _approve(list(signals))
 
@@ -353,7 +355,7 @@ def test_observability_finalization_exception_is_fail_closed(
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.apply_risk_manager_gate",
-        lambda signals, *, risk_limits_path: _approve(list(signals)),
+        lambda signals, *, risk_limits_path, kill_switch_path: _approve(list(signals)),
     )
 
     def finalize(*args, **kwargs):
@@ -385,7 +387,7 @@ def test_risk_gate_failure_remains_fail_closed_and_lineage_cannot_override(
     )
     monkeypatch.setattr(
         "smartcrypto.execution.signal_producer.apply_risk_manager_gate",
-        lambda signals, *, risk_limits_path: _block(list(signals)),
+        lambda signals, *, risk_limits_path, kill_switch_path: _block(list(signals)),
     )
 
     def finalize(*args, **kwargs):

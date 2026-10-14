@@ -14,6 +14,11 @@ from smartcrypto.execution.paper_candidate_filter_runtime_wiring import (
 )
 from smartcrypto.execution.signal_producer import build_active_signals
 
+from test_paper_signal_riskmanager_runtime_wiring_v1 import (
+    REAL_RISK_LIMITS_PATH,
+    _write_clear_authority,
+)
+
 
 def _signals() -> list[dict[str, object]]:
     return [
@@ -144,6 +149,8 @@ def test_runtime_wiring_does_not_change_risk() -> None:
 
 
 def test_signal_producer_calls_wiring_before_payload_write(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    authority = _write_clear_authority(tmp_path)
     predictions_path = tmp_path / "predictions.parquet"
     primary_path = tmp_path / "freqtrade_signals.json"
     pinned_path = tmp_path / "active_freqtrade_signals.json"
@@ -169,6 +176,8 @@ def test_signal_producer_calls_wiring_before_payload_write(monkeypatch, tmp_path
                 "primary_signals": str(primary_path),
                 "pinned_signals": str(pinned_path),
                 "report": str(report_path),
+                "risk_limits": str(REAL_RISK_LIMITS_PATH),
+                "kill_switch": str(authority),
             },
             "policy": {
                 "long_probability": 0.55,

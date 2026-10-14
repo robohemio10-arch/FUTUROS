@@ -27,6 +27,7 @@ from smartcrypto.execution.paper_candidate_trade_lineage_propagation_v1 import (
     select_non_blocking_paper_publication_signals,
 )
 from smartcrypto.execution.signal_risk_gate import (
+    DEFAULT_KILL_SWITCH_PATH,
     DEFAULT_RISK_LIMITS_PATH,
     apply_risk_manager_gate,
 )
@@ -621,6 +622,7 @@ def build_active_signals(
     risk_gate = apply_risk_manager_gate(
         observability_preparation.signals,
         risk_limits_path=risk_limits_path,
+        kill_switch_path=paths.get("kill_switch", DEFAULT_KILL_SWITCH_PATH),
     )
 
     if risk_gate.status == "ok":

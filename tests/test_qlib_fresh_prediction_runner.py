@@ -11,6 +11,11 @@ import pandas as pd
 from smartcrypto.execution.signal_producer import build_active_signals
 from smartcrypto.qlib_engine.fresh_prediction_runner import run_qlib_fresh_predictions
 
+from test_paper_signal_riskmanager_runtime_wiring_v1 import (
+    REAL_RISK_LIMITS_PATH,
+    _write_clear_authority,
+)
+
 
 class DummyProbabilityModel:
     def predict_proba(self, frame):
@@ -98,7 +103,9 @@ def test_runner_generates_fresh_parquet_with_valid_schema(tmp_path: Path) -> Non
     json.dumps(json.loads(report_path.read_text(encoding="utf-8")))
 
 
-def test_signal_producer_accepts_fresh_runner_predictions(tmp_path: Path) -> None:
+def test_signal_producer_accepts_fresh_runner_predictions(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    authority = _write_clear_authority(tmp_path)
     config = tmp_path / "qlib_model.yml"
     features = tmp_path / "market_features.parquet"
     model = tmp_path / "qlib_model.joblib"
@@ -123,6 +130,8 @@ def test_signal_producer_accepts_fresh_runner_predictions(tmp_path: Path) -> Non
                 "primary_signals": str(tmp_path / "primary.json"),
                 "pinned_signals": str(tmp_path / "pinned.json"),
                 "report": str(tmp_path / "signal_report.json"),
+                "risk_limits": str(REAL_RISK_LIMITS_PATH),
+                "kill_switch": str(authority),
             },
             "policy": {
                 "validity_minutes": 45,

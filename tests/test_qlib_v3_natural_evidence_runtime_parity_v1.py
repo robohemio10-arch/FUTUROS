@@ -77,9 +77,19 @@ def context(fixture, monkeypatch):
         ),
     ],
 )
-def test_exact_recovered_runtime_source_parity(relative: str, expected: str) -> None:
+def test_recovered_source_parity_except_explicit_canonical_authority_wiring(
+    relative: str, expected: str
+) -> None:
     raw = (Path(__file__).resolve().parents[1] / relative).read_bytes()
     normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    if relative == "smartcrypto/execution/signal_producer.py":
+        permitted_lines = (
+            b"    DEFAULT_KILL_SWITCH_PATH,\n",
+            b'        kill_switch_path=paths.get("kill_switch", DEFAULT_KILL_SWITCH_PATH),\n',
+        )
+        for line in permitted_lines:
+            assert normalized.count(line) == 1
+            normalized = normalized.replace(line, b"")
     assert hashlib.sha256(normalized).hexdigest() == expected
 
 
