@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "a47610338d1f79ab4705060e6f62dedb6dfbecf99b291036d10c19111d7f68ce",
+  "aggregate_sha256": "362f09454e46d38a9e98dc0f7a7fd635d991d918350f0f74395a9c92c96eed5a",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 326,
-    "manifested_files_total": 2205,
-    "python_files": 1733,
+    "docs_files": 327,
+    "manifested_files_total": 2209,
+    "python_files": 1736,
     "runtime_excluded_files_total": 0,
-    "test_files": 476,
-    "tracked_files_total": 2206,
+    "test_files": 478,
+    "tracked_files_total": 2210,
     "workflows": 2
   },
   "deterministic": true,
@@ -692,10 +692,10 @@
       "sha256": "00d98b6ef9ed7010f82bcdccbdcdbc3dcbb56261ebd853a107db96534b57dcf2"
     },
     {
-      "bytes": 5566,
+      "bytes": 5864,
       "hash_mode": "text_lf",
       "path": "docker-compose.canonical-treatment.yml",
-      "sha256": "97805ab99ec21a5cf0dae3a0df70e7fc697e8f315664e9ab8b3451e1175b3ab6"
+      "sha256": "e325d4ad8c56535884ef0036a7a279f21b977d7b5f7fccbe7bf9f4d553f9143f"
     },
     {
       "bytes": 1328,
@@ -1880,6 +1880,12 @@
       "sha256": "032c7895681c85fa69af7584b83e102748670752d8042dcfa16c276071cb17b5"
     },
     {
+      "bytes": 15504,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_PUBLISHER_PERMISSION_BOUNDARY_F02_V1.md",
+      "sha256": "0db698bae0418a9b625ba93997627b13f6310a2498b86be85480664aa39240f9"
+    },
+    {
       "bytes": 2075,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_B_SELECTOR_ECONOMIC_ATTRIBUTION_V1.md",
@@ -2646,6 +2652,12 @@
       "hash_mode": "text_lf",
       "path": "freqtrade/user_data/config.paper.json",
       "sha256": "a1ee6755f8a99ff65fa93e0ec49593e1c8c11771de05a2631d44db7bc999a0d9"
+    },
+    {
+      "bytes": 15751,
+      "hash_mode": "text_lf",
+      "path": "freqtrade/user_data/strategies/SmartCryptoCanonicalTreatmentStrategy.py",
+      "sha256": "5463d3dcf3cd0e622c5899d16101f2542724513f66d2620559f745773a8d122d"
     },
     {
       "bytes": 25619,
@@ -4160,10 +4172,10 @@
       "sha256": "2652decf936b270ff0275690002979a02e368101ca0e49fafed13004bbfa7a85"
     },
     {
-      "bytes": 1463,
+      "bytes": 1882,
       "hash_mode": "text_lf",
       "path": "scripts/canonical_treatment_report_healthcheck_v1.py",
-      "sha256": "b3549649ff4187020cfe276e150cc64187b61b911f3145fde7e2411196df2345"
+      "sha256": "ae3714aa7aba4ec15bcdd323528ee077df5a6d77f9baebc8358e349d26d941f7"
     },
     {
       "bytes": 2628,
@@ -8738,10 +8750,10 @@
       "sha256": "0534424bac303c4e906c76ddee5f4d2b0101527964f14cc35bfa61db8296a925"
     },
     {
-      "bytes": 19806,
+      "bytes": 33364,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/publisher.py",
-      "sha256": "e046cfa9fd585b588a1ab24e3a861b4b6b38036bdeebe567ed4dd85917fe4aaa"
+      "sha256": "b24c7e48422c9c36b45ed510bb8813af1096be051674bedbafebfb1833af0358"
     },
     {
       "bytes": 22199,
@@ -10728,6 +10740,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_canonical_treatment_causal_governance_v1.py",
       "sha256": "077db305bf41072c93c461c443980ed6e128b0bbf593a03dc7e90d324906d93d"
+    },
+    {
+      "bytes": 23657,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_treatment_consumer_fence_v1.py",
+      "sha256": "434cb896d0c527f690c5966902bd36872000687b176ed4b391837496cdb94efd"
+    },
+    {
+      "bytes": 23599,
+      "hash_mode": "text_lf",
+      "path": "tests/test_canonical_treatment_publisher_permission_boundary_v1.py",
+      "sha256": "3a4d942d2870844218cc47e23010b09b4854f3f070f9cc5a6962adaef56a0afd"
     },
     {
       "bytes": 8757,
