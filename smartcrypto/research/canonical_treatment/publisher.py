@@ -5,13 +5,21 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import math
 import os
 import re
+import socket
+import socketserver
+import stat
+import struct
+import threading
 import time
+import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, SupportsFloat, SupportsIndex, cast
 
 SCHEMA_VERSION = "canonical_treatment_signal_publisher_v1"
 LEDGER_SCHEMA_VERSION = "canonical_treatment_decision_ledger_v1"
@@ -38,6 +46,9 @@ SAFE_FLAGS = {
 
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+_LOGGER = logging.getLogger(__name__)
+AUTHORIZATION_SCHEMA = "canonical_treatment_entry_authorization_v1"
+PUBLICATION_MAX_AGE_SECONDS = 20.0
 
 
 class CanonicalTreatmentError(RuntimeError):
@@ -102,6 +113,236 @@ def _hash(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _strict_time(value: object) -> datetime:
+    if not isinstance(value, str):
+        raise CanonicalTreatmentError("publication_timestamp_required")
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise CanonicalTreatmentError("publication_timezone_required")
+    return parsed.astimezone(UTC)
+
+
+@dataclass(frozen=True)
+class _CommittedPublication:
+    publication_id: str
+    payload_sha256: str
+    report_sha256: str
+    control_sha256: str
+    evidence_sha256: str
+    control_path: Path
+    evidence_path: Path
+    output_path: Path
+    report_path: Path
+
+
+class PublicationAuthority:
+    """In-memory revocation plus synchronous checks under the publisher's own UID."""
+
+    def __init__(self, socket_path: Path) -> None:
+        self.socket_path = socket_path
+        self._lock = threading.Lock()
+        self._state: _CommittedPublication | None = None
+        self._stop = threading.Event()
+        self._server: socketserver.UnixStreamServer | None = None
+        self._thread: threading.Thread | None = None
+        self._inode: tuple[int, int] | None = None
+
+    def invalidate(self) -> None:
+        with self._lock:
+            self._state = None
+
+    def commit(
+        self,
+        *,
+        output: Mapping[str, Any],
+        report: Mapping[str, Any],
+        control_path: Path,
+        evidence_path: Path,
+        output_path: Path,
+        report_path: Path,
+    ) -> None:
+        state = _CommittedPublication(
+            publication_id=str(report["publication_id"]),
+            payload_sha256=_hash(output),
+            report_sha256=_hash(report),
+            control_sha256=str(report["control_sha256"]),
+            evidence_sha256=str(report["v3_evidence_sha256"]),
+            control_path=control_path,
+            evidence_path=evidence_path,
+            output_path=output_path,
+            report_path=report_path,
+        )
+        with self._lock:
+            self._state = state
+
+    def authorize(self, request: Mapping[str, Any]) -> dict[str, Any]:
+        response = {
+            "schema_version": AUTHORIZATION_SCHEMA,
+            "nonce": request.get("nonce"),
+            "request_sha256": _hash(request),
+            "allowed": False,
+            "reason": "publisher_not_committed",
+            "checked_at_utc": _iso(),
+        }
+        with self._lock:
+            state = self._state
+        if state is None or self._stop.is_set():
+            return response
+        expected_fields = {
+            "schema_version",
+            "nonce",
+            "publication_id",
+            "payload_sha256",
+            "report_sha256",
+            "decision_event_id",
+            "decision_payload_sha256",
+            "signal_id",
+            "pair",
+            "side",
+        }
+        if (
+            set(request) != expected_fields
+            or request.get("schema_version") != AUTHORIZATION_SCHEMA
+            or not re.fullmatch(r"[0-9a-f]{32}", str(request.get("nonce") or ""))
+            or request.get("publication_id") != state.publication_id
+            or request.get("payload_sha256") != state.payload_sha256
+            or request.get("report_sha256") != state.report_sha256
+        ):
+            return response | {"reason": "authorization_binding_mismatch"}
+        try:
+            output = _read_json(state.output_path)
+            report = _read_json(state.report_path)
+            control = _read_json(state.control_path)
+            evidence = _read_json(state.evidence_path)
+            if (
+                _hash(output) != state.payload_sha256
+                or _hash(report) != state.report_sha256
+                or _hash(control) != state.control_sha256
+                or _hash(evidence) != state.evidence_sha256
+                or report.get("status") != "ok"
+                or not 0
+                <= (_now() - _strict_time(report.get("generated_at_utc"))).total_seconds()
+                <= PUBLICATION_MAX_AGE_SECONDS
+            ):
+                raise CanonicalTreatmentError("authorization_current_files_mismatch")
+            matches = [
+                row
+                for row in output["signals"]
+                if (
+                    row.get("signal_id") == request["signal_id"]
+                    and row.get("pair") == request["pair"]
+                    and row.get("side") == request["side"]
+                    and row.get("decision_ledger", {}).get("decision_event_id")
+                    == request["decision_event_id"]
+                    and row.get("decision_ledger", {}).get("decision_payload_sha256")
+                    == request["decision_payload_sha256"]
+                )
+            ]
+            if len(matches) != 1 or matches[0].get("risk_approved") is not True:
+                return response | {"reason": "authorization_signal_mismatch"}
+            if _strict_time(matches[0].get("valid_until")) <= _now():
+                return response | {"reason": "authorization_signal_expired"}
+            with self._lock:
+                if self._state is not state or self._stop.is_set():
+                    return response | {"reason": "authorization_revoked_during_validation"}
+            return response | {
+                "allowed": True,
+                "reason": "current_publication_authorized",
+                "checked_at_utc": _iso(),
+            }
+        except Exception as exc:
+            self.invalidate()
+            _LOGGER.error("%s", json.dumps(_failure_evidence(exc, "synchronous_authorization")))
+            return response | {"reason": "authorization_current_files_unavailable"}
+
+    def start(self) -> None:
+        if not hasattr(socket, "SO_PEERCRED") or os.geteuid() != 10001:
+            raise CanonicalTreatmentError("authorization_linux_publisher_uid_required")
+        if not self.socket_path.is_absolute() or any(
+            p.is_symlink() for p in self.socket_path.parents
+        ):
+            raise CanonicalTreatmentError("authorization_socket_path_invalid")
+        authority = self
+
+        class Handler(socketserver.BaseRequestHandler):
+            def handle(self) -> None:
+                try:
+                    self.request.settimeout(0.2)
+                    _, uid, _ = struct.unpack(
+                        "3i",
+                        self.request.getsockopt(
+                            socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i")
+                        ),
+                    )
+                    if uid != 1000:
+                        return
+                    deadline = time.monotonic() + 0.5
+                    raw = b""
+                    while b"\n" not in raw and len(raw) <= 8192 and time.monotonic() < deadline:
+                        chunk = self.request.recv(1024)
+                        if not chunk:
+                            return
+                        raw += chunk
+                    if not raw.endswith(b"\n") or len(raw) > 8192:
+                        return
+                    request = json.loads(raw)
+                    if not isinstance(request, dict):
+                        return
+                    response = authority.authorize(request)
+                    self.request.sendall(json.dumps(response, allow_nan=False).encode() + b"\n")
+                except Exception as exc:
+                    _LOGGER.error(
+                        "%s", json.dumps(_failure_evidence(exc, "authorization_transport"))
+                    )
+
+        # Existing sockets are never removed automatically: a second writer must fail closed.
+        self._server = socketserver.UnixStreamServer(str(self.socket_path), Handler)
+        observed = self.socket_path.lstat()
+        self._inode = (observed.st_dev, observed.st_ino)
+        try:
+            self.socket_path.chmod(0o660)
+            self._server.timeout = 0.1
+            server = self._server
+
+            def serve() -> None:
+                while not self._stop.is_set():
+                    server.handle_request()
+
+            self._thread = threading.Thread(target=serve, name="publication-authority", daemon=True)
+            self._thread.start()
+        except Exception:
+            self.stop()
+            raise
+
+    def stop(self) -> bool:
+        self.invalidate()
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+        if self._server is not None:
+            self._server.server_close()
+        if self._thread is not None and self._thread.is_alive():
+            _LOGGER.error("authorization_shutdown_incomplete")
+            return False
+        if self._inode is not None:
+            try:
+                observed = self.socket_path.lstat()
+                if (
+                    not stat.S_ISSOCK(observed.st_mode)
+                    or (observed.st_dev, observed.st_ino) != self._inode
+                ):
+                    _LOGGER.error("authorization_socket_identity_changed")
+                    return False
+                self.socket_path.unlink()
+                self._inode = None
+            except OSError as exc:
+                _LOGGER.error(
+                    "%s", json.dumps(_failure_evidence(exc, "authorization_socket_cleanup"))
+                )
+                return False
+        return True
+
+
 def _id(value: object, field: str) -> str:
     text = str(value or "")
     if not _IDENTIFIER.fullmatch(text):
@@ -120,7 +361,7 @@ def _finite(value: object) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
-        out = float(value)
+        out = float(cast("str | SupportsFloat | SupportsIndex", value))
     except (TypeError, ValueError, OverflowError):
         return None
     return out if math.isfinite(out) else None
@@ -318,6 +559,87 @@ def _mirror_exit_control(source: Path | None, output_dir: Path) -> None:
     _write_json(destination, _read_json(source))
 
 
+def _failure_evidence(exc: Exception, stage: str) -> dict[str, Any]:
+    # Exception messages can contain source payloads, credentials or host paths.
+    failure: dict[str, Any] = {"stage": stage, "error_type": type(exc).__name__}
+    frames = []
+    traceback = exc.__traceback__
+    while traceback is not None:
+        frames.append(
+            {
+                "function": traceback.tb_frame.f_code.co_name,
+                "line": traceback.tb_lineno,
+            }
+        )
+        traceback = traceback.tb_next
+    failure["traceback"] = frames
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, OSError):
+            failure["io_error_type"] = type(current).__name__
+            failure["errno"] = current.errno
+            break
+        current = current.__cause__ or current.__context__
+    return failure
+
+
+def _blocked_publication(
+    exc: Exception,
+    *,
+    stage: str,
+    now: str,
+    output_path: Path,
+    report_path: Path,
+) -> dict[str, Any]:
+    reason = f"canonical_treatment_boundary_failed:{type(exc).__name__}"
+    if isinstance(exc, CanonicalTreatmentError):
+        reason = str(exc).split(":", 1)[0]
+    blocked: dict[str, Any] = {
+        "schema_version": REPORT_SCHEMA_VERSION,
+        "status": "blocked",
+        "reason": reason,
+        "generated_at_utc": now,
+        "failure": _failure_evidence(exc, stage),
+        "effective_uid": os.geteuid() if hasattr(os, "geteuid") else None,
+        "effective_gid": os.getegid() if hasattr(os, "getegid") else None,
+        "supplementary_gids": os.getgroups() if hasattr(os, "getgroups") else [],
+        "prior_output_invalidation_confirmed": False,
+        "blocked_report_persisted": False,
+        "continuous_consumer_fence_proven": False,
+        "epoch2_runtime_parity": "not_evaluated",
+        "recovery_errors": [],
+        **SAFE_FLAGS,
+    }
+    empty = {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": now,
+        "source": "canonical_treatment_v3_shadow_allow_v1",
+        "runtime_mode": "paper",
+        "signals": [],
+        "treatment_policy": {"fail_closed": True},
+        **SAFE_FLAGS,
+    }
+    try:
+        _write_json(output_path, empty)
+        if _read_json(output_path) != empty:
+            raise CanonicalTreatmentError("signal_invalidation_readback_mismatch")
+        blocked["prior_output_invalidation_confirmed"] = True
+    except Exception as recovery_exc:
+        blocked["recovery_errors"].append(_failure_evidence(recovery_exc, "invalidate_output"))
+
+    # Independent attempt: an inaccessible output must not skip the report.
+    try:
+        blocked["blocked_report_persisted"] = True
+        _write_json(report_path, blocked)
+    except Exception as recovery_exc:
+        blocked["blocked_report_persisted"] = False
+        blocked["recovery_errors"].append(_failure_evidence(recovery_exc, "persist_blocked_report"))
+    _LOGGER.error("%s", json.dumps(blocked, sort_keys=True, ensure_ascii=True))
+    return blocked
+
+
 def build_treatment_artifact(
     *,
     control_signals_path: Path,
@@ -326,12 +648,19 @@ def build_treatment_artifact(
     report_path: Path,
     ledger_path: Path,
     control_exit_control_path: Path | None = None,
+    authority: PublicationAuthority | None = None,
 ) -> dict[str, Any]:
+    if authority is not None:
+        authority.invalidate()
     now = _iso()
+    publication_id = uuid.uuid4().hex
+    stage = "read_control"
 
     try:
         control = _read_json(control_signals_path)
+        stage = "read_v3_evidence"
         evidence = _read_json(v3_evidence_path)
+        stage = "validate_causal_identity"
         index = _crosswalk_index(evidence)
         signals = control.get("signals")
         if not isinstance(signals, list):
@@ -425,6 +754,7 @@ def build_treatment_artifact(
 
         output = {
             "schema_version": SCHEMA_VERSION,
+            "publication_id": publication_id,
             "generated_at": now,
             "source": "canonical_treatment_v3_shadow_allow_v1",
             "runtime_mode": "paper",
@@ -442,6 +772,7 @@ def build_treatment_artifact(
             **SAFE_FLAGS,
         }
 
+        stage = "read_merge_ledger"
         ledger = _merge_ledger(
             _load_ledger(ledger_path),
             observations,
@@ -457,6 +788,10 @@ def build_treatment_artifact(
 
         report = {
             "schema_version": REPORT_SCHEMA_VERSION,
+            "publication_id": publication_id,
+            "published_payload_sha256": _hash(output),
+            "control_sha256": _hash(control),
+            "v3_evidence_sha256": _hash(evidence),
             "status": "ok",
             "reason": (
                 "treatment_signals_published"
@@ -481,40 +816,29 @@ def build_treatment_artifact(
             **SAFE_FLAGS,
         }
 
+        stage = "publish_output"
         _write_json(output_path, output)
+        stage = "publish_ledger"
         _write_json(ledger_path, ledger)
-        _write_json(report_path, report)
+        stage = "mirror_exit_control"
         _mirror_exit_control(control_exit_control_path, output_path.parent)
+        stage = "publish_report"
+        _write_json(report_path, report)
+        if authority is not None:
+            authority.commit(
+                output=output,
+                report=report,
+                control_path=control_signals_path,
+                evidence_path=v3_evidence_path,
+                output_path=output_path,
+                report_path=report_path,
+            )
         return report
 
     except Exception as exc:
-        reason = (
-            str(exc)
-            if isinstance(exc, CanonicalTreatmentError)
-            else f"canonical_treatment_boundary_failed:{type(exc).__name__}"
+        return _blocked_publication(
+            exc, stage=stage, now=now, output_path=output_path, report_path=report_path
         )
-        blocked = {
-            "schema_version": REPORT_SCHEMA_VERSION,
-            "status": "blocked",
-            "reason": reason,
-            "generated_at_utc": now,
-            **SAFE_FLAGS,
-        }
-        empty = {
-            "schema_version": SCHEMA_VERSION,
-            "generated_at": now,
-            "source": "canonical_treatment_v3_shadow_allow_v1",
-            "runtime_mode": "paper",
-            "signals": [],
-            "treatment_policy": {"fail_closed": True},
-            **SAFE_FLAGS,
-        }
-        try:
-            _write_json(output_path, empty)
-            _write_json(report_path, blocked)
-        except OSError:
-            pass
-        return blocked
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -541,11 +865,21 @@ def _parser() -> argparse.ArgumentParser:
         default="data/runtime/paper_exit_control.json",
     )
     parser.add_argument("--interval-seconds", type=float, default=None)
+    parser.add_argument("--authorization-socket", default=None)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    authority = (
+        PublicationAuthority(Path(args.authorization_socket)) if args.authorization_socket else None
+    )
+    if authority is not None:
+        try:
+            authority.start()
+        except Exception as exc:
+            _LOGGER.error("%s", json.dumps(_failure_evidence(exc, "authorization_startup")))
+            return 2
 
     def once() -> dict[str, Any]:
         return build_treatment_artifact(
@@ -555,21 +889,24 @@ def main(argv: list[str] | None = None) -> int:
             report_path=Path(args.report),
             ledger_path=Path(args.ledger),
             control_exit_control_path=Path(args.control_exit_control),
+            authority=authority,
         )
 
-    if args.interval_seconds is None:
-        report = once()
-        print(json.dumps(report, sort_keys=True, ensure_ascii=False))
-        return 0 if report.get("status") == "ok" else 2
-
-    interval = max(1.0, float(args.interval_seconds))
-    while True:
-        report = once()
-        print(
-            json.dumps(report, sort_keys=True, ensure_ascii=False),
-            flush=True,
+    try:
+        interval = (
+            max(1.0, float(args.interval_seconds)) if args.interval_seconds is not None else None
         )
-        time.sleep(interval)
+        while True:
+            report = once()
+            print(json.dumps(report, sort_keys=True, ensure_ascii=False), flush=True)
+            if report.get("status") != "ok":
+                return 2
+            if interval is None:
+                return 0
+            time.sleep(interval)
+    finally:
+        if authority is not None and not authority.stop():
+            raise CanonicalTreatmentError("authorization_shutdown_incomplete")
 
 
 if __name__ == "__main__":
