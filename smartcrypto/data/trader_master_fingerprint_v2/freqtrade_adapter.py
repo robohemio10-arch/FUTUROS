@@ -15,6 +15,7 @@ from typing import Any
 from smartcrypto.data.trade_file_readonly import read_trade_file
 
 from .authoritative_sqlite import read_authoritative_closed_trades
+from .financial_lifecycle import reconcile_financial_lifecycle
 from .fingerprint_spec import (
     HEX_SHA256,
     FingerprintValidationError,
@@ -140,8 +141,10 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         project_root=root,
         snapshot_path=snapshot,
         profile=profile,
+        include_orders=True,
     )
     sqlite_rows = snapshot_result.pop("rows")
+    order_rows = snapshot_result.pop("orders", [])
     report.update(snapshot_result)
     if snapshot_result["status"] != "ok":
         return _blocked(
@@ -156,6 +159,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
         sqlite_rows,
         profile=profile,
         account_scope_hash=normalized_account_hash,
+        order_records=order_rows,
     )
     report.update(_without_internal_records(baseline_adapted))
     if baseline_adapted["structural_errors"]:
@@ -198,6 +202,7 @@ def build_freqtrade_paper_closed_trades_adapter_report(
             profile=profile,
             account_scope_hash=normalized_account_hash,
             forensic_trade_results=forensic_results,
+            order_records=order_rows,
         )
         validator = _validate_adapted_records(
             adapted,
@@ -452,6 +457,7 @@ def reconcile_and_adapt_records(
     profile: FreqtradePaperSourceProfile,
     account_scope_hash: str,
     forensic_trade_results: Mapping[int, Mapping[str, Any]] | None = None,
+    order_records: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     parsed_csv: list[tuple[int, str, Mapping[str, Any], int]] = []
     malformed_order_ids: list[str] = []
@@ -465,13 +471,18 @@ def reconcile_and_adapt_records(
 
     csv_id_counts = Counter(item[0] for item in parsed_csv)
     duplicate_csv_ids = sorted(trade_id for trade_id, count in csv_id_counts.items() if count > 1)
-    sqlite_ids = [int(row["id"]) for row in sqlite_records]
+    sqlite_ids = [
+        parse_freqtrade_order_id(f"freqtrade-paper-{row.get('id')}") for row in sqlite_records
+    ]
     sqlite_id_counts = Counter(sqlite_ids)
     duplicate_sqlite_ids = sorted(
-        trade_id for trade_id, count in sqlite_id_counts.items() if count > 1
+        trade_id for trade_id, count in sqlite_id_counts.items() if count > 1 and trade_id is not None
     )
     csv_by_id = {item[0]: item for item in parsed_csv}
-    sqlite_by_id = {int(row["id"]): row for row in sqlite_records}
+    sqlite_by_id = {
+        trade_id: row for trade_id, row in zip(sqlite_ids, sqlite_records, strict=True)
+        if trade_id is not None
+    }
     csv_only_ids = sorted(set(csv_by_id) - set(sqlite_by_id))
     sqlite_only_ids = sorted(set(sqlite_by_id) - set(csv_by_id))
     structural_errors: list[str] = []
@@ -481,6 +492,8 @@ def reconcile_and_adapt_records(
         structural_errors.append("duplicate_csv_trade_ids")
     if duplicate_sqlite_ids:
         structural_errors.append("duplicate_sqlite_trade_ids")
+    if None in sqlite_ids:
+        structural_errors.append("invalid_sqlite_trade_ids")
     if csv_only_ids:
         structural_errors.append("csv_only_trade_ids")
     if sqlite_only_ids:
@@ -516,6 +529,11 @@ def reconcile_and_adapt_records(
         return base
 
     epsilon = decimal_from_value(profile.financial_contract.epsilon_abs_fonte)
+    lifecycle = reconcile_financial_lifecycle(sqlite_records, order_records, profile=profile)
+    base["financial_lifecycle"] = lifecycle
+    lifecycle_rows = {
+        item["trade_id"]: item for item in lifecycle["trade_results"]
+    }
     forensic_results = forensic_trade_results or {}
     residuals: list[Decimal] = []
     for trade_id in sorted(csv_by_id):
@@ -527,6 +545,10 @@ def reconcile_and_adapt_records(
             profile=profile,
             account_scope_hash=account_scope_hash,
         )
+        lifecycle_row = lifecycle_rows[trade_id]
+        reasons.extend(lifecycle_row["reasons"])
+        if canonical is None and not reasons:
+            reasons.append("canonical_record_unavailable")
         residual = metrics.get("accounting_residual")
         if isinstance(residual, Decimal):
             residuals.append(residual)
@@ -548,18 +570,18 @@ def reconcile_and_adapt_records(
             "accounting_residual": _decimal_text(residual),
             "fee_open_currency": metrics.get("fee_open_currency"),
             "fee_close_currency": metrics.get("fee_close_currency"),
+            "financial_lifecycle": lifecycle_row,
             **_forensic_row_provenance(
                 sqlite_row,
                 forensic_results.get(trade_id),
             ),
         }
         base["adapter_row_results"].append(row_result)
-        if reasons:
+        if reasons or canonical is None:
             unique_reasons = sorted(set(reasons))
             base["quarantine_reason_counts"].update(unique_reasons)
             base["quarantined_order_ids"].append(order_id)
             continue
-        assert canonical is not None
         base["canonical_records"].append(canonical)
         base["candidate_source_row_indices"].append(source_index)
         base["candidate_order_ids"].append(order_id)

@@ -28,10 +28,10 @@ def read_authoritative_closed_trades(
     project_root: Path,
     snapshot_path: Path,
     profile: FreqtradePaperSourceProfile,
+    include_orders: bool = False,
 ) -> dict[str, Any]:
     """Return closed trades without opening the source snapshot itself."""
 
-    before = snapshot_artifact_hashes(snapshot_path, project_root)
     result: dict[str, Any] = {
         "status": "blocked",
         "reason": "authoritative_sqlite_not_evaluated",
@@ -40,26 +40,29 @@ def read_authoritative_closed_trades(
         "snapshot_access_mode": profile.authoritative_sqlite.access_mode,
         "snapshot_temp_copy_used": False,
         "snapshot_query_only": False,
-        "snapshot_source_hashes_before": before,
+        "snapshot_source_hashes_before": {},
         "snapshot_source_hashes_after": {},
         "snapshot_source_hashes_preserved": False,
         "snapshot_schema_columns": [],
         "validation_errors": [],
     }
-    errors = _validate_snapshot_path(
-        project_root=project_root,
-        snapshot_path=snapshot_path,
-        profile=profile,
-    )
-    if errors:
-        result.update(reason=errors[0], validation_errors=errors)
-        result["snapshot_source_hashes_after"] = snapshot_artifact_hashes(
-            snapshot_path, project_root
+    try:
+        errors = _validate_snapshot_path(
+            project_root=project_root,
+            snapshot_path=snapshot_path,
+            profile=profile,
         )
-        result["snapshot_source_hashes_preserved"] = (
-            result["snapshot_source_hashes_after"] == before
+        if errors:
+            result.update(reason=errors[0], validation_errors=errors)
+            return result
+        before = snapshot_artifact_hashes(snapshot_path, project_root)
+    except OSError as exc:
+        result.update(
+            reason="authoritative_sqlite_unreadable",
+            validation_errors=[f"authoritative_sqlite_unreadable:{type(exc).__name__}"],
         )
         return result
+    result["snapshot_source_hashes_before"] = before
 
     try:
         with tempfile.TemporaryDirectory(prefix="smart-futuros-paper-snapshot-") as temp_dir:
@@ -72,15 +75,23 @@ def read_authoritative_closed_trades(
             result["rows"] = rows
             result["snapshot_schema_columns"] = schema_columns
             result["snapshot_query_only"] = query_only
+            if include_orders:
+                result["orders"] = _query_closed_trade_orders(copied_db)
     except (OSError, sqlite3.Error, ValueError) as exc:
         result.update(
             reason="authoritative_sqlite_unreadable",
+            rows=[],
+            orders=[],
             validation_errors=[f"authoritative_sqlite_unreadable:{type(exc).__name__}"],
         )
     else:
         result.update(status="ok", reason="authoritative_sqlite_closed_trades_loaded")
     finally:
-        after = snapshot_artifact_hashes(snapshot_path, project_root)
+        try:
+            after = snapshot_artifact_hashes(snapshot_path, project_root)
+        except OSError as exc:
+            after = {}
+            result["validation_errors"].append(f"snapshot_recheck_failed:{type(exc).__name__}")
         result["snapshot_source_hashes_after"] = after
         result["snapshot_source_hashes_preserved"] = before == after
         if before != after:
@@ -88,9 +99,41 @@ def read_authoritative_closed_trades(
                 status="blocked",
                 reason="authoritative_sqlite_source_hash_changed",
                 rows=[],
-                validation_errors=["authoritative_sqlite_source_hash_changed"],
+                orders=[],
+                validation_errors=sorted(set([
+                    *result["validation_errors"], "authoritative_sqlite_source_hash_changed",
+                ])),
             )
     return result
+
+
+def _query_closed_trade_orders(copied_db: Path) -> list[dict[str, Any]]:
+    """Use the same stable temporary snapshot, never the operational database."""
+    connection = sqlite3.connect(f"{copied_db.as_uri()}?mode=ro", uri=True, timeout=2.0)
+    connection.row_factory = sqlite3.Row
+    try:
+        connection.execute("PRAGMA query_only = ON")
+        if connection.execute("PRAGMA query_only").fetchone()[0] != 1:
+            raise ValueError("sqlite_query_only_not_enabled")
+        required = {
+            "id", "ft_trade_id", "order_id", "ft_pair", "ft_order_side", "side",
+            "ft_is_open", "status", "amount", "filled", "remaining", "average",
+            "order_date", "order_filled_date",
+        }
+        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(orders)")}
+        if not required <= columns:
+            raise ValueError("financial_lifecycle_orders_schema_incomplete")
+        if connection.execute(
+            "SELECT 1 FROM orders LEFT JOIN trades ON orders.ft_trade_id = trades.id "
+            "WHERE trades.id IS NULL LIMIT 1"
+        ).fetchone() is not None:
+            raise ValueError("financial_lifecycle_order_parent_identity_unresolved")
+        return [dict(row) for row in connection.execute(
+            "SELECT * FROM orders WHERE ft_trade_id IN "
+            "(SELECT id FROM trades WHERE is_open = 0) ORDER BY id"
+        )]
+    finally:
+        connection.close()
 
 
 def read_authoritative_trade_evidence(

@@ -168,9 +168,47 @@ def write_sqlite(path: Path, rows: list[dict[str, Any]]) -> None:
             f"INSERT INTO trades ({names}) VALUES ({placeholders})",
             [[row.get(column) for column in columns] for row in rows],
         )
+        connection.execute(
+            "CREATE TABLE orders (id INTEGER, ft_trade_id INTEGER, order_id TEXT, "
+            "ft_pair TEXT, ft_order_side TEXT, side TEXT, status TEXT, ft_is_open INTEGER, "
+            "amount REAL, filled REAL, remaining REAL, average REAL, "
+            "order_date TEXT, order_filled_date TEXT)"
+        )
+        connection.executemany(
+            "INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [tuple(order.values()) for order in execution_rows(rows)],
+        )
         connection.commit()
     finally:
         connection.close()
+
+
+def execution_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Explicit, isolated fill evidence for the existing summary-only fixtures."""
+    orders: list[dict[str, Any]] = []
+    for row in rows:
+        entry, exit_ = ("sell", "buy") if row["is_short"] else ("buy", "sell")
+        for offset, side, price, timestamp in (
+            (0, entry, row["open_rate"], row["open_date"]),
+            (1, exit_, row["close_rate"] if row["close_rate"] is not None else 110, row["close_date"]),
+        ):
+            orders.append({
+                "id": int(row["id"]) * 10 + offset,
+                "ft_trade_id": row["id"],
+                "order_id": f"fixture-{row['id']}-{offset}",
+                "ft_pair": row["pair"],
+                "ft_order_side": side,
+                "side": side,
+                "status": "closed",
+                "ft_is_open": 0,
+                "amount": row["amount"],
+                "filled": row["amount"],
+                "remaining": 0,
+                "average": price,
+                "order_date": timestamp,
+                "order_filled_date": timestamp,
+            })
+    return orders
 
 
 def write_fixture(
