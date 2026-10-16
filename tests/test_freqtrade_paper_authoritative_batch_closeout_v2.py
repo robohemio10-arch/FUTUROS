@@ -12,6 +12,8 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from tests.test_freqtrade_paper_closed_trades_adapter_v2 import execution_rows
+
 import scripts.validate_trader_master_staging_v2 as cli_module
 import smartcrypto.data.trader_master_fingerprint_v2.freqtrade_adapter as adapter_module
 from smartcrypto.data.trader_master_fingerprint_v2.freqtrade_adapter import (
@@ -202,6 +204,7 @@ def _install_adapter_fixture(
             "status": "ok",
             "reason": "authoritative_sqlite_read_ok",
             "rows": copy.deepcopy(sqlite_rows),
+            "orders": execution_rows(sqlite_rows),
             "snapshot_source_hashes_before": copy.deepcopy(HASHES),
             "snapshot_source_hashes_after": copy.deepcopy(HASHES),
             "snapshot_source_hashes_preserved": True,
