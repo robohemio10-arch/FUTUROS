@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "518b56dc54cd197328cebc4fe03cdc570e75b3c8030c0ac9120f72218e5429d2",
+  "aggregate_sha256": "3efdab8ad643d0c4f24184493dd9582dc79235d9a27d77ff39ccc710ecfa3d19",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 328,
-    "manifested_files_total": 2213,
-    "python_files": 1739,
+    "manifested_files_total": 2216,
+    "python_files": 1742,
     "runtime_excluded_files_total": 0,
-    "test_files": 480,
-    "tracked_files_total": 2214,
+    "test_files": 481,
+    "tracked_files_total": 2217,
     "workflows": 2
   },
   "deterministic": true,
@@ -3054,6 +3054,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_candidate_filter_runtime_wiring_v1.py",
       "sha256": "bdda749bcb6d946533cddde11414db8e6d6b08049852523ba905b54d98d11e42"
+    },
+    {
+      "bytes": 1783,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_financial_population_f04.py",
+      "sha256": "71acac8dbbe1afe1b47aa1d59beff41fb6b019ae292aafc4c36684f46384e8fd"
     },
     {
       "bytes": 5405,
@@ -6236,10 +6242,10 @@
       "sha256": "bf582899af3d326d5c7a501430dde0f06044545c633e414282e0eff5bd0187ae"
     },
     {
-      "bytes": 19776,
+      "bytes": 22417,
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/authoritative_sqlite.py",
-      "sha256": "466ef3d32628449062d478a72bbeebb6f2f769635304fdaa743a878e1fe88d5a"
+      "sha256": "ec1960073d9cd314fdf425f912295f51cf14f91c374d62aaf3f5c15bfcef9acb"
     },
     {
       "bytes": 39660,
@@ -6294,6 +6300,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/master_reconciliation.py",
       "sha256": "28adbc0910c70927da7675990e32ba917dc35da657b6bd451bd54e4204613324"
+    },
+    {
+      "bytes": 17056,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/population_evidence.py",
+      "sha256": "8f419762c9212d1a127eb9b8fdaddb158fee8ba06acd0aa19cb7c590558c3f29"
     },
     {
       "bytes": 22285,
@@ -12342,6 +12354,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_financial_performance_metrics.py",
       "sha256": "10f2cfb4ad473854c65f568ceb081d532e1b85b057337e3aab92a8a01eb12967"
+    },
+    {
+      "bytes": 20554,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_financial_population_evidence_f04.py",
+      "sha256": "3169a82141389d8d26cf89f2d606b7bd873cfad20b8a4ed107e245954395e1a0"
     },
     {
       "bytes": 6281,

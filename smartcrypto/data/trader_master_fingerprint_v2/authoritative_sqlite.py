@@ -29,6 +29,7 @@ def read_authoritative_closed_trades(
     snapshot_path: Path,
     profile: FreqtradePaperSourceProfile,
     include_orders: bool = False,
+    include_population_metadata: bool = False,
 ) -> dict[str, Any]:
     """Return closed trades without opening the source snapshot itself."""
 
@@ -68,6 +69,14 @@ def read_authoritative_closed_trades(
         with tempfile.TemporaryDirectory(prefix="smart-futuros-paper-snapshot-") as temp_dir:
             copied_db = _copy_snapshot_artifacts(snapshot_path, Path(temp_dir))
             result["snapshot_temp_copy_used"] = True
+            if include_population_metadata:
+                copied_hashes = snapshot_artifact_hashes(copied_db, Path(temp_dir))
+                for suffix in SQLITE_SIDECAR_SUFFIXES:
+                    source_key = _display_path(Path(f"{snapshot_path}{suffix}"), project_root)
+                    copied_key = _display_path(Path(f"{copied_db}{suffix}"), Path(temp_dir))
+                    if before[source_key] != copied_hashes[copied_key]:
+                        raise ValueError("population_copy_artifact_mismatch")
+                result["snapshot_copy_hashes_verified"] = True
             rows, schema_columns, query_only = _query_closed_trades(
                 copied_db,
                 required_columns=profile.authoritative_sqlite.required_columns,
@@ -77,6 +86,8 @@ def read_authoritative_closed_trades(
             result["snapshot_query_only"] = query_only
             if include_orders:
                 result["orders"] = _query_closed_trade_orders(copied_db)
+            if include_population_metadata:
+                result["snapshot_population"] = _query_population_metadata(copied_db)
     except (OSError, sqlite3.Error, ValueError) as exc:
         result.update(
             reason="authoritative_sqlite_unreadable",
@@ -105,6 +116,44 @@ def read_authoritative_closed_trades(
                 ])),
             )
     return result
+
+
+def _query_population_metadata(copied_db: Path) -> dict[str, Any]:
+    """Describe the whole source without conflating open and closed financial evidence."""
+    connection = sqlite3.connect(f"{copied_db.as_uri()}?mode=ro", uri=True, timeout=2.0)
+    try:
+        connection.execute("PRAGMA query_only = ON")
+        if connection.execute("PRAGMA query_only").fetchone()[0] != 1:
+            raise ValueError("sqlite_query_only_not_enabled")
+        total, closed, opened, identities, valid_ids = connection.execute(
+            "SELECT COUNT(*), "
+            "COUNT(CASE WHEN typeof(is_open)='integer' AND is_open=0 THEN 1 END), "
+            "COUNT(CASE WHEN typeof(is_open)='integer' AND is_open=1 THEN 1 END), "
+            "COUNT(DISTINCT id), "
+            "COUNT(CASE WHEN typeof(id)='integer' AND id>0 THEN 1 END) FROM trades"
+        ).fetchone()
+        columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(trades)")}
+        scope_queries = {
+            "source_id": "SELECT DISTINCT source_id FROM trades",
+            "account_scope_hash": "SELECT DISTINCT account_scope_hash FROM trades",
+            "paper_scope": "SELECT DISTINCT paper_scope FROM trades",
+            "epoch_id": "SELECT DISTINCT epoch_id FROM trades",
+            "cohort_id": "SELECT DISTINCT cohort_id FROM trades",
+        }
+        return {
+            "total_trade_count": total,
+            "closed_trade_count": closed,
+            "open_trade_count": opened,
+            "unclassified_trade_count": total - closed - opened,
+            "distinct_trade_id_count": identities,
+            "valid_trade_id_count": valid_ids,
+            "scope_values": {
+                field: [row[0] for row in connection.execute(query)]
+                for field, query in scope_queries.items() if field in columns
+            },
+        }
+    finally:
+        connection.close()
 
 
 def _query_closed_trade_orders(copied_db: Path) -> list[dict[str, Any]]:
