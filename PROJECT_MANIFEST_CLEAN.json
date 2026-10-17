@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "3efdab8ad643d0c4f24184493dd9582dc79235d9a27d77ff39ccc710ecfa3d19",
+  "aggregate_sha256": "5af9d7ba6309cea0957bef04f36c26d02c8a13e1bb40ae6eef0e7084a5384f39",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 328,
-    "manifested_files_total": 2216,
-    "python_files": 1742,
+    "docs_files": 329,
+    "manifested_files_total": 2220,
+    "python_files": 1745,
     "runtime_excluded_files_total": 0,
-    "test_files": 481,
-    "tracked_files_total": 2217,
+    "test_files": 482,
+    "tracked_files_total": 2221,
     "workflows": 2
   },
   "deterministic": true,
@@ -1970,6 +1970,12 @@
       "sha256": "8cad8cf62b5ce04bea9d37bf71aa449637aad3afe7c7deccb7f29aefd6cc49bf"
     },
     {
+      "bytes": 4813,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_FINANCIAL_SOURCE_AUTHORITY_PREFLIGHT_F05.md",
+      "sha256": "c01b4de270efda8607d41080712e2424d15ba2fa0b6af9f8f2fe3280470b61f3"
+    },
+    {
       "bytes": 2643,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_MASTER_DIVERGENCE_OOS_CAUSAL_ATTRIBUTION_V1.md",
@@ -3060,6 +3066,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_financial_population_f04.py",
       "sha256": "71acac8dbbe1afe1b47aa1d59beff41fb6b019ae292aafc4c36684f46384e8fd"
+    },
+    {
+      "bytes": 1883,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_financial_source_authority_f05.py",
+      "sha256": "ca16e4c285b18ae41e663dc655acd9263d956adb8b0597b6507082de8cd7e866"
     },
     {
       "bytes": 5405,
@@ -6318,6 +6330,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/data/trader_master_fingerprint_v2/quarantine_recovery.py",
       "sha256": "2f5c79eebcff38850a895e25c0ee8c121304a129d3eb03c4e893d591a4486aaf"
+    },
+    {
+      "bytes": 16031,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/data/trader_master_fingerprint_v2/source_authority_preflight.py",
+      "sha256": "afe3e6064c84a2e10bb0ce6f0feb02e15a0f0bda821278a31c461e80866ca655"
     },
     {
       "bytes": 10916,
@@ -12360,6 +12378,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_financial_population_evidence_f04.py",
       "sha256": "3169a82141389d8d26cf89f2d606b7bd873cfad20b8a4ed107e245954395e1a0"
+    },
+    {
+      "bytes": 22130,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_financial_source_authority_f05.py",
+      "sha256": "927a60d88ef9439d9cd8ab86ce6ae5025482c314dc0c5613452c40629b9dfa49"
     },
     {
       "bytes": 6281,
