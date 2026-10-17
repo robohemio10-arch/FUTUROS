@@ -120,7 +120,7 @@ def audit_paper_financial_source_authority(
         if (len(rows) != closed or any(type(key) is not int for key in ids)
                 or sorted(ids) != list(permission.trade_ids)):
             raise f04.EvidenceError("EXPORT_CLOSED_MEMBERSHIP_MISMATCH")
-        _order_identities(f04._records(source.get("orders")), permission.trade_ids)
+        _order_identities(f04._records(source.get("orders")), rows)
         _distinct_inputs([*documents.values(), *artifacts])
         if snapshot_artifact_hashes(snapshot, root) != before_hashes:
             raise f04.EvidenceError("SOURCE_DRIFT")
@@ -228,20 +228,35 @@ def _export_contract(
             raise f04.EvidenceError("EXPORT_POPULATION_COUNTS_INVALID")
 
 
-def _order_identities(orders: list[f04.Record], trade_ids: tuple[int, ...]) -> None:
-    ids: set[int] = set()
-    exchange_ids: set[str] = set()
+def _order_identities(orders: list[f04.Record], trades: list[f04.Record]) -> None:
+    trade_pairs: dict[int, str] = {}
+    if not trades:
+        raise f04.EvidenceError("SOURCE_TRADE_IDENTITIES_AMBIGUOUS")
+    for trade in trades:
+        trade_id, pair = trade.get("id"), trade.get("pair")
+        if (type(trade_id) is not int or trade_id <= 0 or trade_id in trade_pairs
+                or not isinstance(pair, str) or not pair.strip()):
+            raise f04.EvidenceError("SOURCE_TRADE_IDENTITIES_AMBIGUOUS")
+        trade_pairs[trade_id] = pair
+
+    local_ids: set[int] = set()
+    exchange_ids: set[tuple[str, str]] = set()
     parents: set[int] = set()
     for row in orders:
         key, external, parent = row.get("id"), row.get("order_id"), row.get("ft_trade_id")
-        if (type(key) is not int or key <= 0 or key in ids
-                or not isinstance(external, str) or not external.strip() or external in exchange_ids
-                or type(parent) is not int or parent not in trade_ids):
+        pair = row.get("ft_pair")
+        if (type(key) is not int or key <= 0 or key in local_ids
+                or not isinstance(external, str) or not external.strip()
+                or type(parent) is not int or parent not in trade_pairs
+                or not isinstance(pair, str) or not pair.strip() or pair != trade_pairs[parent]):
             raise f04.EvidenceError("SOURCE_ORDER_IDENTITIES_AMBIGUOUS")
-        ids.add(key)
-        exchange_ids.add(external)
+        identity = (pair, external)
+        if identity in exchange_ids:
+            raise f04.EvidenceError("SOURCE_ORDER_IDENTITIES_AMBIGUOUS")
+        local_ids.add(key)
+        exchange_ids.add(identity)
         parents.add(parent)
-    if parents != set(trade_ids):
+    if parents != set(trade_pairs):
         raise f04.EvidenceError("SOURCE_TRADE_ORDER_EVIDENCE_INCOMPLETE")
 
 

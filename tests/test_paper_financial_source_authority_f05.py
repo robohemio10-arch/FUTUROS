@@ -357,6 +357,61 @@ def test_review_does_not_mask_snapshot_membership_or_schema_defects(
     blocked(fixture.audit())
 
 
+@pytest.mark.parametrize(("case", "valid"), [
+    ("mismatched_pair", False), ("missing_order_pair", False), ("blank_order_pair", False),
+    ("missing_trade_pair", False), ("blank_trade_pair", False),
+    ("same_external_different_pairs", True), ("same_external_same_pair", False),
+    ("duplicate_local_different_pairs", False), ("absent_parent", False),
+    ("missing_parent", False), ("missing_external", False), ("missing_local", False),
+    ("missing_order_evidence", False),
+])
+def test_order_pair_and_external_namespace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str, valid: bool,
+) -> None:
+    fixture = fixture_chain(tmp_path, monkeypatch)
+    with sqlite3.connect(fixture.source[1]) as connection:
+        if case in ("same_external_different_pairs", "duplicate_local_different_pairs"):
+            connection.execute("UPDATE trades SET pair='ETH/USDT:USDT' WHERE id=677")
+            connection.execute("UPDATE orders SET ft_pair='ETH/USDT:USDT' WHERE ft_trade_id=677")
+        statements = {
+            "mismatched_pair": "UPDATE orders SET ft_pair='ETH/USDT:USDT' WHERE id=6760",
+            "missing_order_pair": "UPDATE orders SET ft_pair=NULL WHERE id=6760",
+            "blank_order_pair": "UPDATE orders SET ft_pair=' ' WHERE id=6760",
+            "missing_trade_pair": "UPDATE trades SET pair=NULL WHERE id=676",
+            "blank_trade_pair": "UPDATE trades SET pair=' ' WHERE id=676",
+            "same_external_different_pairs": "UPDATE orders SET order_id='shared-external' WHERE id IN (6760,6770)",
+            "same_external_same_pair": "UPDATE orders SET order_id='shared-external' WHERE id IN (6760,6770)",
+            "duplicate_local_different_pairs": "UPDATE orders SET id=6760 WHERE id=6770",
+            "absent_parent": "UPDATE orders SET ft_trade_id=999 WHERE id=6760",
+            "missing_parent": "UPDATE orders SET ft_trade_id=NULL WHERE id=6760",
+            "missing_external": "UPDATE orders SET order_id=NULL WHERE id=6760",
+            "missing_local": "UPDATE orders SET id=NULL WHERE id=6760",
+            "missing_order_evidence": "DELETE FROM orders WHERE ft_trade_id=676",
+        }
+        connection.execute(statements[case])
+    reseal(fixture.source)
+    fixture.receipt["snapshot_artifact_sha256"] = artifacts(fixture.source[1])
+    fixture.seal(monkeypatch)
+    before = bytes_in(tmp_path)
+    result = fixture.audit()
+    if valid:
+        assert result["status"] == "VALIDATED", result
+        assert result["preflight_validated"] is True
+    else:
+        blocked(result)
+    assert result["execution_authorized"] is False
+    assert result["f04_executed"] is False
+    assert bytes_in(tmp_path) == before
+
+
+@pytest.mark.parametrize("duplicate_pair", ["BTC/USDT:USDT", "ETH/USDT:USDT"])
+def test_ambiguous_trade_identity_cannot_be_overwritten(duplicate_pair: str) -> None:
+    trades = [{"id": 676, "pair": "BTC/USDT:USDT"}, {"id": 676, "pair": duplicate_pair}]
+    order = {"id": 6760, "ft_trade_id": 676, "ft_pair": duplicate_pair, "order_id": "fixture-order"}
+    with pytest.raises(f05.f04.EvidenceError, match="^SOURCE_TRADE_IDENTITIES_AMBIGUOUS$"):
+        f05._order_identities([order], trades)
+
+
 @pytest.mark.parametrize("name", ["origin", "config", "receipt", "profile", "authorization", "db"])
 def test_drift_during_read_blocks_preflight(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str,
