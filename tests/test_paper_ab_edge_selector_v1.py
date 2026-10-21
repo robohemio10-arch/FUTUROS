@@ -31,7 +31,6 @@ from smartcrypto.research.paper_ab_edge_selector.persistence import (
     resolve_assignments_path,
     resolve_report_path,
     write_assignments_idempotent,
-    write_report,
 )
 
 
@@ -294,6 +293,26 @@ def test_qlib_dependency_security_blocked_blocks_fail_closed(tmp_path: Path) -> 
     evidence = _read_qlib_security_evidence(tmp_path, target)
     assert evidence["gate_passed"] is False
     assert evidence["reason"] == "upstream_constraint_blocked"
+
+
+def test_historical_approved_report_cannot_override_current_policy(tmp_path: Path) -> None:
+    from smartcrypto.learning.qlib_dependency_security_hardening import audit_project
+
+    root = Path(__file__).resolve().parents[1]
+    target = tmp_path / "old-approved-security.json"
+    target.write_text(json.dumps({
+        "status": "ok", "reason": "old_certificate",
+        "approved_security_clean_resolution_found": True,
+        "qlib_security_gate_passed": True,
+        "policy_sha256": audit_project(root)["policy_sha256"],
+    }), encoding="utf-8")
+    evidence = _read_qlib_security_evidence(root, target)
+    assert evidence["gate_passed"] is False
+    assert evidence["current_policy_reason"] == "qlib_pending_certification"
+    assert evidence["qlib_security_gate_passed"] is False
+    eligible, blockers = treatment_eligibility(_estimate(), _gates(), evidence)
+    assert eligible is False
+    assert blockers
 
 
 def test_no_candidate_linkage_yields_zero_eligible_treatment(monkeypatch: pytest.MonkeyPatch) -> None:

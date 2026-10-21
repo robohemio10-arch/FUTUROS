@@ -1,6 +1,209 @@
 {
-  "approved_security_clean_resolution_found": true,
-  "certified_evidence": {
+  "approved_security_clean_resolution_found": false,
+  "decision": "MANTER_EM_RESEARCH",
+  "expected_direct_requirements": [
+    "pyqlib==0.9.7"
+  ],
+  "expected_packages": {
+    "aiohappyeyeballs": "2.7.1",
+    "aiohttp": "3.14.4",
+    "aiosignal": "1.4.0",
+    "alembic": "1.20.0",
+    "annotated-doc": "0.0.5",
+    "annotated-types": "0.8.0",
+    "anyio": "4.15.1",
+    "argon2-cffi": "25.1.0",
+    "argon2-cffi-bindings": "26.1.0",
+    "arrow": "1.4.0",
+    "asttokens": "3.0.2",
+    "async-lru": "2.4.0",
+    "attrs": "26.1.0",
+    "babel": "2.18.0",
+    "beautifulsoup4": "4.15.0",
+    "bleach": "6.4.0",
+    "blinker": "1.9.0",
+    "cachetools": "7.2.4",
+    "certifi": "2026.10.19",
+    "cffi": "2.1.1",
+    "charset-normalizer": "3.5.2",
+    "clarabel": "0.11.1",
+    "click": "8.5.0",
+    "cloudpickle": "3.1.2",
+    "comm": "0.2.3",
+    "contourpy": "1.4.0",
+    "cryptography": "50.0.0",
+    "cvxpy": "1.9.3",
+    "cycler": "0.12.1",
+    "databricks-sdk": "0.155.0",
+    "debugpy": "1.8.22",
+    "defusedxml": "0.7.1",
+    "dill": "0.4.1",
+    "dnspython": "2.9.0",
+    "docker": "7.2.0",
+    "executing": "2.3.0",
+    "fastapi": "0.158.2",
+    "fastjsonschema": "2.22.2",
+    "filelock": "4.2.4",
+    "fire": "0.7.1",
+    "flask": "3.1.3",
+    "flask-cors": "6.0.5",
+    "fonttools": "4.67.0",
+    "fqdn": "1.6.0",
+    "frozenlist": "1.8.0",
+    "gitdb": "4.0.12",
+    "gitpython": "3.1.62",
+    "google-auth": "2.62.0",
+    "graphene": "3.4.3",
+    "graphql-core": "3.2.13",
+    "graphql-relay": "3.2.0",
+    "gunicorn": "26.2.0",
+    "gym": "0.26.2",
+    "gym-notices": "0.1.0",
+    "h11": "0.16.0",
+    "highspy": "1.15.1",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "huey": "3.4.0",
+    "idna": "3.20",
+    "importlib-metadata": "9.0.1",
+    "ipykernel": "7.4.0",
+    "ipython": "9.17.1",
+    "ipython-pygments-lexers": "1.1.1",
+    "ipywidgets": "8.1.9",
+    "isoduration": "20.11.0",
+    "itsdangerous": "2.2.0",
+    "jedi": "0.20.1",
+    "jinja2": "3.1.6",
+    "joblib": "1.6.0",
+    "json5": "0.17.3",
+    "jsonpointer": "3.4",
+    "jsonschema": "4.26.0",
+    "jsonschema-specifications": "2025.9.1",
+    "jupyter": "1.1.1",
+    "jupyter-builder": "1.2.3",
+    "jupyter-client": "8.10.0",
+    "jupyter-console": "6.6.3",
+    "jupyter-core": "5.9.1",
+    "jupyter-events": "0.12.1",
+    "jupyter-lsp": "2.3.1",
+    "jupyter-server": "2.21.1",
+    "jupyter-server-terminals": "0.5.4",
+    "jupyterlab": "4.6.4",
+    "jupyterlab-pygments": "0.3.0",
+    "jupyterlab-server": "2.28.1",
+    "jupyterlab-widgets": "3.0.17",
+    "kiwisolver": "1.5.1",
+    "lark": "1.3.1",
+    "lightgbm": "4.7.0",
+    "loguru": "0.7.3",
+    "mako": "1.4.2",
+    "markupsafe": "3.0.4",
+    "matplotlib": "3.11.2",
+    "matplotlib-inline": "0.2.2",
+    "mistune": "3.4.0",
+    "mlflow": "3.17.0",
+    "mlflow-skinny": "3.17.0",
+    "mlflow-tracing": "3.17.0",
+    "multidict": "6.9.1",
+    "narwhals": "2.27.1",
+    "nbclient": "0.11.0",
+    "nbconvert": "7.17.2",
+    "nbformat": "5.11.1",
+    "nest-asyncio2": "1.7.4",
+    "notebook": "7.6.3",
+    "notebook-shim": "0.2.4",
+    "numpy": "2.5.4",
+    "opentelemetry-api": "1.45.1",
+    "opentelemetry-proto": "1.45.1",
+    "opentelemetry-sdk": "1.45.1",
+    "opentelemetry-semantic-conventions": "0.66b1",
+    "osqp": "1.1.3",
+    "packaging": "26.3",
+    "pandas": "3.0.6",
+    "pandocfilters": "1.5.1",
+    "parso": "0.8.7",
+    "pexpect": "4.9.0",
+    "pillow": "13.0.0",
+    "platformdirs": "4.13.5",
+    "prettytable": "3.18.0",
+    "prometheus-client": "0.26.0",
+    "prompt-toolkit": "3.0.53",
+    "propcache": "0.5.4",
+    "protobuf": "7.36.2",
+    "psutil": "7.2.2",
+    "ptyprocess": "0.7.0",
+    "pure-eval": "0.2.4",
+    "pyarrow": "25.0.1",
+    "pyasn1": "0.6.4",
+    "pyasn1-modules": "0.4.2",
+    "pycparser": "3.11",
+    "pydantic": "2.14.1",
+    "pydantic-core": "2.50.1",
+    "pydantic-settings": "2.16.1",
+    "pygments": "2.21.0",
+    "pymongo": "4.18.2",
+    "pyparsing": "3.3.3",
+    "pyqlib": "0.9.7",
+    "python-dateutil": "2.9.0.post0",
+    "python-dotenv": "1.2.4",
+    "python-json-logger": "4.2.0",
+    "python-redis-lock": "4.0.1",
+    "pyyaml": "6.0.3",
+    "pyzmq": "27.2.0",
+    "qdldl": "0.1.9.post1",
+    "redis": "8.1.0",
+    "referencing": "0.37.0",
+    "requests": "2.34.2",
+    "rfc3339-validator": "0.1.4",
+    "rfc3986-validator": "0.1.1",
+    "rfc3987-syntax": "1.1.0",
+    "rpds-py": "2026.9.1",
+    "ruamel-yaml": "0.19.1",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "scs": "3.3.1",
+    "send2trash": "2.1.0",
+    "setuptools": "84.2.1",
+    "six": "1.17.0",
+    "skops": "0.16.0",
+    "smmap": "5.0.3",
+    "soupsieve": "3.0.3",
+    "sparsediffpy": "0.6.1",
+    "sqlalchemy": "2.1.6",
+    "sqlparse": "0.6.0",
+    "stack-data": "0.6.3",
+    "starlette": "1.9.0",
+    "termcolor": "3.3.0",
+    "terminado": "0.18.1",
+    "threadpoolctl": "3.7.0",
+    "tinycss2": "1.5.1",
+    "tornado": "6.5.9",
+    "tqdm": "4.70.1",
+    "traitlets": "5.16.1",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "tzdata": "2026.5",
+    "uri-template": "1.3.0",
+    "urllib3": "2.8.0",
+    "uvicorn": "0.54.0",
+    "wcwidth": "0.9.3",
+    "webcolors": "25.10.0",
+    "webencodings": "0.6.1",
+    "websocket-client": "1.9.2",
+    "werkzeug": "3.1.9",
+    "widgetsnbextension": "4.0.16",
+    "yarl": "1.25.1",
+    "zipp": "4.1.2"
+  },
+  "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
+  "expected_security_lock_package_count": 189,
+  "expected_security_lock_sha256": "a9c20fc8e6f46d451716dd9112f71b1f6405c16915ab0a5a766b16386776f7b0",
+  "expected_security_resolution_evidence_sha256": "99ac6249c6347270b9471884f82e52cf83701e6241816899ccd9e7015a59bc29",
+  "governance_approval": {
+    "approved": false,
+    "reason": "new_graph_requires_independent_ci_and_explicit_governance_approval"
+  },
+  "historical_certified_evidence": {
     "historical_blocked_resolution": {
       "observed_date": "2026-08-20",
       "previous_cryptography": "49.0.0",
@@ -27,13 +230,13 @@
         "mlflow": "3.16.0",
         "mlflow-skinny": "3.16.0",
         "mlflow-tracing": "3.16.0",
+        "multidict": "6.9.1",
         "notebook": "7.6.3",
         "pyarrow": "25.0.1",
+        "pymongo": "4.18.2",
         "pyqlib": "0.9.7",
         "tornado": "6.5.9",
         "urllib3": "2.8.0",
-        "multidict": "6.9.1",
-        "pymongo": "4.18.2",
         "werkzeug": "3.1.9"
       },
       "pip_audit_exit_code": 0,
@@ -44,15 +247,7 @@
       "security_status": "clean"
     }
   },
-  "decision": "MANTER_EM_RESEARCH",
-  "expected_direct_requirements": [
-    "pyqlib==0.9.7"
-  ],
-  "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
-  "expected_security_lock_package_count": 190,
-  "expected_security_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
-  "expected_security_resolution_evidence_sha256": "ee6aa92abe5742b588c380a33720274673d70e2d2e897644a495ef625b0e993b",
-  "p08_allowed": true,
+  "p08_allowed": false,
   "p08_functional_regression": {
     "exact_certified_graph_required": true,
     "fallback_allowed": false,
@@ -62,16 +257,14 @@
     "repository_mount": "readonly",
     "required": true,
     "schema_version": "qlib_security_functional_regression_v1",
-    "status": "ci_certified",
-    "certified_workflow_run_id": 37467299675,
-    "certified_proof_commit_sha": "35d00079b76256449bd9f415ef078b789c293946"
+    "status": "pending_ci_certification"
   },
   "p08_security_gate_bypassed": false,
-  "p08_security_gate_remains_blocked": false,
-  "policy_status": "active_security_clean",
-  "policy_version": "2026-10-06.v8",
+  "p08_security_gate_remains_blocked": true,
+  "policy_status": "PENDING_CERTIFICATION",
+  "policy_version": "2026-10-21.v9",
   "qlib_security_gate_bypassed": false,
-  "qlib_security_gate_passed": true,
+  "qlib_security_gate_passed": false,
   "requirements_file": "requirements-qlib.lock",
   "safety": {
     "canary_release_allowed": false,
@@ -95,117 +288,375 @@
   "security_advisories": {
     "CVE-2026-69247": {
       "affected_spec": ">=44,<50",
-      "certified_version": "50.0.0",
       "fixed_minimum": "50.0.0",
       "package": "cryptography",
-      "status": "remediated_by_certified_pin"
+      "resolved_version": "50.0.0",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-69247",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-26p8-2jq9-3vq9": {
+      "affected_spec": ">=3.12.0rc0,<3.17.0",
+      "fixed_minimum": "3.17.0",
+      "package": "mlflow",
+      "resolved_version": "3.17.0",
+      "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-26p8-2jq9-3vq9",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-2g87-pp6c-29x5": {
+      "aliases": [],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-2g87-pp6c-29x5",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-3hv7-mjh2-fv65": {
-      "certified_version": "6.5.9",
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "status": "remediated_by_certified_pin"
+      "resolved_version": "6.5.9",
+      "source_url": "https://github.com/advisories/GHSA-3hv7-mjh2-fv65",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-462x-pgg6-55fp": {
+      "aliases": [
+        "CVE-2026-112395"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-462x-pgg6-55fp",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-494j-54xm-rwp3": {
+      "aliases": [
+        "CVE-2026-111063"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-494j-54xm-rwp3",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-54p9-h82j-f925": {
+      "fixed_minimum": "6.9.1",
+      "package": "multidict",
+      "resolved_version": "6.9.1",
+      "source_url": "https://github.com/advisories/GHSA-54p9-h82j-f925",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-5639-2j2p-m4mx": {
+      "affected_spec": "<=1.4.1",
+      "fixed_minimum": "1.4.2",
+      "package": "mako",
+      "platform_scope": "windows; remediated_without_linux_exemption",
+      "resolved_version": "1.4.2",
+      "source_url": "https://github.com/advisories/GHSA-5639-2j2p-m4mx",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-58r4-6rv3-gfh8": {
+      "aliases": [
+        "CVE-2026-112397"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-58r4-6rv3-gfh8",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-59cr-6r3x-644w": {
+      "affected_spec": "<=3.1.61",
+      "fixed_minimum": "3.1.62",
+      "package": "gitpython",
+      "resolved_version": "3.1.62",
+      "source_url": "https://github.com/advisories/GHSA-59cr-6r3x-644w",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-5wr8-gcqf-gqf3": {
+      "aliases": [
+        "CVE-2026-111064"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-5wr8-gcqf-gqf3",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-65qm-jvmh-6pqg": {
+      "aliases": [
+        "CVE-2026-112400"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-65qm-jvmh-6pqg",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-6cjc-53gc-5rqm": {
+      "aliases": [
+        "CVE-2026-111065"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-6cjc-53gc-5rqm",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-6q48-6c7w-9gw2": {
+      "affected_spec": ">=2019.3.9,<2026.10.19",
+      "fixed_minimum": "2026.10.19",
+      "package": "certifi",
+      "resolved_version": "2026.10.19",
+      "source_url": "https://github.com/advisories/GHSA-6q48-6c7w-9gw2",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-8fvv-fgr5-f8ch": {
+      "fixed_minimum": "4.18.1",
+      "package": "pymongo",
+      "resolved_version": "4.18.2",
+      "source_url": "https://github.com/advisories/GHSA-8fvv-fgr5-f8ch",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-8g5g-8vmr-9782": {
+      "affected_spec": "<=12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-8g5g-8vmr-9782",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-9xw5-w5jj-pvcg": {
+      "affected_spec": ">=2.0.0,<3.14.4",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-9xw5-w5jj-pvcg",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-c2m8-h5v5-343r": {
-      "certified_version": "6.5.9",
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "status": "remediated_by_certified_pin"
+      "resolved_version": "6.5.9",
+      "source_url": "https://github.com/advisories/GHSA-c2m8-h5v5-343r",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-c6hw-5grf-ff96": {
+      "aliases": [
+        "CVE-2026-112404"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-c6hw-5grf-ff96",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-chx6-46f5-w4vp": {
-      "certified_version": "6.5.9",
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "status": "remediated_by_certified_pin"
+      "resolved_version": "6.5.9",
+      "source_url": "https://github.com/advisories/GHSA-chx6-46f5-w4vp",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-f9xw-jh8m-3mwq": {
+      "aliases": [
+        "CVE-2026-111748"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-f9xw-jh8m-3mwq",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-g6x2-hccm-hh4m": {
+      "fixed_minimum": "3.1.9",
+      "package": "werkzeug",
+      "resolved_version": "3.1.9",
+      "source_url": "https://github.com/advisories/GHSA-g6x2-hccm-hh4m",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-gqvg-gmmx-x4hm": {
       "affected_spec": ">=2.1.0,<3.15.0",
-      "certified_version": "3.16.0",
       "control_impacted": "MLFLOW_ALLOW_PICKLE_DESERIALIZATION=False",
       "cvss": 8.8,
       "fixed_minimum": "3.15.0",
       "package": "mlflow",
       "published_date": "2026-09-01",
+      "resolved_version": "3.17.0",
       "severity": "HIGH",
-      "status": "remediated_by_certified_pin"
+      "source_url": "https://github.com/advisories/GHSA-gqvg-gmmx-x4hm",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4055": {
-      "certified_version": "4.6.4",
-      "fixed_minimum": "4.6.4",
-      "package": "jupyterlab",
-      "status": "remediated_by_certified_pin"
+    "GHSA-gx76-c99x-2c96": {
+      "aliases": [
+        "CVE-2026-111749"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-gx76-c99x-2c96",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4056": {
-      "certified_version": "4.6.4",
-      "fixed_minimum": "4.6.4",
-      "package": "jupyterlab",
-      "status": "remediated_by_certified_pin"
+    "GHSA-j7qq-vr8c-xvw3": {
+      "affected_spec": ">=2.19.0,<3.17.0",
+      "fixed_minimum": "3.17.0",
+      "package": "mlflow",
+      "resolved_version": "3.17.0",
+      "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-j7qq-vr8c-xvw3",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4057": {
-      "certified_version": "4.6.4",
-      "fixed_minimum": "4.6.4",
-      "package": "jupyterlab",
-      "status": "remediated_by_certified_pin"
+    "GHSA-m65p-9j7q-6w33": {
+      "affected_spec": ">=3.10.0,<3.17.0",
+      "fixed_minimum": "3.17.0",
+      "package": "mlflow",
+      "resolved_version": "3.17.0",
+      "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-m65p-9j7q-6w33",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4112": {
-      "certified_version": "7.6.3",
-      "fixed_minimum": "7.6.3",
-      "package": "notebook",
-      "status": "remediated_by_certified_pin"
+    "GHSA-p4wg-p73j-c528": {
+      "aliases": [
+        "CVE-2026-112895"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-p4wg-p73j-c528",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4175": {
-      "certified_version": "2.8.0",
-      "fixed_minimum": "2.8.0",
-      "package": "urllib3",
-      "status": "remediated_by_certified_pin"
+    "GHSA-pchr-8j38-3x4p": {
+      "aliases": [
+        "CVE-2026-112896"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-pchr-8j38-3x4p",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4176": {
-      "certified_version": "2.8.0",
-      "fixed_minimum": "2.8.0",
-      "package": "urllib3",
-      "status": "remediated_by_certified_pin"
+    "GHSA-pqxq-w44r-73xw": {
+      "aliases": [
+        "CVE-2026-111750"
+      ],
+      "audit_observed_affected_version": "3.14.3",
+      "fixed_minimum": "3.14.4",
+      "package": "aiohttp",
+      "platform_scope": "pure_python_parser; remediated_without_parser_exemption",
+      "resolved_version": "3.14.4",
+      "source_url": "https://github.com/advisories/GHSA-pqxq-w44r-73xw",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "PYSEC-2026-4177": {
-      "certified_version": "2.8.0",
-      "fixed_minimum": "2.8.0",
-      "package": "urllib3",
-      "status": "remediated_by_certified_pin"
-    },
-    "GHSA-54p9-h82j-f925": {
-      "package": "multidict",
-      "certified_version": "6.9.1",
-      "fixed_minimum": "6.9.1",
-      "status": "remediated_by_certified_pin"
-    },
-    "GHSA-8fvv-fgr5-f8ch": {
-      "package": "pymongo",
-      "certified_version": "4.18.2",
-      "fixed_minimum": "4.18.1",
-      "status": "remediated_by_certified_pin"
+    "GHSA-q45j-58j2-45rg": {
+      "aliases": [
+        "CVE-2026-112897"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-q45j-58j2-45rg",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-qx36-8mw2-4r3x": {
-      "package": "pymongo",
-      "certified_version": "4.18.2",
       "fixed_minimum": "4.18.2",
-      "status": "remediated_by_certified_pin"
+      "package": "pymongo",
+      "resolved_version": "4.18.2",
+      "source_url": "https://github.com/advisories/GHSA-qx36-8mw2-4r3x",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-v4x9-3549-crwv": {
-      "package": "pymongo",
-      "certified_version": "4.18.2",
       "fixed_minimum": "4.18.2",
-      "status": "remediated_by_certified_pin"
+      "package": "pymongo",
+      "resolved_version": "4.18.2",
+      "source_url": "https://github.com/advisories/GHSA-v4x9-3549-crwv",
+      "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-vp6j-j7w5-5xjj": {
-      "package": "pymongo",
-      "certified_version": "4.18.2",
       "fixed_minimum": "4.18.2",
-      "status": "remediated_by_certified_pin"
+      "package": "pymongo",
+      "resolved_version": "4.18.2",
+      "source_url": "https://github.com/advisories/GHSA-vp6j-j7w5-5xjj",
+      "status": "remediated_in_candidate_not_certified"
     },
-    "GHSA-g6x2-hccm-hh4m": {
-      "package": "werkzeug",
-      "certified_version": "3.1.9",
-      "fixed_minimum": "3.1.9",
-      "status": "remediated_by_certified_pin"
+    "GHSA-vx6w-vv9f-6gvg": {
+      "aliases": [
+        "CVE-2026-112899"
+      ],
+      "audit_observed_affected_version": "12.3.0",
+      "fixed_minimum": "13.0.0",
+      "package": "pillow",
+      "resolved_version": "13.0.0",
+      "source_url": "https://github.com/advisories/GHSA-vx6w-vv9f-6gvg",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4055": {
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "resolved_version": "4.6.4",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4055",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4056": {
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "resolved_version": "4.6.4",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4056",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4057": {
+      "fixed_minimum": "4.6.4",
+      "package": "jupyterlab",
+      "resolved_version": "4.6.4",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4057",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4112": {
+      "fixed_minimum": "7.6.3",
+      "package": "notebook",
+      "resolved_version": "7.6.3",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4112",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4175": {
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
+      "resolved_version": "2.8.0",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4175",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4176": {
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
+      "resolved_version": "2.8.0",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4176",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4177": {
+      "fixed_minimum": "2.8.0",
+      "package": "urllib3",
+      "resolved_version": "2.8.0",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4177",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "PYSEC-2026-4320": {
+      "aliases": [
+        "GHSA-6q48-6c7w-9gw2"
+      ],
+      "audit_observed_affected_version": "2026.7.22",
+      "fixed_minimum": "2026.10.19",
+      "package": "certifi",
+      "resolved_version": "2026.10.19",
+      "source_url": "https://osv.dev/vulnerability/PYSEC-2026-4320",
+      "status": "remediated_in_candidate_not_certified"
     }
   },
   "security_lock_file": "requirements-qlib-security.lock",

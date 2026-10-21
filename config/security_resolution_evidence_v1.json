@@ -1,109 +1,693 @@
 {
-  "bitradex": {
-    "hashed_lock_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
-    "resolved_package_count": 11,
-    "resolver_report_sha256": "b4aca35b3c6b1a5b188482ed8f2376ffbaa1f0a94bc052ed239a9c87305413f5",
-    "resolver_status": "resolved"
+  "ci_certification_status": "pending_ci_certification",
+  "evidence_status": "pending_certification",
+  "historical_certifications": {
+    "2026-10-06": {
+      "bitradex": {
+        "hashed_lock_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
+        "resolved_package_count": 11,
+        "resolver_report_sha256": "b4aca35b3c6b1a5b188482ed8f2376ffbaa1f0a94bc052ed239a9c87305413f5",
+        "resolver_status": "resolved"
+      },
+      "ci_certification_status": "ci_certified",
+      "container_digests": {
+        "freqtrade_stable": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
+        "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
+        "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
+      },
+      "evidence_status": "certified_clean",
+      "functional_ci_certification": {
+        "conclusion": "success",
+        "container_healthcheck_smoke": "success",
+        "exact_certified_graph": true,
+        "full_test_suite": {
+          "passed": 5837,
+          "skipped": 3,
+          "status": "success",
+          "warnings": 209
+        },
+        "head_sha": "35d00079b76256449bd9f415ef078b789c293946",
+        "institutional_audit": "success",
+        "lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+        "qlib_dependency_security_policy_audit": "success",
+        "qlib_full_graph_dependency_audit": "success",
+        "qlib_locked_functional_security_regression": {
+          "estimator": "ols",
+          "fallback_used": false,
+          "model_class": "LinearModel",
+          "network_mode": "none",
+          "predictions_all_finite": true,
+          "predictions_count": 12,
+          "predictions_deterministic_repeat": true,
+          "predictions_sha256": "2a2a7104eb99881e27daa25373aa31606f95f3e3bdc25d8767a8affc661f2dd3",
+          "reason": "qlib_locked_graph_functional_regression_passed",
+          "repository_mount": "readonly",
+          "status": "success",
+          "test_rows": 12,
+          "train_rows": 36,
+          "valid_rows": 12
+        },
+        "run_id": 37467299675,
+        "run_number": 1568,
+        "security_scan": "success",
+        "workflow": "CI"
+      },
+      "latest_security_refresh": {
+        "ci_revalidation_required": false,
+        "container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+        "date": "2026-10-06",
+        "functional_ci_conclusion": "success",
+        "functional_ci_head_sha": "35d00079b76256449bd9f415ef078b789c293946",
+        "functional_ci_run_id": 37467299675,
+        "functional_ci_run_number": 1568,
+        "known_vulnerability_count": 0,
+        "p08_functional_regression_status": "ci_certified",
+        "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
+        "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
+        "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+        "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7",
+        "resolved_package_count": 190,
+        "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
+        "scope": "dependency_security_refresh_october_advisories",
+        "source": "github_ci_full_graph_and_functional_regression"
+      },
+      "locks": {
+        "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
+        "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
+        "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+        "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7"
+      },
+      "qlib": {
+        "audited_dependency_count": 188,
+        "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+        "certification_date": "2026-10-06",
+        "certification_source": "github_ci_full_graph_and_functional_regression",
+        "ci_revalidation_required": false,
+        "hashed_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+        "known_vulnerability_count": 0,
+        "packages": {
+          "cryptography": "50.0.0",
+          "gitpython": "3.1.61",
+          "jupyterlab": "4.6.4",
+          "mlflow": "3.16.0",
+          "mlflow-skinny": "3.16.0",
+          "mlflow-tracing": "3.16.0",
+          "multidict": "6.9.1",
+          "notebook": "7.6.3",
+          "pyarrow": "25.0.1",
+          "pymongo": "4.18.2",
+          "pyqlib": "0.9.7",
+          "tornado": "6.5.9",
+          "urllib3": "2.8.0",
+          "werkzeug": "3.1.9"
+        },
+        "pip_audit_exit_code": 0,
+        "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
+        "python_version": "3.12",
+        "resolved_package_count": 190,
+        "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
+        "resolver_status": "resolved",
+        "security_status": "clean"
+      },
+      "safety": {
+        "canary_release_allowed": false,
+        "changes_risk": false,
+        "exchange_private_access": false,
+        "live_release_allowed": false,
+        "live_trading_enabled": false,
+        "model_promotion_performed": false,
+        "operational_authority": false,
+        "order_submission_enabled": false,
+        "paper_only": true,
+        "real_order_submission_enabled": false,
+        "research_only": true,
+        "runtime_updated": false,
+        "sends_orders": false,
+        "shadow_only": true
+      },
+      "schema_version": "dev_security_resolution_evidence_v1",
+      "workflow": {
+        "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
+        "artifact_id": 9953246950,
+        "artifact_name": "security-resolution-evidence",
+        "branch": "codex/dev-security-governance-hardening-closeout-v1",
+        "downloaded_zip_sha256": "af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
+        "head_sha": "452c6d953cac21634aaf6ce004eef4d392b1a3b2",
+        "repository": "robohemio10-arch/FUTUROS",
+        "run_id": 33916166319
+      }
+    }
   },
-  "ci_certification_status": "ci_certified",
-  "container_digests": {
-    "freqtrade_stable": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
-    "python_3_11_slim": "sha256:9534e5a8e315485d4061ed659af0fd78a284c015f9b73661b41d6bab25604534",
-    "python_3_12_slim": "sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
-  },
-  "evidence_status": "certified_clean",
-  "functional_ci_certification": {
-    "conclusion": "success",
-    "container_healthcheck_smoke": "success",
-    "exact_certified_graph": true,
-    "full_test_suite": {
-      "passed": 5837,
-      "skipped": 3,
-      "status": "success",
-      "warnings": 209
-    },
-    "head_sha": "35d00079b76256449bd9f415ef078b789c293946",
-    "institutional_audit": "success",
+  "previous_graph_current_audit": {
+    "finding_count": 17,
+    "findings": [
+      {
+        "aliases": [
+          "CVE-2026-111064"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-5wr8-gcqf-gqf3",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-2g87-pp6c-29x5",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111063"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-494j-54xm-rwp3",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111750"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-pqxq-w44r-73xw",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111066"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-9xw5-w5jj-pvcg",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111749"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-gx76-c99x-2c96",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111065"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-6cjc-53gc-5rqm",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "CVE-2026-111748"
+        ],
+        "fix_versions": [
+          "3.14.4"
+        ],
+        "id": "GHSA-f9xw-jh8m-3mwq",
+        "package": "aiohttp",
+        "version": "3.14.3"
+      },
+      {
+        "aliases": [
+          "GHSA-6q48-6c7w-9gw2"
+        ],
+        "fix_versions": [
+          "2026.10.19"
+        ],
+        "id": "PYSEC-2026-4320",
+        "package": "certifi",
+        "version": "2026.7.22"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112895"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-p4wg-p73j-c528",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112400"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-65qm-jvmh-6pqg",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112397"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-58r4-6rv3-gfh8",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112896"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-pchr-8j38-3x4p",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112897"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-q45j-58j2-45rg",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112395"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-462x-pgg6-55fp",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112404"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-c6hw-5grf-ff96",
+        "package": "pillow",
+        "version": "12.3.0"
+      },
+      {
+        "aliases": [
+          "CVE-2026-112899"
+        ],
+        "fix_versions": [
+          "13.0.0"
+        ],
+        "id": "GHSA-vx6w-vv9f-6gvg",
+        "package": "pillow",
+        "version": "12.3.0"
+      }
+    ],
+    "limitation": "pip_audit_database_does_not_report_every_reviewed_upstream_advisory",
     "lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
-    "qlib_dependency_security_policy_audit": "success",
-    "qlib_full_graph_dependency_audit": "success",
-    "qlib_locked_functional_security_regression": {
-      "estimator": "ols",
-      "fallback_used": false,
-      "model_class": "LinearModel",
-      "network_mode": "none",
-      "predictions_all_finite": true,
-      "predictions_count": 12,
-      "predictions_deterministic_repeat": true,
-      "predictions_sha256": "2a2a7104eb99881e27daa25373aa31606f95f3e3bdc25d8767a8affc661f2dd3",
-      "reason": "qlib_locked_graph_functional_regression_passed",
-      "repository_mount": "readonly",
-      "status": "success",
-      "test_rows": 12,
-      "train_rows": 36,
-      "valid_rows": 12
-    },
-    "run_id": 37467299675,
-    "run_number": 1568,
-    "security_scan": "success",
-    "workflow": "CI"
-  },
-  "latest_security_refresh": {
-    "ci_revalidation_required": false,
-    "container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
-    "date": "2026-10-06",
-    "functional_ci_conclusion": "success",
-    "functional_ci_head_sha": "35d00079b76256449bd9f415ef078b789c293946",
-    "functional_ci_run_id": 37467299675,
-    "functional_ci_run_number": 1568,
-    "known_vulnerability_count": 0,
-    "p08_functional_regression_status": "ci_certified",
-    "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
-    "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
-    "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
-    "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7",
-    "resolved_package_count": 190,
-    "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
-    "scope": "dependency_security_refresh_october_advisories",
-    "source": "github_ci_full_graph_and_functional_regression"
-  },
-  "locks": {
-    "bitradex_requirements_sha256": "db74d164456a5a70f9f3a69d771df562bb9de1d3041d9f87de9e55a05ea64652",
-    "requirements_dev_sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa",
-    "requirements_qlib_security_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
-    "requirements_runtime_sha256": "086d810c854d95ec705fd65c8b1c8447f8871cb90cf1553b31933ebd9d6098f7"
+    "pip_audit_exit_code": 1,
+    "report_sha256": "0ece58906f818db883127a55cfd145c0027f80d4cdb925803c7496ad03e2523d"
   },
   "qlib": {
-    "audited_dependency_count": 188,
+    "advisories_reviewed": [
+      "CVE-2026-69247",
+      "GHSA-26p8-2jq9-3vq9",
+      "GHSA-2g87-pp6c-29x5",
+      "GHSA-3hv7-mjh2-fv65",
+      "GHSA-462x-pgg6-55fp",
+      "GHSA-494j-54xm-rwp3",
+      "GHSA-54p9-h82j-f925",
+      "GHSA-5639-2j2p-m4mx",
+      "GHSA-58r4-6rv3-gfh8",
+      "GHSA-59cr-6r3x-644w",
+      "GHSA-5wr8-gcqf-gqf3",
+      "GHSA-65qm-jvmh-6pqg",
+      "GHSA-6cjc-53gc-5rqm",
+      "GHSA-6q48-6c7w-9gw2",
+      "GHSA-8fvv-fgr5-f8ch",
+      "GHSA-8g5g-8vmr-9782",
+      "GHSA-9xw5-w5jj-pvcg",
+      "GHSA-c2m8-h5v5-343r",
+      "GHSA-c6hw-5grf-ff96",
+      "GHSA-chx6-46f5-w4vp",
+      "GHSA-f9xw-jh8m-3mwq",
+      "GHSA-g6x2-hccm-hh4m",
+      "GHSA-gqvg-gmmx-x4hm",
+      "GHSA-gx76-c99x-2c96",
+      "GHSA-j7qq-vr8c-xvw3",
+      "GHSA-m65p-9j7q-6w33",
+      "GHSA-p4wg-p73j-c528",
+      "GHSA-pchr-8j38-3x4p",
+      "GHSA-pqxq-w44r-73xw",
+      "GHSA-q45j-58j2-45rg",
+      "GHSA-qx36-8mw2-4r3x",
+      "GHSA-v4x9-3549-crwv",
+      "GHSA-vp6j-j7w5-5xjj",
+      "GHSA-vx6w-vv9f-6gvg",
+      "PYSEC-2026-4055",
+      "PYSEC-2026-4056",
+      "PYSEC-2026-4057",
+      "PYSEC-2026-4112",
+      "PYSEC-2026-4175",
+      "PYSEC-2026-4176",
+      "PYSEC-2026-4177",
+      "PYSEC-2026-4320"
+    ],
+    "audit_coverage_root_cause": {
+      "already_satisfied_report_install_count": 0,
+      "bootstrap_versions": {
+        "packaging": "26.3",
+        "setuptools": "84.2.1",
+        "wheel": "0.48.0"
+      },
+      "corrected_command": [
+        "-m",
+        "pip_audit",
+        "-r",
+        "/src/requirements-qlib-security.lock",
+        "--require-hashes",
+        "--no-deps",
+        "--disable-pip",
+        "--strict",
+        "--format",
+        "json",
+        "--progress-spinner",
+        "off",
+        "--output",
+        "/evidence/exact-audit-v2.json"
+      ],
+      "new_resolution_performed_for_candidate_audit": false,
+      "omitted_packages": [
+        "packaging",
+        "setuptools"
+      ],
+      "root_cause": "bootstrap_satisfied_packages_omitted_from_pip_dry_run_install_report",
+      "status": "REPRODUCED",
+      "upstream_source_sha256": "d233953d80ad7649164963734e576aa7f7f072c396bcce8e5e5517f74155fcbc",
+      "upstream_source_url": "https://github.com/pypa/pip-audit/blob/v2.9.0/pip_audit/_virtual_env.py"
+    },
+    "audit_mode": "exact_hashed_lock_require_hashes_no_deps_disable_pip_strict_no_ignores",
+    "audited_dependency_count": 189,
+    "candidate_evidence_validation": {
+      "coverage": "189/189",
+      "hashed_install_report_validated": true,
+      "p08_allowed": false,
+      "report_sha256": "4f5b17a3fb06cd56f1a503530626c5009548c627de590efa82a77148192d0b2c",
+      "status": "PASS"
+    },
+    "certification_blockers": [
+      "independent_ci_certification_not_performed_for_new_graph",
+      "explicit_governance_approval_not_granted"
+    ],
     "certification_container_image": "python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
-    "certification_date": "2026-10-06",
-    "certification_source": "github_ci_full_graph_and_functional_regression",
-    "ci_revalidation_required": false,
-    "hashed_lock_sha256": "74f12c7dbcc069c61cfce98ce51385c5ce3da774b33cdf3db0318736a1b80075",
+    "ci_revalidation_required": true,
+    "ci_style_pip_audit": {
+      "audited_dependency_count": 189,
+      "complete_graph_coverage": true,
+      "exit_code": 0,
+      "finding_count": 0,
+      "hashed_transitive_installation_is_separate_prerequisite": true,
+      "lock_package_count": 189,
+      "mode": "exact_hashed_lock_no_second_resolution",
+      "omitted_packages": [],
+      "report_sha256": "40363da9657a88d89f17fdcb0e09dd19400196d0ebb26a981c3f5113180a42a8"
+    },
+    "functional_regression": {
+      "ci_certified": false,
+      "deterministic_repeat": true,
+      "exact_certified_graph": false,
+      "fallback_used": false,
+      "import_smoke": {
+        "PIL": "PASS",
+        "aiohttp": "PASS",
+        "certifi": "PASS",
+        "cryptography": "PASS",
+        "git": "PASS",
+        "jupyterlab": "PASS",
+        "mako": "PASS",
+        "mlflow": "PASS",
+        "notebook": "PASS",
+        "pyarrow": "PASS",
+        "tornado": "PASS"
+      },
+      "limitation": "optional_catboost_xgboost_torch_models_not_part_of_this_regression",
+      "local_image_config_id": "sha256:6585281b939818e1a403c8ecf88ef14815ea1f6907092e57316d3570c65d2b25",
+      "lock_sha256": "a9c20fc8e6f46d451716dd9112f71b1f6405c16915ab0a5a766b16386776f7b0",
+      "network_mode": "none",
+      "predictions_count": 12,
+      "predictions_sha256": "2a2a7104eb99881e27daa25373aa31606f95f3e3bdc25d8767a8affc661f2dd3",
+      "report_sha256": "12346053e1a46f82c84351a2dc91ed2a47d1e5238c8273b7d51f09794424f786",
+      "repository_mount": "readonly",
+      "scope": "isolated_linux_python312_real_qlib_contrib_linear_model",
+      "status": "PASS",
+      "train_rows": 36,
+      "uid": 10001,
+      "valid_rows": 12
+    },
+    "hashed_install_report_sha256": "19424bc9bf314a4cda9ef6ece9429a88eb4ade185d01bb96f1a1e1ee4bc89237",
+    "hashed_install_status": "PASS",
+    "hashed_lock_sha256": "a9c20fc8e6f46d451716dd9112f71b1f6405c16915ab0a5a766b16386776f7b0",
     "known_vulnerability_count": 0,
     "packages": {
+      "aiohappyeyeballs": "2.7.1",
+      "aiohttp": "3.14.4",
+      "aiosignal": "1.4.0",
+      "alembic": "1.20.0",
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anyio": "4.15.1",
+      "argon2-cffi": "25.1.0",
+      "argon2-cffi-bindings": "26.1.0",
+      "arrow": "1.4.0",
+      "asttokens": "3.0.2",
+      "async-lru": "2.4.0",
+      "attrs": "26.1.0",
+      "babel": "2.18.0",
+      "beautifulsoup4": "4.15.0",
+      "bleach": "6.4.0",
+      "blinker": "1.9.0",
+      "cachetools": "7.2.4",
+      "certifi": "2026.10.19",
+      "cffi": "2.1.1",
+      "charset-normalizer": "3.5.2",
+      "clarabel": "0.11.1",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "comm": "0.2.3",
+      "contourpy": "1.4.0",
       "cryptography": "50.0.0",
-      "gitpython": "3.1.61",
+      "cvxpy": "1.9.3",
+      "cycler": "0.12.1",
+      "databricks-sdk": "0.155.0",
+      "debugpy": "1.8.22",
+      "defusedxml": "0.7.1",
+      "dill": "0.4.1",
+      "dnspython": "2.9.0",
+      "docker": "7.2.0",
+      "executing": "2.3.0",
+      "fastapi": "0.158.2",
+      "fastjsonschema": "2.22.2",
+      "filelock": "4.2.4",
+      "fire": "0.7.1",
+      "flask": "3.1.3",
+      "flask-cors": "6.0.5",
+      "fonttools": "4.67.0",
+      "fqdn": "1.6.0",
+      "frozenlist": "1.8.0",
+      "gitdb": "4.0.12",
+      "gitpython": "3.1.62",
+      "google-auth": "2.62.0",
+      "graphene": "3.4.3",
+      "graphql-core": "3.2.13",
+      "graphql-relay": "3.2.0",
+      "gunicorn": "26.2.0",
+      "gym": "0.26.2",
+      "gym-notices": "0.1.0",
+      "h11": "0.16.0",
+      "highspy": "1.15.1",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "huey": "3.4.0",
+      "idna": "3.20",
+      "importlib-metadata": "9.0.1",
+      "ipykernel": "7.4.0",
+      "ipython": "9.17.1",
+      "ipython-pygments-lexers": "1.1.1",
+      "ipywidgets": "8.1.9",
+      "isoduration": "20.11.0",
+      "itsdangerous": "2.2.0",
+      "jedi": "0.20.1",
+      "jinja2": "3.1.6",
+      "joblib": "1.6.0",
+      "json5": "0.17.3",
+      "jsonpointer": "3.4",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "jupyter": "1.1.1",
+      "jupyter-builder": "1.2.3",
+      "jupyter-client": "8.10.0",
+      "jupyter-console": "6.6.3",
+      "jupyter-core": "5.9.1",
+      "jupyter-events": "0.12.1",
+      "jupyter-lsp": "2.3.1",
+      "jupyter-server": "2.21.1",
+      "jupyter-server-terminals": "0.5.4",
       "jupyterlab": "4.6.4",
-      "mlflow": "3.16.0",
-      "mlflow-skinny": "3.16.0",
-      "mlflow-tracing": "3.16.0",
-      "notebook": "7.6.3",
-      "pyarrow": "25.0.1",
-      "pyqlib": "0.9.7",
-      "tornado": "6.5.9",
-      "urllib3": "2.8.0",
+      "jupyterlab-pygments": "0.3.0",
+      "jupyterlab-server": "2.28.1",
+      "jupyterlab-widgets": "3.0.17",
+      "kiwisolver": "1.5.1",
+      "lark": "1.3.1",
+      "lightgbm": "4.7.0",
+      "loguru": "0.7.3",
+      "mako": "1.4.2",
+      "markupsafe": "3.0.4",
+      "matplotlib": "3.11.2",
+      "matplotlib-inline": "0.2.2",
+      "mistune": "3.4.0",
+      "mlflow": "3.17.0",
+      "mlflow-skinny": "3.17.0",
+      "mlflow-tracing": "3.17.0",
       "multidict": "6.9.1",
+      "narwhals": "2.27.1",
+      "nbclient": "0.11.0",
+      "nbconvert": "7.17.2",
+      "nbformat": "5.11.1",
+      "nest-asyncio2": "1.7.4",
+      "notebook": "7.6.3",
+      "notebook-shim": "0.2.4",
+      "numpy": "2.5.4",
+      "opentelemetry-api": "1.45.1",
+      "opentelemetry-proto": "1.45.1",
+      "opentelemetry-sdk": "1.45.1",
+      "opentelemetry-semantic-conventions": "0.66b1",
+      "osqp": "1.1.3",
+      "packaging": "26.3",
+      "pandas": "3.0.6",
+      "pandocfilters": "1.5.1",
+      "parso": "0.8.7",
+      "pexpect": "4.9.0",
+      "pillow": "13.0.0",
+      "platformdirs": "4.13.5",
+      "prettytable": "3.18.0",
+      "prometheus-client": "0.26.0",
+      "prompt-toolkit": "3.0.53",
+      "propcache": "0.5.4",
+      "protobuf": "7.36.2",
+      "psutil": "7.2.2",
+      "ptyprocess": "0.7.0",
+      "pure-eval": "0.2.4",
+      "pyarrow": "25.0.1",
+      "pyasn1": "0.6.4",
+      "pyasn1-modules": "0.4.2",
+      "pycparser": "3.11",
+      "pydantic": "2.14.1",
+      "pydantic-core": "2.50.1",
+      "pydantic-settings": "2.16.1",
+      "pygments": "2.21.0",
       "pymongo": "4.18.2",
-      "werkzeug": "3.1.9"
+      "pyparsing": "3.3.3",
+      "pyqlib": "0.9.7",
+      "python-dateutil": "2.9.0.post0",
+      "python-dotenv": "1.2.4",
+      "python-json-logger": "4.2.0",
+      "python-redis-lock": "4.0.1",
+      "pyyaml": "6.0.3",
+      "pyzmq": "27.2.0",
+      "qdldl": "0.1.9.post1",
+      "redis": "8.1.0",
+      "referencing": "0.37.0",
+      "requests": "2.34.2",
+      "rfc3339-validator": "0.1.4",
+      "rfc3986-validator": "0.1.1",
+      "rfc3987-syntax": "1.1.0",
+      "rpds-py": "2026.9.1",
+      "ruamel-yaml": "0.19.1",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "scs": "3.3.1",
+      "send2trash": "2.1.0",
+      "setuptools": "84.2.1",
+      "six": "1.17.0",
+      "skops": "0.16.0",
+      "smmap": "5.0.3",
+      "soupsieve": "3.0.3",
+      "sparsediffpy": "0.6.1",
+      "sqlalchemy": "2.1.6",
+      "sqlparse": "0.6.0",
+      "stack-data": "0.6.3",
+      "starlette": "1.9.0",
+      "termcolor": "3.3.0",
+      "terminado": "0.18.1",
+      "threadpoolctl": "3.7.0",
+      "tinycss2": "1.5.1",
+      "tornado": "6.5.9",
+      "tqdm": "4.70.1",
+      "traitlets": "5.16.1",
+      "typing-extensions": "4.16.0",
+      "typing-inspection": "0.4.4",
+      "tzdata": "2026.5",
+      "uri-template": "1.3.0",
+      "urllib3": "2.8.0",
+      "uvicorn": "0.54.0",
+      "wcwidth": "0.9.3",
+      "webcolors": "25.10.0",
+      "webencodings": "0.6.1",
+      "websocket-client": "1.9.2",
+      "werkzeug": "3.1.9",
+      "widgetsnbextension": "4.0.16",
+      "yarl": "1.25.1",
+      "zipp": "4.1.2"
     },
     "pip_audit_exit_code": 0,
-    "pip_audit_report_sha256": "a130508470e2d334a892df3510f3752b723b27165ef7407361f578d8323d9aa7",
+    "pip_audit_report_sha256": "40363da9657a88d89f17fdcb0e09dd19400196d0ebb26a981c3f5113180a42a8",
+    "platform": "linux",
+    "prior_audit_coverage_observation": {
+      "audited_dependency_count": 187,
+      "complete_graph_coverage": false,
+      "exit_code": 0,
+      "finding_count": 0,
+      "lock_package_count": 189,
+      "omitted_packages": [
+        "packaging",
+        "setuptools"
+      ],
+      "report_sha256": "d5a4ed5699f49460d3c64706b636466d504f8083bccc84bf0e154749aec16f86",
+      "supplemental_complete_graph_audit_sha256": "40363da9657a88d89f17fdcb0e09dd19400196d0ebb26a981c3f5113180a42a8",
+      "supplemental_complete_graph_audited_count": 189
+    },
+    "public_candidate_metadata_sha256": "2fd75b86bbddded35e4e1e4c18bf7825d0bd7fc5bfd32334e803d5e75094e840",
     "python_version": "3.12",
-    "resolved_package_count": 190,
-    "resolver_report_sha256": "f1c4e8099606c1cf272ac409bd75bbd00f24b07bbfcedd322cfb527a8714427a",
+    "resolved_package_count": 189,
+    "resolver_report_sha256": "f1d3f53adcd228dbfc039332d88882c320f03c0fb37e85111df69015ae094b87",
     "resolver_status": "resolved",
-    "security_status": "clean"
+    "security_status": "clean",
+    "unreviewed_advisory_count": 0,
+    "validation_date": "2026-10-21"
   },
   "safety": {
     "canary_release_allowed": false,
@@ -121,15 +705,5 @@
     "sends_orders": false,
     "shadow_only": true
   },
-  "schema_version": "dev_security_resolution_evidence_v1",
-  "workflow": {
-    "artifact_api_digest": "sha256:af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
-    "artifact_id": 9953246950,
-    "artifact_name": "security-resolution-evidence",
-    "branch": "codex/dev-security-governance-hardening-closeout-v1",
-    "downloaded_zip_sha256": "af8dd27139dc1bfd8c6ac1dcc91a0b2169f27852d568de7a410bfc55e8863586",
-    "head_sha": "452c6d953cac21634aaf6ce004eef4d392b1a3b2",
-    "repository": "robohemio10-arch/FUTUROS",
-    "run_id": 33916166319
-  }
+  "schema_version": "dev_security_resolution_evidence_v1"
 }

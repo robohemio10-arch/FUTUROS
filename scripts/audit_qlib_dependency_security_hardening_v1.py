@@ -14,6 +14,7 @@ from smartcrypto.learning.qlib_dependency_security_hardening import (  # noqa: E
     DEFAULT_POLICY_PATH,
     DEFAULT_REPORT_PATH,
     audit_project,
+    audit_candidate_evidence,
     write_report_atomic,
 )
 
@@ -29,6 +30,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--policy", default=str(DEFAULT_POLICY_PATH))
     parser.add_argument("--resolver-report")
     parser.add_argument("--pip-audit-report")
+    parser.add_argument("--hashed-install-report")
+    parser.add_argument(
+        "--candidate-validation", action="store_true",
+        help="Validate complete candidate evidence only; never authorize P08. Requires all three reports.",
+    )
     parser.add_argument(
         "--write-report",
         nargs="?",
@@ -49,12 +55,17 @@ def main(argv: list[str] | None = None) -> int:
     resolver_report = Path(args.resolver_report) if args.resolver_report else None
     pip_audit_report = Path(args.pip_audit_report) if args.pip_audit_report else None
 
-    report = audit_project(
-        root,
-        policy_path=policy,
-        resolver_report=resolver_report,
-        pip_audit_report=pip_audit_report,
-    )
+    if args.candidate_validation:
+        report = audit_candidate_evidence(
+            root, policy_path=policy, resolver_report=resolver_report,
+            pip_audit_report=pip_audit_report,
+            hashed_install_report=Path(args.hashed_install_report) if args.hashed_install_report else None,
+        )
+    else:
+        report = audit_project(
+            root, policy_path=policy, resolver_report=resolver_report,
+            pip_audit_report=pip_audit_report,
+        )
 
     if args.write_report:
         destination = Path(args.write_report)
@@ -97,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
             f"decision={report['decision']}"
         )
 
+    if args.candidate_validation:
+        return 0 if report.get("candidate_validation_status") == "ok" and report.get("write_error") is None else 1
     return 1 if report["status"] == "blocked" else 0
 
 

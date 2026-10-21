@@ -68,9 +68,11 @@ def test_qlib_direct_and_transitive_security_locks_are_hashed() -> None:
     direct = requirement_lines("requirements-qlib.lock")
     full = requirement_lines("requirements-qlib-security.lock")
     assert direct == ["pyqlib==0.9.7"]
-    assert len(full) == 190
+    assert len(full) == 189
     assert "pyqlib==0.9.7" in {line.lower() for line in full}
-    assert "mlflow==3.16.0" in {line.lower() for line in full}
+    assert "mlflow==3.17.0" in {line.lower() for line in full}
+    for pin in ("gitpython==3.1.62", "mako==1.4.2", "certifi==2026.10.19", "pillow==13.0.0", "aiohttp==3.14.4"):
+        assert pin in {line.lower() for line in full}
     assert "cryptography==50.0.0" in {line.lower() for line in full}
     assert "--hash=sha256:" in read("requirements-qlib.lock")
     assert "--hash=sha256:" in read("requirements-qlib-security.lock")

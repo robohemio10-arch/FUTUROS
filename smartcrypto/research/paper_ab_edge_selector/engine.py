@@ -11,9 +11,8 @@ import json
 import math
 import re
 from collections import Counter
-from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -151,7 +150,19 @@ def _read_qlib_security_evidence(
     reason = str(payload.get("reason") or "UNKNOWN")
     approved = payload.get("approved_security_clean_resolution_found") is True
     reported_gate = payload.get("qlib_security_gate_passed") is True
-    gate_passed = bool(status.lower() == "ok" and approved and reported_gate)
+    # A cached approval is not authority when the current versioned policy denies P08.
+    from smartcrypto.learning.qlib_dependency_security_hardening import audit_project
+
+    current = audit_project(root)
+    gate_passed = bool(
+        status.lower() == "ok"
+        and approved
+        and reported_gate
+        and current.get("p08_allowed") is True
+        and payload.get("schema_version") == "qlib_dependency_security_audit_v1"
+        and payload.get("p08_allowed") is True
+        and payload.get("policy_sha256") == current.get("policy_sha256")
+    )
     return {
         "status": status,
         "reason": reason,
@@ -159,9 +170,10 @@ def _read_qlib_security_evidence(
         "sha256": file_sha256(path),
         "schema_version": payload.get("schema_version"),
         "decision": payload.get("decision"),
-        "approved_security_clean_resolution_found": approved,
-        "qlib_security_gate_passed": reported_gate,
+        "approved_security_clean_resolution_found": gate_passed,
+        "qlib_security_gate_passed": gate_passed,
         "gate_passed": gate_passed,
+        "current_policy_reason": current["reason"],
     }
 
 
@@ -409,6 +421,7 @@ def _financial_evidence(
     control_count = int(control_metrics.trade_count)
     treatment_count = int(treatment_metrics.trade_count)
     observed_days = _observed_days(observations)
+    blockers: list[str] = []
     sample_gate = bool(
         control_count >= config.minimum_observations_per_arm
         and treatment_count >= config.minimum_observations_per_arm
@@ -416,7 +429,7 @@ def _financial_evidence(
     period_gate = bool(observed_days >= config.minimum_observation_days)
 
     if global_blockers or treatment_count == 0:
-        blockers = tuple(dict.fromkeys([*global_blockers, "NO_EVALUABLE_TREATMENT_OBSERVATIONS"]))
+        blockers = list(dict.fromkeys([*global_blockers, "NO_EVALUABLE_TREATMENT_OBSERVATIONS"]))
         return IncrementalEdgeEvidence(
             status="EVIDENCE_BLOCKED",
             reason=blockers[0],
@@ -440,7 +453,7 @@ def _financial_evidence(
             effective_sample=min(control_count, treatment_count),
             treatment_profit_factor_gate=False,
             edge_ci_gate=False,
-            blockers=blockers,
+            blockers=tuple(blockers),
         )
 
     delta_net = _delta(treatment_metrics.net_pnl, control_metrics.net_pnl)
@@ -449,7 +462,7 @@ def _financial_evidence(
     delta_dd = _delta(treatment_metrics.max_drawdown, control_metrics.max_drawdown)
 
     if not sample_gate or not period_gate:
-        blockers: list[str] = []
+        blockers = []
         if not sample_gate:
             blockers.append("MINIMUM_OBSERVATIONS_PER_ARM_NOT_MET")
         if not period_gate:
@@ -494,7 +507,7 @@ def _financial_evidence(
     )
     edge_ci_gate = bool(ci_lower is not None and ci_lower > 0.0)
 
-    blockers: list[str] = []
+    blockers = []
     if bootstrap.get("status") != "AVAILABLE":
         blockers.append("BOOTSTRAP_CI_UNAVAILABLE")
     if not treatment_pf_gate:
@@ -698,7 +711,7 @@ class PaperABEdgeSelectorEngine:
         ]
 
         observations: list[ABObservation] = []
-        outcome_blockers = Counter()
+        outcome_blockers: Counter[str] = Counter()
         for assignment, estimate in zip(assignment_objects, estimates):
             if assignment.status != "ASSIGNED" or assignment.assignment_id is None or assignment.arm is None:
                 continue
