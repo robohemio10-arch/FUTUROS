@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "338164050a11126235c05a21edfcbd82c566d549a12b3c16a54e32133fbc1c2b",
+  "aggregate_sha256": "dcf4060ed0ef1bc2f0224cab1f97a9734f131dfec2de7578df56d1302f89c321",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 329,
-    "manifested_files_total": 2220,
-    "python_files": 1745,
+    "docs_files": 330,
+    "manifested_files_total": 2227,
+    "python_files": 1751,
     "runtime_excluded_files_total": 0,
-    "test_files": 482,
-    "tracked_files_total": 2221,
+    "test_files": 483,
+    "tracked_files_total": 2228,
     "workflows": 2
   },
   "deterministic": true,
@@ -2036,6 +2036,12 @@
       "sha256": "804099dc55ec68cff64035059ee4696d6608e334d83deffd67943259ccb740b8"
     },
     {
+      "bytes": 6130,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_PRETRADE_CAUSAL_CAPTURE_V1.md",
+      "sha256": "76c1b8da4c6954216b35a15e745a4ed5ec6ed97fb856513049712cbc0515b28b"
+    },
+    {
       "bytes": 1961,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_PROFITABILITY_CORE_V1.md",
@@ -3078,6 +3084,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_only_candidate_filter_adapter_v1.py",
       "sha256": "771c93354aac582666de4aa7034f19adbc261a92e69111400402b07658a992b0"
+    },
+    {
+      "bytes": 2006,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_paper_pretrade_causal_capture_v1.py",
+      "sha256": "a356b6832af6f7bee16b7462091d11fb9f8f3b42e99e1b251d51fd842985f2ae"
     },
     {
       "bytes": 1862,
@@ -9692,6 +9704,30 @@
       "sha256": "11850dfb86a3d1973cd098bdc736c919a19d26dd02c5e28fc0d59830041ed35f"
     },
     {
+      "bytes": 81,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/__init__.py",
+      "sha256": "a3bdd90e0c0402557027503d086a20859bc285c105e3bac63918e8c64a4fcd1a"
+    },
+    {
+      "bytes": 12944,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/archive.py",
+      "sha256": "c850b30b1d068e0dc51430c363dadfd4e5d3539cb0c96f7357cf700a08afc60b"
+    },
+    {
+      "bytes": 18721,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/capture.py",
+      "sha256": "87b510c116daf1e197c85b0a5aae12988346d16cc189f0b9c79acb2d9d9143a1"
+    },
+    {
+      "bytes": 11783,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/contracts.py",
+      "sha256": "072eec30a46e3c215b0c18c7e68b61f0409d29d9d859bbc579817d81b18d1d5b"
+    },
+    {
       "bytes": 357,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/profit_research/__init__.py",
@@ -12444,6 +12480,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_only_candidate_strategy_ab_test_v1.py",
       "sha256": "2de7eb7c180811822b3ed55dfce90e300fdcf74da141b8b9ece407fc50ab8832"
+    },
+    {
+      "bytes": 27790,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_pretrade_causal_capture_v1.py",
+      "sha256": "920d832931d757c500461f416f5fc92fbfcae6864be1c0931ec0b9127bc4cae6"
     },
     {
       "bytes": 12556,
