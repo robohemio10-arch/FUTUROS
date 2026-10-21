@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "338164050a11126235c05a21edfcbd82c566d549a12b3c16a54e32133fbc1c2b",
+  "aggregate_sha256": "bd9cee53615eb1560161026fc9aaed87975ccde8d4cc6240947531a75366b324",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 329,
-    "manifested_files_total": 2220,
+    "docs_files": 330,
+    "manifested_files_total": 2221,
     "python_files": 1745,
     "runtime_excluded_files_total": 0,
     "test_files": 482,
-    "tracked_files_total": 2221,
+    "tracked_files_total": 2222,
     "workflows": 2
   },
   "deterministic": true,
@@ -1382,10 +1382,16 @@
       "sha256": "7352bbe4500c94485efc3365330f446dc42fd50f53972ffe8ee653d300a115f6"
     },
     {
-      "bytes": 3485,
+      "bytes": 8172,
+      "hash_mode": "text_lf",
+      "path": "docs/FREQTRADE_H04_H05_CONSOLIDATED_TECHNICAL_CLOSEOUT.md",
+      "sha256": "4539108cd40418a2a5d90db318bdba45fd240bcc1ad71239f89d9b7306a9e952"
+    },
+    {
+      "bytes": 5881,
       "hash_mode": "text_lf",
       "path": "docs/FREQTRADE_IMAGE_PIN_DIGEST_POLICY_V1.md",
-      "sha256": "6528ae2ff621ccef1b4e6eb7fb60e031054f34be3a2a011632a924b3fc24c654"
+      "sha256": "9e44766fb34f0890abc17b192dc10f4701ad85b0342391fc26fc6524119d59c5"
     },
     {
       "bytes": 4039,
