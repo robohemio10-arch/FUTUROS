@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "dcf4060ed0ef1bc2f0224cab1f97a9734f131dfec2de7578df56d1302f89c321",
+  "aggregate_sha256": "8763274152422f578d4ebb69ae3de96b857bbcafb34d0aed96292d64006c1534",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 330,
-    "manifested_files_total": 2227,
-    "python_files": 1751,
+    "docs_files": 331,
+    "manifested_files_total": 2231,
+    "python_files": 1754,
     "runtime_excluded_files_total": 0,
-    "test_files": 483,
-    "tracked_files_total": 2228,
+    "test_files": 484,
+    "tracked_files_total": 2232,
     "workflows": 2
   },
   "deterministic": true,
@@ -2034,6 +2034,12 @@
       "hash_mode": "text_lf",
       "path": "docs/PAPER_ONLY_CANDIDATE_STRATEGY_AB_TEST_V1.md",
       "sha256": "804099dc55ec68cff64035059ee4696d6608e334d83deffd67943259ccb740b8"
+    },
+    {
+      "bytes": 6506,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_PIT_SOURCE_MODEL_INPUT_PROOF_V1.md",
+      "sha256": "6065ce37bc69936d31878537653902ef03bfd8b6f9ffeaa06061ea7c31dcc215"
     },
     {
       "bytes": 6130,
@@ -9728,6 +9734,18 @@
       "sha256": "072eec30a46e3c215b0c18c7e68b61f0409d29d9d859bbc579817d81b18d1d5b"
     },
     {
+      "bytes": 10158,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/process_writer.py",
+      "sha256": "4db473e29a3fd5aec25a52b3c601f7cddd1f92b6508a8c2760eb4d4371c4261a"
+    },
+    {
+      "bytes": 24291,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/pretrade_causal_capture/source_model_proof.py",
+      "sha256": "8a46b188fb0471337186e0089ef2881f4d9f0d4820c79bb9c7a18045071ceb8b"
+    },
+    {
       "bytes": 357,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/profit_research/__init__.py",
@@ -12480,6 +12498,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_paper_only_candidate_strategy_ab_test_v1.py",
       "sha256": "2de7eb7c180811822b3ed55dfce90e300fdcf74da141b8b9ece407fc50ab8832"
+    },
+    {
+      "bytes": 24265,
+      "hash_mode": "text_lf",
+      "path": "tests/test_paper_pit_source_model_input_proof_v1.py",
+      "sha256": "51724dcd8a7e909e4ecf8b83c205c2ee584c1b34d8c75d6a7db1c6726c3921ad"
     },
     {
       "bytes": 27790,
