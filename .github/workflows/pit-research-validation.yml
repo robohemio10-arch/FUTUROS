@@ -97,10 +97,68 @@ jobs:
             tests/test_paper_pit_source_model_input_proof_v1.py \
             tests/test_pit_research_dependency_audit_v1.py
 
+      - name: Create and verify authorized pytest temporary directory
+        run: |
+          "$PIT_PYTHON" - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+
+          from smartcrypto.runtime.integrity_traceability_v2.atomic_writer import (
+              AtomicWriteError,
+              AtomicWritePolicy,
+              resolve_authorized_target,
+          )
+
+          def checked_directory(path: Path) -> Path:
+              if not path.is_absolute():
+                  raise SystemExit("pit_temp_absolute_path_required")
+              if any(part.is_symlink() for part in (path, *path.parents)):
+                  raise SystemExit("pit_temp_symlink_forbidden")
+              resolved = path.resolve(strict=True)
+              if resolved != path or not resolved.is_dir():
+                  raise SystemExit("pit_temp_canonical_directory_required")
+              return resolved
+
+          temp_root = checked_directory(Path(tempfile.gettempdir()))
+          test_base = checked_directory(
+              Path(tempfile.mkdtemp(prefix="pit-research-tests-", dir=temp_root))
+          )
+          if test_base.parent != temp_root or not test_base.is_relative_to(temp_root):
+              raise SystemExit("pit_temp_outside_system_temp")
+          if any(character in str(test_base) for character in ("\r", "\n")):
+              raise SystemExit("pit_temp_invalid_environment_value")
+
+          policy = AtomicWritePolicy.project_data()
+          resolve_authorized_target(test_base / "authorized-fixture.json", policy=policy)
+          forbidden = Path(temp_root.anchor) / "pit-research-unauthorized-probe.json"
+          try:
+              resolve_authorized_target(forbidden, policy=policy)
+          except AtomicWriteError as error:
+              if error.reason != "target_outside_authorized_roots":
+                  raise
+          else:
+              raise SystemExit("pit_unauthorized_path_was_not_blocked")
+
+          evidence = {
+              "PIT_TEMP_ROOT_VALIDATED": True,
+              "UNAUTHORIZED_PATH_TESTS": "PASS",
+              "system_temp_root": str(temp_root),
+              "pytest_basetemp": str(test_base),
+          }
+          (Path(os.environ["PIT_EVIDENCE"]) / "temp-root-validation.json").write_text(
+              json.dumps(evidence, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as environment:
+              environment.write(f"PIT_TEST_BASE={test_base}\n")
+          print(json.dumps(evidence, sort_keys=True))
+          PY
+
       - name: Test synthetic PIT proof and directly affected contracts
         run: |
           "$PIT_PYTHON" -m pytest -q -p no:cacheprovider \
-            --basetemp "$RUNNER_TEMP/pit-research-tests" \
+            --basetemp "$PIT_TEST_BASE" \
             --junitxml="$PIT_EVIDENCE/pit-tests.xml" \
             tests/test_paper_pretrade_causal_capture_v1.py \
             tests/test_paper_pit_source_model_input_proof_v1.py \
