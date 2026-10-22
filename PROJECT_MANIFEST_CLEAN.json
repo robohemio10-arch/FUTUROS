@@ -1,15 +1,15 @@
 {
-  "aggregate_sha256": "8763274152422f578d4ebb69ae3de96b857bbcafb34d0aed96292d64006c1534",
+  "aggregate_sha256": "c582d907cc3e2267f248411c304aa947b129413cc272af6298583a0fbdb3e0d2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 331,
-    "manifested_files_total": 2231,
-    "python_files": 1754,
+    "manifested_files_total": 2236,
+    "python_files": 1756,
     "runtime_excluded_files_total": 0,
-    "test_files": 484,
-    "tracked_files_total": 2232,
-    "workflows": 2
+    "test_files": 485,
+    "tracked_files_total": 2237,
+    "workflows": 3
   },
   "deterministic": true,
   "files": [
@@ -36,6 +36,12 @@
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
       "sha256": "a171a346156c04ae0818a323e1d03bf7edff47f8dae684db86b19d78b3145abc"
+    },
+    {
+      "bytes": 5113,
+      "hash_mode": "text_lf",
+      "path": ".github/workflows/pit-research-validation.yml",
+      "sha256": "fc8cdacfcf340c34965111a47312da4e8607725d4112415743311a8e866b0527"
     },
     {
       "bytes": 4224,
@@ -2792,6 +2798,18 @@
       "sha256": "5383215f480dda874a40f3edbbb58dcedfab6c4d54bfc88e5b333dee395f3caa"
     },
     {
+      "bytes": 503,
+      "hash_mode": "text_lf",
+      "path": "requirements-pit-research.in",
+      "sha256": "c19cb77f946b70f763c951d8ecfa05597c0b7f6ee178b89f39ae5268d751e466"
+    },
+    {
+      "bytes": 77325,
+      "hash_mode": "text_lf",
+      "path": "requirements-pit-research.lock",
+      "sha256": "855af2ff1370e3b53fa4564bb216e909d9f02652124cea81bafaed4ba4f97df3"
+    },
+    {
       "bytes": 66,
       "hash_mode": "text_lf",
       "path": "requirements-qlib-security-candidate.in",
@@ -3126,6 +3144,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/audit_paper_signal_riskmanager_runtime_wiring_v1.py",
       "sha256": "efa2a006f40c4c0a6cc7405133ebf4d1ca650fa03655a70303f318ca8489b6c8"
+    },
+    {
+      "bytes": 11243,
+      "hash_mode": "text_lf",
+      "path": "scripts/audit_pit_research_dependencies_v1.py",
+      "sha256": "09550eaa83a38cfc3988c32354d43c11a448f0496232aa5af5272481f60a6cee"
     },
     {
       "bytes": 7550,
@@ -12726,6 +12750,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_phase8_contract.py",
       "sha256": "9cf6768507a48af927f079f7add4a77ca820c4385cb66890d5a6d0f9b37599b4"
+    },
+    {
+      "bytes": 12255,
+      "hash_mode": "text_lf",
+      "path": "tests/test_pit_research_dependency_audit_v1.py",
+      "sha256": "6311e8fc55eab9637982de1a33b60b5cf8ec7ad4e75b4c2def4785d56416fe1e"
     },
     {
       "bytes": 10143,

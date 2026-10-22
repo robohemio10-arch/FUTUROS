@@ -1,0 +1,16 @@
+# Third-party imports exercised by the synthetic PIT harness and contract tests.
+# Sources are imported from the checkout; dashboard/project extras are not installed.
+joblib>=1.3,<2
+numpy>=1.26,<2.3
+pandas>=2.2,<2.4
+pyarrow>=23.0.1
+pydantic>=2.5,<3
+PyYAML>=6.0,<7
+scikit-learn>=1.4,<1.9
+
+# Test and audit tools are part of the same hashed and fully audited graph.
+# pip is explicit so the bootstrap installer is included in the final inventory.
+packaging>=24
+pip>=25,<27
+pip-audit>=2.9,<3
+pytest>=9,<10
