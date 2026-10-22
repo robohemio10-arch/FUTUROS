@@ -1,0 +1,183 @@
+name: PIT research validation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pit-research-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  SMARTCRYPTO_RUNTIME_MODE: paper
+  LIVE_ENABLED: "false"
+  ORDER_SUBMISSION_ENABLED: "false"
+  REAL_ORDER_SUBMISSION_ENABLED: "false"
+  EXCHANGE_PRIVATE_ACCESS: "false"
+  SMARTCRYPTO_EXCHANGE_PRIVATE_ACCESS: "false"
+  RUNTIME_INTEGRATION_ALLOWED: "false"
+  OPERATIONAL_AUTHORITY: "false"
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PIP_INDEX_URL: https://pypi.org/simple
+  PIP_CONFIG_FILE: /dev/null
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  pit-research:
+    name: Hashed PIT graph, complete audit and synthetic contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Create independent PIT environment
+        run: |
+          python -m venv "$RUNNER_TEMP/pit-research-venv"
+          mkdir -p "$RUNNER_TEMP/pit-research-evidence"
+          echo "PIT_PYTHON=$RUNNER_TEMP/pit-research-venv/bin/python" >> "$GITHUB_ENV"
+          echo "PIT_EVIDENCE=$RUNNER_TEMP/pit-research-evidence" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$RUNNER_TEMP/pit-research-evidence/source-commit.txt"
+          sha256sum requirements-pit-research.in requirements-pit-research.lock \
+            .github/workflows/pit-research-validation.yml \
+            scripts/audit_pit_research_dependencies_v1.py \
+            > "$RUNNER_TEMP/pit-research-evidence/input-sha256.txt"
+
+      - name: Resolve every locked dependency with verified wheel hashes
+        run: |
+          "$PIT_PYTHON" -m pip install --dry-run --ignore-installed \
+            --require-hashes --only-binary=:all: \
+            --report "$PIT_EVIDENCE/resolver-report.json" \
+            -r requirements-pit-research.lock
+
+      - name: Install only the independent hashed graph
+        run: |
+          "$PIT_PYTHON" -m pip install --force-reinstall --require-hashes --only-binary=:all: \
+            --report "$PIT_EVIDENCE/install-report.json" \
+            -r requirements-pit-research.lock
+          "$PIT_PYTHON" -m pip check | tee "$PIT_EVIDENCE/pip-check.txt"
+          "$PIT_PYTHON" -m pip inspect --local > "$PIT_EVIDENCE/installed-report.json"
+
+      - name: Audit the entire installed environment without exceptions
+        run: |
+          "$PIT_PYTHON" -m pip_audit --strict --format json \
+            --progress-spinner off --cache-dir "$RUNNER_TEMP/pit-research-audit-cache" \
+            --output "$PIT_EVIDENCE/pip-audit.json"
+
+      - name: Require full lock, resolver, inventory and audit agreement
+        run: |
+          "$PIT_PYTHON" scripts/audit_pit_research_dependencies_v1.py \
+            --lock requirements-pit-research.lock \
+            --resolver-report "$PIT_EVIDENCE/resolver-report.json" \
+            --installed-report "$PIT_EVIDENCE/installed-report.json" \
+            --audit-report "$PIT_EVIDENCE/pip-audit.json" \
+            --json | tee "$PIT_EVIDENCE/dependency-coverage.json"
+
+      - name: Compile PIT validation scope
+        run: |
+          "$PIT_PYTHON" -m compileall -q \
+            scripts/audit_pit_research_dependencies_v1.py \
+            smartcrypto/research/pretrade_causal_capture \
+            tests/test_paper_pretrade_causal_capture_v1.py \
+            tests/test_paper_pit_source_model_input_proof_v1.py \
+            tests/test_pit_research_dependency_audit_v1.py
+
+      - name: Create and verify authorized pytest temporary directory
+        run: |
+          "$PIT_PYTHON" - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+
+          from smartcrypto.runtime.integrity_traceability_v2.atomic_writer import (
+              AtomicWriteError,
+              AtomicWritePolicy,
+              resolve_authorized_target,
+          )
+
+          def checked_directory(path: Path) -> Path:
+              if not path.is_absolute():
+                  raise SystemExit("pit_temp_absolute_path_required")
+              if any(part.is_symlink() for part in (path, *path.parents)):
+                  raise SystemExit("pit_temp_symlink_forbidden")
+              resolved = path.resolve(strict=True)
+              if resolved != path or not resolved.is_dir():
+                  raise SystemExit("pit_temp_canonical_directory_required")
+              return resolved
+
+          temp_root = checked_directory(Path(tempfile.gettempdir()))
+          test_base = checked_directory(
+              Path(tempfile.mkdtemp(prefix="pit-research-tests-", dir=temp_root))
+          )
+          if test_base.parent != temp_root or not test_base.is_relative_to(temp_root):
+              raise SystemExit("pit_temp_outside_system_temp")
+          if any(character in str(test_base) for character in ("\r", "\n")):
+              raise SystemExit("pit_temp_invalid_environment_value")
+
+          policy = AtomicWritePolicy.project_data()
+          resolve_authorized_target(test_base / "authorized-fixture.json", policy=policy)
+          forbidden = Path(temp_root.anchor) / "pit-research-unauthorized-probe.json"
+          try:
+              resolve_authorized_target(forbidden, policy=policy)
+          except AtomicWriteError as error:
+              if error.reason != "target_outside_authorized_roots":
+                  raise
+          else:
+              raise SystemExit("pit_unauthorized_path_was_not_blocked")
+
+          evidence = {
+              "PIT_TEMP_ROOT_VALIDATED": True,
+              "UNAUTHORIZED_PATH_TESTS": "PASS",
+              "system_temp_root": str(temp_root),
+              "pytest_basetemp": str(test_base),
+          }
+          (Path(os.environ["PIT_EVIDENCE"]) / "temp-root-validation.json").write_text(
+              json.dumps(evidence, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as environment:
+              environment.write(f"PIT_TEST_BASE={test_base}\n")
+          print(json.dumps(evidence, sort_keys=True))
+          PY
+
+      - name: Test synthetic PIT proof and directly affected contracts
+        run: |
+          "$PIT_PYTHON" -m pytest -q -p no:cacheprovider \
+            --basetemp "$PIT_TEST_BASE" \
+            --junitxml="$PIT_EVIDENCE/pit-tests.xml" \
+            tests/test_paper_pretrade_causal_capture_v1.py \
+            tests/test_paper_pit_source_model_input_proof_v1.py \
+            tests/test_decision_ledger_payload_v4_2.py \
+            tests/test_market_features_refresh_continuity_v1.py \
+            tests/test_pit_research_dependency_audit_v1.py \
+            | tee "$PIT_EVIDENCE/pytest.txt"
+
+      - name: Check repository hygiene
+        run: |
+          "$PIT_PYTHON" scripts/generate_project_manifest.py --check
+          "$PIT_PYTHON" scripts/scan_versioned_secrets.py --json
+          git diff --exit-code
+          git diff --check
+
+      - name: Upload research validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pit-research-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/pit-research-evidence
+          if-no-files-found: error
