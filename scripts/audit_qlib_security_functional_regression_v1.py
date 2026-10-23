@@ -140,19 +140,54 @@ def validate_static_contract(project_root: Path) -> dict[str, Any]:
 
 
 def _installed_versions(expected_packages: Mapping[str, str]) -> dict[str, str]:
+    versions, _extras = _installed_inventory(expected_packages)
+    return versions
+
+
+def _installed_inventory(
+    expected_packages: Mapping[str, str],
+) -> tuple[dict[str, str], dict[str, dict[str, str]]]:
+    """Check every locked distribution and identify the two explicit image extras."""
+    installed: dict[str, str] = {}
+    for distribution in importlib.metadata.distributions():
+        try:
+            raw_name = distribution.metadata["Name"]
+        except KeyError as exc:
+            raise FunctionalRegressionError("installed_package_name_missing") from exc
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            raise FunctionalRegressionError("installed_package_name_missing")
+        name = re.sub(r"[-_.]+", "-", raw_name).lower()
+        if name in installed:
+            raise FunctionalRegressionError(f"installed_package_duplicate:{name}")
+        installed[name] = distribution.version
+    extras: dict[str, dict[str, str]] = {}
+    for name in sorted(set(installed) - set(expected_packages)):
+        if name == "pip":
+            extras[name] = {
+                "version": installed[name],
+                "provenance": "bootstrap_tool_from_digest_pinned_python_image",
+                "qlib_lock_audit_coverage": "not_included",
+            }
+        elif name == "smartcrypto" and installed[name] == "0.2.1":
+            extras[name] = {
+                "version": installed[name],
+                "provenance": "local_repository_package_declared_in_pyproject",
+                "qlib_lock_audit_coverage": "not_included",
+            }
+        else:
+            raise FunctionalRegressionError(f"installed_package_unexpected:{name}:{installed[name]}")
     versions: dict[str, str] = {}
     for package_name, expected_version in expected_packages.items():
-        try:
-            actual_version = importlib.metadata.version(package_name)
-        except importlib.metadata.PackageNotFoundError as exc:
-            raise FunctionalRegressionError(f"installed_package_missing:{package_name}") from exc
+        if package_name not in installed:
+            raise FunctionalRegressionError(f"installed_package_missing:{package_name}")
+        actual_version = installed[package_name]
         if actual_version != expected_version:
             raise FunctionalRegressionError(
                 "installed_package_version_mismatch:"
                 f"{package_name}:{actual_version}:{expected_version}"
             )
         versions[package_name] = actual_version
-    return versions
+    return versions, extras
 
 
 def _build_frame(pd: Any, np: Any, *, start_day: int, rows: int) -> Any:
@@ -197,7 +232,7 @@ def run_functional_regression(project_root: Path) -> dict[str, Any]:
     if os.environ.get("MLFLOW_ALLOW_PICKLE_DESERIALIZATION", "").lower() != "false":
         raise FunctionalRegressionError("mlflow_pickle_deserialization_control_not_false")
 
-    installed_versions = _installed_versions(static["expected_packages"])
+    installed_versions, installation_extras = _installed_inventory(static["expected_packages"])
     import_smoke = (
         "git", "mako", "mlflow", "certifi", "PIL", "aiohttp", "tornado",
         "cryptography", "pyarrow", "jupyterlab", "notebook",
@@ -297,6 +332,8 @@ def run_functional_regression(project_root: Path) -> dict[str, Any]:
         "policy_version": static["policy_version"],
         "lock_sha256": static["lock_sha256"],
         "installed_versions": installed_versions,
+        "installation_extras": installation_extras,
+        "audited_lock_package_count": len(installed_versions),
         "import_smoke": {name: "PASS" for name in import_smoke},
         "qlib": {
             "version": str(getattr(qlib, "__version__", "")),
@@ -323,7 +360,9 @@ def run_functional_regression(project_root: Path) -> dict[str, Any]:
             "mlflow_pickle_deserialization_control": "false",
             "network_mode": "none",
             "repository_mount": "readonly",
+            "exact_locked_graph": True,
             "exact_certified_graph": bool(static["p08_allowed"]),
+            "current_graph_ci_certified": bool(static["p08_allowed"]),
             "qlib_security_gate_bypassed": False,
         },
         "safety": {

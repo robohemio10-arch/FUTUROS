@@ -1,4 +1,3 @@
-\
 from __future__ import annotations
 
 import argparse
@@ -13,8 +12,8 @@ if str(ROOT) not in sys.path:
 from smartcrypto.learning.qlib_dependency_security_hardening import (  # noqa: E402
     DEFAULT_POLICY_PATH,
     DEFAULT_REPORT_PATH,
-    audit_project,
     audit_candidate_evidence,
+    audit_project,
     write_report_atomic,
 )
 
@@ -32,7 +31,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--pip-audit-report")
     parser.add_argument("--hashed-install-report")
     parser.add_argument(
-        "--candidate-validation", action="store_true",
+        "--candidate-validation",
+        action="store_true",
         help="Validate complete candidate evidence only; never authorize P08. Requires all three reports.",
     )
     parser.add_argument(
@@ -57,13 +57,17 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.candidate_validation:
         report = audit_candidate_evidence(
-            root, policy_path=policy, resolver_report=resolver_report,
+            root,
+            policy_path=policy,
+            resolver_report=resolver_report,
             pip_audit_report=pip_audit_report,
             hashed_install_report=Path(args.hashed_install_report) if args.hashed_install_report else None,
         )
     else:
         report = audit_project(
-            root, policy_path=policy, resolver_report=resolver_report,
+            root,
+            policy_path=policy,
+            resolver_report=resolver_report,
             pip_audit_report=pip_audit_report,
         )
 

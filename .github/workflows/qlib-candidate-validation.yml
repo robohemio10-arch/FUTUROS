@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/qlib-candidate-validation.yml"
       - "requirements-qlib*.lock"
+      - "requirements-dev.lock"
+      - "requirements-build.lock"
       - "requirements-qlib-security-candidate.in"
       - "config/qlib_dependency_security_policy_v1.json"
       - "config/security_resolution_evidence_v1.json"
@@ -49,9 +51,13 @@ jobs:
           python-version: "3.12"
 
       - name: Prepare independent audit tools and provenance
+        env:
+          CANDIDATE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python -m venv "$RUNNER_TEMP/qlib-auditor"
-          "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip install --disable-pip-version-check pip-audit==2.9.0 pytest==9.0.3 PyYAML==6.0.3
+          "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip install --disable-pip-version-check --require-hashes -r requirements-dev.lock
+          "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip install --disable-pip-version-check --require-hashes --no-deps -r requirements-build.lock
+          "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip check
           mkdir -p "$RUNNER_TEMP/qlib-candidate-evidence"
           "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip list --format json > "$RUNNER_TEMP/qlib-candidate-evidence/audit-tool-versions.json"
           python - <<'PY'
@@ -60,12 +66,21 @@ jobs:
           import pathlib
           import subprocess
           head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          if head != os.environ["CANDIDATE_HEAD_SHA"]:
+              raise SystemExit("candidate_head_mismatch")
           record = {"candidate_head_sha": head, "workflow_run_id": os.environ["GITHUB_RUN_ID"],
                     "policy_state": "PENDING_CERTIFICATION", "p08_allowed": False,
                     "operational_authority": False, "validation_only": True}
           target = pathlib.Path(os.environ["RUNNER_TEMP"]) / "qlib-candidate-evidence/provenance.json"
           target.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
           PY
+
+      - name: Resolve the complete hash-locked Qlib graph
+        run: |
+          "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip install \
+            --dry-run --ignore-installed --no-build-isolation --require-hashes \
+            --report "$RUNNER_TEMP/qlib-candidate-evidence/qlib-resolver-report.json" \
+            -r requirements-qlib-security.lock
 
       - name: Build existing Qlib image with observable hashed installation
         run: |
@@ -86,10 +101,10 @@ jobs:
             qlib-candidate-ci python -c 'from pathlib import Path; print(Path("/tmp/qlib-install-report.json").read_text())' \
             > "$RUNNER_TEMP/qlib-candidate-evidence/qlib-install-report.json"
 
-      - name: Audit every exact hashed Qlib pin without a second resolution
+      - name: Audit every exact hashed Qlib pin with strict complete coverage
         run: |
           "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip_audit \
-            -r requirements-qlib-security.lock --require-hashes --no-deps --disable-pip \
+            -r requirements-qlib-security.lock --require-hashes --disable-pip \
             --strict --format json --progress-spinner off \
             --output "$RUNNER_TEMP/qlib-candidate-evidence/qlib-pip-audit.json"
 
@@ -97,7 +112,7 @@ jobs:
         run: |
           "$RUNNER_TEMP/qlib-auditor/bin/python" scripts/audit_qlib_dependency_security_hardening_v1.py \
             --project-root . --candidate-validation \
-            --resolver-report "$RUNNER_TEMP/qlib-candidate-evidence/qlib-install-report.json" \
+            --resolver-report "$RUNNER_TEMP/qlib-candidate-evidence/qlib-resolver-report.json" \
             --hashed-install-report "$RUNNER_TEMP/qlib-candidate-evidence/qlib-install-report.json" \
             --pip-audit-report "$RUNNER_TEMP/qlib-candidate-evidence/qlib-pip-audit.json" --json \
             > "$RUNNER_TEMP/qlib-candidate-evidence/qlib-candidate-validation.json"
@@ -109,7 +124,7 @@ jobs:
             tests/test_qlib_security_functional_regression_v1.py \
             tests/test_qlib_candidate_validation_ci_v1.py
 
-      - name: Validate real Qlib training and inference offline
+      - name: Validate the synthetic Qlib fit and inference harness offline
         run: |
           docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges=true \
             --user 10001:10001 --memory 4g --cpus 2 --pids-limit 128 --tmpfs /tmp:rw,nosuid,size=1g \
@@ -125,8 +140,15 @@ jobs:
           from pathlib import Path
           root = Path(os.environ["RUNNER_TEMP"]) / "qlib-candidate-evidence"
           report = json.loads((root / "qlib-functional.stdout").read_text().splitlines()[-1])
-          if (report.get("status") != "ok" or report.get("p08_allowed") is not False
-                  or report["security"]["exact_certified_graph"] is not False):
+          policy = json.loads(Path("config/qlib_dependency_security_policy_v1.json").read_text())
+          if (policy["policy_status"] != "PENDING_CERTIFICATION"
+                  or report.get("status") != "ok"
+                  or report.get("p08_allowed") is not False
+                  or report["security"]["exact_certified_graph"] is not False
+                  or report["security"]["current_graph_ci_certified"] is not False
+                  or report["security"]["qlib_security_gate_bypassed"] is not False
+                  or report["safety"]["operational_authority"] is not False
+                  or report["audited_lock_package_count"] != policy["expected_security_lock_package_count"]):
               raise SystemExit("candidate_functional_regression_or_authorization_contract_failed")
           (root / "qlib-functional.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
           PY

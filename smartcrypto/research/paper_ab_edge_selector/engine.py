@@ -150,7 +150,6 @@ def _read_qlib_security_evidence(
     reason = str(payload.get("reason") or "UNKNOWN")
     approved = payload.get("approved_security_clean_resolution_found") is True
     reported_gate = payload.get("qlib_security_gate_passed") is True
-    # A cached approval is not authority when the current versioned policy denies P08.
     from smartcrypto.learning.qlib_dependency_security_hardening import audit_project
 
     current = audit_project(root)
@@ -421,7 +420,6 @@ def _financial_evidence(
     control_count = int(control_metrics.trade_count)
     treatment_count = int(treatment_metrics.trade_count)
     observed_days = _observed_days(observations)
-    blockers: list[str] = []
     sample_gate = bool(
         control_count >= config.minimum_observations_per_arm
         and treatment_count >= config.minimum_observations_per_arm
@@ -429,10 +427,10 @@ def _financial_evidence(
     period_gate = bool(observed_days >= config.minimum_observation_days)
 
     if global_blockers or treatment_count == 0:
-        blockers = list(dict.fromkeys([*global_blockers, "NO_EVALUABLE_TREATMENT_OBSERVATIONS"]))
+        initial_blockers = tuple(dict.fromkeys([*global_blockers, "NO_EVALUABLE_TREATMENT_OBSERVATIONS"]))
         return IncrementalEdgeEvidence(
             status="EVIDENCE_BLOCKED",
-            reason=blockers[0],
+            reason=initial_blockers[0],
             treatment_evaluable=False,
             eligible_treatment_count=treatment_count,
             control_count=control_count,
@@ -453,7 +451,7 @@ def _financial_evidence(
             effective_sample=min(control_count, treatment_count),
             treatment_profit_factor_gate=False,
             edge_ci_gate=False,
-            blockers=tuple(blockers),
+            blockers=initial_blockers,
         )
 
     delta_net = _delta(treatment_metrics.net_pnl, control_metrics.net_pnl)
@@ -462,7 +460,7 @@ def _financial_evidence(
     delta_dd = _delta(treatment_metrics.max_drawdown, control_metrics.max_drawdown)
 
     if not sample_gate or not period_gate:
-        blockers = []
+        blockers: list[str] = []
         if not sample_gate:
             blockers.append("MINIMUM_OBSERVATIONS_PER_ARM_NOT_MET")
         if not period_gate:

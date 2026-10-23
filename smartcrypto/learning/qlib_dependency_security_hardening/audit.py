@@ -1,4 +1,3 @@
-\
 from __future__ import annotations
 
 import hashlib
@@ -45,20 +44,79 @@ REQUIRED_SEMANTIC_INVARIANTS = {
     "no_approved_security_clean_resolution_is_blocking",
 }
 REQUIRED_ADVISORIES = {
-    "GHSA-59cr-6r3x-644w": ("gitpython", "3.1.62"),
-    "GHSA-5639-2j2p-m4mx": ("mako", "1.4.2"),
-    "GHSA-26p8-2jq9-3vq9": ("mlflow", "3.17.0"),
-    "GHSA-m65p-9j7q-6w33": ("mlflow", "3.17.0"),
-    "GHSA-j7qq-vr8c-xvw3": ("mlflow", "3.17.0"),
-    "GHSA-6q48-6c7w-9gw2": ("certifi", "2026.10.19"),
-    "GHSA-8g5g-8vmr-9782": ("pillow", "13.0.0"),
-    "GHSA-9xw5-w5jj-pvcg": ("aiohttp", "3.14.4"),
-    "GHSA-gqvg-gmmx-x4hm": ("mlflow", "3.15.0"),
-    "CVE-2026-69247": ("cryptography", "50.0.0"),
-    "GHSA-3hv7-mjh2-fv65": ("tornado", "6.5.9"),
-    "GHSA-c2m8-h5v5-343r": ("tornado", "6.5.9"),
-    "GHSA-chx6-46f5-w4vp": ("tornado", "6.5.9"),
+    'CVE-2026-69247': ('cryptography', '50.0.0'),
+    'GHSA-22hg-r758-rrw9': ('pillow', '13.0.0'),
+    'GHSA-24rc-8hj2-v98c': ('pillow', '13.0.0'),
+    'GHSA-254f-3936-288h': ('pillow', '13.0.0'),
+    'GHSA-26p8-2jq9-3vq9': ('mlflow', '3.17.0'),
+    'GHSA-27h8-gf7j-v5hc': ('pillow', '13.0.0'),
+    'GHSA-2g87-pp6c-29x5': ('aiohttp', '3.14.4'),
+    'GHSA-2wqp-q3c6-ccj5': ('mlflow', '3.17.0'),
+    'GHSA-332p-7hrc-92wf': ('pillow', '13.0.0'),
+    'GHSA-3hv7-mjh2-fv65': ('tornado', '6.5.9'),
+    'GHSA-3j72-p6qg-6xp7': ('pillow', '13.0.0'),
+    'GHSA-462x-pgg6-55fp': ('pillow', '13.0.0'),
+    'GHSA-494j-54xm-rwp3': ('aiohttp', '3.14.4'),
+    'GHSA-4rm8-3hmm-39fg': ('pillow', '13.0.0'),
+    'GHSA-4rr5-89j8-mwwm': ('pillow', '13.0.0'),
+    'GHSA-54p9-h82j-f925': ('multidict', '6.9.1'),
+    'GHSA-5639-2j2p-m4mx': ('mako', '1.4.2'),
+    'GHSA-58r4-6rv3-gfh8': ('pillow', '13.0.0'),
+    'GHSA-5wr8-gcqf-gqf3': ('aiohttp', '3.14.4'),
+    'GHSA-5xm2-6676-qcp9': ('pillow', '13.0.0'),
+    'GHSA-65qm-jvmh-6pqg': ('pillow', '13.0.0'),
+    'GHSA-6cjc-53gc-5rqm': ('aiohttp', '3.14.4'),
+    'GHSA-6q48-6c7w-9gw2': ('certifi', '2026.10.19'),
+    'GHSA-74r2-7ff9-mjj2': ('pillow', '13.0.0'),
+    'GHSA-78g4-xqwv-q3g8': ('pillow', '13.0.0'),
+    'GHSA-7mwm-ghpf-9vrm': ('pillow', '13.0.0'),
+    'GHSA-83vg-56qc-22m7': ('gitpython', '3.2.1'),
+    'GHSA-8fvv-fgr5-f8ch': ('pymongo', '4.18.1'),
+    'GHSA-9v9v-9qvf-h2hj': ('pillow', '13.0.0'),
+    'GHSA-9xw5-w5jj-pvcg': ('aiohttp', '3.14.4'),
+    'GHSA-c2m8-h5v5-343r': ('tornado', '6.5.9'),
+    'GHSA-c6hw-5grf-ff96': ('pillow', '13.0.0'),
+    'GHSA-chx6-46f5-w4vp': ('tornado', '6.5.9'),
+    'GHSA-cp9v-662q-vvx9': ('pillow', '13.0.0'),
+    'GHSA-f2g6-542v-9j58': ('pillow', '13.0.0'),
+    'GHSA-f9xw-jh8m-3mwq': ('aiohttp', '3.14.4'),
+    'GHSA-fc9g-5qg7-mf45': ('pillow', '13.0.0'),
+    'GHSA-g4qv-2jxx-769h': ('pillow', '13.0.0'),
+    'GHSA-g6x2-hccm-hh4m': ('werkzeug', '3.1.9'),
+    'GHSA-g7cr-3p24-7wf7': ('pillow', '13.0.0'),
+    'GHSA-g842-9rc4-69pw': ('pillow', '13.0.0'),
+    'GHSA-gg2r-wvfm-q9rx': ('pillow', '13.0.0'),
+    'GHSA-gqvg-gmmx-x4hm': ('mlflow', '3.15.0'),
+    'GHSA-gx76-c99x-2c96': ('aiohttp', '3.14.4'),
+    'GHSA-j4m9-6w36-pw47': ('pillow', '13.0.0'),
+    'GHSA-j7qq-vr8c-xvw3': ('mlflow', '3.17.0'),
+    'GHSA-jg86-v3jv-hrpm': ('pillow', '13.0.0'),
+    'GHSA-m65p-9j7q-6w33': ('mlflow', '3.17.0'),
+    'GHSA-mrfp-p49p-3hf2': ('pillow', '13.0.0'),
+    'GHSA-p4wg-p73j-c528': ('pillow', '13.0.0'),
+    'GHSA-p8hx-v2p6-rp84': ('pillow', '13.0.0'),
+    'GHSA-pchr-8j38-3x4p': ('pillow', '13.0.0'),
+    'GHSA-pqxq-w44r-73xw': ('aiohttp', '3.14.4'),
+    'GHSA-q45j-58j2-45rg': ('pillow', '13.0.0'),
+    'GHSA-qx36-8mw2-4r3x': ('pymongo', '4.18.2'),
+    'GHSA-v4x9-3549-crwv': ('pymongo', '4.18.2'),
+    'GHSA-v9pv-5gc8-w2m6': ('pillow', '13.0.0'),
+    'GHSA-vp6j-j7w5-5xjj': ('pymongo', '4.18.2'),
+    'GHSA-vx6w-vv9f-6gvg': ('pillow', '13.0.0'),
+    'GHSA-w889-685w-c8fh': ('pillow', '13.0.0'),
+    'GHSA-xcq7-p3pf-p88h': ('opentelemetry-api', '1.45.1'),
+    'GHSA-xgh8-jp6q-p5x8': ('pillow', '13.0.0'),
+    'PYSEC-2026-4055': ('jupyterlab', '4.6.4'),
+    'PYSEC-2026-4056': ('jupyterlab', '4.6.4'),
+    'PYSEC-2026-4057': ('jupyterlab', '4.6.4'),
+    'PYSEC-2026-4112': ('notebook', '7.6.3'),
+    'PYSEC-2026-4175': ('urllib3', '2.8.0'),
+    'PYSEC-2026-4176': ('urllib3', '2.8.0'),
+    'PYSEC-2026-4177': ('urllib3', '2.8.0'),
 }
+HISTORICAL_POLICY_EVIDENCE_SHA256 = "933ccf7aed5c17a62cc617b5e659bbab5def548a7454c9622a6ed6698c31b11b"
+HISTORICAL_CERTIFICATION_SHA256 = "32aba6f1ba5406fd9d0bd167f7ddf1c2fb76480b2c55ff14ac06fdd4794d8fa1"
+
 
 
 class PolicyError(ValueError):
@@ -75,6 +133,11 @@ def _canonical_text_bytes(data: bytes) -> bytes:
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _object_sha256(value: Any) -> str:
+    canonical = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return _sha256_bytes(canonical.encode("utf-8"))
 
 
 def _read_bytes(path: Path) -> bytes:
@@ -178,6 +241,15 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
     if not isinstance(state, str) or state not in {"BLOCKED", "PENDING_CERTIFICATION", "CERTIFIED"}:
         raise PolicyError("unexpected_policy_state")
     certified = state == "CERTIFIED"
+    if policy.get("ci_revalidation_required") is not (not certified):
+        raise PolicyError("ci_revalidation_state_mismatch")
+    if (
+        _object_sha256(policy.get("historical_certified_evidence"))
+        != HISTORICAL_POLICY_EVIDENCE_SHA256
+        or policy.get("historical_certified_evidence_sha256")
+        != HISTORICAL_POLICY_EVIDENCE_SHA256
+    ):
+        raise PolicyError("historical_certified_evidence_changed")
     for key in ("approved_security_clean_resolution_found", "qlib_security_gate_passed", "p08_allowed"):
         if policy.get(key) is not certified:
             raise PolicyError(f"policy_state_flag_mismatch:{key}")
@@ -226,6 +298,7 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
         if (
             not isinstance(advisory_package, str)
             or advisory_package not in packages
+            or advisory.get("resolved_version") != packages[advisory_package]
             or not isinstance(source, str)
             or not source.startswith("https://")
             or not source.endswith(advisory_id)
@@ -245,6 +318,8 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
             raise PolicyError(f"semantic_invariant_not_enforced:{key}")
 
     safety = _as_mapping(policy.get("safety"), name="safety")
+    if set(safety) != set(SAFETY_DEFAULTS):
+        raise PolicyError("unexpected_safety_fields")
     for key, expected in SAFETY_DEFAULTS.items():
         if safety.get(key) is not expected:
             raise PolicyError(f"unsafe_policy_flag:{key}")
@@ -262,6 +337,10 @@ def _validate_policy(policy: Mapping[str, Any]) -> None:
     expected_status = {"BLOCKED": "blocked", "PENDING_CERTIFICATION": "pending_ci_certification", "CERTIFIED": "ci_certified"}[state]
     if functional.get("status") != expected_status:
         raise PolicyError("functional_status_inconsistent_with_policy_state")
+    if not certified and any(
+        key in functional for key in ("certified_workflow_run_id", "certified_proof_commit_sha")
+    ):
+        raise PolicyError("candidate_contains_current_ci_certification")
     if certified:
         approval = _as_mapping(policy.get("governance_approval"), name="governance_approval")
         if approval.get("approved") is not True or approval.get("lock_sha256") != policy["expected_security_lock_sha256"]:
@@ -335,8 +414,12 @@ def _packages_from_pip_report(payload: Any) -> dict[str, str]:
         metadata = item.get("metadata")
         if not isinstance(metadata, Mapping):
             raise PolicyError("invalid_resolver_metadata")
-        name = re.sub(r"[-_.]+", "-", str(metadata.get("name", "")).strip()).lower()
-        version = str(metadata.get("version", "")).strip()
+        raw_name = metadata.get("name")
+        raw_version = metadata.get("version")
+        if not isinstance(raw_name, str) or not isinstance(raw_version, str):
+            raise PolicyError("invalid_resolver_package_identity")
+        name = re.sub(r"[-_.]+", "-", raw_name.strip()).lower()
+        version = raw_version.strip()
         if not name or not version or name in packages:
             raise PolicyError("missing_or_duplicate_resolver_identity")
         packages[name] = version
@@ -368,20 +451,39 @@ def _normalize_pip_audit_findings(payload: Any) -> list[dict[str, Any]]:
     return sorted(findings, key=lambda row: (row["package"], row["version"], row["id"]))
 
 
-def _audit_external_evidence(resolver_report: Path | None, pip_audit_report: Path | None, expected_packages: Mapping[str, str]) -> dict[str, Any]:
+def _audit_external_evidence(
+    resolver_report: Path | None,
+    pip_audit_report: Path | None,
+    expected_packages: Mapping[str, str],
+    expected_hashes: Mapping[str, Sequence[str]],
+) -> dict[str, Any]:
     if resolver_report is None and pip_audit_report is None:
         return {"provided": False, "status": "not_provided", "security_clean": None, "finding_count": None, "findings": [], "resolver_packages": {}}
     if resolver_report is None or pip_audit_report is None:
         return {"provided": True, "status": "blocked", "reason": "incomplete_external_evidence_pair", "security_clean": False, "finding_count": None, "findings": [], "resolver_packages": {}}
     try:
-        packages = _packages_from_pip_report(_read_json(resolver_report))
+        resolver_payload = _as_mapping(_read_json(resolver_report), name="resolver_report")
+        packages = _packages_from_pip_report(resolver_payload)
+        if packages != expected_packages:
+            raise PolicyError("external_evidence_graph_mismatch")
+        for row in _as_sequence(resolver_payload.get("install"), name="resolver_install"):
+            name = re.sub(r"[-_.]+", "-", row["metadata"]["name"]).lower()
+            download = _as_mapping(row.get("download_info"), name="resolver_download_info")
+            archive = _as_mapping(download.get("archive_info"), name="resolver_archive_info")
+            hashes = _as_mapping(archive.get("hashes"), name="resolver_archive_hashes")
+            if hashes.get("sha256") not in expected_hashes.get(name, ()):
+                raise PolicyError(f"resolver_archive_hash_not_in_lock:{name}")
         audit_payload = _as_mapping(_read_json(pip_audit_report), name="pip_audit_report")
+        if audit_payload.get("skipped") or audit_payload.get("skips"):
+            raise PolicyError("skipped_audit_dependencies")
         dependencies = _as_sequence(audit_payload.get("dependencies"), name="pip_audit_dependencies")
         audited: dict[str, str] = {}
         for dep in dependencies:
             dep = _as_mapping(dep, name="audited_dependency")
             name = re.sub(r"[-_.]+", "-", str(dep.get("name", ""))).lower()
-            if not name or not dep.get("version") or name in audited or "skip_reason" in dep:
+            if "skip_reason" in dep:
+                raise PolicyError(f"skipped_audit_dependency:{name}")
+            if not name or not dep.get("version") or name in audited:
                 raise PolicyError("incomplete_or_duplicate_audit_identity")
             _as_sequence(dep.get("vulns"), name="dependency_vulns")
             for value in dep["vulns"]:
@@ -424,15 +526,21 @@ def audit_candidate_evidence(
     pip_audit_report: Path | None = None,
     hashed_install_report: Path | None = None,
 ) -> dict[str, Any]:
-    """Validate candidate evidence, never grant or report P08 authorization."""
+    """Check the three candidate reports without granting certification or P08."""
+    root = project_root.resolve()
     report = audit_project(
-        project_root, policy_path=policy_path,
-        resolver_report=resolver_report, pip_audit_report=pip_audit_report,
+        root,
+        policy_path=policy_path,
+        resolver_report=resolver_report,
+        pip_audit_report=pip_audit_report,
     )
-    install: dict[str, Any] = {"status": "blocked", "reason": "hashed_install_report_required"}
+    install: dict[str, Any] = {
+        "status": "blocked",
+        "reason": "hashed_install_report_required",
+    }
     if hashed_install_report is not None and report.get("policy_valid") is True:
         try:
-            lock = _parse_hashed_lock(project_root.resolve() / "requirements-qlib-security.lock")
+            lock = _parse_hashed_lock(root / "requirements-qlib-security.lock")
             raw = _read_bytes(hashed_install_report)
             payload = _as_mapping(json.loads(raw.decode("utf-8-sig")), name="hashed_install_report")
             environment = _as_mapping(payload.get("environment"), name="install_environment")
@@ -442,37 +550,54 @@ def audit_candidate_evidence(
             if packages != lock["packages"]:
                 raise PolicyError("hashed_install_graph_mismatch")
             for row in _as_sequence(payload.get("install"), name="installed_packages"):
-                metadata = row["metadata"]
-                name = re.sub(r"[-_.]+", "-", metadata["name"]).lower()
+                name = re.sub(r"[-_.]+", "-", row["metadata"]["name"].strip()).lower()
                 download = _as_mapping(row.get("download_info"), name="install_download_info")
                 archive = _as_mapping(download.get("archive_info"), name="install_archive_info")
                 hashes = _as_mapping(archive.get("hashes"), name="install_archive_hashes")
                 if hashes.get("sha256") not in lock["package_hashes"][name]:
                     raise PolicyError(f"hashed_install_archive_not_in_lock:{name}")
             install = {
-                "status": "ok", "reason": "hashed_install_report_matches_exact_lock",
-                "package_count": len(packages), "report_sha256": _sha256_bytes(raw),
+                "status": "ok",
+                "reason": "hashed_install_report_matches_exact_lock",
+                "package_count": len(packages),
+                "report_sha256": _sha256_bytes(raw),
                 "lock_sha256": lock["sha256"],
                 "installation_execution_proof": "must_be_supplied_by_ci_install_step_and_functional_probe",
             }
         except (PolicyError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             install = {"status": "blocked", "reason": str(exc)}
+
+    blockers = list(report.get("blockers", []))
+    if report["status"] == "blocked" and not blockers:
+        blockers.append(report["reason"])
+    if report.get("policy_valid") is True and report.get("policy_status") != "PENDING_CERTIFICATION":
+        blockers.append("candidate_policy_must_be_pending_certification")
+    if report.get("external_evidence", {}).get("provided") is not True:
+        blockers.append("candidate_external_evidence_required")
+    if install["status"] != "ok":
+        blockers.append(install["reason"])
     valid = (
-        report.get("policy_valid") is True
-        and report.get("policy_status") == "PENDING_CERTIFICATION"
+        not blockers
         and report.get("candidate_evidence_valid") is True
         and report.get("external_evidence", {}).get("status") == "ok"
-        and install["status"] == "ok"
         and report.get("p08_allowed") is False
+        and report.get("qlib_security_gate_passed") is False
     )
+    if not valid and not blockers:
+        blockers.append("candidate_prerequisites_not_satisfied")
     return {
         **report,
+        "status": report["status"] if valid else "blocked",
+        "reason": report["reason"] if valid else blockers[0],
+        "blockers": blockers,
         "candidate_validation_status": "ok" if valid else "blocked",
         "candidate_validation_reason": (
-            "candidate_evidence_valid_p08_remains_blocked" if valid
-            else (install["reason"] if install["status"] != "ok" else report["reason"])
+            "candidate_evidence_valid_p08_remains_blocked" if valid else blockers[0]
         ),
         "hashed_install_evidence": install,
+        "approved_security_clean_resolution_found": False,
+        "qlib_security_gate_passed": False,
+        "qlib_security_gate_remains_blocked": True,
         "p08_allowed": False,
     }
 
@@ -493,6 +618,9 @@ def _current_evidence_valid(evidence: Mapping[str, Any], policy: Mapping[str, An
         and evidence.get("hashed_install_status") == "PASS"
         and evidence.get("python_version") == "3.12"
         and evidence.get("platform") == "linux"
+        and evidence.get("skipped_dependency_count") == 0
+        and type(evidence.get("skipped_dependency_count")) is int
+        and evidence.get("ci_revalidation_required") is (policy["policy_status"] != "CERTIFIED")
         and evidence.get("advisories_reviewed") == sorted(policy["security_advisories"])
         and all(type(evidence.get(key)) is int for key in (
             "resolved_package_count", "audited_dependency_count", "pip_audit_exit_code",
@@ -558,7 +686,12 @@ def audit_project(
     lock = _audit_locks(root, policy)
     evidence_path = root / str(policy["security_resolution_evidence_file"])
     evidence_identity = _audit_file_identity(evidence_path, str(policy["expected_security_resolution_evidence_sha256"]))
-    external = _audit_external_evidence(resolver_report, pip_audit_report, policy["expected_packages"])
+    external = _audit_external_evidence(
+        resolver_report,
+        pip_audit_report,
+        policy["expected_packages"],
+        lock["security_lock"].get("package_hashes", {}),
+    )
 
     try:
         versioned_evidence = dict(_as_mapping(_read_json(evidence_path), name="versioned_security_resolution_evidence"))
@@ -566,28 +699,49 @@ def audit_project(
         versioned_evidence = {}
     qlib_evidence = versioned_evidence.get("qlib", {}) if isinstance(versioned_evidence, Mapping) else {}
     versioned_clean = isinstance(qlib_evidence, Mapping) and _current_evidence_valid(qlib_evidence, policy)
+    historical = versioned_evidence.get("historical_certifications", {})
+    historical_valid = (
+        isinstance(historical, Mapping)
+        and _object_sha256(historical.get("2026-10-06")) == HISTORICAL_CERTIFICATION_SHA256
+        and versioned_evidence.get("historical_certification_object_sha256")
+        == HISTORICAL_CERTIFICATION_SHA256
+    )
+    if policy["policy_status"] == "PENDING_CERTIFICATION":
+        versioned_clean = bool(
+            versioned_clean
+            and versioned_evidence.get("evidence_status") == "pending_certification"
+            and versioned_evidence.get("ci_certification_status") == "pending_ci_certification"
+            and versioned_evidence.get("ci_revalidation_required") is True
+        )
 
     blockers: list[str] = []
     if lock["status"] != "ok":
         blockers.append("qlib_lock_contract_mismatch")
     if evidence_identity["status"] != "ok":
         blockers.append("security_resolution_evidence_identity_mismatch")
+    if not historical_valid:
+        blockers.append("historical_certification_changed")
     if not versioned_clean and policy["policy_status"] != "BLOCKED":
         blockers.append("versioned_security_resolution_not_clean")
     if external["provided"] and external["status"] != "ok":
         blockers.append(str(external.get("reason", "external_evidence_blocked")))
 
     candidate_evidence_valid = not blockers and versioned_clean
-    if policy["policy_status"] != "CERTIFIED":
-        blockers.append("qlib_security_blocked" if policy["policy_status"] == "BLOCKED" else "qlib_pending_certification")
-    passed = not blockers
-    safety = dict(_as_mapping(policy["safety"], name="safety"))
+    if policy["policy_status"] == "BLOCKED":
+        blockers.append("qlib_security_blocked")
+    passed = not blockers and policy["policy_status"] == "CERTIFIED"
+    pending = candidate_evidence_valid and policy["policy_status"] == "PENDING_CERTIFICATION"
+    safety = {key: policy["safety"][key] for key in SAFETY_DEFAULTS}
     clean = dict(qlib_evidence) if isinstance(qlib_evidence, Mapping) else {}
     return {
         "schema_version": "qlib_dependency_security_audit_v1",
-        "status": "ok" if passed else "blocked",
-        "reason": "approved_security_clean_resolution_certified" if passed else blockers[0],
+        "status": "ok" if passed else ("pending_certification" if pending else "blocked"),
+        "reason": (
+            "approved_security_clean_resolution_certified" if passed
+            else ("security_clean_candidate_pending_ci" if pending else blockers[0])
+        ),
         "blockers": blockers,
+        "certification_blockers": [] if passed else ["independent_current_graph_ci_certification_required"],
         "decision": policy["decision"],
         "policy_path": selected_policy.relative_to(root).as_posix() if selected_policy.is_relative_to(root) else selected_policy.as_posix(),
         "policy_sha256": policy_hash,
