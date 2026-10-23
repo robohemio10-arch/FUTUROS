@@ -90,9 +90,10 @@ jobs:
 
       - name: Qlib full-graph dependency audit
         run: |
-          python -m pip install --dry-run --ignore-installed --require-hashes --report "$RUNNER_TEMP/qlib-resolver-report.json" -r requirements-qlib-security.lock
-          python -m pip_audit -r requirements-qlib-security.lock --progress-spinner off --strict --format json --output "$RUNNER_TEMP/qlib-pip-audit.json"
+          python -m pip install --dry-run --ignore-installed --no-build-isolation --require-hashes --report "$RUNNER_TEMP/qlib-resolver-report.json" -r requirements-qlib-security.lock
+          python -m pip_audit -r requirements-qlib-security.lock --require-hashes --disable-pip --progress-spinner off --strict --format json --output "$RUNNER_TEMP/qlib-pip-audit.json"
           sha256sum requirements-qlib-security.lock "$RUNNER_TEMP/qlib-resolver-report.json" "$RUNNER_TEMP/qlib-pip-audit.json"
+          python scripts/audit_qlib_dependency_security_hardening_v1.py --project-root . --resolver-report "$RUNNER_TEMP/qlib-resolver-report.json" --pip-audit-report "$RUNNER_TEMP/qlib-pip-audit.json" --json
 
       - name: Paper runtime check
         run: make paper-check
