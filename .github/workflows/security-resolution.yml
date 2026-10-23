@@ -44,10 +44,10 @@ jobs:
 
       - name: Verify and audit Qlib security lock
         run: |
-          python -m pip install --dry-run --ignore-installed --require-hashes --report security-resolution/qlib-resolver-report.json -r requirements-qlib-security.lock
+          python -m pip install --dry-run --ignore-installed --no-build-isolation --require-hashes --report security-resolution/qlib-resolver-report.json -r requirements-qlib-security.lock
           cp requirements-qlib-security.lock security-resolution/requirements-qlib-security.hashed.lock
           set +e
-          python -m pip_audit -r requirements-qlib-security.lock --format json --output security-resolution/qlib-pip-audit.json --progress-spinner off
+          python -m pip_audit -r requirements-qlib-security.lock --require-hashes --disable-pip --strict --format json --output security-resolution/qlib-pip-audit.json --progress-spinner off
           code=$?
           set -e
           echo "$code" > security-resolution/qlib-pip-audit.exitcode
