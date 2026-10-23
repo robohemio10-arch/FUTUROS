@@ -518,6 +518,90 @@ def _audit_external_evidence(
     }
 
 
+def audit_candidate_evidence(
+    project_root: Path,
+    *,
+    policy_path: Path | None = None,
+    resolver_report: Path | None = None,
+    pip_audit_report: Path | None = None,
+    hashed_install_report: Path | None = None,
+) -> dict[str, Any]:
+    """Check the three candidate reports without granting certification or P08."""
+    root = project_root.resolve()
+    report = audit_project(
+        root,
+        policy_path=policy_path,
+        resolver_report=resolver_report,
+        pip_audit_report=pip_audit_report,
+    )
+    install: dict[str, Any] = {
+        "status": "blocked",
+        "reason": "hashed_install_report_required",
+    }
+    if hashed_install_report is not None and report.get("policy_valid") is True:
+        try:
+            lock = _parse_hashed_lock(root / "requirements-qlib-security.lock")
+            raw = _read_bytes(hashed_install_report)
+            payload = _as_mapping(json.loads(raw.decode("utf-8-sig")), name="hashed_install_report")
+            environment = _as_mapping(payload.get("environment"), name="install_environment")
+            if environment.get("sys_platform") != "linux" or environment.get("python_version") != "3.12":
+                raise PolicyError("hashed_install_target_mismatch")
+            packages = _packages_from_pip_report(payload)
+            if packages != lock["packages"]:
+                raise PolicyError("hashed_install_graph_mismatch")
+            for row in _as_sequence(payload.get("install"), name="installed_packages"):
+                name = re.sub(r"[-_.]+", "-", row["metadata"]["name"].strip()).lower()
+                download = _as_mapping(row.get("download_info"), name="install_download_info")
+                archive = _as_mapping(download.get("archive_info"), name="install_archive_info")
+                hashes = _as_mapping(archive.get("hashes"), name="install_archive_hashes")
+                if hashes.get("sha256") not in lock["package_hashes"][name]:
+                    raise PolicyError(f"hashed_install_archive_not_in_lock:{name}")
+            install = {
+                "status": "ok",
+                "reason": "hashed_install_report_matches_exact_lock",
+                "package_count": len(packages),
+                "report_sha256": _sha256_bytes(raw),
+                "lock_sha256": lock["sha256"],
+                "installation_execution_proof": "must_be_supplied_by_ci_install_step_and_functional_probe",
+            }
+        except (PolicyError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            install = {"status": "blocked", "reason": str(exc)}
+
+    blockers = list(report.get("blockers", []))
+    if report["status"] == "blocked" and not blockers:
+        blockers.append(report["reason"])
+    if report.get("policy_valid") is True and report.get("policy_status") != "PENDING_CERTIFICATION":
+        blockers.append("candidate_policy_must_be_pending_certification")
+    if report.get("external_evidence", {}).get("provided") is not True:
+        blockers.append("candidate_external_evidence_required")
+    if install["status"] != "ok":
+        blockers.append(install["reason"])
+    valid = (
+        not blockers
+        and report.get("candidate_evidence_valid") is True
+        and report.get("external_evidence", {}).get("status") == "ok"
+        and report.get("p08_allowed") is False
+        and report.get("qlib_security_gate_passed") is False
+    )
+    if not valid and not blockers:
+        blockers.append("candidate_prerequisites_not_satisfied")
+    return {
+        **report,
+        "status": report["status"] if valid else "blocked",
+        "reason": report["reason"] if valid else blockers[0],
+        "blockers": blockers,
+        "candidate_validation_status": "ok" if valid else "blocked",
+        "candidate_validation_reason": (
+            "candidate_evidence_valid_p08_remains_blocked" if valid else blockers[0]
+        ),
+        "hashed_install_evidence": install,
+        "approved_security_clean_resolution_found": False,
+        "qlib_security_gate_passed": False,
+        "qlib_security_gate_remains_blocked": True,
+        "p08_allowed": False,
+    }
+
+
 def _current_evidence_valid(evidence: Mapping[str, Any], policy: Mapping[str, Any]) -> bool:
     """Historical certificates cannot satisfy the current graph's requirements."""
     expected = policy["expected_packages"]

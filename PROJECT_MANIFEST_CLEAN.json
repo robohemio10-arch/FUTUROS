@@ -1,15 +1,15 @@
 {
-  "aggregate_sha256": "2948fdfd75d9edf7593fc3516d0d3e9b925c3b87cffeb29ac0c7971f86c94a0b",
+  "aggregate_sha256": "f3bb2a238e63b21640983fc9bc22e5e44a50b84d79783c34bd4b898f937e4c85",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
     "docs_files": 330,
-    "manifested_files_total": 2221,
-    "python_files": 1745,
+    "manifested_files_total": 2223,
+    "python_files": 1746,
     "runtime_excluded_files_total": 0,
-    "test_files": 482,
-    "tracked_files_total": 2222,
-    "workflows": 2
+    "test_files": 483,
+    "tracked_files_total": 2224,
+    "workflows": 3
   },
   "deterministic": true,
   "files": [
@@ -36,6 +36,12 @@
       "hash_mode": "text_lf",
       "path": ".github/workflows/ci.yml",
       "sha256": "42d64062e58afed30921841af36bfe07e1eb06cfd7c4a469ef2ba8f68829f7e6"
+    },
+    {
+      "bytes": 8894,
+      "hash_mode": "text_lf",
+      "path": ".github/workflows/qlib-candidate-validation.yml",
+      "sha256": "85a16a475ff590857bc5a9de4995c4ae6bbe2fec8db1c6d4902de318a344df9d"
     },
     {
       "bytes": 4285,
@@ -3134,10 +3140,10 @@
       "sha256": "01ebd2f55476c41885441059e19afeec379e2edda34e173ac624b6d05ad10543"
     },
     {
-      "bytes": 3129,
+      "bytes": 3930,
       "hash_mode": "text_lf",
       "path": "scripts/audit_qlib_dependency_security_hardening_v1.py",
-      "sha256": "96e29fac44c1c3b3d6783d2f3b5ed90cd0f8c23c3f8a296d1561fdde97e85536"
+      "sha256": "ed24762c59a107f55e5c109a63a3aca9046364a217f87217ac546dcb636a6898"
     },
     {
       "bytes": 1601,
@@ -7394,16 +7400,16 @@
       "sha256": "810cebc919c552f184e55518b5fcaf6bfe9992fa8b100937ce033818730f7209"
     },
     {
-      "bytes": 270,
+      "bytes": 332,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_dependency_security_hardening/__init__.py",
-      "sha256": "22bdc5d7ff41e8574a0bed1ce2b453634e4be0fc6e38c5ec0c938ba829b4b5b4"
+      "sha256": "209870826c32ed9c780bfadb787bbf5d51e3b456f06f0c3697e14901e220779e"
     },
     {
-      "bytes": 34364,
+      "bytes": 38477,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_dependency_security_hardening/audit.py",
-      "sha256": "19d222c34b22bf855089441f8bb8fcd11cdfd10c7ffab185071b09e83b640e08"
+      "sha256": "d902f3e5061e36f46a51227472fb2ed48a679cdaead24dd68c3e20aea2059a37"
     },
     {
       "bytes": 211,
@@ -9320,10 +9326,10 @@
       "sha256": "a16d53c40a4b2bcea559ce89b829c4f252654ce066277f7f8daaed9a841d2c2d"
     },
     {
-      "bytes": 41381,
+      "bytes": 41819,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/paper_ab_edge_selector/engine.py",
-      "sha256": "6c238cc7132e06a89c5c6a779b34accf3e388d317bced3c8529a378158d7e8ae"
+      "sha256": "309052a2a6b42b7e70839219faf142d2c9daadb38f66684faec28d75349835f3"
     },
     {
       "bytes": 4210,
@@ -12062,10 +12068,10 @@
       "sha256": "7d5ddf43d4e020dc25b92280ab9152afec1cec2fda83b44f76e64e2c7b7dff65"
     },
     {
-      "bytes": 23657,
+      "bytes": 26193,
       "hash_mode": "text_lf",
       "path": "tests/test_paper_ab_edge_selector_v1.py",
-      "sha256": "4370fdb9b0d92b7070aec239c36b0d6f702fd30a308e13b6e0a626f69822f418"
+      "sha256": "7dcbe72c719614d8c20e05c90036c34db061bb2d3bd23b1ab65694e7e2caa7b4"
     },
     {
       "bytes": 22573,
@@ -12734,10 +12740,16 @@
       "sha256": "b3fa308efbd31c8d6e3e45133279faf1c9a46544b4e356f8d1dafe9f7189068a"
     },
     {
-      "bytes": 21844,
+      "bytes": 8909,
+      "hash_mode": "text_lf",
+      "path": "tests/test_qlib_candidate_validation_ci_v1.py",
+      "sha256": "89bd8d39940d2b68c846f1657d53e8332c40c779ae998bb0effdf74fa6d425cb"
+    },
+    {
+      "bytes": 36640,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_dependency_security_hardening_v1.py",
-      "sha256": "ca703ba43475e9b54ea939804759ba7be084121e95bd1ea98143d6459b58b631"
+      "sha256": "630edb978c6909bc1e08aab6756705e9e9acea1f8db5a6de45936de2a13bac8e"
     },
     {
       "bytes": 7887,

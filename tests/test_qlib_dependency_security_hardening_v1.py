@@ -541,3 +541,328 @@ def test_cli_persisted_report_truthfully_records_write(tmp_path: Path) -> None:
     assert payload["qlib_security_gate_passed"] is False
     assert payload["write_requested"] is True
     assert payload["write_performed"] is True
+
+
+def rebind_evidence(root: Path, evidence: dict[str, Any]) -> None:
+    path = write_json(root / "config/security_resolution_evidence_v1.json", evidence)
+    policy_path = root / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["expected_security_resolution_evidence_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    write_json(policy_path, policy)
+
+
+@pytest.mark.parametrize("state", ["BLOCKED", "PENDING_CERTIFICATION"])
+def test_uncertified_governance_states_keep_distinct_public_statuses(
+    tmp_path: Path, state: str
+) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    policy["policy_status"] = state
+    policy["p08_functional_regression"]["status"] = (
+        "blocked" if state == "BLOCKED" else "pending_ci_certification"
+    )
+    write_json(path, policy)
+    report = load_module().audit_project(tmp_path)
+    assert report["policy_valid"] is True
+    assert report["policy_error"] is None
+    assert report["p08_allowed"] is False
+    assert report["qlib_security_gate_passed"] is False
+    assert report["status"] == ("blocked" if state == "BLOCKED" else "pending_certification")
+    assert report["reason"] == (
+        "qlib_security_blocked" if state == "BLOCKED" else "security_clean_candidate_pending_ci"
+    )
+
+
+@pytest.mark.parametrize(
+    "flag", ["p08_allowed", "qlib_security_gate_passed", "approved_security_clean_resolution_found"]
+)
+def test_pending_cannot_grant_approval(tmp_path: Path, flag: str) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    policy[flag] = True
+    write_json(path, policy)
+    report = load_module().audit_project(tmp_path)
+    assert report["reason"] == "policy_invalid_or_incomplete"
+    assert report["p08_allowed"] is False
+    assert report["qlib_security_gate_passed"] is False
+
+
+@pytest.mark.parametrize("advisory_id", sorted(load_module().REQUIRED_ADVISORIES))
+def test_every_required_advisory_is_mandatory(tmp_path: Path, advisory_id: str) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    del policy["security_advisories"][advisory_id]
+    write_json(path, policy)
+    report = load_module().audit_project(tmp_path)
+    assert report["policy_valid"] is False
+    assert f"advisory:{advisory_id}" in report["policy_error"]
+    assert report["p08_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("known_vulnerability_count", 1),
+        ("unreviewed_advisory_count", 1),
+        ("hashed_install_status", "FAIL"),
+        ("resolver_report_sha256", None),
+        ("audited_dependency_count", 189),
+        ("advisories_reviewed", []),
+        ("python_version", "3.11"),
+        ("platform", "windows"),
+        ("skipped_dependency_count", 1),
+        ("ci_revalidation_required", False),
+    ],
+)
+def test_current_evidence_must_be_complete(tmp_path: Path, key: str, value: Any) -> None:
+    copy_project(tmp_path)
+    evidence = json.loads((tmp_path / "config/security_resolution_evidence_v1.json").read_text(encoding="utf-8"))
+    evidence["qlib"][key] = value
+    rebind_evidence(tmp_path, evidence)
+    report = load_module().audit_project(tmp_path)
+    assert report["reason"] == "versioned_security_resolution_not_clean"
+    assert report["status"] == "blocked"
+    assert report["p08_allowed"] is False
+
+
+def test_historical_certificate_cannot_satisfy_current_graph(tmp_path: Path) -> None:
+    copy_project(tmp_path)
+    evidence = json.loads((tmp_path / "config/security_resolution_evidence_v1.json").read_text(encoding="utf-8"))
+    evidence["qlib"] = evidence["historical_certifications"]["2026-10-06"]["qlib"]
+    rebind_evidence(tmp_path, evidence)
+    report = load_module().audit_project(tmp_path)
+    assert report["status"] == "blocked"
+    assert report["reason"] == "versioned_security_resolution_not_clean"
+    assert report["p08_allowed"] is False
+
+
+def test_certification_requires_explicit_current_governance(tmp_path: Path) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    policy.update({
+        "policy_status": "CERTIFIED",
+        "ci_revalidation_required": False,
+        "p08_allowed": True,
+        "qlib_security_gate_passed": True,
+        "approved_security_clean_resolution_found": True,
+        "p08_security_gate_remains_blocked": False,
+    })
+    policy["p08_functional_regression"]["status"] = "ci_certified"
+    policy["governance_approval"] = {
+        "approved": True,
+        "lock_sha256": "0" * 64,
+        "review_reference": "fixture-invalid-lock",
+    }
+    write_json(path, policy)
+    report = load_module().audit_project(tmp_path)
+    assert report["policy_error"] == "current_graph_governance_approval_missing"
+    assert report["p08_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("policy_status", []),
+        ("expected_security_lock_package_count", True),
+        ("security_advisories", []),
+        ("p08_functional_regression", None),
+    ],
+)
+def test_malformed_policy_is_not_a_valid_security_block(
+    tmp_path: Path, key: str, value: Any
+) -> None:
+    copy_project(tmp_path)
+    path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+    policy = json.loads(path.read_text(encoding="utf-8"))
+    policy[key] = value
+    write_json(path, policy)
+    report = load_module().audit_project(tmp_path)
+    assert report["policy_valid"] is False
+    assert report["reason"] == "policy_invalid_or_incomplete"
+    assert report["p08_allowed"] is False
+
+
+def candidate_reports(root: Path) -> tuple[Path, Path, Path]:
+    copy_project(root)
+    resolver, audit = clean_external_evidence(root)
+    lock = load_module()._parse_hashed_lock(root / "requirements-qlib-security.lock")
+    install = write_json(root / "install.json", {
+        "environment": {"sys_platform": "linux", "python_version": "3.12"},
+        "install": [{
+            "metadata": {"name": name, "version": version},
+            "download_info": {"archive_info": {"hashes": {"sha256": lock["package_hashes"][name][0]}}},
+        } for name, version in lock["packages"].items()],
+    })
+    return resolver, audit, install
+
+
+def test_complete_candidate_validation_preserves_pending_contract(tmp_path: Path) -> None:
+    resolver, audit, install = candidate_reports(tmp_path)
+    result = load_module().audit_candidate_evidence(
+        tmp_path, resolver_report=resolver, pip_audit_report=audit, hashed_install_report=install,
+    )
+    assert result["candidate_validation_status"] == "ok"
+    assert result["status"] == "pending_certification"
+    assert result["reason"] == "security_clean_candidate_pending_ci"
+    assert result["blockers"] == []
+    assert result["certification_blockers"] == ["independent_current_graph_ci_certification_required"]
+    assert result["p08_allowed"] is False
+    assert result["qlib_security_gate_passed"] is False
+    assert result["external_evidence"]["audited_package_count"] == 190
+    assert result["external_evidence"]["missing_packages"] == []
+    assert result["hashed_install_evidence"]["package_count"] == 190
+    assert result["hashed_install_evidence"]["installation_execution_proof"] == (
+        "must_be_supplied_by_ci_install_step_and_functional_probe"
+    )
+
+
+@pytest.mark.parametrize("package", ["packaging", "setuptools"])
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "wrong_version", "skipped", "unidentifiable"])
+def test_bootstrap_packages_cannot_escape_candidate_audit(
+    tmp_path: Path, package: str, mutation: str
+) -> None:
+    resolver, audit, install = candidate_reports(tmp_path)
+    payload = json.loads(audit.read_text(encoding="utf-8"))
+    dep = next(row for row in payload["dependencies"] if row["name"] == package)
+    if mutation == "missing":
+        payload["dependencies"].remove(dep)
+    elif mutation == "duplicate":
+        payload["dependencies"].append(dict(dep))
+    elif mutation == "wrong_version":
+        dep["version"] = "0.0.1"
+    elif mutation == "skipped":
+        dep["skip_reason"] = "not_audited"
+    else:
+        dep["name"] = None
+    write_json(audit, payload)
+    result = load_module().audit_candidate_evidence(
+        tmp_path, resolver_report=resolver, pip_audit_report=audit, hashed_install_report=install,
+    )
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["status"] == "blocked"
+    assert result["p08_allowed"] is False
+    if mutation == "missing":
+        assert result["external_evidence"]["missing_packages"] == [package]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["missing_package", "duplicate_package", "wrong_version", "wrong_archive_hash", "missing_archive_hash", "wrong_target", "wrong_python"],
+)
+def test_installation_report_is_an_independent_prerequisite(
+    tmp_path: Path, mutation: str
+) -> None:
+    resolver, audit, install = candidate_reports(tmp_path)
+    payload = json.loads(install.read_text(encoding="utf-8"))
+    if mutation == "missing_package":
+        payload["install"].pop()
+    elif mutation == "duplicate_package":
+        payload["install"].append(dict(payload["install"][0]))
+    elif mutation == "wrong_version":
+        payload["install"][0]["metadata"]["version"] = "0.0.1"
+    elif mutation == "wrong_archive_hash":
+        payload["install"][0]["download_info"]["archive_info"]["hashes"]["sha256"] = "0" * 64
+    elif mutation == "missing_archive_hash":
+        del payload["install"][0]["download_info"]
+    elif mutation == "wrong_target":
+        payload["environment"]["sys_platform"] = "win32"
+    else:
+        payload["environment"]["python_version"] = "3.11"
+    write_json(install, payload)
+    result = load_module().audit_candidate_evidence(
+        tmp_path, resolver_report=resolver, pip_audit_report=audit, hashed_install_report=install,
+    )
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["hashed_install_evidence"]["status"] == "blocked"
+    assert result["status"] == "blocked"
+    assert result["p08_allowed"] is False
+
+
+def test_candidate_validation_requires_installation_report(tmp_path: Path) -> None:
+    resolver, audit, _ = candidate_reports(tmp_path)
+    result = load_module().audit_candidate_evidence(tmp_path, resolver_report=resolver, pip_audit_report=audit)
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["candidate_validation_reason"] == "hashed_install_report_required"
+    assert result["status"] == "blocked"
+
+
+def test_candidate_validation_requires_resolver_and_audit_reports(tmp_path: Path) -> None:
+    _, _, install = candidate_reports(tmp_path)
+    result = load_module().audit_candidate_evidence(tmp_path, hashed_install_report=install)
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["candidate_validation_reason"] == "candidate_external_evidence_required"
+    assert result["status"] == "blocked"
+    assert result["p08_allowed"] is False
+
+
+@pytest.mark.parametrize("blocker", ["finding", "historical_evidence", "gate_override", "lock_hash"])
+def test_complete_installation_does_not_override_other_candidate_blockers(
+    tmp_path: Path, blocker: str
+) -> None:
+    resolver, audit, install = candidate_reports(tmp_path)
+    if blocker == "finding":
+        payload = json.loads(audit.read_text(encoding="utf-8"))
+        payload["dependencies"][0]["vulns"] = [{"id": "UNKNOWN-NEW-FINDING", "fix_versions": []}]
+        write_json(audit, payload)
+    elif blocker == "historical_evidence":
+        evidence = json.loads((tmp_path / "config/security_resolution_evidence_v1.json").read_text(encoding="utf-8"))
+        evidence["qlib"] = evidence["historical_certifications"]["2026-10-06"]["qlib"]
+        rebind_evidence(tmp_path, evidence)
+    elif blocker == "gate_override":
+        path = tmp_path / "config/qlib_dependency_security_policy_v1.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["safety"]["qlib_security_gate_passed"] = True
+        write_json(path, payload)
+    else:
+        path = tmp_path / "requirements-qlib-security.lock"
+        path.write_text(path.read_text(encoding="utf-8") + "# tamper\n", encoding="utf-8")
+    result = load_module().audit_candidate_evidence(
+        tmp_path, resolver_report=resolver, pip_audit_report=audit, hashed_install_report=install,
+    )
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["status"] == "blocked"
+    assert result["p08_allowed"] is False
+    assert result["qlib_security_gate_passed"] is False
+    assert result["operational_authority"] is False
+
+
+def test_candidate_cli_success_keeps_normal_pending_contract(tmp_path: Path) -> None:
+    resolver, audit, install = candidate_reports(tmp_path)
+    command = [
+        sys.executable, str(SCRIPT), "--project-root", str(tmp_path),
+        "--resolver-report", str(resolver), "--pip-audit-report", str(audit),
+        "--hashed-install-report", str(install), "--json",
+    ]
+    candidate = subprocess.run([*command, "--candidate-validation"], capture_output=True, text=True, check=False)
+    assert candidate.returncode == 0
+    payload = json.loads(candidate.stdout)
+    assert payload["candidate_validation_status"] == "ok"
+    assert payload["status"] == "pending_certification"
+    assert payload["reason"] == "security_clean_candidate_pending_ci"
+    assert payload["p08_allowed"] is False
+    assert payload["qlib_security_gate_passed"] is False
+    assert payload["write_performed"] is False
+    normal = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert normal.returncode == 0
+    normal_payload = json.loads(normal.stdout)
+    assert normal_payload["status"] == "pending_certification"
+    assert normal_payload["reason"] == "security_clean_candidate_pending_ci"
+    assert normal_payload["p08_allowed"] is False
+    assert "candidate_validation_status" not in normal_payload
+
+
+def test_candidate_cli_rejects_missing_reports(tmp_path: Path) -> None:
+    copy_project(tmp_path)
+    completed = subprocess.run(
+        [sys.executable, str(SCRIPT), "--project-root", str(tmp_path), "--candidate-validation", "--json"],
+        capture_output=True, text=True, check=False,
+    )
+    assert completed.returncode == 1
+    result = json.loads(completed.stdout)
+    assert result["candidate_validation_status"] == "blocked"
+    assert result["status"] == "blocked"
+    assert result["p08_allowed"] is False
