@@ -72,7 +72,7 @@ def test_requirements_lock_contains_security_lint_and_typecheck_tools() -> None:
     assert "pip-audit==" in text
     assert "pyarrow==23.0.1" in text
     assert "pytest==9.0.3" in text
-    assert "streamlit==1.54.0" in text
+    assert "streamlit==1.66.1" in text
 
 
 def test_pyproject_exposes_tools_in_test_and_dev_extras() -> None:

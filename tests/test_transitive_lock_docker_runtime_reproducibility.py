@@ -70,7 +70,10 @@ def test_qlib_direct_and_transitive_security_locks_are_hashed() -> None:
     assert direct == ["pyqlib==0.9.7"]
     assert len(full) == 190
     assert "pyqlib==0.9.7" in {line.lower() for line in full}
-    assert "mlflow==3.16.0" in {line.lower() for line in full}
+    assert "mlflow==3.17.0" in {line.lower() for line in full}
+    assert "gitpython==3.2.1" in {line.lower() for line in full}
+    assert "certifi==2026.10.19" in {line.lower() for line in full}
+    assert "pillow==13.0.0" in {line.lower() for line in full}
     assert "cryptography==50.0.0" in {line.lower() for line in full}
     assert "--hash=sha256:" in read("requirements-qlib.lock")
     assert "--hash=sha256:" in read("requirements-qlib-security.lock")
@@ -120,6 +123,40 @@ def test_makefile_pip_audit_covers_transitive_lock_without_no_deps() -> None:
         assert "--disable-pip" not in line
 
 
+def test_qlib_workflows_resolve_before_auditing_every_hash_locked_package() -> None:
+    for path in (".github/workflows/ci.yml", ".github/workflows/security-resolution.yml"):
+        workflow = yaml.safe_load(read(path))
+        commands: list[str] = []
+        for job in workflow["jobs"].values():
+            commands.extend(str(step["run"]) for step in job["steps"] if "run" in step)
+        resolver_steps = [
+            (index, command)
+            for index, command in enumerate(commands)
+            if "pip install --dry-run" in command and "requirements-qlib-security.lock" in command
+        ]
+        audit_steps = [
+            (index, command)
+            for index, command in enumerate(commands)
+            if "pip_audit -r requirements-qlib-security.lock" in command
+        ]
+        assert len(resolver_steps) == len(audit_steps) == 1
+        resolver_index, resolver = resolver_steps[0]
+        audit_index, audit = audit_steps[0]
+        assert resolver_index <= audit_index
+        assert "--ignore-installed" in resolver
+        assert "--no-build-isolation" in resolver
+        assert "--require-hashes" in resolver
+        assert "--report" in resolver
+        assert "--no-deps" not in resolver
+        assert "--require-hashes" in audit
+        assert "--disable-pip" in audit
+        assert "--strict" in audit
+        assert "--no-deps" not in audit
+        assert "--ignore-vuln" not in audit
+        if resolver_index == audit_index:
+            assert resolver.index("pip install --dry-run") < audit.index("pip_audit -r")
+
+
 def test_documentation_explains_lock_docker_ci_and_audit_policy() -> None:
     text = read("docs/TRANSITIVE_LOCK_DOCKER_RUNTIME_REPRODUCIBILITY.md")
 
@@ -135,7 +172,17 @@ def test_documentation_explains_lock_docker_ci_and_audit_policy() -> None:
 
 def test_runtime_artifact_ignores_and_safety_flags_remain_institutional() -> None:
     gitignore = read(".gitignore")
-    for token in ("data/", "reports/", "logs/", "models/", "*.sqlite", "*.parquet", "*.csv", "*.xlsx", "*.jsonl"):
+    for token in (
+        "data/",
+        "reports/",
+        "logs/",
+        "models/",
+        "*.sqlite",
+        "*.parquet",
+        "*.csv",
+        "*.xlsx",
+        "*.jsonl",
+    ):
         assert token in gitignore
 
     for text in (read("docker-compose.paper.yml"), read("docker-compose.live.example.yml")):

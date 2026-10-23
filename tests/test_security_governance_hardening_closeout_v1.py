@@ -65,14 +65,26 @@ def test_ci_actions_are_pinned_to_full_shas() -> None:
 def test_security_resolution_evidence_closes_qlib_dependency_vulnerability_without_authority() -> None:
     evidence = json.loads((ROOT / "config/security_resolution_evidence_v1.json").read_text())
     qlib = evidence["qlib"]
-    assert evidence["evidence_status"] == "certified_clean"
+    assert evidence["evidence_status"] == "pending_certification"
+    assert evidence["ci_certification_status"] == "pending_ci_certification"
+    assert qlib["ci_revalidation_required"] is True
     assert qlib["resolver_status"] == "resolved"
     assert qlib["pip_audit_exit_code"] == 0
     assert qlib["known_vulnerability_count"] == 0
     assert qlib["resolved_package_count"] == 190
+    assert qlib["audited_dependency_count"] == 190
     assert qlib["packages"]["cryptography"] == "50.0.0"
-    assert qlib["packages"]["mlflow"] == "3.16.0"
+    assert qlib["packages"]["mlflow"] == "3.17.0"
     assert qlib["packages"]["pyarrow"] == "25.0.1"
+    historical = evidence["historical_certifications"]["2026-10-06"]
+    assert historical["evidence_status"] == "certified_clean"
+    assert historical["qlib"]["packages"]["mlflow"] == "3.16.0"
+    assert historical["functional_ci_certification"]["run_id"] == 37467299675
+    assert historical["qlib"]["hashed_lock_sha256"] != qlib["hashed_lock_sha256"]
+    policy = json.loads((ROOT / "config/qlib_dependency_security_policy_v1.json").read_text())
+    assert policy["p08_allowed"] is False
+    assert policy["qlib_security_gate_passed"] is False
+    assert policy["p08_security_gate_remains_blocked"] is True
     assert evidence["safety"]["operational_authority"] is False
     assert evidence["safety"]["runtime_updated"] is False
     assert evidence["safety"]["model_promotion_performed"] is False
