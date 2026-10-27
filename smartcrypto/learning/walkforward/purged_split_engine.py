@@ -9,11 +9,11 @@ from typing import Any, Mapping
 
 import pandas as pd
 
-from smartcrypto.learning.feature_contracts.dataset_manifest import file_sha256, frame_hash, read_frame
+from smartcrypto.learning.feature_contracts.dataset_manifest import frame_hash, read_frame
 from smartcrypto.learning.paper_autolearning.outcome_schema import SAFETY_FLAGS, utc_now_iso
 
 from .baselines import build_baseline_summary
-from .leakage_audit import audit_leakage, interval_intersects
+from .leakage_audit import audit_leakage, interval_intersects, validated_temporal_frame
 from .split_schema import (
     DEFAULT_BASELINE_JSON,
     DEFAULT_BASELINE_MD,
@@ -24,7 +24,6 @@ from .split_schema import (
     DEFAULT_OUTPUT_MD,
     DEFAULT_OUTCOME_EVENTS,
     DEFAULT_TARGET_STORE_JSON,
-    DEFAULT_TARGET_STORE_SUMMARY_JSON,
     MINIMUM_EMBARGO_SECONDS,
     SAFETY_FALSE_FIELDS,
     SCHEMA_VERSION,
@@ -63,9 +62,13 @@ def build_walkforward_anti_leakage_report(
         validation_errors.append("missing_selected_dataset")
         split_frame = pd.DataFrame()
     else:
-        validation_errors.extend(validate_raw_source(source_frame))
-        split_frame = prepare_split_frame(source_frame, target_store)
-        validation_errors.extend(validate_sources(split_frame, feature_contract))
+        raw_errors = validate_raw_source(source_frame)
+        validation_errors.extend(raw_errors)
+        if raw_errors:
+            split_frame = pd.DataFrame()
+        else:
+            split_frame = prepare_split_frame(source_frame, target_store)
+            validation_errors.extend(validate_sources(split_frame, feature_contract))
 
     target_store_hash = target_store.get("target_store_hash")
     feature_contract_hash = feature_contract.get("contract_hash")
@@ -228,6 +231,16 @@ def validate_raw_source(frame: pd.DataFrame) -> list[str]:
         errors.append("missing_open_time_utc")
     if "close_time_utc" not in frame.columns and "target_holding_seconds" not in frame.columns and "duration_seconds" not in frame.columns:
         errors.append("missing_close_time_or_target_holding_seconds")
+    if "open_time_utc" in frame.columns:
+        # Inspect original values before utc=True could silently localize a
+        # naive timestamp. Holding-derived closes still require aware opens.
+        original_intervals = frame.copy()
+        if "close_time_utc" not in original_intervals.columns:
+            original_intervals["close_time_utc"] = original_intervals["open_time_utc"]
+        try:
+            validated_temporal_frame(original_intervals)
+        except ValueError as exc:
+            errors.append(str(exc))
     return errors
 
 
