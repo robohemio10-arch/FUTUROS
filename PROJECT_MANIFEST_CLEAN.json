@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "161c0600ca60b9c74bf388872c82e260b9f0890bd0e9787a19b82a8376c1c1e7",
+  "aggregate_sha256": "17440d6614630cd1729c917829d2ad41c362c11f0e757ab5189e1d25830fcff2",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 331,
-    "manifested_files_total": 2230,
-    "python_files": 1752,
+    "docs_files": 332,
+    "manifested_files_total": 2232,
+    "python_files": 1753,
     "runtime_excluded_files_total": 0,
-    "test_files": 484,
-    "tracked_files_total": 2231,
+    "test_files": 485,
+    "tracked_files_total": 2233,
     "workflows": 3
   },
   "deterministic": true,
@@ -2652,6 +2652,12 @@
       "hash_mode": "text_lf",
       "path": "docs/WINDOWS_DOCKER_DNS_CAUSAL_TELEMETRY_V1.md",
       "sha256": "c7d3a888f6c5d4027cfbe454296c93162ae3d3fbc4b58b497fc3795f956ab88f"
+    },
+    {
+      "bytes": 3502,
+      "hash_mode": "text_lf",
+      "path": "docs/WQ6_TEMPORAL_LEAKAGE_VALIDATOR_CONTRACT.md",
+      "sha256": "286becf4347ca71dfabbca6d15e11189add4f30908486dff6961d67076a62d32"
     },
     {
       "bytes": 2728,
@@ -7628,16 +7634,16 @@
       "sha256": "dc957129dff2065fb3b384b58fc924f1d6cf0f1ba485c1e96536427d061a11b1"
     },
     {
-      "bytes": 4529,
+      "bytes": 10495,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/walkforward/leakage_audit.py",
-      "sha256": "db85a9aef5191c2c14748e45cc62a5e5c5f1ab61e8bf63cec44ad8a6307cd878"
+      "sha256": "63095e9226ff7ed01c634f14c9ec2e74e75ad2cf3fa2a7ac3ff71f53446a3dd5"
     },
     {
-      "bytes": 28132,
+      "bytes": 28750,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/walkforward/purged_split_engine.py",
-      "sha256": "eadeaf3525ba0ff2dde089d79dc44afc79f6a1cd142d1e08e6b7540009576852"
+      "sha256": "64d0c5d1cc395b44d29b03924d23d553a8729b2faef12ee0072784c9c3332d2f"
     },
     {
       "bytes": 1683,
@@ -9050,10 +9056,10 @@
       "sha256": "fa3aca418f186a35561dd649045695ac63eede1090349842f5632acc06d4b5fe"
     },
     {
-      "bytes": 51793,
+      "bytes": 51840,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/financial_ai_research_engine/engine.py",
-      "sha256": "5e009d8b17df1279bb5b8a689f9cdf6107e270e2fdb77b67ef3e7e369b2dfafe"
+      "sha256": "4bc830a26eba2daf9e8629e75ccf1eaa510cd269fbea53450c4bafe26a9f14d0"
     },
     {
       "bytes": 4638,
@@ -10130,10 +10136,10 @@
       "sha256": "e2e9b48978a3d67b7823c01c12bb923ebd2dd94a999ffbef10d69bc2f5acae95"
     },
     {
-      "bytes": 42716,
+      "bytes": 42389,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/trades_master_official/qlib_dataset.py",
-      "sha256": "37652037b4546bc591c072250c235d93d876089b543e754646b191290820e52b"
+      "sha256": "4b96c59da8ef7bb8559a9c7cd375ea7b0f55fe9a3991e27634182e9fe34aae23"
     },
     {
       "bytes": 29634,
@@ -13266,6 +13272,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_streamlit_snapshot_loader_cache_resilience_v1.py",
       "sha256": "4134bad3f8787357c35a1d8f9e710920896283a680f15341d6d49f88ffd609c7"
+    },
+    {
+      "bytes": 13593,
+      "hash_mode": "text_lf",
+      "path": "tests/test_temporal_leakage_validator_hardening.py",
+      "sha256": "7bad76ad488b23aef142af45415f0c631e794f2793b89e2e5f2abfcc952a9ace"
     },
     {
       "bytes": 26100,

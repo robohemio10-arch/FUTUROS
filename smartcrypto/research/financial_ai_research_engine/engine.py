@@ -638,6 +638,7 @@ def _anti_leakage_report(
         splits,
         feature_contract=audit_contract,
         embargo_seconds=embargo_seconds,
+        identity_column="estimate_subject_id",
     )
     return {**report, "reason": "institutional_leakage_audit"}
 

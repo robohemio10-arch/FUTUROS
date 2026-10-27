@@ -767,31 +767,15 @@ def _true_label_interval_overlap_count(
     frame: pd.DataFrame,
     splits: Sequence[Mapping[str, Any]],
 ) -> int:
-    count = 0
-
-    for split in splits:
-        train_indices = list(split.get("_train_indices", []))
-        validation_indices = list(split.get("_validation_indices", []))
-        test_indices = list(split.get("_test_indices", []))
-
-        eval_indices = validation_indices + test_indices
-
-        if not train_indices or not eval_indices:
-            continue
-
-        earliest_eval_open = frame.loc[
-            eval_indices,
-            "open_time_utc",
-        ].min()
-
-        train_close = frame.loc[
-            train_indices,
-            "close_time_utc",
-        ]
-
-        count += int((train_close >= earliest_eval_open).sum())
-
-    return count
+    audit = audit_leakage(
+        frame,
+        [dict(split) for split in splits],
+        feature_contract={"feature_columns": []},
+        embargo_seconds=0,
+    )
+    if audit["validation_errors"]:
+        raise QlibDatasetValidationError("invalid_label_interval_evidence")
+    return int(audit["label_interval_overlap_count"])
 
 
 def _build_split_manifest(
