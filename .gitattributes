@@ -8,6 +8,10 @@
 *.txt text eol=lf
 *.toml text eol=lf
 
+# Externally approved contracts retain their exact physical hashes.
+smartcrypto/research/canonical_treatment/contracts_v2/approved_l313_proposal.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+smartcrypto/research/canonical_treatment/contracts_v2/approved_l313_proposal.schema.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
 *.ps1 text eol=crlf
 *.bat text eol=crlf
 *.cmd text eol=crlf

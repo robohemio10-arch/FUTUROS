@@ -81,6 +81,9 @@ dev = [
 where = ["."]
 include = ["smartcrypto*"]
 
+[tool.setuptools.package-data]
+"smartcrypto.research.canonical_treatment" = ["contracts_v2/*.json"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:smartfuturos:paper-b-posix-proposal:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "state",
+    "basis_commit",
+    "predecessor",
+    "successor",
+    "qlib_v3_identity",
+    "epoch_contract_reuse",
+    "volume_roles",
+    "safety",
+    "financial_gates",
+    "entry_fence",
+    "activation_requirements",
+    "source_authority",
+    "proposal_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "paper_b_posix_storage_cohort_proposal_v1"
+    },
+    "proposal_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "state": {
+      "const": "PLANNED_UNREGISTERED"
+    },
+    "basis_commit": {
+      "const": "8f36f6f5d36e86e20ef46353b87a684bc0f1a3c5"
+    },
+    "predecessor": {
+      "const": {
+        "epoch_id": "paper-b-epoch-2",
+        "registration_path": "E:\\FUTUROS_LOCAL_CHECKPOINTS\\PAPER_B_EPOCH2\\paper_b_epoch_2\\epoch_registration_v1.json",
+        "physical_sha256": "beb3c929837869e901b3a623ab5784988ddbdc06ebde2b2174e726e8e0231306",
+        "registration_sha256": "74901c73f766f20d9cbf157d63b52573e2c1eb56cf7a73b313ae056ce51549eb",
+        "epoch_manifest_sha256": "47b1353e0a1ddab52b65ae35afdfbe9b85fca108598787a61414ed6f6ea164b2",
+        "epoch_baseline_sha256": "879b07e914b95d4e084a0be015c446b6b48b085ac38c71784f59f4fa6e8dcdab",
+        "formal_activation_utc": "2026-10-06T19:08:33.155007Z"
+      }
+    },
+    "successor": {
+      "const": {
+        "epoch_id": null,
+        "experiment_id": null,
+        "formal_activation_utc": null,
+        "authoritative_evidence_root": null,
+        "allocation": "future_authorized_create_once_against_verified_current_head",
+        "ordinal_assigned": false
+      }
+    },
+    "qlib_v3_identity": {
+      "const": {
+        "epoch_id": "qlib-v3-b0b722c25fd961938943af8c",
+        "freeze_v3_sha256": "87331e2fec0aed73f4fdea57c00a8590f968cda67cbf1d9dc6839e10bd0bc03b",
+        "activation_sha256": "a1756853239b2f52f5604b44ddfb15e6d1355fbfc50533ad046d5f04a5ce9fa9",
+        "prospective_start_utc": "2026-09-12T13:17:28.798985Z",
+        "git_commit_sha": "30719913438b610d330da7cc457a3e429f0f245e",
+        "git_tree_sha": "cf933281c90378d59238bdf0968be015a78a9a8a",
+        "model_artifact_sha256": "76de6399ee9373bb786869e708f0f56d832897b50f0af0c39c199d1c3593405d",
+        "model_semantic_fingerprint": "e0b232ae874d4f187956b913504442ecb4371ac309abb8cfe7e80680ccee74ce",
+        "dataset_fingerprint": "4dd9eb5190125e016a512f689dcbb33592b7c79adc6825123e8c292ecfa54307"
+      }
+    },
+    "epoch_contract_reuse": {
+      "const": {
+        "existing_registration": "paper_b_causal_epoch2_registration_v1",
+        "successor_registration_version": "paper_b_causal_successor_registration_v2",
+        "preserved": [
+          "predecessor_closeout",
+          "epoch_manifest",
+          "epoch_baseline",
+          "opening_snapshot",
+          "registration_sha256",
+          "epoch_manifest_sha256",
+          "epoch_baseline_sha256",
+          "create_once",
+          "exact_v3_identity",
+          "no_population_carryover"
+        ],
+        "legacy_v1_validators_modified": false,
+        "permitted_proven_drift_reasons": [
+          "storage_topology_changed",
+          "treatment_entry_fence_changed"
+        ],
+        "selector_change_must_not_be_fabricated": true,
+        "successor_admission_key": "predecessor_registration_sha256",
+        "successor_registration_relative_path": "successors/74901c73f766f20d9cbf157d63b52573e2c1eb56cf7a73b313ae056ce51549eb/epoch_registration_v2.json",
+        "common_predecessor_guard_required": true,
+        "single_successor_per_verified_head": true,
+        "conflicting_retry": "reject_without_overwrite",
+        "identical_retry": "idempotent_after_full_validation"
+      }
+    },
+    "volume_roles": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "docker_name",
+          "driver",
+          "required_filesystem",
+          "producer",
+          "uid",
+          "gid",
+          "acl",
+          "default_acl",
+          "mounts",
+          "external_readers",
+          "persistence",
+          "authority",
+          "backup",
+          "recovery"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "treatment_output",
+              "publisher_report_ipc",
+              "treatment_ledger",
+              "monitor_reports"
+            ]
+          },
+          "docker_name": {
+            "type": "string",
+            "pattern": "^smartfuturos-paper-b-[0-9a-f]{32}-[a-z_]+$"
+          },
+          "driver": {
+            "const": "local"
+          },
+          "required_filesystem": {
+            "const": "ext4"
+          },
+          "producer": {
+            "enum": [
+              "publisher",
+              "economic_monitor"
+            ]
+          },
+          "uid": {
+            "const": 10001
+          },
+          "gid": {
+            "const": 10001
+          },
+          "acl": {
+            "type": "string"
+          },
+          "default_acl": {
+            "type": "string"
+          },
+          "mounts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "service",
+                "target",
+                "access"
+              ],
+              "properties": {
+                "service": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string",
+                  "pattern": "^/"
+                },
+                "access": {
+                  "enum": [
+                    "RW",
+                    "RO"
+                  ]
+                }
+              }
+            }
+          },
+          "external_readers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "persistence": {
+            "const": "survives_container_recreation_no_automatic_volume_deletion"
+          },
+          "authority": {
+            "const": "one_artifact_role_one_cohort_one_producer"
+          },
+          "backup": {
+            "const": "quiesced_generation_consistent_hashed_acl_snapshot_audit_only"
+          },
+          "recovery": {
+            "const": "restore_to_new_uncommitted_namespace_never_restore_socket_or_memory_authority"
+          }
+        }
+      }
+    },
+    "safety": {
+      "const": {
+        "paper_only": true,
+        "research_only": true,
+        "operational_authority": false,
+        "historical_backfill_allowed": false,
+        "cross_epoch_aggregation_allowed": false,
+        "training_allowed": false,
+        "model_promotion_allowed": false,
+        "changes_risk": false,
+        "changes_model": false,
+        "sends_orders": false
+      }
+    },
+    "financial_gates": {
+      "const": {
+        "observation_days": 45,
+        "resolved_decisions": 200,
+        "selected_closed_trades": 50,
+        "scorer_coverage": 0.99,
+        "unexplained_misses": 0,
+        "profit_factor": 1.1,
+        "additional_stress_bps": 5.0,
+        "stressed_net_pnl_positive": true,
+        "expectancy_positive": true,
+        "paired_delta_positive": true,
+        "paired_bootstrap_ci95_lower_positive": true,
+        "paired_bootstrap_resamples": 5000,
+        "paired_bootstrap_seed": 42
+      }
+    },
+    "entry_fence": {
+      "const": {
+        "strategy": "SmartCryptoCanonicalTreatmentStrategy",
+        "strategy_sha256": "5463d3dcf3cd0e622c5899d16101f2542724513f66d2620559f745773a8d122d",
+        "publisher_sha256": "b24c7e48422c9c36b45ed510bb8813af1096be051674bedbafebfb1833af0358",
+        "publication_ttl_seconds": 20.0,
+        "rpc_deadline_seconds": 0.5,
+        "publisher_uid": 10001,
+        "consumer_uid": 1000,
+        "group_add_allowed": false,
+        "socket": "/run/canonical-treatment-report/publisher_authorization_v1.sock",
+        "socket_mode": "0660",
+        "json_only_fallback_allowed": false,
+        "protective_exit_callbacks_inherited": true,
+        "atomic_exchange_submission_claimed": false
+      }
+    },
+    "activation_requirements": {
+      "const": [
+        "separate_maintenance_approval_and_protection_of_positions_and_pending_orders",
+        "explicit_authoritative_evidence_root_and_current_head_no_ambiguous_history",
+        "collision_checked_successor_identity_and_common_predecessor_guard",
+        "actual_volume_names_labels_driver_filesystem_mounts_uid_gid_acls_bound",
+        "exact_image_ids_selected_strategy_callbacks_sources_and_compose_hashes",
+        "fresh_parity_and_f02_authority_on_actual_qualified_volumes",
+        "independently_observed_scheduler_due_and_successful_cycles",
+        "generation_consistent_opening_snapshot_and_all_readers_explicitly_bound",
+        "separate_activation_approval_then_t0_from_current_registration_audit",
+        "no_pre_t0_decision_trade_or_predecessor_population_carryover"
+      ]
+    },
+    "source_authority": {
+      "const": {
+        "control": "exact_current_authorized_control_export_and_sealed_decision_ledger_RO",
+        "qlib_v3": "existing_canonical_identity_and_exact_store_path_RO_no_copy",
+        "wq6": "authorized_frozen_wq6_bundle_four_explicit_paths_RO",
+        "B14_B15_B16": "existing_exact_materialized_reports_RO_status_and_seals_required",
+        "backup_authority": "audit_only_never_live_fallback",
+        "missing_or_ambiguous_binding": "BLOCK",
+        "cross_epoch_join": "FORBIDDEN",
+        "content_binding": {
+          "deployment_fingerprint": "producer_identity_paths_contracts_and_frozen_artifacts",
+          "mutable_control_and_v3": "exact_per_cycle_hashes_in_publication_and_authority",
+          "opening_snapshot": "sealed_t0_counts_hashes_and_watermarks_not_a_permanent_content_freeze",
+          "economic_reports": "exact_schema_cohort_seal_and_generation_for_each_evaluation"
+        }
+      }
+    },
+    "proposal_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
