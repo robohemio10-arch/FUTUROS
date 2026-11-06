@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "161c0600ca60b9c74bf388872c82e260b9f0890bd0e9787a19b82a8376c1c1e7",
+  "aggregate_sha256": "1af7c3e986a5c2a910e10cc7f2a2a6a0448008c757118f9cfc2d71bffdaeeccb",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -518,10 +518,10 @@
       "sha256": "922aad75581b5d4e914f3a68afbed4dedff93df9c1efe8fb5b48719d98847c46"
     },
     {
-      "bytes": 37772,
+      "bytes": 46068,
       "hash_mode": "text_lf",
       "path": "config/qlib_dependency_security_policy_v1.json",
-      "sha256": "26c2f1c53f8d3d44269b0a2d584266009959de87a9a04e0fe6f3edcf503aeccf"
+      "sha256": "69a734667fbcb0ab3ba584c679809a540a89114f7f57cad14479c5556845d4b8"
     },
     {
       "bytes": 2036,
@@ -638,10 +638,10 @@
       "sha256": "53382c7c76b10a0810306ebe81818060adf3792c085cc77e41d11e2e794b5994"
     },
     {
-      "bytes": 19812,
+      "bytes": 21534,
       "hash_mode": "text_lf",
       "path": "config/security_resolution_evidence_v1.json",
-      "sha256": "7691e43c52a9cdb42fe8530630dac5da7ed962ceed5d22792065beb28862f018"
+      "sha256": "b87f96433d8e3ff709bcb19f732800d65e76ce00b953d746a5a2d66af679c5e6"
     },
     {
       "bytes": 1027,
@@ -2792,10 +2792,10 @@
       "sha256": "636ed54fd7819d89ee081c5cc084a3c871bcb3412b375f28dd00a5cfbed8f68f"
     },
     {
-      "bytes": 134393,
+      "bytes": 139320,
       "hash_mode": "text_lf",
       "path": "requirements-dev.lock",
-      "sha256": "5332d008718f7a456b2f85f195e2523dfa92ed4e7865dda70615d25d20d31b56"
+      "sha256": "11b5f57b015b31627085902de7fd17aedfd543307499d3faf17f3dd89415cae8"
     },
     {
       "bytes": 66,
@@ -2804,10 +2804,10 @@
       "sha256": "a17966b03a3abe038d7ce70dce84695c3ee8d53f4d38bd16ef3ba0163e7592c0"
     },
     {
-      "bytes": 263062,
+      "bytes": 266065,
       "hash_mode": "text_lf",
       "path": "requirements-qlib-security.lock",
-      "sha256": "89946862c34a816c649986cd7d8cc5269f8865e473e897f9710fb9baa281d871"
+      "sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7"
     },
     {
       "bytes": 189,
@@ -2816,10 +2816,10 @@
       "sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9"
     },
     {
-      "bytes": 110692,
+      "bytes": 113495,
       "hash_mode": "text_lf",
       "path": "requirements-runtime.lock",
-      "sha256": "caa3d503001b3dc8e5912713165c87dd4be8c287cabf82e8c56c304c92102e45"
+      "sha256": "fb06251900a15a4783b434875b971ddfec744bf09f72db17a8ae972a6f5619ee"
     },
     {
       "bytes": 1286,
@@ -7418,10 +7418,10 @@
       "sha256": "209870826c32ed9c780bfadb787bbf5d51e3b456f06f0c3697e14901e220779e"
     },
     {
-      "bytes": 38477,
+      "bytes": 39524,
       "hash_mode": "text_lf",
       "path": "smartcrypto/learning/qlib_dependency_security_hardening/audit.py",
-      "sha256": "d902f3e5061e36f46a51227472fb2ed48a679cdaead24dd68c3e20aea2059a37"
+      "sha256": "0d2568f769e65da8106b37d40a49818acb8d1730a76a1393c1ae63d8ade2d5a7"
     },
     {
       "bytes": 211,
@@ -12791,7 +12791,7 @@
       "bytes": 36640,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_dependency_security_hardening_v1.py",
-      "sha256": "630edb978c6909bc1e08aab6756705e9e9acea1f8db5a6de45936de2a13bac8e"
+      "sha256": "77bd5bb453ac43e15f3109691d42ebfb24f07f8bdf865745c4125b1e2d4197a0"
     },
     {
       "bytes": 7887,
@@ -12899,7 +12899,7 @@
       "bytes": 8700,
       "hash_mode": "text_lf",
       "path": "tests/test_qlib_security_functional_regression_v1.py",
-      "sha256": "2f771d4daecadaac3270c0581b6a97aacec6a893ce8508b87eec5ba1718375fd"
+      "sha256": "200bba482161dc3c532cbe40838cbe33a19b7880b3626a76787634c4d731851f"
     },
     {
       "bytes": 9828,
@@ -13205,7 +13205,7 @@
       "bytes": 6512,
       "hash_mode": "text_lf",
       "path": "tests/test_security_governance_hardening_closeout_v1.py",
-      "sha256": "c9107bb2e3a2dad97fd136abcad5b1accf6642ce22dcc66a879413dc75ca9689"
+      "sha256": "054b181a9fd75c29b7a6e0305a2f8cc0ae8c484854449624842ab62ed9e52885"
     },
     {
       "bytes": 31521,
@@ -13361,7 +13361,7 @@
       "bytes": 7802,
       "hash_mode": "text_lf",
       "path": "tests/test_transitive_lock_docker_runtime_reproducibility.py",
-      "sha256": "cb31b15612e7e72c6292a721eb2e9b20b10c7fa6ac6d488dc44c4f87046d90a0"
+      "sha256": "644d68f92c3effc31f367b25bce68eb9487aab891f959be2b501287e0eb24340"
     },
     {
       "bytes": 1541,

@@ -39,12 +39,12 @@
     "debugpy": "1.8.21",
     "defusedxml": "0.7.1",
     "dill": "0.4.1",
-    "dnspython": "2.8.0",
+    "dnspython": "2.9.0",
     "docker": "7.2.0",
     "executing": "2.2.1",
     "fastapi": "0.141.1",
     "fastjsonschema": "2.22.2",
-    "filelock": "3.32.5",
+    "filelock": "4.2.4",
     "fire": "0.7.1",
     "flask": "3.1.3",
     "flask-cors": "6.0.5",
@@ -103,9 +103,9 @@
     "matplotlib": "3.11.1",
     "matplotlib-inline": "0.2.2",
     "mistune": "3.3.4",
-    "mlflow": "3.17.0",
-    "mlflow-skinny": "3.17.0",
-    "mlflow-tracing": "3.17.0",
+    "mlflow": "3.18.0",
+    "mlflow-skinny": "3.18.0",
+    "mlflow-tracing": "3.18.0",
     "multidict": "6.9.1",
     "narwhals": "2.25.0",
     "nbclient": "0.11.0",
@@ -136,19 +136,20 @@
     "ptyprocess": "0.7.0",
     "pure-eval": "0.2.3",
     "pyarrow": "25.0.1",
-    "pyasn1": "0.6.4",
+    "pyasn1": "0.6.5",
     "pyasn1-modules": "0.4.2",
     "pycparser": "3.0",
     "pydantic": "2.13.5",
     "pydantic-core": "2.46.5",
     "pydantic-settings": "2.15.0",
     "pygments": "2.21.0",
-    "pymongo": "4.18.2",
+    "pymongo": "4.18.3",
     "pyparsing": "3.3.2",
     "pyqlib": "0.9.7",
     "python-dateutil": "2.9.0.post0",
     "python-dotenv": "1.2.3",
     "python-json-logger": "4.2.0",
+    "python-multipart": "0.0.33",
     "python-redis-lock": "4.0.1",
     "pyyaml": "6.0.3",
     "pyzmq": "27.2.0",
@@ -165,7 +166,7 @@
     "scipy": "1.18.1",
     "scs": "3.2.11",
     "send2trash": "2.1.0",
-    "setuptools": "84.0.0",
+    "setuptools": "84.1.0",
     "six": "1.17.0",
     "skops": "0.14.0",
     "smmap": "5.0.3",
@@ -179,7 +180,7 @@
     "terminado": "0.18.1",
     "threadpoolctl": "3.6.0",
     "tinycss2": "1.5.1",
-    "tornado": "6.5.9",
+    "tornado": "6.6",
     "tqdm": "4.70.0",
     "traitlets": "5.16.1",
     "typing-extensions": "4.16.0",
@@ -198,9 +199,9 @@
     "zipp": "4.1.0"
   },
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
-  "expected_security_lock_package_count": 190,
-  "expected_security_lock_sha256": "89946862c34a816c649986cd7d8cc5269f8865e473e897f9710fb9baa281d871",
-  "expected_security_resolution_evidence_sha256": "7691e43c52a9cdb42fe8530630dac5da7ed962ceed5d22792065beb28862f018",
+  "expected_security_lock_package_count": 191,
+  "expected_security_lock_sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7",
+  "expected_security_resolution_evidence_sha256": "b87f96433d8e3ff709bcb19f732800d65e76ce00b953d746a5a2d66af679c5e6",
   "governance_approval": {
     "approved": false,
     "reason": "new_graph_requires_independent_ci_and_explicit_governance_approval"
@@ -265,7 +266,7 @@
   "p08_security_gate_bypassed": false,
   "p08_security_gate_remains_blocked": true,
   "policy_status": "PENDING_CERTIFICATION",
-  "policy_version": "2026-10-22.v9",
+  "policy_version": "2026-11-06.v10",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": false,
   "requirements_file": "requirements-qlib.lock",
@@ -289,6 +290,248 @@
   "schema_version": "qlib_dependency_security_policy_v1",
   "scope": "research_only_qlib_dependency_security",
   "security_advisories": {
+    "CVE-2026-106435": {
+      "aliases": [
+        "GHSA-98qm-wvgf-w4cf"
+      ],
+      "audit_observed_affected_version": "4.18.2",
+      "fixed_minimum": "4.18.3",
+      "package": "pymongo",
+      "resolved_version": "4.18.3",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-106435",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112907": {
+      "aliases": [
+        "GHSA-567q-5qvw-pf92"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112907",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112908": {
+      "aliases": [
+        "GHSA-6627-m3xw-93mp"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112908",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112909": {
+      "aliases": [
+        "GHSA-69hj-f68j-2879"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112909",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112910": {
+      "aliases": [
+        "GHSA-8mx5-7m5m-r77g"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112910",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112911": {
+      "aliases": [
+        "GHSA-9c4x-gm8v-wgc4"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112911",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112913": {
+      "aliases": [
+        "GHSA-9vhv-jxww-xfm5"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112913",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112915": {
+      "aliases": [
+        "GHSA-cwqr-hh33-gh44"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112915",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112935": {
+      "aliases": [
+        "GHSA-fq56-3cx3-fjxp"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112935",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112936": {
+      "aliases": [
+        "GHSA-j8f7-rjxc-mr56"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.0.9",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112936",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112938": {
+      "aliases": [
+        "GHSA-m462-7rxw-wvpg"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112938",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112939": {
+      "aliases": [
+        "GHSA-rfpc-qcw5-3pc4"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112939",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-112940": {
+      "aliases": [
+        "GHSA-v4x8-3wr5-3wq8"
+      ],
+      "audit_observed_affected_version": "3.32.5",
+      "fixed_minimum": "4.2.1",
+      "package": "filelock",
+      "resolved_version": "4.2.4",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-112940",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-114605": {
+      "aliases": [
+        "GHSA-45c3-73f7-pv4m"
+      ],
+      "audit_observed_affected_version": "2.8.0",
+      "fixed_minimum": "2.9.0",
+      "package": "dnspython",
+      "resolved_version": "2.9.0",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-114605",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-115927": {
+      "aliases": [
+        "GHSA-r4j5-9xpp-3985"
+      ],
+      "audit_observed_affected_version": "6.5.9",
+      "fixed_minimum": "6.6",
+      "package": "tornado",
+      "resolved_version": "6.6",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-115927",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-116577": {
+      "aliases": [
+        "GHSA-pcg2-g6cj-q92c"
+      ],
+      "audit_observed_affected_version": "6.5.9",
+      "fixed_minimum": "6.6",
+      "package": "tornado",
+      "resolved_version": "6.6",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-116577",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-116578": {
+      "aliases": [
+        "GHSA-pw9p-v7r6-gx4p"
+      ],
+      "audit_observed_affected_version": "6.5.9",
+      "fixed_minimum": "6.6",
+      "package": "tornado",
+      "resolved_version": "6.6",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-116578",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-119194": {
+      "aliases": [
+        "GHSA-fm9c-5rcf-2q5p"
+      ],
+      "audit_observed_affected_version": "0.6.4",
+      "fixed_minimum": "0.6.5",
+      "package": "pyasn1",
+      "resolved_version": "0.6.5",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-119194",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-119195": {
+      "aliases": [
+        "GHSA-9m75-vc3g-4x39"
+      ],
+      "audit_observed_affected_version": "0.6.4",
+      "fixed_minimum": "0.6.5",
+      "package": "pyasn1",
+      "resolved_version": "0.6.5",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-119195",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-119196": {
+      "aliases": [
+        "GHSA-2qm8-x737-gmw5"
+      ],
+      "audit_observed_affected_version": "0.6.4",
+      "fixed_minimum": "0.6.5",
+      "package": "pyasn1",
+      "resolved_version": "0.6.5",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-119196",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-119197": {
+      "aliases": [
+        "GHSA-mm57-4v3p-rchx"
+      ],
+      "audit_observed_affected_version": "0.6.4",
+      "fixed_minimum": "0.6.5",
+      "package": "pyasn1",
+      "resolved_version": "0.6.5",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-119197",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-53995": {
+      "aliases": [
+        "GHSA-wqmh-qccw-pqwf"
+      ],
+      "audit_observed_affected_version": "3.17.0",
+      "fixed_minimum": "3.17.2",
+      "package": "mlflow",
+      "resolved_version": "3.18.0",
+      "source_url": "https://osv.dev/vulnerability/CVE-2026-53995",
+      "status": "remediated_in_candidate_not_certified"
+    },
     "CVE-2026-69247": {
       "affected_spec": ">=44,<50",
       "fixed_minimum": "50.0.0",
@@ -339,7 +582,7 @@
       "fixed_minimum": "3.17.0",
       "metadata_source_url": "https://api.github.com/repos/mlflow/mlflow/security-advisories",
       "package": "mlflow",
-      "resolved_version": "3.17.0",
+      "resolved_version": "3.18.0",
       "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-26p8-2jq9-3vq9",
       "status": "remediated_in_candidate_not_certified",
       "summary": "Remote code execution on unauthenticated MLflow servers via third-party scorer deserialization importing caller-placed artifact modules"
@@ -372,7 +615,7 @@
       "fixed_minimum": "3.17.0",
       "metadata_source_url": "https://api.github.com/repos/mlflow/mlflow/security-advisories",
       "package": "mlflow",
-      "resolved_version": "3.17.0",
+      "resolved_version": "3.18.0",
       "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-2wqp-q3c6-ccj5",
       "status": "remediated_in_candidate_not_certified",
       "summary": "SSRF on unauthenticated MLflow servers via third-party scorer kwargs in the scorer invoke, register, and GenAI evaluate endpoints"
@@ -392,7 +635,7 @@
     "GHSA-3hv7-mjh2-fv65": {
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "resolved_version": "6.5.9",
+      "resolved_version": "6.6",
       "source_url": "https://osv.dev/vulnerability/GHSA-3hv7-mjh2-fv65",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -595,7 +838,7 @@
     "GHSA-8fvv-fgr5-f8ch": {
       "fixed_minimum": "4.18.1",
       "package": "pymongo",
-      "resolved_version": "4.18.2",
+      "resolved_version": "4.18.3",
       "source_url": "https://osv.dev/vulnerability/GHSA-8fvv-fgr5-f8ch",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -626,7 +869,7 @@
     "GHSA-c2m8-h5v5-343r": {
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "resolved_version": "6.5.9",
+      "resolved_version": "6.6",
       "source_url": "https://osv.dev/vulnerability/GHSA-c2m8-h5v5-343r",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -645,7 +888,7 @@
     "GHSA-chx6-46f5-w4vp": {
       "fixed_minimum": "6.5.9",
       "package": "tornado",
-      "resolved_version": "6.5.9",
+      "resolved_version": "6.6",
       "source_url": "https://osv.dev/vulnerability/GHSA-chx6-46f5-w4vp",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -759,7 +1002,7 @@
       "fixed_minimum": "3.15.0",
       "package": "mlflow",
       "published_date": "2026-09-01",
-      "resolved_version": "3.17.0",
+      "resolved_version": "3.18.0",
       "severity": "HIGH",
       "source_url": "https://osv.dev/vulnerability/GHSA-gqvg-gmmx-x4hm",
       "status": "remediated_in_candidate_not_certified"
@@ -794,7 +1037,7 @@
       "fixed_minimum": "3.17.0",
       "metadata_source_url": "https://api.github.com/repos/mlflow/mlflow/security-advisories",
       "package": "mlflow",
-      "resolved_version": "3.17.0",
+      "resolved_version": "3.18.0",
       "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-j7qq-vr8c-xvw3",
       "status": "remediated_in_candidate_not_certified",
       "summary": "MLflow CrewAI autologging records LLM provider API keys in logged trace spans"
@@ -817,7 +1060,7 @@
       "fixed_minimum": "3.17.0",
       "metadata_source_url": "https://api.github.com/repos/mlflow/mlflow/security-advisories",
       "package": "mlflow",
-      "resolved_version": "3.17.0",
+      "resolved_version": "3.18.0",
       "source_url": "https://github.com/mlflow/mlflow/security/advisories/GHSA-m65p-9j7q-6w33",
       "status": "remediated_in_candidate_not_certified",
       "summary": "Arbitrary file read on unauthenticated MLflow servers via prompt model version source"
@@ -897,14 +1140,14 @@
     "GHSA-qx36-8mw2-4r3x": {
       "fixed_minimum": "4.18.2",
       "package": "pymongo",
-      "resolved_version": "4.18.2",
+      "resolved_version": "4.18.3",
       "source_url": "https://osv.dev/vulnerability/GHSA-qx36-8mw2-4r3x",
       "status": "remediated_in_candidate_not_certified"
     },
     "GHSA-v4x9-3549-crwv": {
       "fixed_minimum": "4.18.2",
       "package": "pymongo",
-      "resolved_version": "4.18.2",
+      "resolved_version": "4.18.3",
       "source_url": "https://osv.dev/vulnerability/GHSA-v4x9-3549-crwv",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -923,7 +1166,7 @@
     "GHSA-vp6j-j7w5-5xjj": {
       "fixed_minimum": "4.18.2",
       "package": "pymongo",
-      "resolved_version": "4.18.2",
+      "resolved_version": "4.18.3",
       "source_url": "https://osv.dev/vulnerability/GHSA-vp6j-j7w5-5xjj",
       "status": "remediated_in_candidate_not_certified"
     },
@@ -973,6 +1216,15 @@
       "package": "pillow",
       "resolved_version": "13.0.0",
       "source_url": "https://osv.dev/vulnerability/GHSA-xgh8-jp6q-p5x8",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "GHSA-xmj3-9gf7-h52w": {
+      "aliases": [],
+      "audit_observed_affected_version": "84.0.0",
+      "fixed_minimum": "84.1.0",
+      "package": "setuptools",
+      "resolved_version": "84.1.0",
+      "source_url": "https://osv.dev/vulnerability/GHSA-xmj3-9gf7-h52w",
       "status": "remediated_in_candidate_not_certified"
     },
     "PYSEC-2026-4055": {
