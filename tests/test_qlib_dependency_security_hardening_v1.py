@@ -17,7 +17,7 @@ POLICY = ROOT / "config" / "qlib_dependency_security_policy_v1.json"
 DIRECT_LOCK = ROOT / "requirements-qlib.lock"
 SECURITY_LOCK = ROOT / "requirements-qlib-security.lock"
 EVIDENCE = ROOT / "config" / "security_resolution_evidence_v1.json"
-CURRENT_LOCK_SHA256 = "89946862c34a816c649986cd7d8cc5269f8865e473e897f9710fb9baa281d871"
+CURRENT_LOCK_SHA256 = "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3"
 HISTORICAL_POLICY_EVIDENCE_SHA256 = (
     "933ccf7aed5c17a62cc617b5e659bbab5def548a7454c9622a6ed6698c31b11b"
 )
@@ -68,7 +68,7 @@ def locked_packages_and_hashes() -> list[tuple[str, str, str]]:
         digest = re.search(r"--hash=sha256:([a-f0-9]{64})", block)
         assert digest is not None
         entries.append((pin[1], pin[2], digest[1]))
-    assert len(entries) == 190
+    assert len(entries) == 191
     return entries
 
 
@@ -121,12 +121,13 @@ def test_current_candidate_versions_and_full_graph_audit_are_not_ci_certificatio
     assert evidence["security_status"] == "clean"
     assert evidence["pip_audit_exit_code"] == 0
     assert evidence["known_vulnerability_count"] == 0
-    assert evidence["resolved_package_count"] == 190
-    assert evidence["audited_dependency_count"] == 190
+    assert evidence["resolved_package_count"] == 191
+    assert evidence["audited_dependency_count"] == 191
     assert evidence["hashed_lock_sha256"] == CURRENT_LOCK_SHA256
     assert evidence["ci_revalidation_required"] is True
     assert evidence["packages"]["pyqlib"] == "0.9.7"
-    assert evidence["packages"]["mlflow"] == "3.17.0"
+    assert evidence["packages"]["mlflow"] == "3.18.0"
+    assert evidence["packages"]["nbconvert"] == "7.17.2"
     assert evidence["packages"]["gitpython"] == "3.2.1"
     assert evidence["packages"]["pillow"] == "13.0.0"
     assert evidence["packages"]["certifi"] == "2026.10.19"
@@ -161,7 +162,7 @@ def test_direct_and_full_locks_are_hash_locked() -> None:
     assert lock["direct"]["requirement_count"] == 1
     assert lock["direct"]["hash_locked"] is True
     assert lock["direct"]["specs"] == ["pyqlib==0.9.7"]
-    assert lock["security_lock"]["requirement_count"] == 190
+    assert lock["security_lock"]["requirement_count"] == 191
     assert lock["security_lock"]["hash_locked"] is True
     assert lock["security_lock"]["sha256"] == CURRENT_LOCK_SHA256
     assert lock["security_lock_anchors_match_policy"] is True
@@ -247,8 +248,8 @@ def test_external_clean_matching_evidence_is_accepted(tmp_path: Path) -> None:
     assert report["external_evidence"]["status"] == "ok"
     assert report["external_evidence"]["security_clean"] is True
     assert report["external_evidence"]["anchor_packages_match"] is True
-    assert report["external_evidence"]["expected_package_count"] == 190
-    assert report["external_evidence"]["audited_package_count"] == 190
+    assert report["external_evidence"]["expected_package_count"] == 191
+    assert report["external_evidence"]["audited_package_count"] == 191
 
 
 @pytest.mark.parametrize("source", ["resolver", "audit"])
@@ -712,9 +713,9 @@ def test_complete_candidate_validation_preserves_pending_contract(tmp_path: Path
     assert result["certification_blockers"] == ["independent_current_graph_ci_certification_required"]
     assert result["p08_allowed"] is False
     assert result["qlib_security_gate_passed"] is False
-    assert result["external_evidence"]["audited_package_count"] == 190
+    assert result["external_evidence"]["audited_package_count"] == 191
     assert result["external_evidence"]["missing_packages"] == []
-    assert result["hashed_install_evidence"]["package_count"] == 190
+    assert result["hashed_install_evidence"]["package_count"] == 191
     assert result["hashed_install_evidence"]["installation_execution_proof"] == (
         "must_be_supplied_by_ci_install_step_and_functional_probe"
     )

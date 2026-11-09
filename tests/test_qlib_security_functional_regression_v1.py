@@ -19,7 +19,7 @@ from scripts.audit_qlib_security_functional_regression_v1 import (
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "config/qlib_dependency_security_policy_v1.json"
 SECURITY_LOCK = ROOT / "requirements-qlib-security.lock"
-CURRENT_LOCK_SHA256 = "89946862c34a816c649986cd7d8cc5269f8865e473e897f9710fb9baa281d871"
+CURRENT_LOCK_SHA256 = "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3"
 
 
 def _policy() -> dict[str, object]:
@@ -33,7 +33,7 @@ def test_repository_static_contract_enforces_advisories_and_p08_state() -> None:
 
     assert report["lock_sha256"] == CURRENT_LOCK_SHA256
     assert report["advisories_explicitly_enforced"] == sorted(_policy()["security_advisories"])
-    assert len(report["advisories_explicitly_enforced"]) == 69
+    assert len(report["advisories_explicitly_enforced"]) == 93
     assert report["candidate_evidence_valid"] is True
     assert report["functional_status"] == "pending_ci_certification"
     assert report["p08_allowed"] is False
@@ -42,10 +42,11 @@ def test_repository_static_contract_enforces_advisories_and_p08_state() -> None:
 def test_current_lock_binds_the_full_candidate_graph() -> None:
     lock = parse_security_lock(SECURITY_LOCK)
     assert lock["sha256"] == CURRENT_LOCK_SHA256
-    assert lock["package_count"] == 190
+    assert lock["package_count"] == 191
     assert lock["packages"] == _policy()["expected_packages"]
     assert lock["packages"]["pyqlib"] == "0.9.7"
-    assert lock["packages"]["mlflow"] == "3.17.0"
+    assert lock["packages"]["mlflow"] == "3.18.0"
+    assert lock["packages"]["nbconvert"] == "7.17.2"
     assert lock["packages"]["gitpython"] == "3.2.1"
     assert lock["packages"]["pillow"] == "13.0.0"
 
@@ -184,7 +185,7 @@ def test_installed_inventory_covers_every_locked_package_and_separates_image_ext
 
     installed, extras = functional_regression._installed_inventory(packages)
     assert installed == packages
-    assert len(installed) == 190
+    assert len(installed) == 191
     assert set(extras) == {"pip", "smartcrypto"}
     assert extras["pip"]["version"] == "26.2.1"
     assert extras["smartcrypto"]["version"] == "0.2.1"
