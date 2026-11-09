@@ -17,7 +17,7 @@ POLICY = ROOT / "config" / "qlib_dependency_security_policy_v1.json"
 DIRECT_LOCK = ROOT / "requirements-qlib.lock"
 SECURITY_LOCK = ROOT / "requirements-qlib-security.lock"
 EVIDENCE = ROOT / "config" / "security_resolution_evidence_v1.json"
-CURRENT_LOCK_SHA256 = "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7"
+CURRENT_LOCK_SHA256 = "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3"
 HISTORICAL_POLICY_EVIDENCE_SHA256 = (
     "933ccf7aed5c17a62cc617b5e659bbab5def548a7454c9622a6ed6698c31b11b"
 )
@@ -127,6 +127,7 @@ def test_current_candidate_versions_and_full_graph_audit_are_not_ci_certificatio
     assert evidence["ci_revalidation_required"] is True
     assert evidence["packages"]["pyqlib"] == "0.9.7"
     assert evidence["packages"]["mlflow"] == "3.18.0"
+    assert evidence["packages"]["nbconvert"] == "7.17.2"
     assert evidence["packages"]["gitpython"] == "3.2.1"
     assert evidence["packages"]["pillow"] == "13.0.0"
     assert evidence["packages"]["certifi"] == "2026.10.19"

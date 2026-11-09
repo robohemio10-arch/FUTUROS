@@ -7,14 +7,18 @@ on:
       - ".github/workflows/qlib-candidate-validation.yml"
       - "requirements-qlib*.lock"
       - "requirements-dev.lock"
+      - "requirements-runtime.lock"
       - "requirements-build.lock"
       - "requirements-qlib-security-candidate.in"
       - "config/qlib_dependency_security_policy_v1.json"
       - "config/security_resolution_evidence_v1.json"
       - "smartcrypto/learning/qlib_dependency_security_hardening/**"
       - "scripts/audit_qlib*security*.py"
+      - "scripts/audit_locked_dependency_advisories_v1.py"
+      - "scripts/audit_nbconvert_path_containment_v1.py"
       - "tests/test_qlib*security*.py"
       - "tests/test_qlib_candidate_validation_ci_v1.py"
+      - "tests/test_locked_dependency_advisories_v1.py"
       - "docker/qlib/**"
   workflow_dispatch:
 
@@ -75,6 +79,15 @@ jobs:
           target.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
           PY
 
+      - name: Audit every locked dependency with PyPI and OSV
+        env:
+          ADVISORY_AUDIT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          ADVISORY_AUDIT_CHECKOUT_SHA="$(git rev-parse HEAD)"
+          export ADVISORY_AUDIT_CHECKOUT_SHA
+          python scripts/audit_locked_dependency_advisories_v1.py --project-root . \
+            --output "$RUNNER_TEMP/qlib-candidate-evidence/locked-dependency-advisories.json"
+
       - name: Resolve the complete hash-locked Qlib graph
         run: |
           "$RUNNER_TEMP/qlib-auditor/bin/python" -m pip install \
@@ -100,6 +113,8 @@ jobs:
           docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges=true --user 10001:10001 \
             qlib-candidate-ci python -c 'from pathlib import Path; print(Path("/tmp/qlib-install-report.json").read_text())' \
             > "$RUNNER_TEMP/qlib-candidate-evidence/qlib-install-report.json"
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges=true --user 10001:10001 \
+            qlib-candidate-ci python -m pip check > "$RUNNER_TEMP/qlib-candidate-evidence/qlib-pip-check.txt"
 
       - name: Audit every exact hashed Qlib pin with strict complete coverage
         run: |
@@ -122,7 +137,8 @@ jobs:
           "$RUNNER_TEMP/qlib-auditor/bin/python" -m pytest -q \
             tests/test_qlib_dependency_security_hardening_v1.py \
             tests/test_qlib_security_functional_regression_v1.py \
-            tests/test_qlib_candidate_validation_ci_v1.py
+            tests/test_qlib_candidate_validation_ci_v1.py \
+            tests/test_locked_dependency_advisories_v1.py
 
       - name: Validate the synthetic Qlib fit and inference harness offline
         run: |
@@ -153,13 +169,22 @@ jobs:
           (root / "qlib-functional.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
           PY
 
+      - name: Verify nbconvert path containment with synthetic notebook data
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges=true \
+            --user 10001:10001 --memory 4g --cpus 2 --pids-limit 128 --tmpfs /tmp:rw,nosuid,size=1g \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/workspace,readonly" \
+            qlib-candidate-ci python /workspace/scripts/audit_nbconvert_path_containment_v1.py \
+            > "$RUNNER_TEMP/qlib-candidate-evidence/nbconvert-path-containment.json"
+
       - name: Check manifest, secrets and unchanged worktree
         run: |
           python scripts/generate_project_manifest.py --check
           python scripts/scan_versioned_secrets.py --json
           git diff --exit-code
           git diff --check
-          sha256sum requirements-qlib-security.lock "$RUNNER_TEMP/qlib-candidate-evidence/"*.json > "$RUNNER_TEMP/qlib-candidate-evidence/SHA256SUMS"
+          sha256sum requirements-qlib-security.lock "$RUNNER_TEMP/qlib-candidate-evidence/"*.json \
+            "$RUNNER_TEMP/qlib-candidate-evidence/qlib-pip-check.txt" > "$RUNNER_TEMP/qlib-candidate-evidence/SHA256SUMS"
 
       - name: Upload candidate validation evidence (not certification)
         if: always()

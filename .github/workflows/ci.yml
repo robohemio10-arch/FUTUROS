@@ -25,11 +25,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12"
+
+      - name: Audit every locked dependency with PyPI and OSV
+        id: locked_dependency_advisories
+        env:
+          ADVISORY_AUDIT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          ADVISORY_AUDIT_CHECKOUT_SHA="$(git rev-parse HEAD)"
+          export ADVISORY_AUDIT_CHECKOUT_SHA
+          python scripts/audit_locked_dependency_advisories_v1.py --project-root . \
+            --output "$RUNNER_TEMP/locked-dependency-advisories.json"
+
+      - name: Upload dependency advisory evidence
+        if: ${{ always() && (steps.locked_dependency_advisories.outcome == 'success' || steps.locked_dependency_advisories.outcome == 'failure') }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: locked-dependency-advisories
+          path: ${{ runner.temp }}/locked-dependency-advisories.json
+          if-no-files-found: error
 
       - name: Install package and test dependencies
         run: |

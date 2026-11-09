@@ -109,7 +109,7 @@
     "multidict": "6.9.1",
     "narwhals": "2.25.0",
     "nbclient": "0.11.0",
-    "nbconvert": "7.17.1",
+    "nbconvert": "7.17.2",
     "nbformat": "5.11.1",
     "nest-asyncio2": "1.7.2",
     "notebook": "7.6.3",
@@ -200,8 +200,8 @@
   },
   "expected_requirements_sha256": "e777d11a1ec86154a4c331a1abef2b197534f2471c2c3d8685fc5fe5316ac4e9",
   "expected_security_lock_package_count": 191,
-  "expected_security_lock_sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7",
-  "expected_security_resolution_evidence_sha256": "b87f96433d8e3ff709bcb19f732800d65e76ce00b953d746a5a2d66af679c5e6",
+  "expected_security_lock_sha256": "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3",
+  "expected_security_resolution_evidence_sha256": "c8c3d79e007c76102111ec2074a2f1651f97ccc706b1c76121bd8ef71d70e97a",
   "governance_approval": {
     "approved": false,
     "reason": "new_graph_requires_independent_ci_and_explicit_governance_approval"
@@ -266,7 +266,7 @@
   "p08_security_gate_bypassed": false,
   "p08_security_gate_remains_blocked": true,
   "policy_status": "PENDING_CERTIFICATION",
-  "policy_version": "2026-11-06.v10",
+  "policy_version": "2026-11-09.v11",
   "qlib_security_gate_bypassed": false,
   "qlib_security_gate_passed": false,
   "requirements_file": "requirements-qlib.lock",
@@ -431,6 +431,17 @@
       "package": "filelock",
       "resolved_version": "4.2.4",
       "source_url": "https://osv.dev/vulnerability/CVE-2026-112940",
+      "status": "remediated_in_candidate_not_certified"
+    },
+    "CVE-2026-114140": {
+      "aliases": [
+        "GHSA-pjvx-prjx-h659"
+      ],
+      "audit_observed_affected_version": "7.17.1",
+      "fixed_minimum": "7.17.2",
+      "package": "nbconvert",
+      "resolved_version": "7.17.2",
+      "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-114140",
       "status": "remediated_in_candidate_not_certified"
     },
     "CVE-2026-114605": {

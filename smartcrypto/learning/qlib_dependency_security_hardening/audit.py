@@ -57,6 +57,7 @@ REQUIRED_ADVISORIES = {
     'CVE-2026-112938': ('filelock', '4.2.1'),
     'CVE-2026-112939': ('filelock', '4.2.1'),
     'CVE-2026-112940': ('filelock', '4.2.1'),
+    'CVE-2026-114140': ('nbconvert', '7.17.2'),
     'CVE-2026-114605': ('dnspython', '2.9.0'),
     'CVE-2026-115927': ('tornado', '6.6'),
     'CVE-2026-116577': ('tornado', '6.6'),

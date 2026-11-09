@@ -142,7 +142,7 @@
   },
   "locks": {
     "requirements_dev_sha256": "11b5f57b015b31627085902de7fd17aedfd543307499d3faf17f3dd89415cae8",
-    "requirements_qlib_security_sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7",
+    "requirements_qlib_security_sha256": "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3",
     "requirements_runtime_sha256": "fb06251900a15a4783b434875b971ddfec744bf09f72db17a8ae972a6f5619ee"
   },
   "previous_graph_current_audit": {
@@ -255,6 +255,7 @@
       "CVE-2026-112938",
       "CVE-2026-112939",
       "CVE-2026-112940",
+      "CVE-2026-114140",
       "CVE-2026-114605",
       "CVE-2026-115927",
       "CVE-2026-116577",
@@ -346,36 +347,58 @@
     "ci_revalidation_required": true,
     "dependency_edges_checked": 368,
     "distribution_hashes_verified": 191,
+    "dual_source_advisory_audit": {
+      "ci_certified": false,
+      "fresh_query_required_in_ci": true,
+      "report_sha256": "fdd15c9a1464c9c1d1a808d36b043792514b761c87633acfe75ced69485f38ef",
+      "sources": [
+        "PyPI",
+        "OSV"
+      ],
+      "status": "SECURITY_PASS"
+    },
     "functional_regression": {
       "ci_certified": false,
       "deterministic_repeat": true,
       "fallback_used": false,
-      "lock_sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7",
+      "lock_sha256": "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3",
       "model_class": "LinearModel",
       "network_mode": "none",
       "operational_training_performed": false,
-      "report_sha256": "d30f59d55b11b5489f67af6b8c34acac2a7ca0ee77e5fd8f2954f0cbb2219691",
+      "report_sha256": "f76e804243e079dcedebec2b7e0ab9b5b198dbe26a5937cc1302ced142c3910c",
       "repository_mount": "readonly",
       "status": "PASS_LOCAL_PENDING_CI",
       "synthetic_fit_predict_performed": true,
       "test_rows": 12
     },
-    "graph_validation_report_sha256": "0c1d04b4d0069ff6f661daacd8ea14ec5c596a644d78e35b6346624e228604aa",
-    "hashed_install_report_sha256": "5e59d8957bb1736e51df4b4a5c4454cc86b95cc387e8189d64d3f4b80584e49d",
+    "graph_validation_report_sha256": "9f1a0de2497a1a5be7b3fb276694bc519f4b7801eba669f983590def7a143d75",
+    "hashed_install_report_sha256": "31e17fc9c9ed4fe613b9350cdfb477180b66b1544eccd0b3e2b3d33084d2b895",
     "hashed_install_status": "PASS",
-    "hashed_lock_sha256": "c863713e2c8b89fe90fe712e6ff6b3eb735a5d837112ae56e25a28f9641b04b7",
+    "hashed_lock_sha256": "08d23b7e741f9b5dd792972952ba3c488341d948b06ce2bda770aa87fbb32ec3",
     "import_data_integration": {
       "ci_certified": false,
       "model_serialization_performed": false,
       "model_training_performed": true,
       "network_mode": "none",
       "operational_training_performed": false,
-      "report_sha256": "d30f59d55b11b5489f67af6b8c34acac2a7ca0ee77e5fd8f2954f0cbb2219691",
+      "report_sha256": "f76e804243e079dcedebec2b7e0ab9b5b198dbe26a5937cc1302ced142c3910c",
       "repository_mount": "readonly",
       "scope": "canonical_in_memory_synthetic_regression",
       "status": "PASS"
     },
     "known_vulnerability_count": 0,
+    "nbconvert_remediation": {
+      "advisory": "GHSA-pjvx-prjx-h659",
+      "ci_certified": false,
+      "containment_probe_report_sha256": "18dc819b418ea7b76dea7926657d3efd971f13f09d834a6d367832a1210f619d",
+      "containment_probe_status": "PASS",
+      "corrected_version": "7.17.2",
+      "cve": "CVE-2026-114140",
+      "previous_version": "7.17.1",
+      "release_metadata_sha256": "1a6b85516b3317a843dbcee2b26b1474883cf33a86ec1d36a8ef05c7e9b8bc73",
+      "source_url": "https://github.com/jupyter/nbconvert/security/advisories/GHSA-pjvx-prjx-h659",
+      "upstream_fix": "https://github.com/jupyter/nbconvert/commit/ce4bd99aec31d81d759fa8eeb8643179392ec66f"
+    },
     "packages": {
       "aiohappyeyeballs": "2.7.1",
       "aiohttp": "3.14.4",
@@ -480,7 +503,7 @@
       "multidict": "6.9.1",
       "narwhals": "2.25.0",
       "nbclient": "0.11.0",
-      "nbconvert": "7.17.1",
+      "nbconvert": "7.17.2",
       "nbformat": "5.11.1",
       "nest-asyncio2": "1.7.2",
       "notebook": "7.6.3",
@@ -570,11 +593,11 @@
       "zipp": "4.1.0"
     },
     "pip_audit_exit_code": 0,
-    "pip_audit_report_sha256": "c31b6b3d881ca126ddf30bd81118783ab1a6b87bc00b86af701a924a529359be",
+    "pip_audit_report_sha256": "503f51ae2299050bcb5da611d4fea871550fb57f15e2889e545fdb9b315510e1",
     "platform": "linux",
     "python_version": "3.12",
     "resolved_package_count": 191,
-    "resolver_report_sha256": "db8c0af72a56ec7869eabf9e3f3364c90770f7b9840de0255ba4137b7e735d35",
+    "resolver_report_sha256": "6b03b15eed3ec0f013e216902e0b073206bc55a1b62a3a045ac594c359875865",
     "resolver_status": "resolved",
     "security_status": "clean",
     "skipped_dependency_count": 0,
@@ -588,7 +611,7 @@
     },
     "upstream_metadata_coverage": "191/191",
     "upstream_original_findings_count": 23,
-    "upstream_security_review_report_sha256": "f841ba52f4a84f03eb8e9c86fde08a1d9502b6182b91a07bf4029485fbaff548"
+    "upstream_security_review_report_sha256": "1e170dea542096d1a8694c87626db66bc5591f986746f38b6e72916c33dae106"
   },
   "remediation_baseline_audit": {
     "coverage": "190/190",
