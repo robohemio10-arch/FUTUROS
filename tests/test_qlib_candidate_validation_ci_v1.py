@@ -28,7 +28,11 @@ def test_candidate_workflow_is_independent_and_read_only() -> None:
     assert "pull_request" in events
     assert "pull_request_target" not in events
     assert data["permissions"] == {"contents": "read"}
-    assert "requirements-runtime.lock" not in text
+    assert "requirements-runtime.lock" in events["pull_request"]["paths"]
+    assert all(
+        "requirements-runtime.lock" not in step.get("run", "")
+        for step in data["jobs"]["validate-candidate"]["steps"]
+    )
     assert "--ignore-vuln" not in text
     assert "continue-on-error" not in text
     assert re.search(r"\$\{\{\s*secrets\.", text) is None
@@ -75,6 +79,7 @@ def test_exact_lock_audit_requires_resolution_installation_and_complete_coverage
     assert "docker/qlib/Dockerfile" in build
     assert "--require-hashes -r requirements-qlib-security.lock" in build
     assert "--ignore-installed --report /tmp/qlib-install-report.json" in build
+    assert 'qlib-candidate-ci python -m pip check > "$RUNNER_TEMP/qlib-candidate-evidence/qlib-pip-check.txt"' in build
     for flag in ("--dry-run", "--ignore-installed", "--no-build-isolation", "--require-hashes"):
         assert flag in resolver
     assert '-r requirements-qlib-security.lock' in resolver
@@ -112,6 +117,43 @@ def test_candidate_evidence_is_uploaded_even_on_a_failed_gate() -> None:
     assert upload["if"] == "always()"
     assert upload["with"]["if-no-files-found"] == "error"
     assert upload["with"]["path"] == "${{ runner.temp }}/qlib-candidate-evidence"
+
+
+def test_security_workflows_require_live_dependency_advisory_evidence() -> None:
+    ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+    candidate = workflow()
+    resolution = yaml.safe_load((ROOT / ".github/workflows/security-resolution.yml").read_text(encoding="utf-8"))
+    pull_request_head = "${{ github.event.pull_request.head.sha || github.sha }}"
+    for data, job, directory, head in (
+        (ci, "test", "$RUNNER_TEMP", pull_request_head),
+        (candidate, "validate-candidate", "$RUNNER_TEMP/qlib-candidate-evidence", pull_request_head),
+        (resolution, "resolve", "$RUNNER_TEMP", "${{ github.sha }}"),
+    ):
+        steps = data["jobs"][job]["steps"]
+        gate = next(step for step in steps if step["name"] == "Audit every locked dependency with PyPI and OSV")
+        assert gate["env"]["ADVISORY_AUDIT_HEAD_SHA"] == head
+        assert 'ADVISORY_AUDIT_CHECKOUT_SHA="$(git rev-parse HEAD)"' in gate["run"]
+        assert "python scripts/audit_locked_dependency_advisories_v1.py --project-root ." in gate["run"]
+        assert f'--output "{directory}/locked-dependency-advisories.json"' in gate["run"]
+        assert "if" not in gate and "continue-on-error" not in gate
+
+        if job != "validate-candidate":
+            upload = next(step for step in steps if step["name"] == "Upload dependency advisory evidence")
+            assert "always()" in upload["if"]
+            assert "steps.locked_dependency_advisories.outcome == 'failure'" in upload["if"]
+            assert upload["with"]["path"] == "${{ runner.temp }}/locked-dependency-advisories.json"
+            assert upload["with"]["if-no-files-found"] == "error"
+
+
+def test_nbconvert_path_containment_runs_offline_in_candidate_image() -> None:
+    data = workflow()
+    steps = data["jobs"]["validate-candidate"]["steps"]
+    probe = next(step for step in steps if step["name"].startswith("Verify nbconvert path containment"))
+    for marker in ("--network none", "--read-only", "--user 10001:10001", "readonly",
+                   "qlib-candidate-ci python /workspace/scripts/audit_nbconvert_path_containment_v1.py",
+                   '"$RUNNER_TEMP/qlib-candidate-evidence/nbconvert-path-containment.json"'):
+        assert marker in probe["run"]
+    assert "continue-on-error" not in probe
 
 
 @pytest.mark.parametrize(

@@ -71,10 +71,10 @@ def test_security_resolution_evidence_closes_qlib_dependency_vulnerability_witho
     assert qlib["resolver_status"] == "resolved"
     assert qlib["pip_audit_exit_code"] == 0
     assert qlib["known_vulnerability_count"] == 0
-    assert qlib["resolved_package_count"] == 190
-    assert qlib["audited_dependency_count"] == 190
+    assert qlib["resolved_package_count"] == 191
+    assert qlib["audited_dependency_count"] == 191
     assert qlib["packages"]["cryptography"] == "50.0.0"
-    assert qlib["packages"]["mlflow"] == "3.17.0"
+    assert qlib["packages"]["mlflow"] == "3.18.0"
     assert qlib["packages"]["pyarrow"] == "25.0.1"
     historical = evidence["historical_certifications"]["2026-10-06"]
     assert historical["evidence_status"] == "certified_clean"

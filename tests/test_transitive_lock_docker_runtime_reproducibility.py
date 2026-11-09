@@ -68,9 +68,9 @@ def test_qlib_direct_and_transitive_security_locks_are_hashed() -> None:
     direct = requirement_lines("requirements-qlib.lock")
     full = requirement_lines("requirements-qlib-security.lock")
     assert direct == ["pyqlib==0.9.7"]
-    assert len(full) == 190
+    assert len(full) == 191
     assert "pyqlib==0.9.7" in {line.lower() for line in full}
-    assert "mlflow==3.17.0" in {line.lower() for line in full}
+    assert "mlflow==3.18.0" in {line.lower() for line in full}
     assert "gitpython==3.2.1" in {line.lower() for line in full}
     assert "certifi==2026.10.19" in {line.lower() for line in full}
     assert "pillow==13.0.0" in {line.lower() for line in full}
