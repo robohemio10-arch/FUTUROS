@@ -4,10 +4,49 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 from smartcrypto.learning.qlib_v3_prospective.contracts import CANONICAL, digest
 from smartcrypto.research.canonical_treatment import storage_cohort_contract_v2 as contract
+
+
+def encode_source(value: object) -> bytes:
+    return value if isinstance(value, bytes) else json.dumps(value, allow_nan=False).encode()
+
+
+def materialized_b10_sources() -> dict[str, Any]:
+    from tests import test_economic_control_treatment_scorecard_v1 as scorecard_fixtures
+
+    dataset = b"synthetic materialized data bytes, never parsed or trained"
+    dataset_sha256 = hashlib.sha256(dataset).hexdigest()
+    feature_contract = {"validation_status": "ok", "contract_hash": "a" * 64}
+    manifest = {
+        "validation_status": "ok", "feature_contract_hash": "a" * 64,
+        "dataset_hash": "b" * 64, "materialized_dataset_sha256": dataset_sha256,
+    }
+    splits = {
+        "validation_status": "ok", "leakage_status": "ok",
+        "feature_contract_hash": "a" * 64, "dataset_hash": "b" * 64,
+        "split_manifest_hash": "c" * 64,
+    }
+    report = scorecard_fixtures._branch10()
+    report["source"] = {
+        "dataset_sha256": dataset_sha256,
+        "feature_contract_sha256": hashlib.sha256(encode_source(feature_contract)).hexdigest(),
+        "dataset_manifest_sha256": hashlib.sha256(encode_source(manifest)).hexdigest(),
+        "split_manifest_sha256": hashlib.sha256(encode_source(splits)).hexdigest(),
+        "dataset_hash": "b" * 64, "feature_contract_hash": "a" * 64,
+        "split_manifest_hash": "c" * 64,
+    }
+    return {
+        "wq6_dataset": dataset,
+        "wq6_feature_contract": feature_contract,
+        "wq6_dataset_manifest": manifest,
+        "wq6_split_manifest": splits,
+        "branch10_report": report,
+    }
 
 
 def predecessor_fixture() -> dict:
@@ -38,7 +77,7 @@ def reseal(descriptor: dict, known: dict, *, sync_known: bool = True) -> None:
         known["authorized_local_roots"] = roots
 
 
-def context_for_sources(tmp_path: Path, sources: dict[str, object], *, components=None):
+def context_for_sources(tmp_path: Path, sources: Mapping[str, object], *, components=None):
     proposal = contract.approved_proposal()
     canonical_names = {
         "wq6_dataset": "official_trades_master_qlib_dataset_v1.parquet",
@@ -48,7 +87,7 @@ def context_for_sources(tmp_path: Path, sources: dict[str, object], *, component
     }
     bindings = []
     for logical, value in sources.items():
-        raw = value if isinstance(value, bytes) else json.dumps(value, allow_nan=False).encode()
+        raw = encode_source(value)
         extension = ".parquet" if logical == "wq6_dataset" else ".json"
         path = tmp_path / (logical + extension)
         path.write_bytes(raw)

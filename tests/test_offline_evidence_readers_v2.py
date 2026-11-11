@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Mapping
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,10 +13,7 @@ from smartcrypto.research.canonical_treatment import offline_evidence_readers_v2
 from tests import test_economic_control_treatment_scorecard_v1 as scorecard_fixtures
 from tests import test_portfolio_of_alphas_oos_economic_selection_v1 as portfolio_fixtures
 from tests import test_research_council_alpha_uplift_ab_v1 as council_fixtures
-
-
-def _encode(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, allow_nan=False).encode()
+from tests.v2_contract_fixtures import encode_source, materialized_b10_sources
 
 
 def _install_sources(
@@ -34,7 +30,7 @@ def _install_sources(
         calls.append(logical)
         reason = (blocked or {}).get(logical)
         value = sources.get(logical)
-        raw = value if isinstance(value, bytes) else _encode(value)
+        raw = encode_source(value)
         return SimpleNamespace(
             status="blocked" if reason or logical not in sources else "ok",
             reason=reason or ("source_missing" if logical not in sources else "source_validated"),
@@ -120,7 +116,7 @@ def _b14_sources() -> dict[str, object]:
 
     sources = {
         "branch09_report": scorecard_fixtures._branch09(),
-        "branch10_report": scorecard_fixtures._branch10(),
+        **materialized_b10_sources(),
         "branch11_report": scorecard_fixtures._branch11(),
         "branch12_report": scorecard_fixtures._branch12(),
         "branch13_report": scorecard_fixtures._ledger(),
@@ -215,34 +211,6 @@ def test_b16_reuses_existing_evidence_validator(monkeypatch: pytest.MonkeyPatch)
     assert result["result"]["operational_authority"] is False
 
 
-def _b10_sources() -> dict[str, object]:
-    dataset = b"synthetic materialized data bytes, never parsed or trained"
-    contract = {"validation_status": "ok", "contract_hash": "a" * 64}
-    manifest = {
-        "validation_status": "ok", "feature_contract_hash": "a" * 64,
-        "dataset_hash": "b" * 64, "materialized_dataset_sha256": hashlib.sha256(dataset).hexdigest(),
-    }
-    splits = {
-        "validation_status": "ok", "leakage_status": "ok",
-        "feature_contract_hash": "a" * 64, "dataset_hash": "b" * 64,
-        "split_manifest_hash": "c" * 64,
-    }
-    frozen = {
-        "wq6_dataset": dataset, "wq6_feature_contract": contract,
-        "wq6_dataset_manifest": manifest, "wq6_split_manifest": splits,
-    }
-    report = scorecard_fixtures._branch10()
-    report["source"] = {
-        "dataset_sha256": hashlib.sha256(dataset).hexdigest(),
-        "feature_contract_sha256": hashlib.sha256(_encode(contract)).hexdigest(),
-        "dataset_manifest_sha256": hashlib.sha256(_encode(manifest)).hexdigest(),
-        "split_manifest_sha256": hashlib.sha256(_encode(splits)).hexdigest(),
-        "dataset_hash": "b" * 64, "feature_contract_hash": "a" * 64,
-        "split_manifest_hash": "c" * 64,
-    }
-    return frozen | {"branch10_report": report}
-
-
 def test_b10_reads_only_materialized_report_without_fit(monkeypatch: pytest.MonkeyPatch) -> None:
     from smartcrypto.research.aibot_parity import market_intelligence_pnl_ablation as ablation
 
@@ -251,17 +219,17 @@ def test_b10_reads_only_materialized_report_without_fit(monkeypatch: pytest.Monk
 
     monkeypatch.setattr(ablation, "_fit_predict", forbidden)
     monkeypatch.setattr(ablation, "build_market_intelligence_pnl_ablation_v1", forbidden)
-    calls = _install_sources(monkeypatch, _b10_sources())
+    calls = _install_sources(monkeypatch, materialized_b10_sources())
     result = _read("B10")
     assert result["status"] == "ok"
-    assert calls == list(_b10_sources())
+    assert calls == list(materialized_b10_sources())
     assert result["training_executed_by_adapter"] is False
     assert result["evaluation_scope"] == "existing_materialized_report_and_explicit_source_bindings"
 
 
 def test_b10_mismatched_frozen_source_hash_blocks(monkeypatch: pytest.MonkeyPatch) -> None:
-    sources = _b10_sources()
-    sources["branch10_report"]["source"]["dataset_sha256"] = "0" * 64  # type: ignore[index]
+    sources = materialized_b10_sources()
+    sources["branch10_report"]["source"]["dataset_sha256"] = "0" * 64
     _install_sources(monkeypatch, sources)
     result = _read("B10")
     assert result["status"] == "blocked"
@@ -269,8 +237,8 @@ def test_b10_mismatched_frozen_source_hash_blocks(monkeypatch: pytest.MonkeyPatc
 
 
 def test_b10_blocked_report_not_promoted(monkeypatch: pytest.MonkeyPatch) -> None:
-    sources = _b10_sources()
-    sources["branch10_report"]["status"] = "blocked"  # type: ignore[index]
+    sources = materialized_b10_sources()
+    sources["branch10_report"]["status"] = "blocked"
     _install_sources(monkeypatch, sources)
     result = _read("B10")
     assert result["status"] == "blocked"

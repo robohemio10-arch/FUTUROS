@@ -77,6 +77,12 @@ def _object(raw: bytes) -> dict[str, Any]:
 
 def _validate_materialized_source(logical_source: str, report: dict[str, Any]) -> None:
     """Apply source semantics in addition to the resolver's physical hash."""
+    if logical_source in {"sleeve_evidence", "council_ab_evidence"}:
+        # The historical schemas permit omission, but an explicit non-ok state
+        # must stop V2 before the evaluator can select a research candidate.
+        if "status" in report and report["status"] != "ok":
+            raise OfflineEvidenceReaderError("source_status_not_admissible:" + logical_source)
+        return
     if logical_source == "branch09_report":
         check_identity(report.get("identity"), CANONICAL)
         return
@@ -202,6 +208,16 @@ def build_offline_evidence_reader_v2(
         _validate_materialized_source(logical_source, value)
         return value
 
+    def materialized_b10_source() -> dict[str, Any]:
+        # Each binding must authorize the current reader, including B14.
+        raw_source("wq6_dataset")
+        contract = object_source("wq6_feature_contract")
+        manifest = object_source("wq6_dataset_manifest")
+        splits = object_source("wq6_split_manifest")
+        materialized = object_source("branch10_report")
+        _validate_materialized_b10(materialized, resolutions, contract, manifest, splits)
+        return materialized
+
     try:
         if reader == "B09":
             from smartcrypto.research.aibot_parity.ai_shadow_economic_challenger import (
@@ -225,12 +241,7 @@ def build_offline_evidence_reader_v2(
         elif reader == "B10":
             # The pre-existing producer calls model.fit. This adapter accepts only
             # an already-materialized report bound to the four exact frozen inputs.
-            raw_source("wq6_dataset")
-            contract = object_source("wq6_feature_contract")
-            manifest = object_source("wq6_dataset_manifest")
-            splits = object_source("wq6_split_manifest")
-            result = object_source("branch10_report")
-            _validate_materialized_b10(result, resolutions, contract, manifest, splits)
+            result = materialized_b10_source()
             report["evaluation_scope"] = "existing_materialized_report_and_explicit_source_bindings"
         elif reader == "B14":
             from smartcrypto.research.aibot_parity.economic_control_treatment_scorecard import (
@@ -239,7 +250,7 @@ def build_offline_evidence_reader_v2(
 
             result = build_economic_control_treatment_scorecard_from_reports(
                 branch09_report=object_source("branch09_report"),
-                branch10_report=object_source("branch10_report"),
+                branch10_report=materialized_b10_source(),
                 branch11_report=object_source("branch11_report"),
                 branch12_report=object_source("branch12_report"),
                 ledger_report=object_source("branch13_report"),

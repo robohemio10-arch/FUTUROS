@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "481cce50569eaad739df8cce83d9979ad510006dd3ea1a389f6b481de301b518",
+  "aggregate_sha256": "6d6168fd6237e490f6173ec4bf4a50709ae275e4aba4b8ad03ff93f0b570d979",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
@@ -1910,10 +1910,10 @@
       "sha256": "2ae960113543b9b03cbcb9883a8aef06b568bf29749929a919c0c2a81ddbb5f2"
     },
     {
-      "bytes": 9710,
+      "bytes": 10007,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_B_STORAGE_COHORT_V2_OFFLINE_V1.md",
-      "sha256": "898597f673ada2349e29702686b115976f64115bcd4a0ddb15c2e514b5e19c14"
+      "sha256": "3c5971f0cb3f21f28baaade0f3c975c8484c757317f2374b6d64ede6420723ce"
     },
     {
       "bytes": 3393,
@@ -8846,10 +8846,10 @@
       "sha256": "35f1fbd505b3eb46cc4ffa9724959af0c0b09eda45ccbf2c3bdf8105cab31ffa"
     },
     {
-      "bytes": 12386,
+      "bytes": 12964,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/offline_evidence_readers_v2.py",
-      "sha256": "ce081bef3dfc375554f8bfab071fcc55d2a7fa9243aabf1d7827e0aa1bf9add9"
+      "sha256": "ccdb6b83d76aafbed359cccba3198a48117de24de8ff8d7736d55af44c23169a"
     },
     {
       "bytes": 46087,
@@ -12122,16 +12122,16 @@
       "sha256": "0ba956476215868292d35e20c0b26621b2c5a470ee075a7940ae84bd0fe82cbb"
     },
     {
-      "bytes": 7415,
+      "bytes": 13082,
       "hash_mode": "text_lf",
       "path": "tests/test_offline_evidence_admission_v2.py",
-      "sha256": "49ed00221af8b0a6b690ab77f22d139841290bddc05acf26c20d92532f20a87c"
+      "sha256": "1fd0897f02c59433c93328112df2459a916634a0af0727cc33366ef9345a6ff9"
     },
     {
-      "bytes": 12576,
+      "bytes": 11210,
       "hash_mode": "text_lf",
       "path": "tests/test_offline_evidence_readers_v2.py",
-      "sha256": "c71094c1a717f3b5d1d870dd1d6847e949ec188b546b08df4da90553beb7c0fe"
+      "sha256": "42a6fb735e8efe1c131bc351627fe01ed72c5e668348db47e685913934217b12"
     },
     {
       "bytes": 6121,
@@ -13478,10 +13478,10 @@
       "sha256": "1f5ed6b656f2a38354525bd5ef16c35d7585f45b97059c4f8f3f92dead392fef"
     },
     {
-      "bytes": 4949,
+      "bytes": 6516,
       "hash_mode": "text_lf",
       "path": "tests/v2_contract_fixtures.py",
-      "sha256": "f8b789d3bb044fe4f9a336657ea47aeb626f5299ca9c08d16bc4a8761d4da918"
+      "sha256": "acee4fcd0e53caf834d8b518fcc7a693699b1758bf9c5a8b4f2f73a1a23de825"
     }
   ],
   "generated_by_script": "scripts/generate_project_manifest.py",

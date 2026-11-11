@@ -65,8 +65,12 @@ autoritativa, sem editar retrospectivamente os relatórios oficiais.
 
 A revisão L3.15 reforçou a admissão semântica dos relatórios materializados:
 B14 confere a identidade V3 completa de B09 e recalcula o selo B13 com a função
-oficial do produtor. B15/B16 recalculam o selo do scorecard B14 antes de avaliar
-seus inputs. Nos selos B13/B14, todos os campos, inclusive `source` se presente,
+oficial do produtor. Também aplica a mesma validação do relatório B10 e dos
+quatro artefatos WQ6, todos com bindings explícitos que autorizam B14.
+B15/B16 recalculam o selo do scorecard B14 e rejeitam evidência com status
+explícito diferente de `ok` antes da avaliação. Omissão de status mantém a
+validação pelos schemas históricos. Nos selos B13/B14, todos os campos,
+inclusive `source` se presente,
 participam do hash, exceto o próprio selo. Nenhum selo novo foi inventado para
 os schemas B09–B12. JSON histórico cujo aninhamento excede a capacidade do parser
 retorna bloqueio estruturado, sem bytes ou avaliação parcial.
@@ -101,7 +105,7 @@ do leitor offline retorna 0 para um diagnóstico ok ou waiting.
 | Coletor de paridade | Bloqueado | Falta atestação versionada do deployment real. A resolução de relatório é diagnóstica. |
 | B09 | Integrado | Avalia o snapshot V3 exato, conferindo schema, coleções, identidade e selo. |
 | B10 | Compatível com relatório materializado | Confere os quatro inputs congelados e sua vinculação ao relatório existente. Não executa treino ou nova ablation. |
-| B14 | Integrado como avaliação pura | Exige todos os relatórios explícitos e seus vínculos históricos válidos. |
+| B14 | Integrado como avaliação pura | Exige os relatórios explícitos e a mesma proveniência WQ6 exigida por B10, com autorização própria para cada fonte. |
 | B15 | Integrado como avaliação pura | Exige scorecard e evidência de sleeves admissíveis. |
 | B16 | Integrado como avaliação pura | Exige scorecard e evidência Council A/B admissíveis. |
 | B17 | Integrado no gate de pré-ativação | Sem registro sucessor e T0, continua blocked sem tentar certificação. |
