@@ -34,6 +34,7 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     arguments = parser()
     args = arguments.parse_args(argv)
+    runtime_root = args.runtime_root
     v2_paths = (args.v2_descriptor, args.v2_predecessor_registration, args.v2_fingerprints)
     v2_context = {}
     if any(path is not None for path in v2_paths):
@@ -56,11 +57,13 @@ def main(argv: list[str] | None = None) -> int:
             "v2_predecessor_raw_sha256": hashlib.sha256(predecessor_raw).hexdigest(),
             "v2_known_fingerprints": fingerprints,
         }
-    elif args.runtime_root is None:
+        if runtime_root is None:
+            runtime_root = args.project_root
+    elif runtime_root is None:
         arguments.error("--runtime-root is required for historical V1 collection")
     report = build_economic_phase_final_forward_proof_v1(
         project_root=args.project_root,
-        runtime_root=args.runtime_root or args.project_root,
+        runtime_root=runtime_root,
         **v2_context,
     )
     print(

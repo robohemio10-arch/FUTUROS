@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import copy
-import importlib.util
+import hashlib
 import json
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
+from scripts import build_economic_phase_final_forward_proof_v1 as b17_cli
 from smartcrypto.learning.qlib_v3_prospective.contracts import CANONICAL, digest
 from smartcrypto.research.aibot_parity import economic_phase_final_forward_proof as b17
 from tests.v2_contract_fixtures import context_for_sources, validate_synthetic
@@ -94,12 +96,70 @@ def test_financial_gates_and_legacy_parameters_are_preserved(v2_context):
     assert all(gate["passed"] is False for gate in result["economic_gates"].values())
 
 
-def test_v2_cli_incomplete_context_cannot_start_legacy_runtime(v2_context, capsys):
-    path = Path(__file__).resolve().parents[1] / "scripts/build_economic_phase_final_forward_proof_v1.py"
-    spec = importlib.util.spec_from_file_location("b17_v2_cli_fixture", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+@pytest.fixture
+def cli_builder(monkeypatch: pytest.MonkeyPatch) -> Mock:
+    builder = Mock(return_value={"status": "blocked"})
+    monkeypatch.setattr(b17_cli, "build_economic_phase_final_forward_proof_v1", builder)
+    return builder
+
+
+@pytest.mark.parametrize("runtime_root", ["", "runtime", None], ids=["empty", "explicit", "missing"])
+def test_v1_cli_runtime_root(
+    cli_builder: Mock, capsys: pytest.CaptureFixture[str], runtime_root: str | None,
+) -> None:
+    args = ["--project-root", "project", "--json"]
+    if runtime_root is None:
+        with pytest.raises(SystemExit) as exc:
+            b17_cli.main(args)
+        assert exc.value.code == 2
+        assert "--runtime-root is required" in capsys.readouterr().err
+        cli_builder.assert_not_called()
+    else:
+        assert b17_cli.main([*args, "--runtime-root", runtime_root]) == 2
+        cli_builder.assert_called_once_with(project_root="project", runtime_root=runtime_root)
+
+
+@pytest.mark.parametrize(
+    ("runtime_root", "expected_root"), [(None, "project"), ("", ""), ("runtime", "runtime")],
+    ids=["missing", "empty", "explicit"],
+)
+def test_v2_cli_complete_context(
+    cli_builder: Mock, tmp_path: Path, runtime_root: str | None, expected_root: str,
+) -> None:
+    args = ["--project-root", "project", "--json"]
+    if runtime_root is not None:
+        args.extend(("--runtime-root", runtime_root))
+    inputs = {
+        "descriptor": b'{"descriptor": true}',
+        "predecessor-registration": b'{ "predecessor": true }\n',
+        "fingerprints": b'{"fingerprints": true}',
+    }
+    for name, raw in inputs.items():
+        path = tmp_path / f"{name}.json"
+        path.write_bytes(raw)
+        args.extend((f"--v2-{name}", str(path)))
+
+    assert b17_cli.main(args) == 2
+    cli_builder.assert_called_once_with(
+        project_root="project",
+        runtime_root=expected_root,
+        v2_descriptor={"descriptor": True},
+        v2_predecessor_registration={"predecessor": True},
+        v2_predecessor_raw_sha256=hashlib.sha256(inputs["predecessor-registration"]).hexdigest(),
+        v2_known_fingerprints={"fingerprints": True},
+    )
+
+
+@pytest.mark.parametrize("missing", ["descriptor", "predecessor-registration", "fingerprints"])
+def test_v2_cli_incomplete_context_cannot_start_legacy_runtime(
+    cli_builder: Mock, capsys: pytest.CaptureFixture[str], missing: str,
+) -> None:
+    args = ["--runtime-root", "runtime", "--json"]
+    for name in ("descriptor", "predecessor-registration", "fingerprints"):
+        if name != missing:
+            args.extend((f"--v2-{name}", "missing.json"))
     with pytest.raises(SystemExit) as exc:
-        module.main(["--v2-descriptor", "missing.json", "--json"])
+        b17_cli.main(args)
     assert exc.value.code == 2
     assert "V2 requires" in capsys.readouterr().err
+    cli_builder.assert_not_called()
