@@ -1,14 +1,14 @@
 {
-  "aggregate_sha256": "276eda47ed18579dc380057e4724611e7ba560226e837d01c4b4d26b91082e65",
+  "aggregate_sha256": "e377ed22939378835292a069df856b55a1809447ed55bec4fbbf21d9fa43e60f",
   "byte_count_strategy": "canonical content bytes",
   "counts": {
     "dockerfiles": 4,
-    "docs_files": 331,
-    "manifested_files_total": 2233,
-    "python_files": 1755,
+    "docs_files": 332,
+    "manifested_files_total": 2245,
+    "python_files": 1764,
     "runtime_excluded_files_total": 0,
-    "test_files": 485,
-    "tracked_files_total": 2234,
+    "test_files": 490,
+    "tracked_files_total": 2246,
     "workflows": 3
   },
   "deterministic": true,
@@ -26,10 +26,10 @@
       "sha256": "02bc71c46eb651ab5462546b756cb680fee5ae2d092d0a0ea6245a15cb3bc07e"
     },
     {
-      "bytes": 200,
+      "bytes": 581,
       "hash_mode": "text_lf",
       "path": ".gitattributes",
-      "sha256": "d4eeaf6042a9f14cf11b8d16da5b3d223dde85c6a3e1b371211c3b7135920831"
+      "sha256": "162a1ba1effaa586423ebd8e3f706b5af94bb262018c94c5c5bb8b9a1dcda324"
     },
     {
       "bytes": 6882,
@@ -1910,6 +1910,12 @@
       "sha256": "2ae960113543b9b03cbcb9883a8aef06b568bf29749929a919c0c2a81ddbb5f2"
     },
     {
+      "bytes": 10007,
+      "hash_mode": "text_lf",
+      "path": "docs/PAPER_B_STORAGE_COHORT_V2_OFFLINE_V1.md",
+      "sha256": "3c5971f0cb3f21f28baaade0f3c975c8484c757317f2374b6d64ede6420723ce"
+    },
+    {
       "bytes": 3393,
       "hash_mode": "text_lf",
       "path": "docs/PAPER_CANDIDATE_FILTER_RUNTIME_OBSERVATION_PACK_V1.md",
@@ -2780,10 +2786,10 @@
       "sha256": "cf576f72ec7a95d98a77f1a827b6976aa1e198e3e9ea17cf9befb7c52ca5e410"
     },
     {
-      "bytes": 1765,
+      "bytes": 1866,
       "hash_mode": "text_lf",
       "path": "pyproject.toml",
-      "sha256": "0654be0974e29ad86dfef06def635f846db40d5c3427d8ddbc00894defe4de11"
+      "sha256": "0fb1a12ff7e88271e6e946012a41e046313df805492211b211005a230cb14fdb"
     },
     {
       "bytes": 520,
@@ -3542,10 +3548,10 @@
       "sha256": "dc20af4bdb5df23fcf7d83291b5a5c217e6eda6108dc6b7a4eec2b6cf1503c7b"
     },
     {
-      "bytes": 1377,
+      "bytes": 3153,
       "hash_mode": "text_lf",
       "path": "scripts/build_economic_phase_final_forward_proof_v1.py",
-      "sha256": "d7ae0cf110e5c531e9227db0094ae4541e827e25955af07b249fdfd61645cfab"
+      "sha256": "d43f3961f5f8235eae1902b1484a1ccb26900b656d74e897e1f60179b10e5b6c"
     },
     {
       "bytes": 2374,
@@ -3900,6 +3906,12 @@
       "hash_mode": "text_lf",
       "path": "scripts/build_paper_b_causal_epoch2_foundation_v1.py",
       "sha256": "0bef24a11392cf3ff6137ded933b99aaa78d5d59c64a9a5e42a651a9b7cb47ac"
+    },
+    {
+      "bytes": 2404,
+      "hash_mode": "text_lf",
+      "path": "scripts/build_paper_b_offline_evidence_v2.py",
+      "sha256": "948849020ea1ad7d3181a5d541c71b5286c6375f2ec7c456c9507cbd59bc97ff"
     },
     {
       "bytes": 3802,
@@ -8606,10 +8618,10 @@
       "sha256": "8cf1d879e9327e0f2e12cbc95b2d727897c98f08f767d84bcd785e0ed554380c"
     },
     {
-      "bytes": 28848,
+      "bytes": 32229,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/aibot_parity/economic_phase_final_forward_proof.py",
-      "sha256": "60f89fb6a0cd0ab5f5d5fd675086aa0648b2efbc851f7a50bc773030e88d3f7b"
+      "sha256": "6cc0c9a3fe0de5c39e72a27c72cec98b70b1a11f2dd72cb4fb16c89261f4195d"
     },
     {
       "bytes": 18212,
@@ -8810,10 +8822,34 @@
       "sha256": "ac004b2ed08459718498892052b448394c815bc5645b0bf0a4a09e921d1acdb4"
     },
     {
+      "bytes": 10811,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/contracts_v2/approved_l313_proposal.json",
+      "sha256": "e984a50f0a064e713ee3326341ac69cf7fab7e98ab2c48b505fb8bd98b2a3a51"
+    },
+    {
+      "bytes": 10318,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/contracts_v2/approved_l313_proposal.schema.json",
+      "sha256": "2202fb0df10c5e40b2d7ebfa497a4f21c3de58ea76e1bc631e2a376ddf822c88"
+    },
+    {
       "bytes": 16251,
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/economic_monitor.py",
       "sha256": "b27a9522326efb7f2741313f4334cac06eedd3605d975c8c9a90472ddc1904a4"
+    },
+    {
+      "bytes": 5406,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/evidence_sources_v2.py",
+      "sha256": "35f1fbd505b3eb46cc4ffa9724959af0c0b09eda45ccbf2c3bdf8105cab31ffa"
+    },
+    {
+      "bytes": 12964,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/offline_evidence_readers_v2.py",
+      "sha256": "ccdb6b83d76aafbed359cccba3198a48117de24de8ff8d7736d55af44c23169a"
     },
     {
       "bytes": 46087,
@@ -8844,6 +8880,12 @@
       "hash_mode": "text_lf",
       "path": "smartcrypto/research/canonical_treatment/soak_checkpoint_certification.py",
       "sha256": "7256eef71a6ffadb96c5a840938ff7fbc9fff181b9ce9e125d9959098cf0e538"
+    },
+    {
+      "bytes": 15934,
+      "hash_mode": "text_lf",
+      "path": "smartcrypto/research/canonical_treatment/storage_cohort_contract_v2.py",
+      "sha256": "1ee8fc8eea7e5aa3770eeff44ce4782070bf31d7746687a3baa43501f58979e6"
     },
     {
       "bytes": 17591,
@@ -11504,6 +11546,12 @@
       "sha256": "cf8b389e97256d19bf98c24a62785ed9cc39d8f6f9a9a6f87e758909ac65a10d"
     },
     {
+      "bytes": 7092,
+      "hash_mode": "text_lf",
+      "path": "tests/test_economic_phase_final_forward_proof_v2.py",
+      "sha256": "2457895151d60134f9d7d176e3a640fa07dddd316a939804e06b78de95687244"
+    },
+    {
       "bytes": 15013,
       "hash_mode": "text_lf",
       "path": "tests/test_ensemble_abstention_v1.py",
@@ -12072,6 +12120,18 @@
       "hash_mode": "text_lf",
       "path": "tests/test_official_trades_master_walkforward_v1.py",
       "sha256": "0ba956476215868292d35e20c0b26621b2c5a470ee075a7940ae84bd0fe82cbb"
+    },
+    {
+      "bytes": 13082,
+      "hash_mode": "text_lf",
+      "path": "tests/test_offline_evidence_admission_v2.py",
+      "sha256": "1fd0897f02c59433c93328112df2459a916634a0af0727cc33366ef9345a6ff9"
+    },
+    {
+      "bytes": 11210,
+      "hash_mode": "text_lf",
+      "path": "tests/test_offline_evidence_readers_v2.py",
+      "sha256": "42a6fb735e8efe1c131bc351627fe01ed72c5e668348db47e685913934217b12"
     },
     {
       "bytes": 6121,
@@ -13280,6 +13340,12 @@
       "sha256": "3e7723c0c0457946c0f47009c2b0055d4844fcede11101686d79f45280c9e907"
     },
     {
+      "bytes": 13292,
+      "hash_mode": "text_lf",
+      "path": "tests/test_storage_cohort_contract_v2.py",
+      "sha256": "8aefc7b8584ee952fdc7b59a2b3c8af150cff40004dbdf0b787ba89abe79bb71"
+    },
+    {
       "bytes": 7606,
       "hash_mode": "text_lf",
       "path": "tests/test_streamlit_snapshot_loader_cache_resilience_v1.py",
@@ -13410,6 +13476,12 @@
       "hash_mode": "text_lf",
       "path": "tests/test_zip_standalone_audit_fallback.py",
       "sha256": "1f5ed6b656f2a38354525bd5ef16c35d7585f45b97059c4f8f3f92dead392fef"
+    },
+    {
+      "bytes": 6516,
+      "hash_mode": "text_lf",
+      "path": "tests/v2_contract_fixtures.py",
+      "sha256": "acee4fcd0e53caf834d8b518fcc7a693699b1758bf9c5a8b4f2f73a1a23de825"
     }
   ],
   "generated_by_script": "scripts/generate_project_manifest.py",

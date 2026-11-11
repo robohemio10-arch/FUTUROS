@@ -616,12 +616,101 @@ def build_economic_phase_final_forward_proof_from_reports(
         return _sealed(result)
 
 
+def _v2_unavailable(now: datetime) -> dict[str, Any]:
+    result = _base(now)
+    result.update(
+        status="blocked",
+        decision="BLOCKED_FORWARD_EVIDENCE",
+        evidence_mode="explicit_v2_offline",
+        evidence_status="NOT_COLLECTED",
+        certification_attempted=False,
+        causal_population={
+            "eligible_decisions": None, "scored_decisions": None, "coverage_misses": None
+        },
+    )
+    for gate in result["sample_gates"].values():
+        gate["value"] = None
+    return result
+
+
+def build_economic_phase_final_forward_proof_v2(
+    *,
+    descriptor: Mapping[str, Any],
+    predecessor_registration: Mapping[str, Any],
+    predecessor_raw_sha256: str,
+    known_fingerprints: Mapping[str, Any],
+    as_of_utc: str | None = None,
+) -> dict[str, Any]:
+    """Validate the explicit offline descriptor without collecting runtime evidence."""
+    from smartcrypto.research.canonical_treatment.storage_cohort_contract_v2 import (
+        validate_descriptor,
+    )
+
+    result = _v2_unavailable(governance.now_utc())
+    try:
+        if as_of_utc is not None:
+            result["generated_at_utc"] = utc(as_of_utc).isoformat()
+        validated = validate_descriptor(
+            descriptor,
+            predecessor_registration=predecessor_registration,
+            predecessor_raw_sha256=predecessor_raw_sha256,
+            known_fingerprints=known_fingerprints,
+        )
+    except (EvidenceError, OSError, ValueError, KeyError, TypeError) as exc:
+        result["blockers"].append(
+            str(exc) if isinstance(exc, (EvidenceError, ValueError))
+            else "v2_descriptor_invalid:" + type(exc).__name__
+        )
+        return _sealed(result)
+    state = validated.mapping()
+    result["source_contract"] = {
+        "schema_version": state.get("schema_version"),
+        "descriptor_sha256": state.get("descriptor_sha256"),
+        "predecessor_registration_sha256": predecessor_registration.get("registration_sha256"),
+        "operational_authority": False,
+    }
+    result["blockers"].extend(
+        (
+            "v2_cohort_unregistered_no_t0",
+            "v2_registered_successor_required_for_financial_evaluation",
+            "v2_admissible_economic_reports_required",
+        )
+    )
+    return _sealed(result)
+
+
 def build_economic_phase_final_forward_proof_v1(
     *,
     project_root: str | Path,
     runtime_root: str | Path,
+    v2_descriptor: Mapping[str, Any] | None = None,
+    v2_predecessor_registration: Mapping[str, Any] | None = None,
+    v2_predecessor_raw_sha256: str | None = None,
+    v2_known_fingerprints: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Read current canonical sources in their active containers, without writes."""
+    v2_arguments = (
+        v2_descriptor,
+        v2_predecessor_registration,
+        v2_predecessor_raw_sha256,
+        v2_known_fingerprints,
+    )
+    if any(value is not None for value in v2_arguments):
+        if (
+            v2_descriptor is None
+            or v2_predecessor_registration is None
+            or v2_predecessor_raw_sha256 is None
+            or v2_known_fingerprints is None
+        ):
+            result = _v2_unavailable(governance.now_utc())
+            result["blockers"].append("v2_explicit_context_incomplete")
+            return _sealed(result)
+        return build_economic_phase_final_forward_proof_v2(
+            descriptor=v2_descriptor,
+            predecessor_registration=v2_predecessor_registration,
+            predecessor_raw_sha256=v2_predecessor_raw_sha256,
+            known_fingerprints=v2_known_fingerprints,
+        )
     project = Path(project_root).resolve()
     now = governance.now_utc()
     result = _base(now)
